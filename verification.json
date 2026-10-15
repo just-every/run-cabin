@@ -1,0 +1,55 @@
+{
+  "push": [
+    {
+      "name": "source",
+      "browser": false,
+      "hosted": false,
+      "commands": [
+        "pnpm run check --profile first-party"
+      ]
+    },
+    {
+      "name": "typecheck",
+      "browser": false,
+      "hosted": false,
+      "commands": [
+        "pnpm run typecheck"
+      ]
+    },
+    {
+      "name": "domain",
+      "browser": false,
+      "hosted": false,
+      "commands": [
+        "pnpm run test:cabin"
+      ]
+    },
+    {
+      "name": "restore",
+      "browser": false,
+      "hosted": false,
+      "commands": [
+        "pnpm run test:archive"
+      ]
+    },
+    {
+      "name": "runtime",
+      "browser": true,
+      "hosted": true,
+      "commands": [
+        "pnpm run build",
+        "pnpm run test:runtime"
+      ]
+    }
+  ],
+  "nightly": [
+    {
+      "name": "clone",
+      "browser": false,
+      "hosted": false,
+      "commands": [
+        "pnpm run test:launch"
+      ]
+    }
+  ]
+}

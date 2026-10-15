@@ -1,0 +1,36 @@
+import { type Actor, type Context, type Data, type Query, kinds, query, guard, need, fail, newId } from './model'
+export function authority(a: Actor): Query {
+ const operator = "EXISTS(SELECT 1 FROM oa_operators WHERE id=? AND status='active' AND version=? AND role=?)"
+ const params: any[] = [a.id, a.operatorVersion, ['owner', 'agent'].includes(a.role) ? 'owner' : 'member']
+ let sql = operator
+ if (a.role === 'agent') { sql += ' AND EXISTS(SELECT 1 FROM cb_agent_keys WHERE id=? AND owner_id=? AND owner_version=? AND revoked_at IS NULL AND expires_at>?)'; params.push(a.keyId, a.id, a.operatorVersion, Date.now()) }
+ if (a.role === 'manager' || a.role === 'cleaner') { sql += ' AND EXISTS(SELECT 1 FROM cb_members WHERE id=? AND email=? COLLATE NOCASE AND role=? AND active=1)'; params.push(a.memberId, a.email, a.role) }
+ return query(sql, ...params)
+}
+export async function assertLive(db: D1Database, actor: Actor) { const a = authority(actor); need(await db.prepare(`SELECT 1 WHERE ${a.sql}`).bind(...a.params).first(), 'Access expired or revoked', 403) }
+export async function load(db: D1Database): Promise<Data> {
+ const results = await db.batch<any>([
+  db.prepare('SELECT version FROM cb_meta WHERE id=1'), db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
+  db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare('SELECT kind,data FROM cb_records ORDER BY rowid'),
+  db.prepare('SELECT id,kind,record_id AS recordId,revision,actor_id AS actorId,at FROM cb_approvals ORDER BY at,id'),
+  db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
+ ])
+ const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], approvals: results[4].results, events: results[5].results }
+ for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
+ return data
+}
+export function transaction(c: Context, name: string): Query[] {
+ const a = authority(c.actor), q = [guard(a.sql, ...a.params), guard('(SELECT version FROM cb_meta WHERE id=1)=?', c.before.version)]
+ for (const kind of kinds) {
+  const old = new Map(c.before[kind].map(row => [row.id, JSON.stringify(row)]))
+  for (const row of c.data[kind]) if (old.get(row.id) !== JSON.stringify(row)) q.push(query('INSERT INTO cb_records(kind,id,revision,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data', kind, row.id, 'revision' in row ? row.revision : row.id, JSON.stringify(row)))
+ }
+ const existing = new Set(c.before.approvals.map(a => a.id))
+ for (const a of c.data.approvals) if (!existing.has(a.id)) q.push(query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)', a.id,a.kind,a.recordId,a.revision,a.actorId,a.at))
+ q.push(...c.queries, query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at) VALUES(?,?,?,?,?,?)', newId(), c.actor.id,c.actor.role,name,c.entityId,c.now),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
+ return q
+}
+export async function commit(c: Context, name: string) {
+ try { await c.db.batch(transaction(c, name).map(q => c.db.prepare(q.sql).bind(...q.params))) }
+ catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
+}
