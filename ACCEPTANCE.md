@@ -34,7 +34,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **SYNC-003 — Vrbo two-way channel management · missing.** Connect a Vrbo listing, complete and alter a reservation at the channel, close inventory and change pricing in Cabin, cancel the stay and reconcile channel acknowledgements, payment responsibility and final availability. Several accounts: SYNC-010.
   Current evidence: none; the described acceptance journey is missing.
 
-- **SYNC-004 — Booking.com two-way channel management · partial.** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state. A Payments by Booking.com reservation passes its virtual card to PAY-005, whose acceptance proves the charge.
+- **SYNC-004 — Booking.com two-way channel management · partial.** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state. A Payments by Booking.com reservation passes its virtual card to PAY-005, and a property-collect reservation passes its guest card to PAY-006, whose acceptance journeys prove the charges.
   Current evidence: `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`. Remaining: Manual Booking.com calendar snapshots exist; connectivity, rate plans, collection-method tracking and live acknowledgements do not.
 
 - **SYNC-005 — Listing content and distribution · missing.** Preview and publish one content revision to each named OTA and one Google Vacation Rentals listing; inspect accepted and rejected fields, keep an intentional channel override, and follow a Google referral to the correctly priced direct stay.
@@ -101,7 +101,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **PAY-001 — Processor-backed USD checkout and manual payments · missing.** Book through the public site with successful, declined and authentication-required cards plus pending/returned ACH in the processor test environment; replay payment callbacks and prove one correct reservation balance and no raw payment credentials in reads, exports or logs.
   Current evidence: none; the described acceptance journey is missing.
 
-- **PAY-002 — Scheduled collection and payment follow-up · missing.** Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart. Virtual-card collection: PAY-005.
+- **PAY-002 — Scheduled collection and payment follow-up · missing.** Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart. Virtual-card collection: PAY-005; property-collect guest cards: PAY-006.
   Current evidence: none; the described acceptance journey is missing.
 
 - **PAY-003 — Damage deposits, refunds and cancellation settlement · missing.** Authorize a damage deposit, approve an evidenced partial claim, release the remainder, issue a partial rent refund and cancel a second stay; replay each event and verify processor balances, guest receipts, tax adjustments and owner liabilities match once.
@@ -111,6 +111,9 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
   Current evidence: none; the described acceptance journey is missing.
 
 - **PAY-005 — Booking.com virtual credit cards · missing.** Receive three Booking.com test reservations carrying VCCs with set loaded amounts and activation dates. On the first, attempt a charge before activation and confirm refusal with no processor charge; advance to activation and verify exactly the loaded amount is charged once, including after a replayed callback and a rerun job, and that no full card number appears in reads, exports or logs. Let the second VCC expire and move the third stay earlier so its activation date falls after the new check-in; verify both become assigned exceptions with no charge. Reconcile the charged amount to its reservation, Booking.com payout and owner statement line.
+  Current evidence: none; the described acceptance journey is missing.
+
+- **PAY-006 — Booking.com property-collect guest cards · missing.** Receive three property-collect Booking.com test reservations through the connection and confirm no full card number or security code appears in any read, export, log or archive. On the first, verify the deposit and balance each charge on schedule exactly once, including after a replayed callback and a rerun job. On the second, decline the card, report it invalid from the reservation and repeat the report; verify a single report, Booking.com’s acknowledgement, and the guest deadline with an assigned exception. Deliver an updated card from Booking.com and verify the failed charge retries once and the schedule resumes. Leave the third reservation’s declined card un-updated past its deadline; verify the penalty-free cancellation is offered, confirmed by a human and acknowledged by Booking.com, that inventory reopens and that no further charge is attempted. Reconcile the collected amounts and the Booking.com commission invoice to each reservation and its owner statement line.
   Current evidence: none; the described acceptance journey is missing.
 
 - **GUEST-001 — Guest profiles and repeat-stay context · missing.** Receive the same guest on two channels, review a suggested merge, record a preference and opt-out, book a return stay and undo a mistaken merge; verify the right history follows each person and role-limited reads remain private.
@@ -168,7 +171,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **FIN-001 — Reservation-linked USD trust subledgers · missing.** Through reservation, payment and accounting doors record a deposit, earned stay, channel fee, tax, refund and owner expense; drill each balance to source transactions and prove debits equal credits before and after a period-close correction.
   Current evidence: none; the described acceptance journey is missing.
 
-- **FIN-002 — Payout reconciliation per reservation · missing.** Import or receive each named provider’s settlement with multiple stays across two connected accounts of one channel, a charged Booking.com virtual card, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
+- **FIN-002 — Payout reconciliation per reservation · missing.** Import or receive each named provider’s settlement with multiple stays across two connected accounts of one channel, a charged Booking.com virtual card, a property-collect Booking.com charge with its commission invoice, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
   Current evidence: none; the described acceptance journey is missing.
 
 - **FIN-003 — Management agreements and expense allocation · partial.** Configure two different owner agreements, post reservation revenue and a shared repair, amend terms for a later stay, then inspect exact owner splits, fees, reserve and invoice evidence without rewriting the earlier allocation.
@@ -275,7 +278,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 
 ## Build and evidence discipline
 
-**83 clauses: 6 done · 22 partial · 55 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
+**84 clauses: 6 done · 22 partial · 56 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
 
 Current public-door checks are `pnpm run test:cabin` (native authority, snapshot reconciliation, cleaner evidence, statement arithmetic, bearer limits and basic move-in), `pnpm run test:archive` (local CLI round-trip, damaged/populated refusal and later-journal erasure), `pnpm run test:runtime` after the real build (health, installed homepage and 404s), and `pnpm run test:launch` (fresh-clone rer dev launch). They are implementation tests, not a complete target suite. Run the tests relevant to changed behavior; the CI push matrix in `verification.json` is the full wall. Preserve existing checks; document work must not weaken them.
 
