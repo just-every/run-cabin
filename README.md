@@ -6,11 +6,14 @@ The run site is **local for now**. Run `rer dev`, then open `http://127.0.0.1:<p
 
 ## Start from a fresh clone
 
-Install Git and Node 22 or newer, then run one line. It clones Cabin, installs the launcher and starts it:
+Install Git, then run two lines. The first installs the launcher; the second clones Cabin and starts it:
 
 ```sh
-npx -y @runeditrun/rer dev just-every/run-cabin
+curl -fsSL https://runeditrun.com/install.sh | sh
+rer dev just-every/run-cabin
 ```
+
+The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-cabin` does both lines in one.
 
 To start it again later, run `cd run-cabin && rer dev`. RER selects pinned Node 22.20.0 and pnpm 10.12.4, installs dependencies, migrates local D1 and prepares a local owner. First launch can take several minutes. Open the private **RER_OPEN** link from the terminal, confirm the owner on **Finish setup**, and open `/app`. Keep that link private. **RER_READY** is the ordinary app address. Run the same command again if interrupted. Stop with `rer dev --stop` or Ctrl-C.
 
