@@ -46,13 +46,13 @@ The existing bearer door can prepare only calendar, turnover and statement draft
 
 ### SYNC-001 — Reviewed calendar files remain honest snapshots.
 
-Airbnb and Booking.com iCal snapshots retain import and approval times, reconcile by property/channel/UID and list additions, changes, cancellation, disappearance and overlaps before exact approval. Checkout is end-exclusive. Malformed or unsupported calendar constructs are refused. File review remains available for migration and diagnosis; its dates never constitute a live channel acknowledgement or a double-booking guarantee.
+Airbnb and Booking.com iCal snapshots retain import and approval times, reconcile by property/channel/UID and list additions, changes, cancellation, disappearance and overlaps before exact approval. Checkout is end-exclusive. Malformed or unsupported calendar constructs are refused. File review remains available for migration and diagnosis; its dates never constitute a live channel acknowledgement or a double-booking guarantee. Scheduled automatic iCal exchange for channels without an API is SYNC-009.
 
 **Acceptance evidence:** Import two overlapping channel files, inspect the clash and timestamps, approve exact reviews, reimport without duplicates, cancel or remove a UID, test adjacent checkout/check-in, and reject a stale baseline and malformed file.
 
 ### SYNC-002 — Airbnb two-way channel management.
 
-Through an approved Airbnb API or contracted channel partner, Cabin receives reservations, modifications and cancellations and sends rates, availability and restrictions for mapped listings. It retains provider IDs, revisions and acknowledgements; authorization failures and channel constraints remain visible. Listing connection is proven before a manager enables selling.
+Through an approved Airbnb API or contracted channel partner, Cabin receives reservations, modifications and cancellations and sends rates, availability and restrictions for mapped listings. It retains provider IDs, revisions and acknowledgements; authorization failures and channel constraints remain visible. Listing connection is proven before a manager enables selling. Inquiries, requests to book, pre-approvals, special offers and alteration requests are SYNC-008.
 
 **Acceptance evidence:** Authorize an Airbnb test listing from Connections; book, extend and cancel through Airbnb, change a rate and close dates in Cabin, and verify both systems and their acknowledgement history agree without duplicate reservations.
 
@@ -74,17 +74,29 @@ A manager publishes property descriptions, photos, amenities, occupancy, house r
 
 **Acceptance evidence:** Preview and publish one content revision to each named OTA and one Google Vacation Rentals listing; inspect accepted and rejected fields, keep an intentional channel override, and follow a Google referral to the correctly priced direct stay.
 
-### SYNC-006 — Inventory holds and double-booking prevention.
+### SYNC-006 — Inventory holds, measured closure latency and double-booking prevention.
 
-Every sale, quote hold, owner block and maintenance closure uses one durable unit/night inventory allocation. Concurrent Cabin checkouts cannot sell the same inventory; changes propagate promptly to all connected channels. Late channel collisions remain visible and open a recovery case rather than being overwritten. Pending acknowledgements, feed age and disconnected channels are shown; managers can stop selling affected inventory.
+Every sale, quote hold, owner block, maintenance closure and imported iCal block uses one durable unit/night inventory allocation. Concurrent Cabin checkouts cannot sell the same inventory. From the commit of any allocation change, Cabin submits the closure or reopening to every connected API channel (Airbnb, Vrbo and Booking.com) within 15 seconds, and each channel’s provider-acknowledged closure must arrive within **2 minutes** of commit; Cabin’s own iCal export feeds (SYNC-009) reflect the change within 60 seconds. Connections shows the measured commit-to-acknowledgement time per channel and change; a breach of the 2-minute maximum, a refused acknowledgement or a disconnected channel raises an alert and an assigned exception and offers stop-sell for the affected inventory. Late channel collisions remain visible and open a recovery case rather than being overwritten.
 
-**Acceptance evidence:** Race a direct checkout and channel reservation for one unit/night through public booking/channel doors; prove only one Cabin allocation commits, all channels receive closures, and a deliberately late OTA conflict is assigned for recovery with both original reservations retained.
+**Acceptance evidence:** Race a direct checkout and a channel reservation for one unit/night through public booking/channel doors; prove only one Cabin allocation commits, record commit and acknowledgement timestamps for Airbnb, Vrbo and Booking.com and show each closure acknowledged within 2 minutes and the export feed updated within 60 seconds. Hold one provider’s acknowledgement past 2 minutes in its test harness and verify the Connections breach alert, assigned exception and stop-sell. A deliberately late OTA conflict is assigned for recovery with both original reservations retained.
 
 ### SYNC-007 — Inspectable sync failures and safe recovery.
 
 Connections expose last successful exchange, lag, pending changes, field errors and provider acknowledgements. Signed/verified provider events are deduplicated and ordered by provider revision. Credential expiry, throttling, outages and uncertain writes survive restart as assigned exceptions; reconciliation reads establish external state before repeating uncertain effects. Reconnection cannot resurrect canceled stays or send stale rates.
 
 **Acceptance evidence:** From Connections revoke authorization, deliver duplicate/out-of-order events, throttle a push and lose its response; restart Cabin, reconnect and reconcile against the provider, preserving one reservation and the newest accepted prices with every unresolved exception visible.
+
+### SYNC-008 — Inquiries, booking requests, special offers and alterations.
+
+Airbnb inquiries arrive as Inquiry-status records linked to their inbox thread, with requested dates, guests and quoted USD price, and hold no inventory. From the thread, staff pre-approve an inquiry, send a special offer with a custom price and terms, withdraw and re-send an offer, accept or decline a request to book inside Airbnb’s 24-hour response window, and accept or decline a guest’s alteration request. Every pending request shows its channel deadline; approaching deadlines escalate through MESSAGE-002 and expiry is recorded, never hidden. Hosts can enable automatic pre-approval per listing against saved criteria (stay rules, guest count, lead time, guest verification and no SYNC-006 conflict); inquiries that miss any criterion route to a person. Vrbo inquiries and booking requests and Booking.com request-to-book flows, where the channel offers them, use the same states and actions. Accepting a request, offer or alteration revalidates price and inventory through SYNC-006 and RES-004 and then updates downstream payments, messages, tasks and access through RES-002. Each outcome is recorded only on the channel’s acknowledgement.
+
+**Acceptance evidence:** On an Airbnb test listing send an inquiry and see it as Inquiry; pre-approve it, withdraw the pre-approval and re-send it as a special offer with a custom price, and verify the guest-side offer and channel acknowledgement. Decline one request to book and let another expire after 24 hours, verifying the recorded expiry and unchanged inventory. Accept a guest alteration that moves dates and confirm inventory, price and downstream tasks update. Auto-pre-approve an inquiry that meets saved criteria and route one that does not to a person. Repeat a request flow on Vrbo and on Booking.com. Every outcome is acknowledged by the channel.
+
+### SYNC-009 — Automatic iCal sync for channels without an API.
+
+For channels with no API connection, such as Furnished Finder, Hipcamp or a partner’s PMS, a manager connects any external iCal URL per unit. Cabin polls each URL on a configurable interval of 15 to 60 minutes (default 15), applies new, changed and removed events as channel blocks that take inventory through SYNC-006, and publishes a per-unit secret iCal export URL listing every Cabin reservation and block, which the manager can regenerate to revoke old links. Each feed shows last successful fetch, last applied change and next poll. An unreachable or malformed feed enters a visible stale state with an alert and assigned exception, keeps its last applied blocks rather than releasing nights, and recovers on the next good fetch. Connections and the listing settings state plainly that iCal sync is polled and does not guarantee against double booking; API channels carry that guarantee. Imported events never trigger guest messages or charges. SYNC-001 remains the manual review path for migration and diagnosis.
+
+**Acceptance evidence:** Connect an external iCal URL served by a test host; add a block there and verify Cabin applies it within the configured polling interval and then refuses a direct booking for those nights. Create a Cabin direct reservation and fetch the unit’s export URL to find it within 60 seconds; regenerate the export URL and confirm the old one returns 404. Make the external feed unreachable, then malformed, and verify the stale state, alert, assigned exception and retained blocks; restore it and verify recovery and fresh timestamps.
 
 ### RES-001 — Portfolio calendar with operational context.
 
@@ -106,7 +118,7 @@ Managers and permitted rental owners create, edit and cancel personal-stay or ma
 
 ### RES-004 — Stay rules, fees and cancellation policies.
 
-Effective-dated seasonal/day-of-week rates, minimum/maximum nights, orphan-gap rules, arrival/departure restrictions, advance notice, booking windows, preparation buffers, occupancy limits, extra-guest/pet/cleaning fees and cancellation policies govern every quote and channel push. Unsupported channel restrictions are named; inclusive/exclusive fees and taxes are disclosed before commitment.
+Effective-dated seasonal/day-of-week rates, minimum/maximum nights, orphan-gap rules, arrival/departure restrictions, advance notice, booking windows, preparation buffers, occupancy limits, extra-guest/pet/cleaning fees and cancellation policies govern every quote and channel push. Unsupported channel restrictions are named; inclusive/exclusive fees and taxes are disclosed before commitment. Per-channel markups and weekly/monthly discounts are PRICE-002.
 
 **Acceptance evidence:** Price boundary-date, gap-night, last-minute and extra-guest stays through direct checkout and each OTA adapter; prove an invalid stay cannot book, valid totals agree with the breakdown, and an old reservation retains its saved cancellation policy.
 
@@ -129,6 +141,12 @@ Staff issue itemized USD quotes with guest counts, fees, taxes, cancellation ter
 A nightly planner imports market-informed rates and stay restrictions from PriceLabs, Wheelhouse and Beyond through separate named adapters. Hosts choose the active source per listing, set USD floors/ceilings and manual overrides, inspect provenance and preview changes. Daily updates honor saved limits and property rules; unavailable feeds preserve explicit last-known pricing with an alert.
 
 **Acceptance evidence:** Connect and exercise PriceLabs, Wheelhouse and Beyond separately; import a daily plan, override one night, reject a below-floor rate, simulate stale provider data and publish valid prices to all three OTAs with acknowledgements.
+
+### PRICE-002 — Per-channel markups and length-of-stay discounts.
+
+Per listing and per channel, a manager sets a percentage or fixed USD markup or markdown (for example +15% on Booking.com to cover commission, or −$20 a night on Vrbo) and chooses whether cleaning and other fees are included in the adjusted amount. Weekly (7+ nights) and monthly (28+ nights) length-of-stay discounts apply to direct quotes and are published as Airbnb weekly/monthly discounts, Vrbo length-of-stay discounts and Booking.com rate plans or length-of-stay pricing. Adjustments apply after the PRICE-001 rate and before channel push. No markup or discount takes a night below its saved floor, and an unsupported channel combination is named before publication. Each reservation records the base rate, channel adjustment and discount it used, and the rates view shows the expected payout after commission per channel.
+
+**Acceptance evidence:** Configure a +15% Booking.com markup that includes the cleaning fee and a fixed $20-a-night Vrbo markdown that excludes fees; publish and verify each channel’s acknowledged nightly price and fees, then book on each and reconcile the payout to the expected figures. Set weekly and monthly discounts and quote 7-night and 28-night stays on direct, Airbnb and Booking.com (as a rate plan), verifying each discounted total. Set a discount that would cross the floor and verify the floor holds and the conflict is shown.
 
 ### WEB-001 — Branded direct-booking website.
 
@@ -194,7 +212,7 @@ Guest records join channel identities, verified contact details, reservations, c
 
 ### MESSAGE-001 — Unified channel, SMS, email and WhatsApp inbox.
 
-Airbnb, Vrbo and Booking.com conversations, guest email, Twilio SMS and WhatsApp join reservation-linked threads with attachments and delivery history. Twilio/SendGrid or the selected Base mail adapter supplies email delivery; provider approval, US messaging registration and consent are implementation work. Cabin preserves channel reply rules and distinguishes submitted, provider-accepted, delivered and failed messages.
+Airbnb, Vrbo and Booking.com conversations, guest email, Twilio SMS and WhatsApp join reservation-linked threads with attachments and delivery history. Twilio/SendGrid or the selected Base mail adapter supplies email delivery; provider approval, US messaging registration and consent are implementation work. Inquiry, request-to-book, special-offer and alteration actions (SYNC-008) are taken from the thread. Cabin preserves channel reply rules and distinguishes submitted, provider-accepted, delivered and failed messages.
 
 **Acceptance evidence:** Receive and reply on all three OTA channels, email, SMS and WhatsApp through the inbox; attach the correct reservation, replay an inbound event and simulate a rejected/outage send, proving one visible message and an assigned delivery failure without false delivery claims.
 
@@ -224,17 +242,23 @@ A secure mobile guest portal exposes only the holder’s reservation, payment/ve
 
 ### GUEST-003 — Reviews and consented repeat-guest marketing.
 
-Staff track channel reviews, request post-stay feedback, draft and approve supported public review responses and follow unresolved dissatisfaction into service recovery. Mailchimp receives explicitly consented guest segments for repeat-stay campaigns; opt-outs and deletion propagate. Cabin records campaign/referral attribution without treating review requests or audience export as completed guest recovery.
+Staff track channel reviews, request post-stay feedback, draft and approve supported public review responses and follow unresolved dissatisfaction into service recovery. Mailchimp receives explicitly consented guest segments for repeat-stay campaigns; opt-outs and deletion propagate. Cabin records campaign/referral attribution without treating review requests or audience export as completed guest recovery. The host’s own reviews of guests are GUEST-004.
 
 **Acceptance evidence:** Complete a stay, deliver one eligible review request, receive a negative response and assign recovery, approve a channel review reply, sync a consented Mailchimp segment and verify an opt-out removes the guest before the next campaign.
+
+### GUEST-004 — Automated host reviews of Airbnb guests.
+
+After each Airbnb checkout Cabin can post the host’s review of the guest from a pool of manager-approved templates, after a configurable delay inside Airbnb’s review window, with configured star ratings and an optional private note. Staff can stop automation for one reservation, for example after a bad stay; that stay enters a review-needed queue showing its deadline. Automation never posts where a review was already written by hand, in Cabin or on Airbnb, and never posts after the window closes. A review is recorded as posted only on Airbnb’s acknowledgement; a refused post becomes an assigned task before the deadline.
+
+**Acceptance evidence:** Check out three Airbnb test stays: one receives a templated review after the configured delay and Airbnb accepts it; one has automation stopped and stays in the queue until a person writes and submits it; one already reviewed by hand is not overwritten. Refuse one post in the provider test harness and verify the assigned task, and confirm no post is attempted after the window closes.
 
 ## Property operations and access
 
 ### OPS-001 — Reservation-triggered turnover dispatch.
 
-Confirmed reservations, checkout, amendments and cancellations create or revise the appropriate cleaning/inspection tasks exactly once. Managers configure per-property templates, timing, rates and approved teams; cleaners accept or decline, receive reminders, and can be replaced without losing history. Overdue or declined jobs escalate before arrival; staff capacity and travel time affect assignment.
+Confirmed reservations, checkout, amendments and cancellations create or revise the appropriate cleaning/inspection tasks exactly once. Managers configure per-property templates, timing, rates and approved teams; cleaners accept or decline, receive reminders, and can be replaced without losing history. Overdue or declined jobs escalate before arrival. Each cleaner or team has a saved daily capacity (jobs and hours) and home base; travel time between consecutive jobs comes from property addresses through a routing provider such as the Google Maps Distance Matrix API, or from manager-entered drive times. An assignment that would exceed capacity or cannot reach the next job within its window is never made silently: it routes to the next eligible backup or is flagged to a manager with the reason.
 
-**Acceptance evidence:** Confirm, extend and cancel a stay through reservation doors, inspect generated tasks, have a cleaner decline and a backup accept, and verify deadlines, changed instructions and cancellation propagate with no duplicate payable turnover.
+**Acceptance evidence:** Confirm, extend and cancel a stay through reservation doors, inspect generated tasks, have a cleaner decline and a backup accept, and verify deadlines, changed instructions and cancellation propagate with no duplicate payable turnover. Then give one cleaner two same-day turnovers that cannot both be reached within their windows given travel time, and a third job beyond the cleaner’s daily capacity; verify each is routed to a backup or flagged to a manager with the reason shown.
 
 ### EVIDENCE-001 — Private immutable cleaner completion evidence.
 
@@ -250,9 +274,9 @@ The cleaner app provides assigned schedules, directions, safe entry instructions
 
 ### OPS-003 — Readiness is verified before arrival.
 
-A per-stay readiness record combines accepted cleaning, maintenance blockers, inspection evidence, supplies and access verification. Named people attest physical completion; pending/failed evidence remains unready. Managers see at-risk arrivals, chase overdue work and explicitly approve exceptions with guest impact recorded. A cleaner upload alone cannot certify building safety.
+A per-stay readiness record combines accepted cleaning, maintenance blockers, inspection evidence, supplies and access verification. Per-property supply and restock items (for example linens, toiletries, coffee and paper goods) are readiness items: a failed or short item keeps the arrival unready until it is restocked and attested, or a manager explicitly excepts it. Named people attest physical completion; pending/failed evidence remains unready. Managers see at-risk arrivals, chase overdue work and explicitly approve exceptions with guest impact recorded. A cleaner upload alone cannot certify building safety.
 
-**Acceptance evidence:** Open an arrival with completed cleaning but failed lock and maintenance checks; verify it stays unready, resolve the tasks, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
+**Acceptance evidence:** Open an arrival with completed cleaning but failed lock and maintenance checks and a failed restock item; verify it stays unready, resolve the tasks and restock and attest the item, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
 
 ### OPS-004 — Maintenance, inspections and work-order expenses.
 
@@ -262,15 +286,21 @@ Managers dispatch corrective work orders and recurring preventive maintenance/in
 
 ### OPS-005 — Stay-bound smart-lock automation.
 
-Schlage, Yale and August locks connect directly or through an approved bridge such as Seam. Cabin provisions unique stay-bound codes, verifies provider/device state, sends them only when release rules pass, updates windows for changed stays and revokes them on cancellation/checkout. Battery/offline alerts trigger assigned action and a manager-approved backup entry plan; an API acknowledgement alone is not a tested door.
+Schlage, Yale, August, Kwikset, RemoteLock, Igloohome, Nuki and Salto locks connect directly or through an approved bridge such as Seam; Connections shows which path each lock uses. Cabin provisions unique stay-bound codes, verifies provider/device state, sends them only when release rules pass, updates windows for changed stays and revokes them on cancellation/checkout. Battery/offline alerts trigger assigned action and a manager-approved backup entry plan; an API acknowledgement alone is not a tested door. Hub-dependent and offline-PIN locks follow OPS-007.
 
-**Acceptance evidence:** Connect each named lock family, provision and verify a stay code, extend then cancel the booking, observe expiry/revocation at the device or provider test harness, and route a low-battery/offline lock to a person before arrival.
+**Acceptance evidence:** Connect each named lock family, directly or through the bridge; for each, provision and verify a stay code, extend then cancel the booking and observe expiry/revocation at the device or provider test harness. Route a low-battery/offline lock to a person before arrival.
 
 ### OPS-006 — Breezeway specialist operations handoff.
 
 A host using Breezeway can map properties, reservation events and task types, send authorized work and receive acceptance, completion, photos and issues. Cabin shows the system responsible for each task and avoids duplicate dispatch or expense creation. Disconnects and conflicting updates remain assigned exceptions; imported completion feeds readiness only after required human inspection.
 
 **Acceptance evidence:** Connect Breezeway, amend a reservation, accept and complete its turnover externally, return photos and an issue, then replay events and disconnect the adapter; verify one owned task and cost with visible unresolved readiness.
+
+### OPS-007 — Hub-dependent and offline-PIN locks.
+
+Each connected lock records its connectivity mode: cloud or Wi-Fi, hub-bridged (for example Schlage Sense, Bluetooth Yale and August models, or Nuki through its bridge) or offline (for example Igloohome time-bound PINs). Before enablement Cabin states when a hub is required and then shows the hub’s online state. For an offline-only lock Cabin generates the provider’s time-bound PIN for the stay window, labels it as unverifiable at the device and not revocable early, and requires a manager-approved fallback (a code-change task or lockbox) for cancellations and early checkouts. A hub going offline before arrival opens an assigned case, and code delivery still waits for release rules.
+
+**Acceptance evidence:** Connect an Igloohome lock in offline mode and a Schlage Sense through its hub; verify the hub requirement is stated before enablement. Provision an offline time-bound PIN, confirm it is labelled unverifiable, then cancel the stay and verify the fallback task. Take the hub offline before an arrival and verify the assigned case and that code delivery waits for release rules.
 
 ## US money, owner accounting and reporting
 
@@ -398,9 +428,9 @@ US iOS and Android apps provide role-scoped reservation/calendar, inbox, arrival
 
 ### INTERFACE-001 — Responsive accessible and honest operations.
 
-Desktop and mobile pages expose textual statuses, source freshness, errors, pending work and actionable empty states. Keyboard, labels, focus and screen-reader feedback support WCAG 2.2 AA journeys; failed actions remain visible and do not erase user inputs or masquerade as success. Large portfolios use explicit pagination and measured capacity rather than silent truncation; operators see provider/usage costs before enabling paid services.
+Desktop and mobile pages expose textual statuses, source freshness, errors, pending work and actionable empty states. Keyboard, labels, focus and screen-reader feedback support WCAG 2.2 AA journeys; failed actions remain visible and do not erase user inputs or masquerade as success. Cabin is proven at the top of its buyer range: 40 properties with three years of history (at least 10,000 reservations, 100,000 guest messages and 15,000 turnover tasks) and 25 staff. At that size the portfolio calendar month view loads in under 2 seconds, inbox search returns in under 1 second, and reports render and export every row with totals matching ledger records. Lists use explicit pagination, never silent truncation; operators see provider/usage costs before enabling paid services.
 
-**Acceptance evidence:** At 1440 and 390 pixels, use realistic properties/stays through calendar review, cleaner photo completion and statement download; exercise keyboard/error recovery, then the full target booking/inbox journey and a large paginated portfolio without lost rows.
+**Acceptance evidence:** At 1440 and 390 pixels, use realistic properties/stays through calendar review, cleaner photo completion and statement download; exercise keyboard/error recovery and the full target booking/inbox journey. Seed an installation with 40 properties and three years of history at the stated volumes; measure calendar, inbox search and report timings against the stated limits and verify paginated lists and exports return every row with counts and totals matching the source records.
 
 ### DATA-001 — Complete portable product records and safe restore.
 
@@ -494,11 +524,11 @@ Base native sessions, command lifecycle and import-kit custody remain the founda
 
 ## Status per clause
 
-Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 16 October 2026, equal to current `main` at drafting. The inventory audit assessed 75 inventory rows (1 done, 16 partial, 58 missing); the table below assesses the differently grouped named contract clauses, including preserved foundations and new US/product requirements. No code changed after that audit in this branch.
+Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 16 October 2026, equal to current `main` at drafting. The inventory audit assessed 75 inventory rows (1 done, 16 partial, 58 missing); the table below assesses the differently grouped named contract clauses, including preserved foundations and new US/product requirements. No Cabin code or test changed after that audit, on this branch or on `main` through `f0c750fd3e325df82e2eaf15a85a7f1b5c35237a`. Revised 17 October 2026 in response to buyer review round 1: SYNC-008, SYNC-009, PRICE-002, GUEST-004 and OPS-007 were added, and SYNC-006, OPS-001, OPS-003, OPS-005 and INTERFACE-001 were sharpened.
 
 `done` means the narrowly stated clause has implementation and an exercising test. `partial` means cited foundations exist but the full target behavior/evidence does not; `missing` means no implementing product flow was found. Source/test citations describe the current tree, not proof of live providers. All external integrations and agent outcomes need their stated acceptance journey. An unused shared module is not a product capability.
 
-**76 clauses: 6 done · 21 partial · 49 missing.**
+**81 clauses: 6 done · 22 partial · 53 missing.**
 
 | Clause | Status | Evidence path and remaining work |
 | --- | --- | --- |
@@ -514,6 +544,8 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | SYNC-005 | missing | — No implementing flow in the audited tree. |
 | SYNC-006 | missing | — No implementing flow in the audited tree. |
 | SYNC-007 | missing | — No implementing flow in the audited tree. |
+| SYNC-008 | missing | — No implementing flow in the audited tree. |
+| SYNC-009 | partial | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55` RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing. |
 | RES-001 | partial | `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:31` A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not. |
 | RES-002 | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55` Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
 | RES-003 | missing | — No implementing flow in the audited tree. |
@@ -521,6 +553,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | RES-005 | missing | — No implementing flow in the audited tree. |
 | RES-006 | missing | — No implementing flow in the audited tree. |
 | PRICE-001 | missing | — No implementing flow in the audited tree. |
+| PRICE-002 | missing | — No implementing flow in the audited tree. |
 | WEB-001 | missing | — No implementing flow in the audited tree. |
 | WEB-002 | missing | — No implementing flow in the audited tree. |
 | WEB-003 | missing | — No implementing flow in the audited tree. |
@@ -537,13 +570,15 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | MESSAGE-004 | missing | — No implementing flow in the audited tree. |
 | GUEST-002 | missing | — No implementing flow in the audited tree. |
 | GUEST-003 | missing | — No implementing flow in the audited tree. |
-| OPS-001 | partial | `src/cabin/turnovers.ts`; `tests/cabin.test.mjs:67` Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment and escalation are absent. |
+| GUEST-004 | missing | — No implementing flow in the audited tree. |
+| OPS-001 | partial | `src/cabin/turnovers.ts`; `tests/cabin.test.mjs:67` Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment, capacity/travel-time routing and escalation are absent. |
 | EVIDENCE-001 | done | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:67` |
 | OPS-002 | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `public/cabin.css`; `tests/cabin.test.mjs:67` Online checklist/caption and one private photo exist; native/offline capture, multiple required photos and acceptance are missing. |
-| OPS-003 | partial | `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs:67` Cleaner photo completion is visible; cross-team readiness, inspections and arrival gates are absent. |
+| OPS-003 | partial | `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs:67` Cleaner photo completion is visible; cross-team readiness, supply/restock items, inspections and arrival gates are absent. |
 | OPS-004 | missing | — No implementing flow in the audited tree. |
 | OPS-005 | missing | — No implementing flow in the audited tree. |
 | OPS-006 | missing | — No implementing flow in the audited tree. |
+| OPS-007 | missing | — No implementing flow in the audited tree. |
 | FIN-001 | missing | — No implementing flow in the audited tree. |
 | FIN-002 | missing | — No implementing flow in the audited tree. |
 | FIN-003 | partial | `src/cabin/people.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs:90` Fixed property commission and manually supplied signed lines exist; agreement models and derived allocation rules are absent. |
@@ -564,7 +599,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | MIGRATE-006 | missing | — No implementing flow in the audited tree. |
 | MIGRATE-007 | missing | — No implementing flow in the audited tree. |
 | MOBILE-001 | missing | — No implementing flow in the audited tree. |
-| INTERFACE-001 | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` Responsive forms and server errors exist. Full browser accessibility, scale, native workflows and paid-provider cost disclosure are not established. |
+| INTERFACE-001 | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
 | DATA-001 | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs:27` Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |
 | DATA-002 | partial | `src/cabin/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs:27` Property cascade/source retirement and later-journal refusal are exercised. Member erasure refuses used/invited grants; broad guest/operator erasure, retention holds and completion receipts need work. |
 | AUDIT-001 | partial | `src/cabin/storage.ts`; `src/cabin/credentials.ts`; `src/cabin/movein/index.ts`; `migrations/core/0015_cabin.sql`; `tests/cabin.test.mjs:31`; `tests/archive.test.mjs:27` Domain/credential events, independent approvals and import journals exist; comprehensive provider/read history, anonymization guarantees and search/export are incomplete. The state read shows only the latest 100 events. |

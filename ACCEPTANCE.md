@@ -40,11 +40,17 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **SYNC-005 — Listing content and distribution · missing.** Preview and publish one content revision to each named OTA and one Google Vacation Rentals listing; inspect accepted and rejected fields, keep an intentional channel override, and follow a Google referral to the correctly priced direct stay.
   Current evidence: none; the described acceptance journey is missing.
 
-- **SYNC-006 — Inventory holds and double-booking prevention · missing.** Race a direct checkout and channel reservation for one unit/night through public booking/channel doors; prove only one Cabin allocation commits, all channels receive closures, and a deliberately late OTA conflict is assigned for recovery with both original reservations retained.
-  Current evidence: none; the described acceptance journey is missing.
+- **SYNC-006 — Inventory holds, measured closure latency and double-booking prevention · missing.** Race a direct checkout and a channel reservation for one unit/night through public booking/channel doors; prove only one Cabin allocation commits, record commit and acknowledgement timestamps for Airbnb, Vrbo and Booking.com and show each closure acknowledged within 2 minutes and the export feed updated within 60 seconds. Hold one provider’s acknowledgement past 2 minutes in its test harness and verify the Connections breach alert, assigned exception and stop-sell. A deliberately late OTA conflict is assigned for recovery with both original reservations retained.
+    Current evidence: none; the described acceptance journey is missing.
 
 - **SYNC-007 — Inspectable sync failures and safe recovery · missing.** From Connections revoke authorization, deliver duplicate/out-of-order events, throttle a push and lose its response; restart Cabin, reconnect and reconcile against the provider, preserving one reservation and the newest accepted prices with every unresolved exception visible.
   Current evidence: none; the described acceptance journey is missing.
+
+- **SYNC-008 — Inquiries, booking requests, special offers and alterations · missing.** On an Airbnb test listing send an inquiry and see it as Inquiry; pre-approve it, withdraw the pre-approval and re-send it as a special offer with a custom price, and verify the guest-side offer and channel acknowledgement. Decline one request to book and let another expire after 24 hours, verifying the recorded expiry and unchanged inventory. Accept a guest alteration that moves dates and confirm inventory, price and downstream tasks update. Auto-pre-approve an inquiry that meets saved criteria and route one that does not to a person. Repeat a request flow on Vrbo and on Booking.com. Every outcome is acknowledged by the channel.
+  Current evidence: none; the described acceptance journey is missing.
+
+- **SYNC-009 — Automatic iCal sync for channels without an API · partial.** Connect an external iCal URL served by a test host; add a block there and verify Cabin applies it within the configured polling interval and then refuses a direct booking for those nights. Create a Cabin direct reservation and fetch the unit’s export URL to find it within 60 seconds; regenerate the export URL and confirm the old one returns 404. Make the external feed unreachable, then malformed, and verify the stale state, alert, assigned exception and retained blocks; restore it and verify recovery and fresh timestamps.
+  Current evidence: `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55`. Remaining: RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing.
 
 - **RES-001 — Portfolio calendar with operational context · partial.** Open the calendar for a realistic 20-home portfolio; filter by property/channel, inspect an overlapping stay, unpaid arrival, owner block and unready turnover, and follow each to its source record on desktop and phone.
   Current evidence: `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:31`. Remaining: A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not.
@@ -67,6 +73,9 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 ## Revenue and direct bookings
 
 - **PRICE-001 — Revenue planner and dynamic pricing connections · missing.** Connect and exercise PriceLabs, Wheelhouse and Beyond separately; import a daily plan, override one night, reject a below-floor rate, simulate stale provider data and publish valid prices to all three OTAs with acknowledgements.
+  Current evidence: none; the described acceptance journey is missing.
+
+- **PRICE-002 — Per-channel markups and length-of-stay discounts · missing.** Configure a +15% Booking.com markup that includes the cleaning fee and a fixed $20-a-night Vrbo markdown that excludes fees; publish and verify each channel’s acknowledged nightly price and fees, then book on each and reconcile the payout to the expected figures. Set weekly and monthly discounts and quote 7-night and 28-night stays on direct, Airbnb and Booking.com (as a rate plan), verifying each discounted total. Set a discount that would cross the floor and verify the floor holds and the conflict is shown.
   Current evidence: none; the described acceptance journey is missing.
 
 - **WEB-001 — Branded direct-booking website · missing.** Publish a two-property site on a test custom domain, edit a property page, search real available dates at 1440 and 390 pixels and complete a guest booking with the exact advertised total and terms.
@@ -119,10 +128,13 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **GUEST-003 — Reviews and consented repeat-guest marketing · missing.** Complete a stay, deliver one eligible review request, receive a negative response and assign recovery, approve a channel review reply, sync a consented Mailchimp segment and verify an opt-out removes the guest before the next campaign.
   Current evidence: none; the described acceptance journey is missing.
 
+- **GUEST-004 — Automated host reviews of Airbnb guests · missing.** Check out three Airbnb test stays: one receives a templated review after the configured delay and Airbnb accepts it; one has automation stopped and stays in the queue until a person writes and submits it; one already reviewed by hand is not overwritten. Refuse one post in the provider test harness and verify the assigned task, and confirm no post is attempted after the window closes.
+  Current evidence: none; the described acceptance journey is missing.
+
 ## Property operations and access
 
-- **OPS-001 — Reservation-triggered turnover dispatch · partial.** Confirm, extend and cancel a stay through reservation doors, inspect generated tasks, have a cleaner decline and a backup accept, and verify deadlines, changed instructions and cancellation propagate with no duplicate payable turnover.
-  Current evidence: `src/cabin/turnovers.ts`; `tests/cabin.test.mjs:67`. Remaining: Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment and escalation are absent.
+- **OPS-001 — Reservation-triggered turnover dispatch · partial.** Confirm, extend and cancel a stay through reservation doors, inspect generated tasks, have a cleaner decline and a backup accept, and verify deadlines, changed instructions and cancellation propagate with no duplicate payable turnover. Then give one cleaner two same-day turnovers that cannot both be reached within their windows given travel time, and a third job beyond the cleaner’s daily capacity; verify each is routed to a backup or flagged to a manager with the reason shown.
+    Current evidence: `src/cabin/turnovers.ts`; `tests/cabin.test.mjs:67`. Remaining: Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment, capacity/travel-time routing and escalation are absent.
 
 - **EVIDENCE-001 — Private immutable cleaner completion evidence · done.** Complete a job through the cleaner command/photo doors; reject missing checks, malformed images, another cleaner and a duplicate completion, then retrieve the original photo only with an authorized session.
   Current evidence: `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:67`.
@@ -130,16 +142,19 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **OPS-002 — Cleaner mobile work with reliable uploads · partial.** On a phone accept an assigned job, capture required checklist photos and an issue, lose connectivity, then reconnect after a booking edit; retain the draft, request review of stale work and complete only the current approved task.
   Current evidence: `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `public/cabin.css`; `tests/cabin.test.mjs:67`. Remaining: Online checklist/caption and one private photo exist; native/offline capture, multiple required photos and acceptance are missing.
 
-- **OPS-003 — Readiness is verified before arrival · partial.** Open an arrival with completed cleaning but failed lock and maintenance checks; verify it stays unready, resolve the tasks, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
-  Current evidence: `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs:67`. Remaining: Cleaner photo completion is visible; cross-team readiness, inspections and arrival gates are absent.
+- **OPS-003 — Readiness is verified before arrival · partial.** Open an arrival with completed cleaning but failed lock and maintenance checks and a failed restock item; verify it stays unready, resolve the tasks and restock and attest the item, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
+    Current evidence: `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs:67`. Remaining: Cleaner photo completion is visible; cross-team readiness, supply/restock items, inspections and arrival gates are absent.
 
 - **OPS-004 — Maintenance, inspections and work-order expenses · missing.** Report a broken appliance, approve a vendor quote, block the unit, receive invoice/photos and inspect completion; reopen for guests, reconcile the owner expense and advance a recurring inspection without duplicate tasks.
   Current evidence: none; the described acceptance journey is missing.
 
-- **OPS-005 — Stay-bound smart-lock automation · missing.** Connect each named lock family, provision and verify a stay code, extend then cancel the booking, observe expiry/revocation at the device or provider test harness, and route a low-battery/offline lock to a person before arrival.
-  Current evidence: none; the described acceptance journey is missing.
+- **OPS-005 — Stay-bound smart-lock automation · missing.** Connect each named lock family, directly or through the bridge; for each, provision and verify a stay code, extend then cancel the booking and observe expiry/revocation at the device or provider test harness. Route a low-battery/offline lock to a person before arrival.
+    Current evidence: none; the described acceptance journey is missing.
 
 - **OPS-006 — Breezeway specialist operations handoff · missing.** Connect Breezeway, amend a reservation, accept and complete its turnover externally, return photos and an issue, then replay events and disconnect the adapter; verify one owned task and cost with visible unresolved readiness.
+  Current evidence: none; the described acceptance journey is missing.
+
+- **OPS-007 — Hub-dependent and offline-PIN locks · missing.** Connect an Igloohome lock in offline mode and a Schlage Sense through its hub; verify the hub requirement is stated before enablement. Provision an offline time-bound PIN, confirm it is labelled unverifiable, then cancel the stay and verify the fallback task. Take the hub offline before an arrival and verify the assigned case and that code delivery waits for release rules.
   Current evidence: none; the described acceptance journey is missing.
 
 ## US money, owner accounting and reporting
@@ -206,8 +221,8 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **MOBILE-001 — Native manager and field-team apps · missing.** On iOS and Android as manager, cleaner and rental owner, handle a changed arrival, reply to a guest, complete an evidenced task and open a statement; test offline conflict, push acknowledgement and grant revocation while offline/reconnecting.
   Current evidence: none; the described acceptance journey is missing.
 
-- **INTERFACE-001 — Responsive accessible and honest operations · partial.** At 1440 and 390 pixels, use realistic properties/stays through calendar review, cleaner photo completion and statement download; exercise keyboard/error recovery, then the full target booking/inbox journey and a large paginated portfolio without lost rows.
-  Current evidence: `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs`. Remaining: Responsive forms and server errors exist. Full browser accessibility, scale, native workflows and paid-provider cost disclosure are not established.
+- **INTERFACE-001 — Responsive accessible and honest operations · partial.** At 1440 and 390 pixels, use realistic properties/stays through calendar review, cleaner photo completion and statement download; exercise keyboard/error recovery and the full target booking/inbox journey. Seed an installation with 40 properties and three years of history at the stated volumes; measure calendar, inbox search and report timings against the stated limits and verify paginated lists and exports return every row with counts and totals matching the source records.
+    Current evidence: `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs`. Remaining: Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established.
 
 - **DATA-001 — Complete portable product records and safe restore · partial.** Use the public rer export/import commands to round-trip a populated installation, compare all record families/media and totals, reject damaged or populated restores and verify restored jobs/connections remain inactive until the new owner reauthorizes them.
   Current evidence: `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs:27`. Remaining: Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented.
@@ -254,7 +269,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 
 ## Build and evidence discipline
 
-**76 clauses: 6 done · 21 partial · 49 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
+**81 clauses: 6 done · 22 partial · 53 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
 
 Current public-door checks are `pnpm run test:cabin` (native authority, snapshot reconciliation, cleaner evidence, statement arithmetic, bearer limits and basic move-in), `pnpm run test:archive` (local CLI round-trip, damaged/populated refusal and later-journal erasure), `pnpm run test:runtime` after the real build (health, installed homepage and 404s), and `pnpm run test:launch` (fresh-clone rer dev launch). They are implementation tests, not a complete target suite. Run the tests relevant to changed behavior; the CI push matrix in `verification.json` is the full wall. Preserve existing checks; document work must not weaken them.
 
