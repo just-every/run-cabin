@@ -52,21 +52,21 @@ Airbnb and Booking.com iCal snapshots retain import and approval times, reconcil
 
 ### SYNC-002 — Airbnb two-way channel management.
 
-Through an approved Airbnb API or contracted channel partner, Cabin receives reservations, modifications and cancellations and sends rates, availability and restrictions for mapped listings. It retains provider IDs, revisions and acknowledgements; authorization failures and channel constraints remain visible. Listing connection is proven before a manager enables selling. Inquiries, requests to book, pre-approvals, special offers and alteration requests are SYNC-008.
+Through an approved Airbnb API or contracted channel partner, Cabin receives reservations, modifications and cancellations and sends rates, availability and restrictions for mapped listings. It retains provider IDs, revisions and acknowledgements; authorization failures and channel constraints remain visible. Listing connection is proven before a manager enables selling. Several Airbnb host accounts, including co-hosted listings, connect side by side under SYNC-010. Inquiries, requests to book, pre-approvals, special offers and alteration requests are SYNC-008.
 
 **Acceptance evidence:** Authorize an Airbnb test listing from Connections; book, extend and cancel through Airbnb, change a rate and close dates in Cabin, and verify both systems and their acknowledgement history agree without duplicate reservations.
 
 ### SYNC-003 — Vrbo two-way channel management.
 
-An approved Vrbo API or channel partner connection exchanges reservation lifecycle, live availability, rates, fees and supported stay restrictions. Account/listing mapping, payment-collection responsibility, acknowledgements and rejected fields are explicit; a failed connection cannot be labeled synchronized.
+An approved Vrbo API or channel partner connection exchanges reservation lifecycle, live availability, rates, fees and supported stay restrictions. Account/listing mapping, payment-collection responsibility, acknowledgements and rejected fields are explicit; a failed connection cannot be labeled synchronized. Several Vrbo accounts connect side by side under SYNC-010.
 
 **Acceptance evidence:** Connect a Vrbo listing, complete and alter a reservation at the channel, close inventory and change pricing in Cabin, cancel the stay and reconcile channel acknowledgements, payment responsibility and final availability.
 
 ### SYNC-004 — Booking.com two-way channel management.
 
-An approved Booking.com connectivity connection receives bookings, guest/date changes and cancellations, and publishes room/rate-plan availability, prices and restrictions. It tracks channel-versus-property collection, supported virtual-card handling through the processor, and actionable channel rejections.
+An approved Booking.com connectivity connection receives bookings, guest/date changes and cancellations, and publishes room/rate-plan availability, prices and restrictions. It tracks channel-versus-property collection and actionable channel rejections. Payments by Booking.com virtual credit cards are charged and reconciled under PAY-005, and several Booking.com property accounts connect side by side under SYNC-010.
 
-**Acceptance evidence:** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state.
+**Acceptance evidence:** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state. A Payments by Booking.com reservation passes its virtual card to PAY-005, whose acceptance proves the charge.
 
 ### SYNC-005 — Listing content and distribution.
 
@@ -97,6 +97,12 @@ Airbnb inquiries arrive as Inquiry-status records linked to their inbox thread, 
 For channels with no API connection, such as Furnished Finder, Hipcamp or a partner’s PMS, a manager connects any external iCal URL per unit. Cabin polls each URL on a configurable interval of 15 to 60 minutes (default 15), applies new, changed and removed events as channel blocks that take inventory through SYNC-006, and publishes a per-unit secret iCal export URL listing every Cabin reservation and block, which the manager can regenerate to revoke old links. Each feed shows last successful fetch, last applied change and next poll. An unreachable or malformed feed enters a visible stale state with an alert and assigned exception, keeps its last applied blocks rather than releasing nights, and recovers on the next good fetch. Connections and the listing settings state plainly that iCal sync is polled and does not guarantee against double booking; API channels carry that guarantee. Imported events never trigger guest messages or charges. SYNC-001 remains the manual review path for migration and diagnosis.
 
 **Acceptance evidence:** Connect an external iCal URL served by a test host; add a block there and verify Cabin applies it within the configured polling interval and then refuses a direct booking for those nights. Create a Cabin direct reservation and fetch the unit’s export URL to find it within 60 seconds; regenerate the export URL and confirm the old one returns 404. Make the external feed unreachable, then malformed, and verify the stale state, alert, assigned exception and retained blocks; restore it and verify recovery and fresh timestamps.
+
+### SYNC-010 — Multiple connected accounts per channel and Airbnb co-hosting.
+
+Each channel holds any number of connected accounts in one Cabin installation: several Airbnb host accounts, several Vrbo accounts and several Booking.com property accounts. Each account is authorized, given a manager-chosen nickname, monitored (last exchange, lag, exceptions) and revoked separately in Connections. Every listing, room and rate plan maps to the connected account that owns it, and its reservations, inbox threads (MESSAGE-001), reviews (GUEST-004), payouts (FIN-002) and acknowledgements are attributed to that account. Airbnb listings where the manager is a co-host connect through the co-host’s grant wherever Airbnb gives the co-host full access, after the listing owner’s host account authorizes; Connections shows each co-hosted listing’s granted permissions, and an action the grant lacks is refused with that reason rather than attempted. One account’s authorization failure, expiry or revocation stop-sells only that account’s inventory through SYNC-006 and opens SYNC-007 exceptions for it, while every other account keeps syncing. One listing cannot be mapped under two accounts at once, and moving a listing between accounts is a reviewed remap that keeps its reservation history.
+
+**Acceptance evidence:** From Connections authorize two Airbnb host accounts (the second with a listing on which the manager is a full-access co-host after the owner’s account authorizes) and two Vrbo accounts, each with its own nickname; map one listing under each account. Book, message and post a host review on a listing in every account and confirm each reservation, thread, review and payout carries its owning account. Try to map one listing under both Airbnb accounts and confirm refusal. Revoke one Airbnb account: verify only its listings are stop-sold with a SYNC-007 exception while a booking and rate change on the other Airbnb account and both Vrbo accounts still exchange and acknowledge normally; reauthorize and confirm recovery without duplicate reservations.
 
 ### RES-001 — Portfolio calendar with operational context.
 
@@ -188,7 +194,7 @@ Stripe checkout collects guest card payments and supported US ACH payments again
 
 ### PAY-002 — Scheduled collection and payment follow-up.
 
-Deposit, installment and balance schedules use the reservation’s policy and authorized payment mandate. Due jobs collect through Stripe, record receipts and chase failed/overdue payments with assigned deadlines. Date changes and cancellation reschedule or suppress future collection; uncertain charges require provider reconciliation before another attempt.
+Deposit, installment and balance schedules use the reservation’s policy and authorized payment mandate. Due jobs collect through Stripe, record receipts and chase failed/overdue payments with assigned deadlines. Date changes and cancellation reschedule or suppress future collection; uncertain charges require provider reconciliation before another attempt. Booking.com virtual-card charges are scheduled collection jobs bound by PAY-005’s activation, expiry and loaded-amount limits.
 
 **Acceptance evidence:** Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart.
 
@@ -203,6 +209,12 @@ Cabin distinguishes security-deposit authorizations, refundable deposits and ren
 Hosts may connect licensed damage/travel-protection and dispute-support partners, for example Safely or an eligible protection provider, with eligibility, price, coverage/exclusions and guest acceptance recorded. Disputes retain deadlines, signed agreements, communication and work evidence for human-approved submission. Partner acknowledgement is separate from coverage, claim approval or recovered money.
 
 **Acceptance evidence:** Enroll an eligible stay, decline an ineligible one with its reason, open a damage/chargeback case, approve its evidence packet and follow the provider’s accepted/rejected outcome through reservation and owner adjustments.
+
+### PAY-005 — Booking.com virtual credit cards.
+
+When Payments by Booking.com collects a stay, its virtual credit card (VCC) is tokenized straight into Stripe’s vault through the channel connection; Cabin never stores, logs or shows the full card number or security code. Cabin records the VCC token reference with its loaded amount (USD), activation date and expiry date on the reservation. A PAY-002 collection job charges exactly the loaded amount through Stripe, once, on or after the activation date and before expiry. Cabin refuses any charge before activation, after expiry or above the loaded amount, and a replayed callback or repeated job cannot charge twice. An expired or declined VCC, or a stay date change that leaves the activation date out of step with the new dates (the date does not move with the stay), opens an assigned exception with the channel’s deadline rather than charging. A charged VCC posts to the reservation’s trust subledger (FIN-001) and reconciles to the Booking.com payout and the owner line in FIN-002.
+
+**Acceptance evidence:** Receive three Booking.com test reservations carrying VCCs with set loaded amounts and activation dates. On the first, attempt a charge before activation and confirm refusal with no processor charge; advance to activation and verify exactly the loaded amount is charged once, including after a replayed callback and a rerun job, and that no full card number appears in reads, exports or logs. Let the second VCC expire and move the third stay earlier so its activation date falls after the new check-in; verify both become assigned exceptions with no charge. Reconcile the charged amount to its reservation, Booking.com payout and owner statement line.
 
 ### GUEST-001 — Guest profiles and repeat-stay context.
 
@@ -312,9 +324,9 @@ A balanced ledger in integer USD cents separates guest receivables, advance depo
 
 ### FIN-002 — Payout reconciliation per reservation.
 
-Airbnb, Vrbo, Booking.com and Stripe settlement records reconcile gross bookings, commissions, processor fees, withheld taxes, refunds, disputes, payout batches and bank receipt to each reservation and owner. Split/partial payouts and rounding differences remain explainable exceptions. Original provider events survive corrections; missing records are pursued until resolved, never filled with invented income.
+Airbnb, Vrbo, Booking.com and Stripe settlement records reconcile gross bookings, commissions, processor fees, withheld taxes, refunds, disputes, payout batches and bank receipt to each reservation and owner. Split/partial payouts and rounding differences remain explainable exceptions. Each settlement is attributed to the connected channel account that earned it (SYNC-010), and charged Booking.com virtual cards (PAY-005) reconcile to their reservation, Booking.com payout and owner line. Original provider events survive corrections; missing records are pursued until resolved, never filled with invented income.
 
-**Acceptance evidence:** Import or receive each named provider’s settlement with multiple stays, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
+**Acceptance evidence:** Import or receive each named provider’s settlement with multiple stays across two connected accounts of one channel, a charged Booking.com virtual card, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
 
 ### FIN-003 — Management agreements and expense allocation.
 
@@ -386,15 +398,15 @@ The owner can preview a property-register CSV without publishing, inspect normal
 
 ### MIGRATE-002 — Migration from Guesty.
 
-A Guesty-specific export/API adapter maps properties/listings, future and historical reservations, guests, threads/attachments, fees/rules, tasks, owner terms, settlements and opening owner balances into a reviewed move-in plan. Original IDs, field mappings, counts and unsupported data remain visible. Missing source permissions or inaccessible history produce a named remediation/export request rather than silent omission.
+A Guesty-specific export/API adapter maps properties/listings, future and historical reservations, guests, threads/attachments, fees/rules, tasks, owner terms, settlements and opening owner balances into a reviewed move-in plan. Original IDs, field mappings, counts and unsupported data remain visible. Missing source permissions or inaccessible history produce a named remediation/export request rather than silent omission. Channel mappings carry each listing’s owning channel account, including several Airbnb, Vrbo and Booking.com accounts and co-hosted Airbnb listings, so each maps to its SYNC-010 connected account.
 
-**Acceptance evidence:** Upload a permissioned Guesty export or connect a test account in Move in; preview each record family and balance, fix one mapping, apply without guest sends/charges and reconcile source counts and financial totals with the resulting Cabin records.
+**Acceptance evidence:** Upload a permissioned Guesty export or connect a test account in Move in; preview each record family and balance, fix one mapping, apply without guest sends/charges and reconcile source counts and financial totals with the resulting Cabin records. Include listings from two Airbnb accounts, one co-hosted, and confirm after reauthorization that each listing maps to its own connected account.
 
 ### MIGRATE-003 — Migration from Hostaway.
 
-A separate Hostaway adapter preserves property/channel IDs, future/history bookings, guest conversations, rate/rule data, operations, payment/settlement history and owner opening balances. The reviewed plan distinguishes migrated history from live channel authority, lists exclusions with retrieval steps and deduplicates later channel events by external identity.
+A separate Hostaway adapter preserves property/channel IDs, future/history bookings, guest conversations, rate/rule data, operations, payment/settlement history and owner opening balances. The reviewed plan distinguishes migrated history from live channel authority, lists exclusions with retrieval steps and deduplicates later channel events by external identity. Each listing keeps its owning channel account, so a portfolio spread over several Airbnb, Vrbo or Booking.com accounts, including co-hosted Airbnb listings, maps to the matching SYNC-010 connected accounts.
 
-**Acceptance evidence:** Import a permissioned Hostaway dataset through Move in with a modified stay, archived thread and unpaid owner balance; reconcile records/totals, then deliver the same stay’s live channel event and prove it updates rather than duplicates the booking.
+**Acceptance evidence:** Import a permissioned Hostaway dataset through Move in with a modified stay, archived thread and unpaid owner balance; reconcile records/totals, then deliver the same stay’s live channel event and prove it updates rather than duplicates the booking. Use listings from two Vrbo accounts and confirm each maps to, and receives live events through, its own connected account.
 
 ### MIGRATE-004 — Migration from OwnerRez.
 
@@ -524,11 +536,11 @@ Base native sessions, command lifecycle and import-kit custody remain the founda
 
 ## Status per clause
 
-Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 16 October 2026, equal to current `main` at drafting. The inventory audit assessed 75 inventory rows (1 done, 16 partial, 58 missing); the table below assesses the differently grouped named contract clauses, including preserved foundations and new US/product requirements. No Cabin code or test changed after that audit, on this branch or on `main` through `f0c750fd3e325df82e2eaf15a85a7f1b5c35237a`. Revised 17 October 2026 in response to buyer review round 1: SYNC-008, SYNC-009, PRICE-002, GUEST-004 and OPS-007 were added, and SYNC-006, OPS-001, OPS-003, OPS-005 and INTERFACE-001 were sharpened.
+Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 16 October 2026, equal to current `main` at drafting. The inventory audit assessed 75 inventory rows (1 done, 16 partial, 58 missing); the table below assesses the differently grouped named contract clauses, including preserved foundations and new US/product requirements. No Cabin code or test changed after that audit, on this branch or on `main` through `f0c750fd3e325df82e2eaf15a85a7f1b5c35237a`. Revised 17 October 2026 in response to buyer review round 1: SYNC-008, SYNC-009, PRICE-002, GUEST-004 and OPS-007 were added, and SYNC-006, OPS-001, OPS-003, OPS-005 and INTERFACE-001 were sharpened. Revised again 17 October 2026 in response to buyer review round 2: SYNC-010 and PAY-005 were added, and SYNC-002, SYNC-003, SYNC-004, PAY-002, FIN-002, MIGRATE-002 and MIGRATE-003 were sharpened.
 
 `done` means the narrowly stated clause has implementation and an exercising test. `partial` means cited foundations exist but the full target behavior/evidence does not; `missing` means no implementing product flow was found. Source/test citations describe the current tree, not proof of live providers. All external integrations and agent outcomes need their stated acceptance journey. An unused shared module is not a product capability.
 
-**81 clauses: 6 done · 22 partial · 53 missing.**
+**83 clauses: 6 done · 22 partial · 55 missing.**
 
 | Clause | Status | Evidence path and remaining work |
 | --- | --- | --- |
@@ -540,12 +552,13 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | SYNC-001 | done | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55` |
 | SYNC-002 | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31` Only manually supplied Airbnb calendar files exist. No approved two-way transport, rates or acknowledgement handling is implemented. |
 | SYNC-003 | missing | — No implementing flow in the audited tree. |
-| SYNC-004 | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31` Manual Booking.com calendar snapshots exist; connectivity, rate plans, payment handling and live acknowledgements do not. |
+| SYNC-004 | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31` Manual Booking.com calendar snapshots exist; connectivity, rate plans, collection-method tracking and live acknowledgements do not. |
 | SYNC-005 | missing | — No implementing flow in the audited tree. |
 | SYNC-006 | missing | — No implementing flow in the audited tree. |
 | SYNC-007 | missing | — No implementing flow in the audited tree. |
 | SYNC-008 | missing | — No implementing flow in the audited tree. |
 | SYNC-009 | partial | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55` RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing. |
+| SYNC-010 | missing | — No implementing flow in the audited tree. |
 | RES-001 | partial | `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:31` A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not. |
 | RES-002 | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55` Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
 | RES-003 | missing | — No implementing flow in the audited tree. |
@@ -563,6 +576,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | PAY-002 | missing | — No implementing flow in the audited tree. |
 | PAY-003 | missing | — No implementing flow in the audited tree. |
 | PAY-004 | missing | — No implementing flow in the audited tree. |
+| PAY-005 | missing | — No implementing flow in the audited tree. |
 | GUEST-001 | missing | — No implementing flow in the audited tree. |
 | MESSAGE-001 | missing | — No implementing flow in the audited tree. |
 | MESSAGE-002 | missing | — No implementing flow in the audited tree. |

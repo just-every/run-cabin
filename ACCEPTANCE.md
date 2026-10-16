@@ -28,14 +28,14 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **SYNC-001 — Reviewed calendar files remain honest snapshots · done.** Import two overlapping channel files, inspect the clash and timestamps, approve exact reviews, reimport without duplicates, cancel or remove a UID, test adjacent checkout/check-in, and reject a stale baseline and malformed file.
   Current evidence: `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55`.
 
-- **SYNC-002 — Airbnb two-way channel management · partial.** Authorize an Airbnb test listing from Connections; book, extend and cancel through Airbnb, change a rate and close dates in Cabin, and verify both systems and their acknowledgement history agree without duplicate reservations.
+- **SYNC-002 — Airbnb two-way channel management · partial.** Authorize an Airbnb test listing from Connections; book, extend and cancel through Airbnb, change a rate and close dates in Cabin, and verify both systems and their acknowledgement history agree without duplicate reservations. Several accounts and co-hosting: SYNC-010.
   Current evidence: `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`. Remaining: Only manually supplied Airbnb calendar files exist. No approved two-way transport, rates or acknowledgement handling is implemented.
 
-- **SYNC-003 — Vrbo two-way channel management · missing.** Connect a Vrbo listing, complete and alter a reservation at the channel, close inventory and change pricing in Cabin, cancel the stay and reconcile channel acknowledgements, payment responsibility and final availability.
+- **SYNC-003 — Vrbo two-way channel management · missing.** Connect a Vrbo listing, complete and alter a reservation at the channel, close inventory and change pricing in Cabin, cancel the stay and reconcile channel acknowledgements, payment responsibility and final availability. Several accounts: SYNC-010.
   Current evidence: none; the described acceptance journey is missing.
 
-- **SYNC-004 — Booking.com two-way channel management · partial.** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state.
-  Current evidence: `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`. Remaining: Manual Booking.com calendar snapshots exist; connectivity, rate plans, payment handling and live acknowledgements do not.
+- **SYNC-004 — Booking.com two-way channel management · partial.** Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state. A Payments by Booking.com reservation passes its virtual card to PAY-005, whose acceptance proves the charge.
+  Current evidence: `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`. Remaining: Manual Booking.com calendar snapshots exist; connectivity, rate plans, collection-method tracking and live acknowledgements do not.
 
 - **SYNC-005 — Listing content and distribution · missing.** Preview and publish one content revision to each named OTA and one Google Vacation Rentals listing; inspect accepted and rejected fields, keep an intentional channel override, and follow a Google referral to the correctly priced direct stay.
   Current evidence: none; the described acceptance journey is missing.
@@ -51,6 +51,9 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 
 - **SYNC-009 — Automatic iCal sync for channels without an API · partial.** Connect an external iCal URL served by a test host; add a block there and verify Cabin applies it within the configured polling interval and then refuses a direct booking for those nights. Create a Cabin direct reservation and fetch the unit’s export URL to find it within 60 seconds; regenerate the export URL and confirm the old one returns 404. Make the external feed unreachable, then malformed, and verify the stale state, alert, assigned exception and retained blocks; restore it and verify recovery and fresh timestamps.
   Current evidence: `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs:31`; `tests/cabin.test.mjs:55`. Remaining: RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing.
+
+- **SYNC-010 — Multiple connected accounts per channel and Airbnb co-hosting · missing.** From Connections authorize two Airbnb host accounts (the second with a listing on which the manager is a full-access co-host after the owner’s account authorizes) and two Vrbo accounts, each with its own nickname; map one listing under each account. Book, message and post a host review on a listing in every account and confirm each reservation, thread, review and payout carries its owning account. Try to map one listing under both Airbnb accounts and confirm refusal. Revoke one Airbnb account: verify only its listings are stop-sold with a SYNC-007 exception while a booking and rate change on the other Airbnb account and both Vrbo accounts still exchange and acknowledge normally; reauthorize and confirm recovery without duplicate reservations.
+  Current evidence: none; the described acceptance journey is missing.
 
 - **RES-001 — Portfolio calendar with operational context · partial.** Open the calendar for a realistic 20-home portfolio; filter by property/channel, inspect an overlapping stay, unpaid arrival, owner block and unready turnover, and follow each to its source record on desktop and phone.
   Current evidence: `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:31`. Remaining: A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not.
@@ -98,13 +101,16 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **PAY-001 — Processor-backed USD checkout and manual payments · missing.** Book through the public site with successful, declined and authentication-required cards plus pending/returned ACH in the processor test environment; replay payment callbacks and prove one correct reservation balance and no raw payment credentials in reads, exports or logs.
   Current evidence: none; the described acceptance journey is missing.
 
-- **PAY-002 — Scheduled collection and payment follow-up · missing.** Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart.
+- **PAY-002 — Scheduled collection and payment follow-up · missing.** Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart. Virtual-card collection: PAY-005.
   Current evidence: none; the described acceptance journey is missing.
 
 - **PAY-003 — Damage deposits, refunds and cancellation settlement · missing.** Authorize a damage deposit, approve an evidenced partial claim, release the remainder, issue a partial rent refund and cancel a second stay; replay each event and verify processor balances, guest receipts, tax adjustments and owner liabilities match once.
   Current evidence: none; the described acceptance journey is missing.
 
 - **PAY-004 — Protection partners and chargeback casework · missing.** Enroll an eligible stay, decline an ineligible one with its reason, open a damage/chargeback case, approve its evidence packet and follow the provider’s accepted/rejected outcome through reservation and owner adjustments.
+  Current evidence: none; the described acceptance journey is missing.
+
+- **PAY-005 — Booking.com virtual credit cards · missing.** Receive three Booking.com test reservations carrying VCCs with set loaded amounts and activation dates. On the first, attempt a charge before activation and confirm refusal with no processor charge; advance to activation and verify exactly the loaded amount is charged once, including after a replayed callback and a rerun job, and that no full card number appears in reads, exports or logs. Let the second VCC expire and move the third stay earlier so its activation date falls after the new check-in; verify both become assigned exceptions with no charge. Reconcile the charged amount to its reservation, Booking.com payout and owner statement line.
   Current evidence: none; the described acceptance journey is missing.
 
 - **GUEST-001 — Guest profiles and repeat-stay context · missing.** Receive the same guest on two channels, review a suggested merge, record a preference and opt-out, book a return stay and undo a mistaken merge; verify the right history follows each person and role-limited reads remain private.
@@ -162,7 +168,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **FIN-001 — Reservation-linked USD trust subledgers · missing.** Through reservation, payment and accounting doors record a deposit, earned stay, channel fee, tax, refund and owner expense; drill each balance to source transactions and prove debits equal credits before and after a period-close correction.
   Current evidence: none; the described acceptance journey is missing.
 
-- **FIN-002 — Payout reconciliation per reservation · missing.** Import or receive each named provider’s settlement with multiple stays, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
+- **FIN-002 — Payout reconciliation per reservation · missing.** Import or receive each named provider’s settlement with multiple stays across two connected accounts of one channel, a charged Booking.com virtual card, a partial refund and a missing payout; reconcile a real bank receipt through the accounting view, retain the unmatched item and close it only after the missing external record arrives.
   Current evidence: none; the described acceptance journey is missing.
 
 - **FIN-003 — Management agreements and expense allocation · partial.** Configure two different owner agreements, post reservation revenue and a shared repair, amend terms for a later stay, then inspect exact owner splits, fees, reserve and invoice evidence without rewriting the earlier allocation.
@@ -200,10 +206,10 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **MIGRATE-001 — Reviewed property-register move-in · partial.** Use Move in to preview/apply the documented CSV, reject a changed fingerprint, inspect the durable job, edit one imported property and undo; retain that native edit with its disposition, then erase another imported property and verify source retirement.
   Current evidence: `src/cabin/movein/index.ts`; `src/cabin/movein/csv.ts`; `src/cabin/movein/targets.ts`; `docs/move-in.md`; `tests/cabin.test.mjs:124`; `tests/archive.test.mjs:27`. Remaining: Basic inert preview, apply, journal, guarded undo and erasure round-trip are tested. All documented collision, resume and dependency cases are not independently exercised.
 
-- **MIGRATE-002 — Migration from Guesty · missing.** Upload a permissioned Guesty export or connect a test account in Move in; preview each record family and balance, fix one mapping, apply without guest sends/charges and reconcile source counts and financial totals with the resulting Cabin records.
+- **MIGRATE-002 — Migration from Guesty · missing.** Upload a permissioned Guesty export or connect a test account in Move in; preview each record family and balance, fix one mapping, apply without guest sends/charges and reconcile source counts and financial totals with the resulting Cabin records. Include listings from two Airbnb accounts, one co-hosted, and confirm after reauthorization that each listing maps to its own connected account.
   Current evidence: none; the described acceptance journey is missing.
 
-- **MIGRATE-003 — Migration from Hostaway · missing.** Import a permissioned Hostaway dataset through Move in with a modified stay, archived thread and unpaid owner balance; reconcile records/totals, then deliver the same stay’s live channel event and prove it updates rather than duplicates the booking.
+- **MIGRATE-003 — Migration from Hostaway · missing.** Import a permissioned Hostaway dataset through Move in with a modified stay, archived thread and unpaid owner balance; reconcile records/totals, then deliver the same stay’s live channel event and prove it updates rather than duplicates the booking. Use listings from two Vrbo accounts and confirm each maps to, and receives live events through, its own connected account.
   Current evidence: none; the described acceptance journey is missing.
 
 - **MIGRATE-004 — Migration from OwnerRez · missing.** Preview and apply a permissioned OwnerRez export including a signed agreement, future installment and owner statement; compare source records and balances, reconnect payment/channel authority and verify no historical collection or message is replayed.
@@ -269,7 +275,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 
 ## Build and evidence discipline
 
-**81 clauses: 6 done · 22 partial · 53 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
+**83 clauses: 6 done · 22 partial · 55 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
 
 Current public-door checks are `pnpm run test:cabin` (native authority, snapshot reconciliation, cleaner evidence, statement arithmetic, bearer limits and basic move-in), `pnpm run test:archive` (local CLI round-trip, damaged/populated refusal and later-journal erasure), `pnpm run test:runtime` after the real build (health, installed homepage and 404s), and `pnpm run test:launch` (fresh-clone rer dev launch). They are implementation tests, not a complete target suite. Run the tests relevant to changed behavior; the CI push matrix in `verification.json` is the full wall. Preserve existing checks; document work must not weaken them.
 
