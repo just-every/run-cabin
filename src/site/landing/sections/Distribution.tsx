@@ -14,13 +14,13 @@ export function Channels() {
           {DAYS.map(([day, date]) => <span key={date} className="cal-day">{day}<b>{date}</b></span>)}
           <span className="cal-channel" style={{ gridRow: 2 }}><Channel name="Airbnb" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 2 }} />
-          <span className="cal-bar bar-airbnb" style={{ gridColumn: '3 / span 4', gridRow: 2 }}>M. Ortiz<i>·</i>3 nights</span>
+          <span className="cal-bar bar-airbnb" style={{ gridColumn: '3 / span 4', gridRow: 2 }}><span>M. Ortiz</span><i>·</i><span>3 nights</span></span>
           <span className="cal-channel" style={{ gridRow: 3 }}><Channel name="Vrbo" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 3 }} />
-          <span className="cal-bar bar-blocked" style={{ gridColumn: '3 / span 7', gridRow: 3 }}>Blocked</span>
+          <span className="cal-bar bar-blocked" style={{ gridColumn: '3 / span 7', gridRow: 3 }}><span>Blocked</span></span>
           <span className="cal-channel" style={{ gridRow: 4 }}><Channel name="Booking.com" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 4 }} />
-          <span className="cal-bar bar-booking" style={{ gridColumn: '7 / span 3', gridRow: 4 }}>J. Chen<i>·</i>2 nights</span>
+          <span className="cal-bar bar-booking" style={{ gridColumn: '7 / span 3', gridRow: 4 }}><span>J. Chen</span><i>·</i><span>2 nights</span></span>
         </div>
       </div>
       <p className="chip chip-red"><Status tone="bad" size="sm" /><span>Vrbo request Oct 19–21 declined<i>·</i>overlaps Airbnb</span></p>

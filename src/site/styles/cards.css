@@ -209,19 +209,24 @@
 /* ---------- Narrow screens: cards keep their content and wrap where they must ---------- */
 @media (max-width: 1099px) {
   .checkout, .rates { margin: 0; }
+  .cal-grid { grid-template-columns: 110px repeat(8, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .card-title { font-size: 17px; }
   .card-title.big, .rates-head .card-title, .turnover .card-title, .timeline .card-title { font-size: 19px; }
+  /* The week keeps all eight days: guest and nights stack in each bar, and anything longer ends in an ellipsis. */
   .calendar { padding: 18px 10px 10px; }
-  .cal-grid { grid-template-columns: 62px repeat(8, minmax(0, 1fr)); grid-template-rows: 44px repeat(3, 52px); }
-  .cal-day { font-size: 10.5px; }
-  .cal-day b { font-size: 11px; }
-  .cal-channel { padding-left: 6px; font-size: 13px; }
-  .cal-channel .channel-vrbo { font-size: 15px; }
-  .cal-channel .channel-booking { font-size: 10.5px; letter-spacing: -.03em; }
-  .cal-bar { height: 34px; padding: 0 5px; font-size: 10.5px; letter-spacing: -.01em; }
-  .cal-bar i { margin: 0 .25em; }
+  .cal-grid { grid-template-columns: 84px repeat(8, minmax(0, 1fr)); grid-template-rows: 46px repeat(3, 54px); }
+  .cal-day { gap: 4px; font-size: 11px; }
+  .cal-day b { font-size: 12px; }
+  .cal-channel { padding-left: 6px; font-size: 14px; }
+  .cal-channel .channel-vrbo { font-size: 16px; }
+  .cal-channel .channel-booking { font-size: 12px; letter-spacing: -.03em; }
+  .cal-bar { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; height: 42px; padding: 0 7px; font-size: 12px; line-height: 1.15; }
+  .cal-bar span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .cal-bar span + span { font-size: 11px; font-weight: 400; opacity: .8; }
+  .cal-bar i { display: none; }
+  .bar-blocked { align-items: center; }
   .chip { font-size: 13px; white-space: normal; padding: 8px 14px 8px 8px; }
   .thread-head { padding: 18px 18px 14px; gap: 12px; }
   .initials-lg { width: 46px; height: 46px; font-size: 16px; }

@@ -112,7 +112,7 @@
   .tag .status { width: 32px; height: 32px; flex: none; }
   .tag-text { font-size: 13.5px; gap: 1px; }
   .tag-text strong { font-size: 15px; }
-  .feature-row, .feature.flip .feature-row, .ownership .feature-row { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .feature-row, .feature.flip .feature-row, #channels .feature-row, .ownership .feature-row { grid-template-columns: minmax(0, 1fr); gap: 40px; }
   .feature.flip .feature-copy, .feature.flip .feature-art { order: 0; padding-left: 0; }
   .feature-art, .feature.flip .feature-art { justify-content: center; }
   .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
