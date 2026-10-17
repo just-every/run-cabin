@@ -1,3 +1,4 @@
+import { event } from '../audit/write'
 import { providerCommand, providerJobs } from './provider-import'
 import { planD1Import, createD1ImportJob, applyD1ImportBatches, undoD1Import, resumeD1Import, readD1ImportJob, readD1ImportOriginals, readD1ImportUndoReport, canonicalJson } from '../../modules/import-kit/src/d1/index.ts'
 import type { D1ImportContext, D1Database as KitDatabase, ImportMapping, ImportPlan } from '../../modules/import-kit/src/d1/index.ts'
@@ -37,7 +38,7 @@ export async function importCommand(db:D1Database,actor:Actor,name:string,input:
    const conflicts=await nativeConflicts(db,values(plan));need(conflicts.length===0,'Properties now conflict with this plan. Preview a corrected CSV.',409)
    const job=await createD1ImportJob(plan,{...context,reviewedFingerprint:review.fingerprint,operationKey:review.id})
    const at=new Date().toISOString()
-   await atomic(db,actor,[guard('EXISTS(SELECT 1 FROM cb_import_reviews WHERE id=? AND fingerprint=? AND plan=? AND job_id IS NULL)',review.id,review.fingerprint,review.plan),query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)',newId(),'import',review.id,review.fingerprint,actor.id,at),query('UPDATE cb_import_reviews SET job_id=? WHERE id=?',job.id,review.id),query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at) VALUES(?,?,?,?,?,?)',newId(),actor.id,actor.role,name,review.id,at)])
+   await atomic(db,actor,[guard('EXISTS(SELECT 1 FROM cb_import_reviews WHERE id=? AND fingerprint=? AND plan=? AND job_id IS NULL)',review.id,review.fingerprint,review.plan),query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)',newId(),'import',review.id,review.fingerprint,actor.id,at),query('UPDATE cb_import_reviews SET job_id=? WHERE id=?',job.id,review.id),event(actor,name,at,{kind:'import',id:review.id,revision:review.fingerprint,result:'approved'})])
    return {id:review.id,job:await applyD1ImportBatches(job.id,context)}
   }
   need(review.job_id,'Approve this exact import plan first',409)

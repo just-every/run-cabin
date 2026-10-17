@@ -1,0 +1,18 @@
+import { type Actor, manager, need } from '../model'
+import { assertLive } from '../storage'
+export interface AuditPage { events:any[]; next:string|null }
+const fields:Record<string,string>={property:'COALESCE(p.anonymous_id,e.property_id)',booking:'COALESCE(b.anonymous_id,e.booking_id)',entity:'COALESCE(x.anonymous_id,e.entity_id)',actor:'COALESCE(a.anonymous_id,e.actor_id)',action:'e.action',result:'e.result'}
+export async function history(db:D1Database,actor:Actor,params:URLSearchParams):Promise<AuditPage> {
+ manager(actor);need(!actor.isAgent,'Human access required',403);await assertLive(db,actor)
+ const where:string[]=[],args:(string|number)[]=[]
+ for(const [key,column] of Object.entries(fields)){const value=params.get(key);if(value){need(value.length<=200,'Search value too long');where.push(`${column}=?`);args.push(value)}}
+ for(const [key,op] of [['from','>='],['until','<']] as const){const value=params.get(key);if(value){need(/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value)),'Use a YYYY-MM-DD date');where.push(`e.at ${op} ?`);args.push(key==='until'?new Date(Date.parse(value)+86400000).toISOString():value)}}
+ const before=params.get('before');if(before){let cursor:any;try{cursor=JSON.parse(atob(before))}catch{}need(cursor&&typeof cursor.at==='string'&&typeof cursor.id==='string'&&cursor.at.length<=40&&cursor.id.length<=200,'Invalid history cursor');where.push('(e.at<? OR (e.at=? AND e.id<?))');args.push(cursor.at,cursor.at,cursor.id)}
+ const rows=(await db.prepare(`SELECT e.id,e.actor_role AS actorRole,e.actor_kind AS actorKind,e.actor_version AS actorVersion,e.source_version AS sourceVersion,e.facts,COALESCE(a.anonymous_id,e.actor_id) AS actorId,e.actor_key_id AS actorKeyId,e.action,COALESCE(x.anonymous_id,e.entity_id) AS entityId,e.entity_kind AS entityKind,COALESCE(p.anonymous_id,e.property_id) AS propertyId,COALESCE(b.anonymous_id,e.booking_id) AS bookingId,e.source_revision AS sourceRevision,e.result,e.at FROM (SELECT id,actor_id,actor_role,action,entity_id,at,source_version,actor_version,facts,actor_kind,actor_key_id,entity_kind,property_id,booking_id,source_revision,result FROM cb_events UNION ALL SELECT 'auth:'||id AS id,actor_id,'unknown' AS actor_role,'authority.'||action AS action,actor_id AS entity_id,strftime('%Y-%m-%dT%H:%M:%fZ',created_at/1000.0,'unixepoch') AS at,NULL AS source_version,NULL AS actor_version,'{}' AS facts,'legacy' AS actor_kind,NULL AS actor_key_id,'operator' AS entity_kind,NULL AS property_id,NULL AS booking_id,NULL AS source_revision,'legacy' AS result FROM oa_auth_audit) e LEFT JOIN cb_audit_redactions a ON a.subject_id=e.actor_id LEFT JOIN cb_audit_redactions x ON x.subject_id=e.entity_id LEFT JOIN cb_audit_redactions p ON p.subject_id=e.property_id LEFT JOIN cb_audit_redactions b ON b.subject_id=e.booking_id ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY e.at DESC,e.id DESC LIMIT 101`).bind(...args).all<any>()).results
+ const page=rows.slice(0,100),next=rows.length>100?btoa(JSON.stringify({at:page.at(-1)!.at,id:page.at(-1)!.id})):null
+ await assertLive(db,actor);return {events:page.map(({facts,...r})=>({...r,facts:JSON.parse(facts)})),next}
+}
+export function exportHistory(db:D1Database,actor:Actor,params:URLSearchParams){
+ const query=new URLSearchParams(params);query.delete('before');let done=false
+ return new ReadableStream<Uint8Array>({async pull(controller){if(done){controller.close();return}try{const page=await history(db,actor,query);controller.enqueue(new TextEncoder().encode(page.events.map(e=>JSON.stringify(e)+'\n').join('')));if(page.next)query.set('before',page.next);else done=true}catch(error){controller.error(error)}},cancel(){done=true}})
+}

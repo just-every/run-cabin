@@ -668,13 +668,15 @@ Every capability claim and demo action on the approved homepage maps to the clau
 | 53 | Owner portal: "Owners see stays and statements any time" | FIN-005 | implemented (scope and remaining clause gaps below) |
 | 54 | Maintenance: "Broken things become tasks with photos" | OPS-004 | partial |
 | 55 | Review replies: "Thank-yous and replies sent on schedule" | GUEST-003, MESSAGE-003, GUEST-004 | missing |
-| 56 | Activity log: "Every change, message and payout, recorded" | AUDIT-001 | partial |
+| 56 | Activity log: "Every change, message and payout, recorded" | AUDIT-001 | implemented (permanent attributable history; see clause Status) |
 | 57 | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | OPEN-001 | partial |
 | 58 | "Try the demo" | SITE-002 | partial |
 
 ## Status
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
+
+18 October 2026, AUDIT-001: append-only scoped business and provider history, native authority changes, bearer-agent attribution, guest access release, complete search/export and anonymous history after operational guest erasure. Legacy events retain only their original evidence. See `docs/activity.md`.
 
 18 October 2026, FIN-001: reservation trust subledger with immutable balanced USD postings, owner/entity scope, source drill-down, CSV export, closed periods and linked corrections. Recovery credits and undo post to the same ledger; source-backed manual transactions cover deposits, earned stays, fees, taxes, refunds and owner expenses. See `docs/trust-ledger.md`.
 
@@ -694,10 +696,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 7 | 52 | 30 | 89 |
-| All | 20 | 52 | 30 | 102 |
+| Target and push further | 8 | 51 | 30 | 89 |
+| All | 21 | 51 | 30 | 102 |
 
-**102 clauses: 20 done, 52 partial, 30 missing.**
+**102 clauses: 21 done, 51 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -788,9 +790,9 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `MOBILE-001` | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
 | `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
 | `DATA-001` | Complete portable product records and safe restore | target | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs` (line 27) | Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |
-| `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs` (line 27) | Property cascade/source retirement and later-journal refusal are exercised. Member erasure refuses used/invited grants; broad guest/operator erasure, retention holds and completion receipts need work. |
+| `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs`; `tests/audit.test.mjs` | Property/source retirement and later-journal refusal, operational guest identity/message erasure, revoked stay links and anonymous audit references ship. Full vendor/ID retention, legal holds, operator erasure and completion receipts need work. |
 | `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | partial | `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/archive.test.mjs` (line 27) | Today’s properties, calendar bookings, turnovers, photos and statements live in the installation’s own D1 storage; guest, message and payout records do not exist yet, and no test records outbound requests to show nothing else leaves. |
-| `AUDIT-001` | Permanent attributable business and automation history | target | partial | `src/cabin/storage.ts`; `src/cabin/credentials.ts`; `src/cabin/movein/index.ts`; `migrations/core/0015_cabin.sql`; `tests/cabin.test.mjs` (line 31); `tests/archive.test.mjs` (line 27) | Domain/credential events, independent approvals and import journals exist; comprehensive provider/read history, anonymization guarantees and search/export are incomplete. The state read shows only the latest 100 events. |
+| `AUDIT-001` | Permanent attributable business and automation history | target | done | `src/cabin/audit/`; `src/cabin/ui/activity.ts`; `migrations/core/0023_audit.sql`; `tests/audit.test.mjs`; `docs/activity.md` | Append-only events retain safe actor/agent/authority, scope, source revision and controlled outcomes for domain changes, approvals, guest access, providers, money, imports and erasures. Search and full paginated export include legacy native history without its value field. Guest erasure preserves stable anonymous action references and necessary accounting; broader retention controls remain DATA-002. |
 | `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
 | `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
 | `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |

@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server'
+import { record, type AuditActor } from '../audit/write'
 import { type Actor, type Booking, manager, need, text, newId } from '../model'
 import { assertLive, mutate } from '../storage'
 import { stays } from '../direct/store'
@@ -20,7 +21,13 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
  })
  need(name==='payout.import'||name==='payout.stripe','Unknown payout command',404)
  let lines:SourceLine[],propertyId:string|null=null
- if(name==='payout.stripe')lines=await stripePayoutLines(env)
+ if(name==='payout.stripe'){
+  const id=newId()
+  await record(env.DB,actor,'payout.stripe.request',{kind:'payout-import',id,revision:id,result:'pending'})
+  try { lines=await stripePayoutLines(env) } catch(error) {
+   await record(env.DB,actor,'payout.stripe.result',{kind:'payout-import',id,revision:id,result:'failed-or-uncertain'});throw error
+  }
+ }
  else {need(input.source==='airbnb'||input.source==='vrbo','Choose Airbnb or Vrbo');propertyId=text(input.propertyId,'home');lines=parsePayoutCsv(input.source,text(input.csv,'payout CSV',2_000_000))}
  const direct=await stays(env.DB)
  return mutate(env.DB,actor,name,c=>{

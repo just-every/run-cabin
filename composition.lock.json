@@ -568,7 +568,7 @@
       "source": "modules/operator-auth/accounts/schema/owner-signin.sql"
     },
     "package.json": {
-      "sha256": "cc8c0bc687d5bb5eba92c3873350d569b3417b9c7a5ce1c922eabb5d5dfd8106",
+      "sha256": "f01385f36fccc2564620b432a0162eddb2385dd4aafcc97731e9db57dd895434",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "6a3db5135306fe21dd3c031af633c8dee55cb85da2569a11e3189849293bb322",
+      "sha256": "cc5ca9cd117c87badede29efc6e8f6247a0f580776a5f03d97bbb9f8e32cbbd4",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

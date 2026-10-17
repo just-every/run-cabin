@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server'
+import { record, type AuditActor } from '../audit/write'
 import { managedInstall } from '../channels'
 import type { InboxSettings } from '../model'
 import { unseal } from '../seal'
@@ -26,7 +27,10 @@ export async function aiKey(env: Bindings, inbox: InboxSettings) {
  return key ? { key, model: inbox.ai.model || AI_MODEL, workspace: inbox.ai.workspace } : null
 }
 export interface Draft { text: string; grounds: string[]; needsHost: boolean; note: string }
-export async function aiDraft(config: { key: string; model: string; workspace: string }, f: Facts | null, history: { from: 'guest' | 'host'; text: string }[]): Promise<Draft> {
+export async function aiDraft(config: { key: string; model: string; workspace: string }, f: Facts | null, history: { from: 'guest' | 'host'; text: string }[], audit: { db: D1Database; actor: AuditActor; kind: 'messages' | 'bookings'; id: string; revision: string; propertyId: string | null; bookingId: string | null }): Promise<Draft> {
+ const { db, actor, ...scope } = audit
+ await record(db, actor, 'inbox.ai.request', { ...scope, result: 'pending' })
+ try {
  const stay = f ? `Guest first name: ${f.guest}\nHome: ${f.home}\nCheck-in: ${f.checkin}\nCheck-out: ${f.checkout}\nAddress: ${f.address}\nDoor code: ${f.code}\nStay page: ${f.stay_link}` : 'No stay matched this sender yet.'
  const thread = history.slice(-12).map(m => `<${m.from}>\n${m.text.slice(0, 4000)}\n</${m.from}>`).join('\n')
  let response: Response
@@ -42,5 +46,10 @@ export async function aiDraft(config: { key: string; model: string; workspace: s
  if (body?.stop_reason === 'refusal') throw new DraftError('The AI model declined to draft this reply.')
  let answer: any; try { answer = JSON.parse(body?.content?.find((p: any) => p.type === 'text')?.text ?? '') } catch { answer = null }
  if (typeof answer?.reply !== 'string' || !answer.reply.trim()) throw new DraftError('The AI model gave no usable draft.')
+ await record(db, actor, 'inbox.ai.result', { ...scope, result: answer.needs_host === true ? 'escalated' : 'draft' })
  return { text: answer.reply.trim().slice(0, 4000), grounds: Array.isArray(answer.grounds) ? answer.grounds.filter((g: unknown) => typeof g === 'string').slice(0, 7) : [], needsHost: answer.needs_host === true, note: typeof answer.note === 'string' ? answer.note.slice(0, 300) : '' }
+ } catch (error) {
+  await record(db, actor, 'inbox.ai.result', { ...scope, result: 'failed-or-uncertain' })
+  throw error
+ }
 }

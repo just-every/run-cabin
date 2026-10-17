@@ -55,7 +55,7 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
  }
  if (name === 'booking.details') {
   manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId)
-  need((b.kind ?? 'stay') === 'stay', 'Blocks have no guest')
+  need((b.kind ?? 'stay') === 'stay', 'Blocks have no guest');need(!b.guestErasedAt,'This guest identity was erased; contact details cannot be restored on this stay',409)
   const guestName = optional(p.guestName, 'guest name', 120), time = arrival(p.arrivalTime)
   if (guestName) b.guestName = guestName; else delete b.guestName
   if (time) b.arrivalTime = time; else delete b.arrivalTime

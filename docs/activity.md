@@ -1,0 +1,11 @@
+# Activity history
+
+Open **Activity** as an owner or manager. Search by home, reservation, record, actor, action, result or date, follow **Earlier events**, or export all matching history as JSON lines. The export continues beyond the displayed page and checks current access on every page. Cleaners, rental-owner portal sessions and draft-only agent credentials cannot read this operator history.
+
+Each event retains its original action, time, actor kind and authority version, property/reservation scope, record revision and controlled result. One statement can appear under each reservation it contains. Human approval, bearer-agent preparation, guest access release, messages, lock attempts, imports, financial postings and role changes use the same search. Original native authorization events are included without their value field. Older records are explicitly marked legacy where the previous version did not record a revision or detailed result.
+
+Events are append-only. Outbound actions retain an intent and outcome; provider acceptance is different from physical lock verification or delivery to a mailbox. A failed or uncertain external response remains visible and is not presented as confirmed success. Audit fields never copy message bodies, guest contact details, door-code values, capability links, API keys, provider errors or raw command inputs.
+
+The owner can erase a guest's operational identity from the Activity page. Review the reservation and confirm the action. Stays sharing its email or phone are anonymized together; a stay without either contact identifies only that reservation. Guest message bodies and contact fields are cleared, queued guest messages cancelled and stay links revoked. Signed rental agreements and necessary accounting/evidence records remain legal records. This is not the full retention and erasure policy in DATA-002.
+
+History keeps stable anonymous references for erased guest subjects, preserving who acted, when, under what authority, which source revision and what result. Later feed updates cannot restore the erased stay's operational identity. Exported history and the installation archive retain that useful attribution. Full vendor source retention and broader legal retention controls remain DATA-002 work.

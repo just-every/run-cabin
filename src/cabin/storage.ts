@@ -1,5 +1,7 @@
 import { type Actor, type Context, type Data, type Query, kinds, query, guard, need, fail, newId } from './model'
 import { finishRecoveries } from './recovery/commands'
+import { changes } from './audit/write'
+import { retainGuestErasure } from './audit/privacy'
 import { syncLedger } from './ledger/automatic'
 import { dispatch } from './dispatch'
 import { scheduleMessages } from './inbox/schedule'
@@ -20,13 +22,13 @@ export async function load(db: D1Database): Promise<Data> {
   db.prepare('SELECT version FROM cb_meta WHERE id=1'), db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
   db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare('SELECT kind,data FROM cb_records ORDER BY rowid'),
   db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
-  db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
+  db.prepare('SELECT e.id,COALESCE(a.anonymous_id,e.actor_id) AS actorId,e.actor_role AS actorRole,e.action,COALESCE(x.anonymous_id,e.entity_id) AS entityId,e.at FROM cb_events e LEFT JOIN cb_audit_redactions a ON a.subject_id=e.actor_id LEFT JOIN cb_audit_redactions x ON x.subject_id=e.entity_id ORDER BY e.rowid DESC LIMIT 100'),
  ])
  const data: Data = { ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  return data
 }
-/** `audit` false skips the event row: a scheduled poll that changed nothing but its own timestamps. */
+/** `audit` false suppresses an empty poll event; actual business/provider changes remain attributable. */
 export function transaction(c: Context, name: string, audit = true): Query[] {
  const a = authority(c.actor), q = [guard(a.sql, ...a.params), guard('(SELECT version FROM cb_meta WHERE id=1)=?', c.before.version)]
  for (const kind of kinds) {
@@ -35,12 +37,12 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
  }
  const existing = new Set(c.before.approvals.map(a => a.id))
  for (const a of c.data.approvals) if (!existing.has(a.id)) q.push(query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)', a.id,a.kind,a.recordId,a.revision,a.actorId,a.at))
- q.push(...c.queries, ...(audit ? [query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at) VALUES(?,?,?,?,?,?)', newId(), c.actor.id,c.actor.role,name,c.entityId,c.now)] : []),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
+ q.push(...c.queries, ...changes(c,name,audit),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
  return q
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- dispatch(c); scheduleMessages(c); finishRecoveries(c); await syncLedger(c)
+ retainGuestErasure(c); dispatch(c); scheduleMessages(c); retainGuestErasure(c); finishRecoveries(c); await syncLedger(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

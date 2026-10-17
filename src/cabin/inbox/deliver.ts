@@ -1,3 +1,4 @@
+import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
 import { type Booking, type Data, type GuestMessage, type InboxSettings, type MessageChannel, newId } from '../model'
@@ -64,6 +65,7 @@ export async function deliverGuestMessages(env: Bindings) {
  const fresh = await load(env.DB), results = []
  for (const m of claimed) {
   const outcome = await transmit(env, fresh, m)
+  await record(env.DB,INBOX_SYSTEM,'message.provider.result',{kind:'messages',id:m.id,propertyId:m.propertyId,bookingId:m.bookingId,revision:m.revision,result:outcome.status==='failed'?'failed-or-uncertain':outcome.status})
   results.push(await mutate(env.DB, INBOX_SYSTEM, `message.${outcome.status}`, c => {
    const row = c.data.messages.find(r => r.id === m.id); if (!row) return null
    Object.assign(row, outcome, { sentAt: c.now, revision: newId() }); c.entityId = row.id

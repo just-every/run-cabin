@@ -99,6 +99,12 @@
       "clauses": [
         "FIN-001"
       ]
+    },
+    {
+      "id": "activity-history",
+      "clauses": [
+        "AUDIT-001"
+      ]
     }
   ],
   "nonGoals": [

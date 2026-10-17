@@ -63,7 +63,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 53 | Quiet details | Owner portal: "Owners see stays and statements any time" | code | Owners see only their homes’ stays and approved statements, including frozen paid expenses. Other owners’ homes, statements and operator APIs are refused. `src/cabin/owners/`, `tests/finance.test.mjs`; FIN-005. |
 | 54 | Quiet details | Maintenance: "Broken things become tasks with photos" | code | As row 33: tasks with photos raised from a turnover or by hand, assigned, emailed and closed with notes and photos (`src/cabin/maintenance.ts`). Vendors, quotes, invoices and recurring inspections remain contract (OPS-004). `tests/turnovers.test.mjs` (line 15). |
 | 55 | Quiet details | Review replies: "Thank-yous and replies sent on schedule" | contract | GUEST-003, MESSAGE-003. |
-| 56 | Quiet details | Activity log: "Every change, message and payout, recorded" | partial | Domain and credential events and every approval with actor and revision: `src/cabin/storage.ts`, `src/cabin/model.ts` (`approve`), approval history in `src/cabin/ui/admin.ts`. No messages or payouts to record yet. AUDIT-001. |
+| 56 | Quiet details | Activity log: "Every change, message and payout, recorded" | code | Append-only scoped history attributes human, guest, bearer-agent and provider actions; search and complete JSON-lines export outlast the view window, with stable anonymous references after guest erasure. `src/cabin/audit/`, `src/cabin/ui/activity.ts`, `tests/audit.test.mjs`; AUDIT-001. |
 | 57 | Closing | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | code | `LICENSE`, `src/cabin/`. |
 | 58 | Footer, actions | "Try the demo" | — | No hosted demo exists (demo.run-cabin.com does not resolve, 17 Oct 2026), so the link opens `/run`. |
 
@@ -71,12 +71,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 40, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 46 |
-| partial | 5, 13, 15, 35, 39, 42, 52, 56 | 8 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 40, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 56, 57 | 47 |
+| partial | 5, 13, 15, 35, 39, 42, 52 | 7 |
 | contract | 24, 26, 55 | 3 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 46 code, 8 partial, 3 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 47 code, 7 partial, 3 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 

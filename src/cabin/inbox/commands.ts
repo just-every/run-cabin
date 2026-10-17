@@ -31,7 +31,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   const stay = [...data.bookings].filter(b => b.kind === 'stay' && b.status === 'confirmed').sort((a, b) => b.start.localeCompare(a.start))[0]
   if (!stay) return { ok: false, message: 'Add a confirmed stay in Calendar first. The test uses its real saved details; nothing is sent to the guest.' }
   try {
-   const f = facts(data, env.AUTH_ORIGIN, stay), d = await aiDraft(config, f, [{ from: 'guest', text: 'Any chance we can check in early, around 1 pm?' }])
+   const f = facts(data, env.AUTH_ORIGIN, stay), d = await aiDraft(config, f, [{ from: 'guest', text: 'Any chance we can check in early, around 1 pm?' }], { db: env.DB, actor: who, kind: 'bookings', id: stay.id, revision: stay.revision, propertyId: stay.propertyId, bookingId: stay.id })
    if (!d.needsHost) return { ok: false, message: `Anthropic replied, but did not flag early check-in for your approval. Review the model setting before using it. Test reply for ${f.home}: “${d.text}” Nothing was sent.` }
    return { ok: true, message: `Working with ${config.model}, using ${f.home}'s saved stay: “${d.text}” Needs you: ${d.note || 'Early check-in requires your approval.'} Nothing was sent to the guest.` }
   }

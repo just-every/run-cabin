@@ -1,3 +1,7 @@
+import { importHistory } from './audit/imports'
+import { history, exportHistory } from './audit/read'
+import { record } from './audit/write'
+import { assertLive } from './storage'
 import { ledgerState } from './ledger/store'
 import { csvCell } from './statements'
 import { recoveryWording } from './recovery/wording'
@@ -30,12 +34,12 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/ledger','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
- if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
+ if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
  const result=name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
@@ -58,6 +62,7 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
  if(name==='import.provider.undo')return 'Move-in undone. Imported listings, stays, guests, balances and calendar links were removed.'
+ if(name==='privacy.erase'&&result.reservations)return `Guest operational identity erased from ${result.reservations} reservation${result.reservations===1?'':'s'}. History keeps anonymous action references.`
  if(name==='books.export.prepare')return 'QuickBooks files ready. Download the CSV or IIF file below and import it into QuickBooks.'
  if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
@@ -147,8 +152,10 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
+   if(path==='/api/cabin/activity')return json(await history(env.DB,who,url.searchParams))
+   if(path==='/api/cabin/activity.jsonl'){manager(who);need(!who.isAgent,'Human access required',403);await assertLive(env.DB,who);return new Response(exportHistory(env.DB,who,url.searchParams),{headers:{...headers,'content-type':'application/x-ndjson; charset=utf-8','content-disposition':'attachment; filename="cabin-activity.jsonl"'}})}
    if(path==='/api/cabin/ledger.csv'){manager(who);need(!who.isAgent,'Human access required',403);const ledger=await ledgerState(env.DB,who);const rows=[['Journal','Entity','Property','Owner reference','Reservation','Effective','Posted','Actor','Source type','Source','Revision','Reversal','Correction','Account','Debit USD cents','Credit USD cents'],...ledger.journals.flatMap(j=>j.lines.map(l=>[j.id,j.legalEntity,j.propertyId,j.ownerKey,j.bookingId,j.effectiveDate,j.postedAt,j.actorId,j.sourceType,j.sourceId,j.sourceRevision,j.reversalOf??'',j.correctionOf??'',l.account,l.debitCents,l.creditCents]))];return new Response(rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="cabin-ledger.csv"'}})}
-   if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
+   if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,activity:path==='/app/activity'?await history(env.DB,who,url.searchParams):undefined,activityParams:url.searchParams,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
@@ -159,7 +166,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
-   const state=await snapshot(env,who);return renderApp(state,back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
+   const state=await snapshot(env,who);return renderApp(state,back,{activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})
@@ -167,7 +174,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   return json({error:'Not found'},404)
  }catch(error){
   const status=Number((error as any)?.status)||500,message=(error as any)?.status?(error as Error).message:'Could not complete this request. Refresh and try again.'
-  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
+  if(who&&request.method==='POST'){try{await assertLive(env.DB,who);await record(env.DB,who,'command.denied',{result:status===403?'denied':'refused'})}catch{}}
+  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
   if(pages.has(path)&&status===401)return new Response(null,{status:303,headers:{...headers,location:'/signin?returnTo='+encodeURIComponent(path)}})
   return json({error:message},status)
  }

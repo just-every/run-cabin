@@ -41,7 +41,7 @@ function cleanerCode(c: Context, s: HomeSettings, t: Turnover) {
 export function dispatch(c: Context) {
  const now = Date.parse(c.now)
  for (const b of c.data.bookings) {
-  if (!isStay(b) || !c.data.properties.some(p => p.id === b.propertyId)) continue
+  if (!isStay(b) || b.guestErasedAt || !c.data.properties.some(p => p.id === b.propertyId)) continue
   const s = homeSettings(c, b.propertyId), t = liveTurnover(c, b.id), codes = c.data.codes.filter(r => r.bookingId === b.id && r.status === 'issued')
   if (b.status !== 'confirmed') {
    if (t && t.status !== 'completed') cancel(c, t, 'The stay was cancelled')

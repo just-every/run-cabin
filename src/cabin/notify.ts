@@ -1,3 +1,4 @@
+import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
 import { operatorMail } from '../mail.server.mjs'
 import { load, mutate, SYSTEM } from './storage'
@@ -25,6 +26,7 @@ export async function deliverNotices(env: Bindings) {
     if (status === 'failed') detail = 'The mail provider did not accept this email.'
    } catch (error) { status = 'failed'; detail = `The mail provider refused this email: ${(error as Error)?.message || 'unknown error'}` }
   }
+  await record(env.DB,SYSTEM,'notice.provider.result',{kind:'notices',id:claimed.id,propertyId:claimed.propertyId,revision:claimed.revision,result:status==='failed'?'failed-or-uncertain':status})
   results.push(await mutate(env.DB, SYSTEM, `notice.${status}`, c => { const n = c.data.notices.find(r => r.id === id); if (!n) return null; Object.assign(n, { status, detail, sentAt: c.now }); c.entityId = n.id; return n }))
  }
  return results
