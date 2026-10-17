@@ -1,0 +1,28 @@
+/* Turnovers, door codes, maintenance and readiness (src/cabin/ui/ops.ts and its pages). */
+.cabin .chip-wait{background:#fdf3dc;color:#6b4a0b}.cabin .chip-wait .dot{background:#d79b16}.cabin .chip:not(.chip-good):not(.chip-bad):not(.chip-wait){background:color-mix(in srgb,var(--rer-border) 18%,var(--rer-surface))}.cabin .chip:not(.chip-good):not(.chip-bad):not(.chip-wait) .dot{background:var(--rer-muted)}
+.cabin .record-title .chip{margin:0}
+.cabin .when{margin-bottom:4px}.cabin .when strong{font-size:17px}
+.cabin .doors{display:grid;gap:10px;margin:14px 0}
+.cabin .door{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--rer-border) 35%,transparent);border-radius:12px;background:color-mix(in srgb,var(--rer-accent) 4%,var(--rer-surface))}
+.cabin .door .chip{margin:0}.cabin .door-label{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--rer-muted)}
+.cabin .door-code{font:600 26px/1 var(--rer-font-mono,monospace);letter-spacing:.18em}
+.cabin .door .muted{flex-basis:100%;margin:0}
+.cabin .lock-line{margin-top:-4px}
+.cabin .notice-line{font-size:14px;margin:-6px 0 10px;color:var(--rer-muted)}.cabin .notice-line.ok::before{content:"✉ ";color:#22a35f}.cabin .notice-line.bad{color:#7c2424}
+.cabin form.inline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}.cabin form.inline label{flex:1 1 220px}.cabin form.inline button{width:auto}
+.cabin .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:10px 0 14px}
+.cabin .photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block;background:color-mix(in srgb,var(--rer-border) 20%,transparent)}
+.cabin details summary{cursor:pointer;min-height:32px}.cabin details.report{margin-top:14px}.cabin details.home-settings{border-top:1px solid color-mix(in srgb,var(--rer-border) 25%,transparent);padding:14px 0}.cabin details.home-settings form{margin-top:14px}
+.cabin fieldset{border:0;padding:0;margin:0 0 6px}.cabin legend{font-weight:600;margin-bottom:8px}
+.cabin .job.mine .check{padding:10px 0;min-height:44px;border-bottom:1px solid color-mix(in srgb,var(--rer-border) 18%,transparent)}.cabin .job.mine .check input{width:22px;height:22px}
+.cabin .address a{font-weight:500}
+.cabin nav.days{display:flex;gap:6px;flex-wrap:wrap;padding:0;border:0;background:transparent;margin:-8px 0 24px}.cabin nav.days a{border:1px solid color-mix(in srgb,var(--rer-border) 40%,transparent);background:var(--rer-surface);padding:6px 12px;font-size:14px}
+.cabin .ready-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.cabin .home-ready{padding:22px;background:var(--rer-surface);border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);border-radius:var(--rer-radius);border-top:5px solid #22a35f;min-width:0}.cabin .home-ready.not-ready{border-top-color:#c33f3f}.cabin .home-ready.unknown{border-top-color:#d79b16}
+.cabin .facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:12px 0;font-size:15px}.cabin .facts dt{color:var(--rer-muted)}.cabin .facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.cabin .reasons{margin:8px 0 12px;padding-left:20px;color:#7c2424;font-size:14px}
+.cabin .task .record-title h3{margin:0}
+.cabin.guest main{max-width:560px}.cabin .code-card{padding:24px;border-radius:var(--rer-radius);background:var(--rer-surface);border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);margin:16px 0 20px}.cabin .code-card .code{font:600 54px/1 var(--rer-font-mono,monospace);letter-spacing:.2em;margin:10px 0 16px}
+@media(max-width:700px){.cabin .ready-grid{grid-template-columns:1fr}.cabin .home-ready{padding:18px}.cabin .door-code{font-size:24px}.cabin form.inline{display:grid}.cabin form.inline button{width:100%}.cabin .photos{grid-template-columns:repeat(3,1fr)}}
+.cabin nav.days .pick-day{display:flex;align-items:center;gap:8px;margin:0}.cabin nav.days .pick-day label{display:flex;align-items:center;gap:8px;margin:0}.cabin nav.days .pick-day input{min-height:36px;padding:4px 8px;width:auto}.cabin nav.days .pick-day button{min-height:36px;width:auto;padding:4px 14px}
+.cabin .checked-out{font-size:14px;color:#164e33}.cabin .checked-out::before{content:"✓ "}

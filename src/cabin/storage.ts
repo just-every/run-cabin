@@ -1,4 +1,5 @@
 import { type Actor, type Context, type Data, type Query, kinds, query, guard, need, fail, newId } from './model'
+import { dispatch } from './dispatch'
 /** The scheduled iCal sync acts as Cabin itself; principal() never issues this role. */
 export const SYSTEM: Actor = { id: 'cabin:ical-sync', email: '', role: 'system', isAgent: false, operatorVersion: 0 }
 export function authority(a: Actor): Query {
@@ -18,7 +19,7 @@ export async function load(db: D1Database): Promise<Data> {
   db.prepare('SELECT id,kind,record_id AS recordId,revision,actor_id AS actorId,at FROM cb_approvals ORDER BY at,id'),
   db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
  ])
- const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], approvals: results[4].results, events: results[5].results }
+ const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  return data
 }
@@ -34,7 +35,9 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
  q.push(...c.queries, ...(audit ? [query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at) VALUES(?,?,?,?,?,?)', newId(), c.actor.id,c.actor.role,name,c.entityId,c.now)] : []),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
  return q
 }
+/** Every commit first brings turnovers, door codes and notices in line with the stays (dispatch.ts). */
 export async function commit(c: Context, name: string, audit = true) {
+ dispatch(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

@@ -1,0 +1,10 @@
+{
+  "action_attempt": {
+    "action_attempt_id": "fixture-attempt-update",
+    "action_type": "UPDATE_ACCESS_CODE",
+    "status": "pending",
+    "result": null,
+    "error": null
+  },
+  "ok": true
+}

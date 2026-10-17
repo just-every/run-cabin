@@ -11,7 +11,7 @@ import { unstable_splitSqlQuery } from 'wrangler'
 const bundles = new Map()
 export async function harness(options = {}) {
   // The demo entry keeps the app's own mail sender: a demo suppresses mail itself.
-  const entry = options.entry ?? 'tests/worker.ts', plugins = options.entry ? [] : [{ name: 'mail-network-edge', setup(builder) { builder.onResolve({filter:/^\.\/mail\.server\.mjs$/}, () => ({path: join(process.cwd(),'tests/mail-edge.mjs')})) } }]
+  const entry = options.entry ?? 'tests/worker.ts', plugins = options.entry ? [] : [{ name: 'mail-network-edge', setup(builder) { builder.onResolve({filter:/^\.\.?\/mail\.server\.mjs$/}, () => ({path: join(process.cwd(),'tests/mail-edge.mjs')})) } }]
   if (!bundles.has(entry)) bundles.set(entry, await build({ entryPoints: [entry], bundle: true, write: false, format: 'esm', platform: 'neutral', conditions: ['workerd', 'worker', 'browser'], external: ['node:*', 'cloudflare:*'], target: 'es2023', plugins }))
   const bundle = bundles.get(entry)
   const socket = createServer(); await new Promise(r => socket.listen(0, '127.0.0.1', r)); const port = socket.address().port; await new Promise(r => socket.close(r))

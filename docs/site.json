@@ -12,7 +12,7 @@
       "pages": [
         { "slug": "calendars", "title": "Channel calendars", "file": "calendars.md", "summary": "Connect each home's Airbnb, Vrbo and Booking.com calendar links, publish Cabin's own links back, read the calendar grid and take requests without double bookings." },
         {"slug": "direct-bookings", "title": "Direct bookings", "file": "direct-bookings.md", "summary": "Publish each home's booking page, set stay rules and taxes, collect Stripe test payments, and retain signed agreements, ID checks and damage holds."},
-        { "slug": "turnovers", "title": "Turnovers", "file": "turnovers.md", "summary": "Assign a cleaner and a checklist to a departing booking; the cleaner ticks every item and adds a photo." },
+        { "slug": "turnovers", "title": "Turnovers", "file": "turnovers.md", "summary": "Every stay makes its turnover and door codes; the cleaner is emailed, marks the home ready with photos, and Readiness shows which homes are ready." },
         { "slug": "statements", "title": "Owner statements", "file": "statements.md", "summary": "Enter a month's income and costs for a home, check the management fee and owner net, approve and download the CSV." },
         { "slug": "agent-access", "title": "Agent access", "file": "agent-access.md", "summary": "Give the agent you already use a token to prepare calendar reviews, turnovers and statements for a person to approve." }
       ]

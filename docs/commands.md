@@ -2,7 +2,7 @@ All private routes use the installation’s native operator session. The install
 
 `GET /api/cabin/state` returns the current state. `POST /api/cabin/command` accepts `{"name":"command.name","input":{}}` and returns `{"result":...}`. Human POSTs require the exact installation `Origin`; cross-site fetches are refused. This Origin check also protects plain HTML forms and multipart uploads from CSRF. Errors return `{"error":"..."}` with HTTP 400, 401, 403, 404 or 409. Domain money is always an integer number of cents.
 
-The equivalent HTML routes are `/app`, `/app/calendar`, `/app/turnovers`, `/app/statements`, `/app/people`, `/app/import` and `/app/agent`. Forms POST to `/app/action?name=COMMAND&returnTo=/app/PAGE`. JSON and urlencoded bodies are accepted; photo completion also accepts multipart `photo`, `caption`, `checks`, `id` and `revision`. Requests are limited to 500,000 bytes. Revision UUIDs are opaque strings; property and member revisions are positive integers.
+The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/turnovers`, `/app/maintenance`, `/app/statements`, `/app/people`, `/app/import` and `/app/agent`. Forms POST to `/app/action?name=COMMAND&returnTo=/app/PAGE`. JSON and urlencoded bodies are accepted; forms with photos also accept multipart, with each photo in a `photoFiles` field (up to 256 KB each). Requests are limited to 4,000,000 bytes. Revision UUIDs are opaque strings; property and member revisions are positive integers.
 
 | Command | Input | Authority and result |
 | --- | --- | --- |
@@ -19,8 +19,14 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/turnovers`, `/app/
 | `reservation.cancel` | `id` (booking) | Owner or manager. Cancels a hold or block made in Cabin. Channel stays are cancelled on the channel. |
 | `booking.details` | `id`, optional `guestName, arrivalTime` | Owner or manager. Sets or clears a stay's guest name and arrival time. |
 | `turnover.prepare` | `bookingId, cleanerId, checklist: string[]` | Owner, manager or agent. Booking must be approved and confirmed; cleaner must have an active cleaner grant. Returns an immutable assignment draft. |
-| `turnover.approve` | `id, revision` | Owner or manager. Publishes that exact checklist, cleaner and booking revision. A booking has at most one approved turnover. |
-| `turnover.complete` | `id, revision, checks: string[], photo, mimeType, caption` | Only the currently assigned cleaner. `checks` must contain every approved checklist item once. `photo` is plain base64 PNG or JPEG, at most 256,000 decoded bytes, with matching MIME type. Returns the completed immutable evidence record. |
+| `turnover.approve` | `id, revision` | Owner or manager. Publishes that exact checklist, cleaner and booking revision, replacing the stay's open dispatched turnover; refused when the stay's turnover is already done. |
+| `turnover.assign` | `id, revision, cleanerId` | Owner or manager. Assigns or reassigns an open turnover; the new cleaner gets fresh door-code digits and an email, the previous one is told. |
+| `turnover.checkout` | `id` | The assigned cleaner ("Guests have left") or an owner or manager. Records the actual check-out time and who found it, once per open turnover; marking ready records it if nobody did. |
+| `turnover.complete` | `id, revision, checks: string[], photos: [{photo, mimeType}], caption` | Only the currently assigned cleaner. `checks` must contain every approved checklist item once. At least the home's required number of photos, up to 12; each `photo` is plain base64 PNG or JPEG, at most 256,000 decoded bytes, with matching MIME type (a single `photo` and `mimeType` is one photo). Returns the completed immutable evidence record. |
+| `home.settings` | `propertyId, revision, address, timeZone, checkInTime, checkOutTime, cleanerId?, maintenanceId?, checklist: string[], photosRequired, lockDeviceId?` | Owner or manager. A home's turnover settings; `revision` is the current settings revision (omit for the first save). Every stay is dispatched with them. |
+| `task.raise` | `title, note?, blocking, photos?` plus `turnoverId` (cleaner, their own turnover) or `propertyId` or `turnoverId` (manager, who may add `assigneeId`) | A maintenance task with up to 6 photos, assigned to `assigneeId` or the home's maintenance person, who is emailed. |
+| `task.assign` | `id, revision, assigneeId, blocking` | Owner or manager. |
+| `task.close` | `id, revision, note?, photos?` | Owner, manager or the task's assignee. |
 | `statement.prepare` | `propertyId, month, lines: [{description, amountCents}]`, optional `managementFeeCents` | Owner, manager or agent. Month is `YYYY-MM`. Returns a frozen draft including property/owner details and all money totals. |
 | `statement.approve` | `id, revision` | Owner or manager. Property terms must still match the reviewed revision. Only one approved statement per property and month. |
 | `agent.create` | `label` | Owner. Returns a random bearer token once, its ID and expiry. Credentials expire after 30 days and are bound to the current owner version. Only their hashes are stored. |
@@ -44,7 +50,9 @@ Every confirmed booking and block holds its nights. `reservation.request` declin
 
 ## Completion evidence
 
-Cleaners see only their published jobs, the associated property names and booking dates, and their own grant. Owner contacts, commission terms, other cleaners’ jobs, statements, calendar reviews and import journals are withheld. Photo reads require the same current permission: `GET /api/cabin/turnovers/ID/photo` (or `/api/cabin/photos/PHOTO_ID`). Photo bytes are persisted in D1, authenticated on retrieval and included in installation archives. PNG structure and CRCs or JPEG marker structure are checked; base64 text and a MIME label alone are insufficient. Completion cannot be overwritten or submitted twice. A booking change invalidates completion authority for the old assignment until the manager reviews the job.
+Turnovers are dispatched by Cabin itself: every commit that adds, moves or cancels a stay (a channel sync, an approved calendar file, a request) creates, moves or cancels that stay's one turnover, its guest door code and its cleaner's door code, and writes the cleaner's email; emails are sent right after the commit and retried by the Cron. The state read includes `homeSettings`, `codes` (door codes with their windows and lock state), `notices` (each email and whether it was sent) and `tasks`. Guests open their code at `GET /stay/TOKEN`, the secret link on their stay's guest code.
+
+Cleaners see only their published jobs, the associated property names, addresses and booking dates (no guest names), their own door codes, the tasks they raised or were given, and their own grant. Owner contacts, commission terms, other cleaners' jobs, guest codes, statements, calendar reviews and import journals are withheld. Agents never see door codes. Photo reads require the same current permission: `GET /api/cabin/turnovers/ID/photo` (the first photo) or `/api/cabin/photos/PHOTO_ID`. Photo bytes are persisted in D1, authenticated on retrieval and included in installation archives. PNG structure and CRCs or JPEG marker structure are checked; base64 text and a MIME label alone are insufficient. Completion cannot be overwritten or submitted twice.
 
 ## Statement money and CSV
 

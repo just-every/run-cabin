@@ -1,0 +1,25 @@
+{
+  "access_code": {
+    "access_code_id": "fixture-access-code-1",
+    "device_id": "device-fixture-1",
+    "name": "Cabin guest 4417",
+    "code": "4417",
+    "type": "time_bound",
+    "status": "setting",
+    "starts_at": "2026-10-20T20:00:00.000Z",
+    "ends_at": "2026-10-23T14:00:00.000Z",
+    "created_at": "2026-10-17T14:00:00.000Z",
+    "errors": [],
+    "warnings": [],
+    "is_managed": true,
+    "is_scheduled_on_device": false
+  },
+  "action_attempt": {
+    "action_attempt_id": "fixture-attempt-create",
+    "action_type": "CREATE_ACCESS_CODE",
+    "status": "pending",
+    "result": null,
+    "error": null
+  },
+  "ok": true
+}

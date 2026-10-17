@@ -3,21 +3,40 @@ document.querySelector('[data-signout]')?.addEventListener('click', async () => 
   if (response.ok) location.assign('/signin')
 })
 
-// Files stay private: bytes go to the same authenticated completion handler.
-document.querySelectorAll('form[data-photo]').forEach(form => form.addEventListener('submit', async event => {
+// Photos stay private: a phone's camera photos are shrunk in the browser to a
+// JPEG under 256 KB, then sent with the form to the same authenticated command.
+const LIMIT = 250_000
+async function shrink(file) {
+  if ((file.type === 'image/jpeg' || file.type === 'image/png') && file.size <= LIMIT) return file
+  const image = await createImageBitmap(file), canvas = document.createElement('canvas')
+  for (const [edge, quality] of [[1600, .82], [1280, .75], [1024, .7], [800, .65], [640, .6]]) {
+    const scale = Math.min(1, edge / Math.max(image.width, image.height))
+    canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale)
+    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise(done => canvas.toBlob(done, 'image/jpeg', quality))
+    if (blob && blob.size <= LIMIT) return blob
+  }
+  throw Error(`${file.name || 'A photo'} is too large to send.`)
+}
+const base64 = async blob => { const bytes = new Uint8Array(await blob.arrayBuffer()); let binary = ''; for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(binary) }
+document.querySelectorAll('form[data-photos]').forEach(form => form.addEventListener('submit', async event => {
   event.preventDefault()
-  const button = form.querySelector('button'), notice = document.createElement('p')
-  notice.setAttribute('role', 'alert'); form.append(notice); button.disabled = true
+  const button = form.querySelector('button[type=submit]'), notice = form.querySelector('[data-upload-status]') ?? document.createElement('p')
+  notice.setAttribute('role', 'alert'); notice.dataset.uploadStatus = ''; form.append(notice); button.disabled = true
   try {
-    const data = new FormData(form), file = data.get('photoFile')
-    if (!(file instanceof File) || !file.size || file.size > 256000) throw Error('Choose a JPEG or PNG photo up to 256 KB.')
-    const bytes = new Uint8Array(await file.arrayBuffer()); let binary = ''
-    for (const byte of bytes) binary += String.fromCharCode(byte)
-    const body = { id: data.get('id'), revision: data.get('revision'), checks: data.getAll('checks'), photo: btoa(binary), mimeType: file.type, caption: data.get('caption') }
-    const response = await fetch('/api/cabin/command', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'turnover.complete', input: body }) })
+    const action = new URL(form.action), name = action.searchParams.get('name'), field = form.querySelector('input[name=photoFiles]')
+    const files = [...(field?.files ?? [])], min = Number(field?.dataset.min ?? 0), max = Number(field?.dataset.max ?? 12)
+    if (files.length < min) throw Error(`Add at least ${min} photo${min === 1 ? '' : 's'}.`)
+    if (files.length > max) throw Error(`Add at most ${max} photos.`)
+    const input = {}
+    for (const [key, value] of new FormData(form)) if (key !== 'photoFiles') input[key] = key === 'checks' ? [...(input[key] ?? []), value] : value
+    input.photos = []
+    for (const [i, file] of files.entries()) { notice.textContent = `Preparing photo ${i + 1} of ${files.length}…`; const blob = await shrink(file); input.photos.push({ photo: await base64(blob), mimeType: blob.type }) }
+    notice.textContent = 'Sending…'
+    const response = await fetch('/api/cabin/command', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, input }) })
     const result = await response.json()
-    if (!response.ok) throw Error(result.error || 'The checklist could not be saved.')
-    location.assign('/app/turnovers')
+    if (!response.ok) throw Error(result.error || 'This could not be saved.')
+    location.assign(action.searchParams.get('returnTo') || '/app')
   } catch (error) { notice.textContent = error.message; button.disabled = false }
 }))
 

@@ -1,4 +1,4 @@
-import { need, text } from './model'
+import { type Context, type StoredPhoto, need, text, newId, query, sha } from './model'
 const LIMIT = 256_000
 function crc32(bytes: Uint8Array) { let crc=0xffffffff;for(const b of bytes){crc^=b;for(let i=0;i<8;i++)crc=(crc>>>1)^((crc&1)?0xedb88320:0)}return (crc^0xffffffff)>>>0 }
 function png(bytes: Uint8Array) {
@@ -32,4 +32,20 @@ export function photoBytes(value:unknown,mime:unknown){
  const media=png(bytes)?'image/png':jpeg(bytes)?'image/jpeg':null
  need(media&&media===mime,'Upload a valid PNG or JPEG photo with the matching MIME type')
  return {bytes,mimeType:media}
+}
+/** A command's photos: `photos` [{photo, mimeType}] from the phone, or one `photo` and `mimeType`. */
+export function photoList(p: Record<string, unknown>, min: number, max = 12) {
+ const list = Array.isArray(p.photos) ? p.photos : p.photo === undefined ? [] : [{ photo: p.photo, mimeType: p.mimeType }]
+ need(list.length >= min, min === 1 ? 'Add a photo' : `Add at least ${min} photos`); need(list.length <= max, `Add at most ${max} photos`)
+ return list.map((v: any) => photoBytes(v?.photo, v?.mimeType))
+}
+/** Private bytes in cb_photos beside the record they evidence, in order. */
+export async function storePhotos(c: Context, recordId: string, photos: { bytes: Uint8Array; mimeType: string }[], caption: string, from = 0): Promise<StoredPhoto[]> {
+ const stored: StoredPhoto[] = []
+ for (const [i, photo] of photos.entries()) {
+  const id = newId(), digest = await sha(photo.bytes)
+  c.queries.push(query('INSERT INTO cb_photos(id,turnover_id,position,mime_type,bytes,sha256,caption,uploaded_by,uploaded_at) VALUES(?,?,?,?,?,?,?,?,?)', id, recordId, from + i, photo.mimeType, photo.bytes, digest, caption, c.actor.id, c.now))
+  stored.push({ id, mimeType: photo.mimeType, sha256: digest })
+ }
+ return stored
 }

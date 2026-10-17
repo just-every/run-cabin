@@ -50,7 +50,7 @@ test('public CLI archive round trip refuses damaged or populated stores and resp
     const bytes=await readFile(old,'utf8');assert.ok(bytes.includes('Temporary property'));assert.ok(!bytes.includes('Excluded secret'));assert.ok(!bytes.includes(agentHash));assert.ok(!bytes.includes(key.token))
     await command(restored,['import','--input',old,'--yes'])
     await command(restored,['export','--output',again])
-    h=await harness({root:restored,...identity}); const signed=await h.signIn(h.auth.OWNER_EMAIL); const saved=await h.state(signed); assert.equal(saved.turnovers[0].status,'completed'); assert.ok(saved.importJobs.some(j=>j.status==='completed')); assert.equal((await h.send(`/api/cabin/turnovers/${turnover.id}/photo`,undefined,signed)).status,200); await h.close();h=null
+    h=await harness({root:restored,...identity}); const signed=await h.signIn(h.auth.OWNER_EMAIL); const saved=await h.state(signed); assert.equal(saved.turnovers.find(t=>t.id===turnover.id).status,'completed'); assert.ok(saved.importJobs.some(j=>j.status==='completed')); assert.equal((await h.send(`/api/cabin/turnovers/${turnover.id}/photo`,undefined,signed)).status,200); await h.close();h=null
     const rows=text=>text.split('\n').filter(Boolean).map(JSON.parse).filter(r=>r.kind==='part')
     assert.ok(rows(bytes).length>0);assert.deepEqual(rows(await readFile(again,'utf8')),rows(bytes))
     await command(restored,['import','--input',old,'--yes'],4)
