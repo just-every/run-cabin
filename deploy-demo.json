@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "domain": "run-cabin.com",
+  "name": "Cabin",
+  "ownerEmail": "jess@blueridgegetaways.example",
+  "settings": {
+    "MAIL_FROM": "hello@blueridgegetaways.example"
+  }
+}

@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { wireDatabase } from '../../d1-transport/index.mjs';
+import { wireDatabase } from '../../../d1-transport/index.mjs';
 import { guard, guardPredicate } from './guards.ts';
 import type { D1Database, D1ImportContext, D1Sql } from './types.ts';
 const budgets = new WeakMap<D1Database, { used: number; limit: number }>();

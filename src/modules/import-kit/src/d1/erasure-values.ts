@@ -11,7 +11,7 @@ import { sha256 } from '../provenance/identity.ts';
 import { stagingChunks } from './staging-transport.ts';
 import { NATIVE_STAGE_ROWS_BYTES,nativeRowStatements } from './native-staging-rows.ts';
 import { stagingStatements } from './staging-statements.ts';
-import { rpcSize, rpcSizeBytes, wireSql, type RpcSize } from '../../d1-transport/index.mjs';
+import { rpcSize, rpcSizeBytes, wireSql, type RpcSize } from '../../../d1-transport/index.mjs';
 import type { NativeStageCheckpoint } from './native-staging-rows.ts';
 
 export const erasureIndexColumns=['ordinal','source_identity','target_identity'];

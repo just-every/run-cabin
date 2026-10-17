@@ -1,4 +1,4 @@
-import { rpcBytes, wireBatch } from '../../d1-transport/index.mjs';
+import { rpcBytes, wireBatch } from '../../../d1-transport/index.mjs';
 import type { D1Sql } from './types.ts';
 import { checkSql } from './budget.ts';
 
