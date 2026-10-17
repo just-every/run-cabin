@@ -260,6 +260,11 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **RUNTIME-001 — Owner-run lifecycle and durable background work · partial.** Start a fresh source checkout with rer dev, sign in and complete a product job, stop/restart and recover durable state; interrupt each external job before/after provider acceptance and prove reconciliation prevents duplicate charges, sends or unlocks. Run the homepage’s five commands on a clean macOS and a clean Linux machine to a signed-in installation, then `rer deploy` the same source to an owner-controlled Cloudflare account and sign in there.
   Current evidence: `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs:10`; `tests/runtime.mjs`; `tests/archive.test.mjs:27`. Remaining: Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity.
 
+## Public hosted demo
+
+- **SITE-002 — Hosted vacation-rental demo · partial.** From the homepage’s Try the demo at 1440 and 390 pixels, start a signed-out visitor session with no install or contact details and use the seeded US rental business: approve a calendar review, complete a turnover with photos and approve a USD owner statement. Verify a second visitor cannot see those changes; trigger the host’s scheduled expiry through its test boundary, reject reads from the expired session and start a fresh sample session. Check that visitor changes and typed contact details are gone from storage, logs and backups, that no real guest data was seeded and no real message, charge, payout or lock/provider action left the sandbox. Verify the public hostname and homepage link work, and a fresh owner installation is empty.
+  Current evidence: `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs`. Remaining: Seeded rental data, effect suppression, deployment wiring and a direct demo link exist; the public hosted journey, scheduled expiry and storage/log/backup erasure are not established by the seed tests.
+
 ## Push further: agents complete the stay’s job
 
 - **AGENT-001 — Recover a disrupted stay through verified readiness · partial.** Cancel the cleaner shortly before an arrival, then report a failed lock as the guest. From the recovery case approve a budget and relocation/compensation choice; verify backup acceptance, completed evidence, new code state, guest confirmation and corrected owner net. Stop/restart midway and exercise denied approval; no step or unresolved balance may be silently skipped.
@@ -290,7 +295,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 
 ## Build and evidence discipline
 
-**88 clauses: 6 done · 30 partial · 52 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
+**89 clauses: 6 done · 53 partial · 30 missing.** IDs and statuses correspond one-to-one with the contract’s final table. No new target capability is treated as accepted merely because a neighboring foundation is done.
 
 Current public-door checks are `pnpm run test:cabin` (native authority, snapshot reconciliation, cleaner evidence, statement arithmetic, bearer limits and basic move-in), `pnpm run test:archive` (local CLI round-trip, damaged/populated refusal and later-journal erasure), `pnpm run test:runtime` after the real build (health, installed homepage and 404s), and `pnpm run test:launch` (fresh-clone rer dev launch). They are implementation tests, not a complete target suite. Run the tests relevant to changed behavior; the CI push matrix in `verification.json` is the full wall. Preserve existing checks; document work must not weaken them.
 
