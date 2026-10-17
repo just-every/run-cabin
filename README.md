@@ -1,8 +1,8 @@
-# Cabin
+# <img src="public/brand/mark.svg" alt="" width="40" height="40"> Cabin
 
-Holiday-rental operations for an Australian host or manager with 3–40 short-stay properties: calendar imports, cleaner photo checklists and approved owner statements. MIT licensed. [First-release scope](ACCEPTANCE.md).
+Vacation rental operations for a US host or manager with 3–40 rentals: channel calendar imports, cleaner photo checklists and approved owner statements in USD. MIT licensed. [Target contract](CONTRACT.md) · [first-release scope](ACCEPTANCE.md) · [docs](docs/getting-started.md).
 
-The run site is **local for now**. Run `rer dev`, then open `http://127.0.0.1:<port>/run`, using the port in the **RER_SITE** address RER prints. Its port differs from **RER_READY**, which serves the installed app and `/app`. `https://run-cabin.com` goes live once its domain is registered. Registration does not block using or deploying the app.
+The run site (homepage, `/docs` and `/run`) is **local for now**. Run `rer dev`, then open `http://127.0.0.1:<port>/`, using the port in the **RER_SITE** address RER prints. Its port differs from **RER_READY**, which serves the installed app and `/app`. `https://run-cabin.com` goes live once its domain is registered. Registration does not block using or deploying the app.
 
 ## Start from a fresh clone
 
@@ -24,7 +24,7 @@ For a lasting installation with your own mailbox, before the first launch in a f
 1. **Properties & people:** add a property, owner name/email and commission. Commission is in basis points: 1500 means 15%. The installation owner adds an active cleaner and sends their invitation. Only the owner grants access. Managers operate the portfolio; cleaners see only their own jobs.
 2. **Calendar:** paste each channel's exported `.ics` file for the same property. Prepare and inspect changes and clashes, then approve each exact snapshot. Try the documented [Airbnb](fixtures/airbnb.ics) and [Booking.com](fixtures/booking-com.ics) fixtures. Feed freshness shows the last approved import time. Refresh manually from the source: files can lag and **Cabin never prevents double bookings**. Edits, cancellations and removals need a fresh human approval.
 3. **Turnovers:** choose a departing booking, active cleaner and checklist. Prepare, review and approve the assignment. The cleaner signs in, checks every item and uploads a JPEG or PNG photo (up to 256 KB) with a caption. Photos stay private to the assigned cleaner and managers. Locally, add the cleaner with email `cleaner@dev.localhost`. Run `rer dev --as cleaner` in another terminal and open its private RER_OPEN link in a separate browser profile. For a local manager use `manager@dev.localhost` and `rer dev --as manager`. Save the matching active team grant as owner first. These personas sign in locally without sending mail; hosted people use invitations.
-4. **Statements:** choose a property and month, enter income/cost descriptions and AUD amounts, then prepare. Review the owner, commission and net, approve the frozen revision and download CSV. Positive lines are income, negative lines are costs. Cabin does not collect payments or perform trust accounting.
+4. **Statements:** choose a property and month, enter income/cost descriptions and USD amounts, then prepare. Review the owner, commission and net, approve the frozen revision and download CSV. Positive lines are income, negative lines are costs. Cabin does not collect payments or perform trust accounting.
 5. **Move in:** paste the [Cabin property-register CSV](fixtures/properties.csv), preview its dry run, inspect the plan and approve. The durable journal shows progress. Undo removes unchanged imports and preserves native edits. Read the [format and undo guide](docs/move-in.md). Fixtures document Cabin's input shape; they are not claimed vendor exports.
 6. **Agent access:** create a preparation token, copy it once into private configuration, and use the [command API](docs/commands.md). Agents prepare calendar, turnover and statement drafts; people approve. Every approval records its actor and exact revision. Revoke a token to end access immediately.
 
@@ -69,8 +69,9 @@ Dry run validates/builds without provider calls. Real deploy provisions resource
 ```sh
 pnpm run test:cabin
 pnpm run test:archive
+pnpm run test:site
 pnpm run typecheck
 rer verify
 ```
 
-GitHub Verify shards source, types, domain, restore and production runtime checks. Package mode pins `@runeditrun/rer@0.2.22`. Foundation: Base `ada9f574d8a7247edc3a1180b593ad182b1fbb37`. [Source reuse](docs/source-notes.md), [operations](RUN-LOCALLY.md), [agent instructions](AGENTS.md).
+GitHub Verify shards source, types, domain, restore, run site and production runtime checks. Package mode pins `@runeditrun/rer@0.2.38`. Foundation: Base `ada9f574d8a7247edc3a1180b593ad182b1fbb37`. [Source reuse](docs/source-notes.md), [operations](RUN-LOCALLY.md), [agent instructions](AGENTS.md).

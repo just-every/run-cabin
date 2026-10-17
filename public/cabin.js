@@ -21,7 +21,7 @@ document.querySelectorAll('form[data-photo]').forEach(form => form.addEventListe
   } catch (error) { notice.textContent = error.message; button.disabled = false }
 }))
 
-// Add real statement lines; the server converts decimal AUD exactly to cents.
+// Add real statement lines; the server converts decimal USD exactly to cents.
 document.querySelector('[data-add-line]')?.addEventListener('click', () => {
   const list = document.querySelector('[data-statement-lines]')
   if (list.children.length >= 100) return

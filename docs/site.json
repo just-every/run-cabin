@@ -1,0 +1,28 @@
+{
+  "sections": [
+    {
+      "title": "Start here",
+      "pages": [
+        { "slug": "getting-started", "title": "Getting started", "file": "getting-started.md", "summary": "Start Cabin on your own computer in two lines, confirm yourself as the owner and open the app." },
+        { "slug": "homes-and-people", "title": "Homes and people", "file": "homes-and-people.md", "summary": "Add each home with its owner and commission, then give managers and cleaners their own access." }
+      ]
+    },
+    {
+      "title": "Run your homes",
+      "pages": [
+        { "slug": "calendars", "title": "Channel calendars", "file": "calendars.md", "summary": "Bring in each home's Airbnb and Booking.com calendar file, review what changed and any clashes, and approve the snapshot." },
+        { "slug": "turnovers", "title": "Turnovers", "file": "turnovers.md", "summary": "Assign a cleaner and a checklist to a departing booking; the cleaner ticks every item and adds a photo." },
+        { "slug": "statements", "title": "Owner statements", "file": "statements.md", "summary": "Enter a month's income and costs for a home, check the management fee and owner net, approve and download the CSV." },
+        { "slug": "agent-access", "title": "Agent access", "file": "agent-access.md", "summary": "Give the agent you already use a token to prepare calendar reviews, turnovers and statements for a person to approve." }
+      ]
+    },
+    {
+      "title": "Keep your data",
+      "pages": [
+        { "slug": "move-in", "title": "Move in your homes", "file": "move-in.md", "summary": "Preview a property register CSV, approve the exact plan, follow the journal and undo while records are untouched." },
+        { "slug": "backup", "title": "Back up, restore and erase", "file": "backup.md", "summary": "Export the whole installation to one archive, restore it into a fresh copy, and erase a home for good." },
+        { "slug": "commands", "title": "Command reference", "file": "commands.md", "summary": "Every command the app and the agent door accept, with its input and who may run it." }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,3 @@
-# Cabin command contract
-
 All private routes use the installation’s native operator session. The installation owner grants manager and cleaner access by email; a native member account alone grants no Cabin access. Every read, command, photo and CSV checks the current operator and grant. Revocation takes effect on the next request; mutation transactions fence authority again before committing.
 
 `GET /api/cabin/state` returns the current state. `POST /api/cabin/command` accepts `{"name":"command.name","input":{}}` and returns `{"result":...}`. Human POSTs require the exact installation `Origin`; cross-site fetches are refused. This Origin check also protects plain HTML forms and multipart uploads from CSRF. Errors return `{"error":"..."}` with HTTP 400, 401, 403, 404 or 409. Domain money is always an integer number of cents.
@@ -23,7 +21,7 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/turnovers`, `/app/
 | `privacy.erase` | `entity: "property", id, revision` | Owner. Erases the property, its bookings/calendar reviews, turnover checklist/photo evidence and statements. Also erases the property’s retained move-in source and invalidates older archive checkpoints. Destructive: export anything that must be kept before requesting erasure. |
 | `privacy.erase` | `entity: "member", id, revision` | Owner. Erases only an unused, uninvited grant. Grants with turnover or native authentication history must be deactivated instead. |
 
-Move-in commands, fingerprints, jobs, undo reports and CSV fixtures are specified in [move-in.md](move-in.md).
+Move-in commands, fingerprints, jobs, undo reports and CSV fixtures are specified in [Move in your homes](/docs/move-in).
 
 ## Calendar semantics
 

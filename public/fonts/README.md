@@ -14,3 +14,19 @@ at weights 400, 500 and 700. Ascent, descent and line gap match Outfit's
 1000, -260 and 0 per 1000 units, divided by each scale. Matching metrics reduces
 layout movement; different glyph designs cannot have identical widths in every
 piece of text. Recalculate the fallback and preload when changing the brand font.
+
+## Run site faces
+
+The run site (homepage, docs, /run) uses three more faces, each under the SIL
+Open Font License 1.1 with its licence beside it, from Fontsource's variable
+Latin and Latin Extended WOFF2 subsets (5.3.0):
+
+| Face | Use | Folder | Upstream |
+|---|---|---|---|
+| Inter Tight | headings and the Cabin wordmark | `inter-tight/` | https://github.com/rsms/inter-tight |
+| Inter | body text | `inter/` | https://github.com/rsms/inter |
+| JetBrains Mono | commands and code | `jetbrains-mono/` | https://github.com/JetBrains/JetBrainsMono |
+
+Their `@font-face` rules are in `fonts.css` with Outfit's. The site's tokens
+(`public/site/theme.css`) name them; the app keeps Outfit until its screens
+take the new look.

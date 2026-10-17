@@ -1,7 +1,7 @@
 export const h = (value: unknown) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!))
 export const owner = (s: any) => s.actor.role === 'owner'
 export const manager = (s: any) => ['owner', 'manager'].includes(s.actor.role)
-export const money = (n: number) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n / 100)
+export const money = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n / 100)
 export const badge = (text: unknown) => `<span class="badge">${h(text)}</span>`
 export const empty = (text: string) => `<p class="empty">${h(text)}</p>`
 export const panel = (title: string, body: string) => `<section class="panel"><h2>${h(title)}</h2>${body}</section>`

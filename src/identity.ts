@@ -8,8 +8,8 @@ import site from '../deploy-site.json'
 export const identity: EditionIdentity = {
   product: branding.name,
   deployment: branding.name,
-  purpose: '{deployment} keeps short-stay calendars, cleaner turnovers and owner statements together.',
-  tagline: 'Short-stay operations in your own hands.',
+  purpose: '{deployment} keeps vacation rental calendars, cleaner turnovers and owner statements together.',
+  tagline: 'Open source vacation rental software for hosts and managers.',
   signInPath: '/signin',
   // The run site `rer deploy --site` publishes (deploy-site.json).
   runSite: `https://${site.domain}`,

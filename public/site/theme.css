@@ -1,0 +1,78 @@
+/* The run site's tokens, defined once: the homepage, the docs, /run and the 404
+   link this file (Base's Run and not-found pages read its --rer-* tokens).
+   Cabin's look (design desk, 16 Oct 2026): warm off-white paper sampled from the
+   painted bands, deep forest-navy ink, the mark's pine and amber as accents,
+   Inter Tight headings over Inter body text, white cards with soft shadows. */
+:root {
+  --rer-font-body: 'Inter', Arial, sans-serif;
+  --rer-font-heading: 'Inter Tight', 'Inter', Arial, sans-serif;
+  --rer-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --rer-page: #faf7f3;
+  --rer-surface: #ffffff;
+  --rer-text: #0d2b24;
+  --rer-muted: #5a6470;
+  --rer-border: #8d969e;
+  --rer-focus: #1f6b47;
+  --rer-link: #0d2b24;
+  --rer-accent: #0d2b24;
+  --rer-accent-text: #ffffff;
+  --rer-code-background: #1c1e21;
+  --rer-code-text: #e8eaec;
+  --rer-wordmark-weight: 700;
+  --rer-wordmark-tracking: -.03em;
+  --rer-logo: url('/brand/mark.svg');
+
+  --paper: var(--rer-page);
+  --surface: var(--rer-surface);
+  --ink: var(--rer-text);
+  --pill: #062620;
+  --body: #555e6c;
+  --soft: #6b7480;
+  --faint: #9aa1aa;
+  --line: #ebe8e2;
+  --line-strong: #dedad2;
+  --row: #f3f4f7;
+  --pine: #0f3d2e;
+  --pine-hover: #17513d;
+  --eyebrow: #1f5a3a;
+  --green: #2b9a6c;
+  --green-ink: #13693f;
+  --green-tint: #e2f4e8;
+  --amber: #f6a83a;
+  --amber-ink: #a86412;
+  --amber-tint: #fef1dc;
+  --red: #e2423f;
+  --red-ink: #9a1c1c;
+  --red-tint: #fde4e4;
+  --blue: #1677e8;
+  --blue-tint: #dcecfe;
+  --violet: #5b54ec;
+  --violet-tint: #e7e6fd;
+  --coral-bar: #feaaa9;
+  --booking-bar: #bcdcfd;
+  --terminal: #1c1e21;
+  --terminal-green: #34c46a;
+
+  --font-head: var(--rer-font-heading);
+  --font-body: var(--rer-font-body);
+  --font-mono: var(--rer-font-mono);
+
+  --radius-card: 18px;
+  --radius-chip: 999px;
+  --shadow-card: 0 1px 2px rgba(13, 43, 36, .04), 0 22px 48px -24px rgba(13, 43, 36, .22);
+  --shadow-float: 0 2px 6px rgba(13, 43, 36, .06), 0 18px 40px -18px rgba(13, 43, 36, .30);
+  --wrap: 1290px;
+  --gutter: clamp(16px, 5vw, 80px);
+}
+
+/* Base's Run page (/run) and not-found page, in the same look: heavy display
+   type, white step cards on the warm paper, pine numerals, the terminal card. */
+body:has(> main > .intro) h1, body:has(> main > .hero) h1 { font-weight: 800; letter-spacing: -.025em; }
+body:has(> main > .intro) .step { border-radius: 22px; border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-card); }
+body:has(> main > .intro) .num { background: var(--pine); color: #fff; font-weight: 800; }
+body:has(> main > .intro) .step h2 { font-weight: 750; letter-spacing: -.015em; }
+body:has(> main > .intro) .code { background: var(--terminal); }
+body:has(> main) .brand span { font-weight: 700; }
+body:has(> main > .intro), body:has(> main > .hero) {
+  background: radial-gradient(60% 50% at 90% 6%, rgba(246, 168, 58, .10), transparent 70%), radial-gradient(50% 40% at 4% 30%, rgba(43, 154, 108, .07), transparent 70%), var(--paper);
+}
