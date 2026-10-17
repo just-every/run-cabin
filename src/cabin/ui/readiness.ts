@@ -4,7 +4,7 @@ import { portfolio } from '../readiness'
 import { localDay, dayName, when } from '../clock'
 import { homeSettings } from '../homes'
 import { channelName } from '../inventory'
-import { stayLabel } from './calendar-grid'
+import { guestOf } from './calendar-grid'
 // The owner's portfolio view: for a chosen day, is each home ready for its next
 // guests? Each card shows the next arrival, the turnover before it, the door
 // code and the photos the cleaner sent back.
@@ -20,7 +20,7 @@ export function readiness(s: any, from?: string | null) {
     const [text, tone] = STATE[x.state], a = x.arrival, t = x.turnover, done = t?.status === 'completed'
     const list = done ? t!.completion?.photos ?? [{ id: t!.completion?.photoId }] : []
     return `<article class="home-ready ${x.state}"><div class="record-title"><h3>${h(x.property.name)}</h3>${chip(text, tone)}</div>
-    <dl class="facts"><dt>Next arrival</dt><dd>${a ? `${h(stayLabel(a))} · <span class="ch ch-${a.channel === 'booking.com' ? 'booking' : h(a.channel)}">${h(channelName(a.channel))}</span> · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, x.property.id).checkInTime}`))}` : 'None booked'}</dd>
+    <dl class="facts"><dt>Next arrival</dt><dd>${a ? `${h(guestOf(a))} · <span class="ch ch-${a.channel === 'booking.com' ? 'booking' : h(a.channel)}">${h(channelName(a.channel))}</span> · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, x.property.id).checkInTime}`))}` : 'None booked'}</dd>
     <dt>Turnover</dt><dd>${t ? `<a href="/app/turnovers#turnover-${h(t.id)}">${h(done ? 'Done' : t.status === 'unassigned' ? 'No cleaner yet' : 'Scheduled')}</a>${t.cleanerId ? ` · ${h(memberName(s, t.cleanerId))}` : ''} · ${h(windowText(t))}${t.checkedOut ? `<br><span class="checked-out">${h(checkedOut(s, t))}</span>` : ''}` : '—'}</dd>
     <dt>Photos</dt><dd>${t ? `${done ? list.length : 0} / ${h(t.photosRequired ?? 1)}` : '—'}</dd></dl>
     ${x.guestCode ? `<div class="doors">${codeLine(s, x.guestCode, 'Door code')}</div>${lockNote(s, x.guestCode)}` : ''}

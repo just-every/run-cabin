@@ -18,6 +18,11 @@ export function initials(name: string) {
   const words = name.split(/\s+/).filter(w => /^[a-z]/i.test(w) && !/^(the|and|of)$/i.test(w))
   return words.length ? (words[0][0] + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() : name.slice(0, 2)
 }
+/** "Brooke Sullivan" → "Brooke S."; a family or one-word name has none. */
+export function firstAndInitial(name: string) {
+  const words = name.split(/\s+/).filter(Boolean)
+  return words.length >= 2 && !/^the$/i.test(words[0]) && /^[a-z]/i.test(words[words.length - 1]) ? [`${words[0]} ${words[words.length - 1][0].toUpperCase()}.`] : []
+}
 /** A name's forms: in full, then whole first words with an ellipsis, then initials. */
 export const nameForms = (name: string, last = [initials(name)]) => [...new Set([name, ...prefixes(name), ...last])]
 /** A detail line's forms: whole " · " parts first, then whole words, then nothing at all. */

@@ -2,7 +2,8 @@ import { h, heading, panel, form, select, area, hidden, approve, empty, property
 import { turnoverChip, codeLine, lockNote, windowText, address, photos, noticeLine, choose, photoInput, zoneName, atHome, checkedOut } from './ops'
 import { homeSettings } from '../homes'
 import { ZONES, time12 } from '../clock'
-import { stayLabel } from './calendar-grid'
+import { knownGuest } from './calendar-grid'
+import { channelName } from '../inventory'
 import { checkoutInstant, checkoutTime, finishedLate } from '../turnover-window'
 import { when } from '../clock'
 import { turnoverLockSetup } from './turnover-lock-setup'
@@ -34,7 +35,8 @@ export function readyMessage(s: any, id: string | null) {
 }
 function after(s: any, t: any) {
   const stay = stayOf(s, t.bookingId), next = stayOf(s, t.nextBookingId)
-  return `${stay ? `After ${h(stayLabel(stay))} checks out` : 'After check-out'} · ${next ? `next arrival ${h(stayLabel(next))}${t.windowEnd ? ` at ${h(time12(t.windowEnd.slice(11, 16)))}` : ''}` : 'no next arrival booked'}`
+  // Airbnb's calendar names no guest: say whose stay it is, never "Reserved" as a name.
+  return `${stay ? `After ${h(knownGuest(stay) ?? `the ${channelName(stay.channel)} stay`)} checks out` : 'After check-out'} · ${next ? `next arrival ${h(knownGuest(next) ?? `(${channelName(next.channel)})`)}${t.windowEnd ? ` at ${h(time12(t.windowEnd.slice(11, 16)))}` : ''}` : 'no next arrival booked'}`
 }
 function managerJob(s: any, t: any) {
   const guest = codeOf(s, t, 'guest'), mine = codeOf(s, t, 'cleaner'), open = t.status === 'unassigned' || t.status === 'approved', wait = checkoutWait(s, t)

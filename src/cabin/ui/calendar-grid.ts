@@ -3,7 +3,7 @@ import { addDays, overlaps } from '../inventory'
 import { homeSettings } from '../homes'
 import { GLYPHS, icon } from './icons'
 import { type Item, declinedBar, openNights, short, stayBar, turnoverChip } from './calendar-items'
-export { stayLabel } from './calendar-items'
+export { stayLabel, knownGuest, guestOf } from './calendar-items'
 // The timeline: one row per home, days across. Each home's row stacks its
 // stays and blocks first, then any declined requests, then a lane of turnover
 // chips under the checkout days, so a same-day turnover never squeezes between
@@ -16,6 +16,8 @@ export const SPANS: [number, string][] = [[7, 'Week'], [14, '2 weeks'], [28, 'Mo
 export const ARRIVAL_DAYS = 14
 /** Days a turnover chip spans at each view, so its cleaner and window can show. */
 const CHIP: Record<number, number> = { 7: 2, 14: 3, 28: 4 }
+/** How many days a declined request's label may take, its own nights included. */
+const SPILL: Record<number, number> = { 14: 4, 28: 7 }
 const dayIndex = (from: string, day: string) => Math.round((Date.parse(day) - Date.parse(from)) / 86_400_000)
 export const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v + 'T00:00:00Z').toISOString().slice(0, 10) === v
 export function time12(t?: string | null) { if (!t) return ''; const [hh, mm] = t.split(':').map(Number); return `${hh % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${hh < 12 ? 'am' : 'pm'}` }
@@ -63,11 +65,13 @@ export function grid(s: any, v: GridView) {
     const direct = s.direct?.homes?.find((d: any) => d.propertyId === p.id)
     const vacant = openNights(v, bars, direct?.enabled ? direct.nightlyCents : null)
     const count = lanes(chips, lanes(declined, lanes([...bars, ...vacant], 1))) - 1, place = town(s, p.id)
+    // A short declined request's reason runs on past its last night while its lane is free.
+    for (const d of declined) { const next = Math.min(days, ...declined.filter(o => o !== d && o.lane === d.lane && o.a >= d.z).map(o => o.a)); d.spill = Math.max(0, Math.min(next - d.z, (SPILL[days] ?? 0) - (d.z - d.a))) }
     for (const x of [...bars, ...declined]) if (x.pop) pops.push(x.pop)
     const label = `<div class="tl-label">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}${direct ? `<span class="rate" title="${direct.enabled ? 'Direct booking nightly rate' : 'Direct nightly rate (booking page not published)'}">${h(money(direct.nightlyCents).replace(/\.00$/, ''))}/night</span>` : ''}</div></div>`
     const now = t >= 0 && t < days ? `<i class="now x-${t + 1}" aria-hidden="true"></i>` : ''
     const items = [...bars, ...vacant, ...declined, ...chips].sort((x, y) => (x.lane! - y.lane!) || x.a - y.a)
-    return `<div class="tl-row">${label}<div class="tl-grid tl-track d${days} lanes-${count}">${now}${items.map(x => x.html(`${where(x.a, x.z)} ln-${x.lane}`)).join('') || '<p class="tl-free">No stays in these dates</p>'}</div></div>`
+    return `<div class="tl-row">${label}<div class="tl-grid tl-track d${days} lanes-${count}">${now}${items.map(x => x.html(`${where(x.a, x.z + (x.spill ?? 0))}${x.spill ? ` spill nw-${x.z - x.a}` : ''} ln-${x.lane}`)).join('') || '<p class="tl-free">No stays in these dates</p>'}</div></div>`
   }).join('')
   const legend = `<p class="tl-legend"><span class="key ch-airbnb">${GLYPHS.airbnb}Airbnb</span><span class="key ch-vrbo">${GLYPHS.vrbo}Vrbo</span><span class="key ch-booking">${GLYPHS['booking.com']}Booking.com</span><span class="key ch-direct">${GLYPHS.direct}Direct</span><span class="key block">${GLYPHS.block}Blocked</span><span class="key declined">${icon('alert')}Request declined</span><span class="key k-turn"><i class="dot"></i>Turnover</span><span class="key k-same">${icon('turn')}Same-day turnover</span><span class="note">Airbnb’s calendar names every stay “Reserved” and Booking.com’s closes nights without a guest, so their bars show a guest only once you add one under Reservations. A night held on any channel closes on every other channel through Cabin’s calendar links. Select a bar for its details.</span></p>`
   return `<section class="panel tl-card" aria-label="Calendar of every home, ${h(short(from))} to ${h(short(addDays(from, days - 1)))}"><div class="tl-scroll" role="region" aria-label="Homes by day" tabindex="0"><div class="tl d${days}">${monthBar}${head}${rows}</div></div>${legend}${pops.join('')}</section>`

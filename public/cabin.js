@@ -69,7 +69,7 @@ document.querySelector('[data-add-expense]')?.addEventListener('click', () => {
 // a word. Phone layouts show every label whole, as cards.
 function fitLabels() {
   const whole = matchMedia('(max-width: 700px)').matches
-  const fits = (line, box) => line.scrollWidth <= line.clientWidth + 0.5 && box.scrollHeight <= box.clientHeight + 0.5
+  const fits = (line, box) => line.scrollWidth <= line.clientWidth + 0.5 && line.scrollHeight <= line.clientHeight + 0.5 && box.scrollHeight <= box.clientHeight + 0.5
   for (const box of document.querySelectorAll('.tl-track .t')) {
     const lines = [...box.querySelectorAll('[data-fit]')].map(line => [line, JSON.parse(line.dataset.fit)]), code = box.querySelector('.code')
     if (whole) { for (const [line, forms] of lines) line.textContent = forms[0]; if (code) code.hidden = false; continue }
@@ -80,8 +80,11 @@ function fitLabels() {
     for (const [i, [line, forms]] of lines.entries()) {
       const pick = () => forms.find(form => { line.textContent = form; return !(form && used.has(form)) && fits(line, box) }) ?? forms[forms.length - 1]
       line.textContent = pick()
-      // The guest's name matters more than the channel's mark beside it.
-      if (i === 0 && line.textContent !== forms[0] && bar.querySelector(':scope > .glyph')) { bar.classList.add('no-mark'); line.textContent = pick() }
+      // The guest's name matters more than the channel's mark beside it; a stay
+      // the channel names nobody for keeps its mark, which is then its label,
+      // unless even its shortest form does not fit beside it.
+      const mark = bar.querySelector(':scope > .glyph') && !bar.classList.contains('no-mark')
+      if (mark && ((i === 0 && line.textContent !== forms[0] && !bar.classList.contains('keep-mark')) || !fits(line, box))) { bar.classList.add('no-mark'); line.textContent = pick() }
       used.add(line.textContent)
     }
     if (code) code.hidden = box.scrollHeight > box.clientHeight + 0.5
