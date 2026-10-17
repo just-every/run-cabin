@@ -1,0 +1,14 @@
+Record type,Provider,Listing ID,Listing name,Owner name,Owner email,Commission percent,Reservation ID,Channel,Status,Channel reference,iCal UID,Balance ID,Opening balance,Currency,As of,iCal URL
+home,guesty,65a000000000000000000001,Juniper Cabin,Rae Ellis,rae@example.com,18.50,,,,,,,,,,
+home,guesty,65a000000000000000000002,River House,Devon Park,devon@example.com,20,,,,,,,,,,
+reservation,guesty,,,,,,65b000000000000000000001,,,,synthetic-juniper-airbnb-1,,,,,
+reservation,guesty,,,,,,65b000000000000000000002,,,,synthetic-river-vrbo-2,,,,,
+reservation,guesty,,,,,,65b000000000000000000003,,,,,,,,,
+balance,guesty,65a000000000000000000001,,,rae@example.com,,,,,,,opening-65a000000000000000000001-20261017,1845.67,USD,2026-10-17,
+balance,guesty,65a000000000000000000002,,,devon@example.com,,,,,,,opening-65a000000000000000000002-20261017,-95.25,USD,2026-10-17,
+link,guesty,65a000000000000000000001,,,,,,airbnb,,,,,,,,https://calendar.example.com/airbnb/65a000000000000000000001.ics?token=synthetic
+link,guesty,65a000000000000000000001,,,,,,vrbo,,,,,,,,https://calendar.example.com/vrbo/65a000000000000000000001.ics?token=synthetic
+link,guesty,65a000000000000000000001,,,,,,booking.com,,,,,,,,https://calendar.example.com/booking.com/65a000000000000000000001.ics?token=synthetic
+link,guesty,65a000000000000000000002,,,,,,airbnb,,,,,,,,https://calendar.example.com/airbnb/65a000000000000000000002.ics?token=synthetic
+link,guesty,65a000000000000000000002,,,,,,vrbo,,,,,,,,https://calendar.example.com/vrbo/65a000000000000000000002.ics?token=synthetic
+link,guesty,65a000000000000000000002,,,,,,booking.com,,,,,,,,https://calendar.example.com/booking.com/65a000000000000000000002.ics?token=synthetic

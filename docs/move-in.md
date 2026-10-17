@@ -1,4 +1,31 @@
-Cabin's property-register move-in kit (version 1) brings in your homes, their owners and your commission on each from one spreadsheet. You preview it first, approve the exact plan, and can undo it while the imported homes are unchanged. It moves homes only: it does not bring in bookings, people, statements or photos.
+Cabin can move homes, owners, guests, reservations and opening owner balances from Guesty, Hostaway or OwnerRez exports. You preview a saved plan, import its accepted rows, compare source totals with the saved Cabin records, then sign off the cutover. The original homes-only property-register kit remains available under **Property-register CSV · homes only**.
+
+## Provider exports
+
+1. Sign in as the installation owner and open **Move in**. Select Guesty, Hostaway or OwnerRez and the cutover date used for future-night and opening-balance reconciliation.
+2. Select the original native exports together under **Native export files**. Add a supplementary cutover CSV for ownership, commissions, opening balances and iCal links missing from the exports. OwnerRez's Date Range export also needs supplementary reservation rows identifying channel and status. Use the exact supported report headings and cutover columns in [Move-in formats](/docs/move-in-formats); Cabin does not guess missing provider fields.
+3. Choose **Preview exports**. This stores the source mapping, accepted rows, row refusals and fingerprint without creating homes, guests or reservations.
+4. Review **Source → Cabin**, then expand the homes, reservations, guests and opening-balance tables. In a preview, the Cabin column represents the accepted plan. Refused rows show their file, row, record kind, source ID where available, and reason. Correct the files and preview again, or import the accepted records with the refusals explicitly excluded.
+5. Choose **Import accepted records**. This applies exactly the saved fingerprint. Reconciliation now compares source totals with the imported records actually saved in Cabin: reservation count, confirmed future nights from the cutover date, and opening owner balances.
+6. Explain every source-to-Cabin difference and account for every refused row, tick the review confirmation, then choose **Sign off cutover**. Sign-off records your explanations and time; an import with unexplained differences or refusals cannot be signed off.
+
+Opening balances are cutover amounts, not recreated historical statements. Review the imported reservations on the shared calendar: confirmed imported stays block availability. Retained iCal links support ongoing calendar refresh on a self-hosted installation. RER managed hosting cannot refresh outbound iCal feeds; file imports still work there.
+
+**Provider APIs are not connected.** Export imports work independently. The documented API adapters have been exercised only with recorded synthetic fixtures; live provider acceptance requires owner accounts. These fixtures are test evidence, not customer data or a live connection.
+
+## Undo a provider import
+
+Choose **Undo provider import** on an imported or signed-off job. Undo checks that the imported records remain unchanged and have no later dependent work before removing them. If a later change prevents undo, Cabin reports the conflict rather than overwriting that work. The job and its review evidence remain visible after undo.
+
+## Provider command API
+
+The owner can use `import.provider.preview` with `provider`, `asOf` (`YYYY-MM-DD`) and source files; the app submits files as repeated `sourceFiles` fields in a multipart form. The saved job includes its normalized plan, source-column mappings, refusals, fingerprint and reconciliation. Use `import.provider.apply` with `{id, fingerprint}` to import that plan, and `import.provider.undo` with `{id}` to undo it.
+
+Use `import.provider.signoff` with `id`, `fingerprint`, `confirm: "yes"` and the relevant explanation fields: `reservationsExplanation`, `futureNightsExplanation`, `ownerBalanceCentsExplanation`, and `refusalsExplanation`. A metric explanation is required when that metric differs; the refusals explanation is required when any row was refused. `GET /api/cabin/state` includes saved provider jobs alongside the original property-register jobs. Agents cannot perform move-in commands.
+
+## Property-register kit
+
+The property-register kit (version 1) brings in homes, owners and commissions from one spreadsheet. It does not import bookings, guests, balances, statements or photos. You preview it first, approve the exact plan, and can undo it while imported homes are unchanged.
 
 ## The CSV
 
@@ -20,7 +47,7 @@ home-two,Ocean Loft,Alex Chen,alex@stay.example,1000
 
 A file holds up to 100 rows and 100,000 bytes of UTF-8 (a byte-order mark is fine). Quoted commas and line breaks are supported. Cabin refuses malformed quoting, wrong columns, duplicate IDs, fractional commission and invalid email, and says which.
 
-## Move in from the app
+## Move in with the property-register kit
 
 1. Sign in as the installation owner and open **Move in**.
 2. Paste the CSV into **Property register CSV** and choose **Preview move-in**. This is a dry run: Cabin stores the plan and its fingerprint but creates no home.

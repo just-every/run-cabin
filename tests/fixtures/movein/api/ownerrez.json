@@ -1,0 +1,121 @@
+{
+  "listings": {
+    "items": [
+      {
+        "id": 16064,
+        "name": "Juniper Cabin",
+        "currency_code": "USD",
+        "owner_id": 901,
+        "active": true,
+        "time_zone": "America/New_York"
+      },
+      {
+        "id": 16065,
+        "name": "River House",
+        "currency_code": "USD",
+        "owner_id": 902,
+        "active": true,
+        "time_zone": "America/New_York"
+      }
+    ],
+    "limit": 100,
+    "offset": 0
+  },
+  "reservations": {
+    "items": [
+      {
+        "id": 3812041,
+        "property_id": 16064,
+        "guest_id": 9927181,
+        "arrival": "2026-10-25",
+        "departure": "2026-10-28",
+        "type": "booking",
+        "status": "active",
+        "listing_site": "Airbnb",
+        "currency_code": "USD",
+        "platform_reservation_number": "HM-SYNTH-001"
+      },
+      {
+        "id": 3812042,
+        "property_id": 16065,
+        "guest_id": 9927182,
+        "arrival": "2026-11-02",
+        "departure": "2026-11-06",
+        "type": "booking",
+        "status": "active",
+        "listing_site": "Vrbo",
+        "currency_code": "USD",
+        "platform_reservation_number": "VR-SYNTH-002"
+      },
+      {
+        "id": 3812043,
+        "property_id": 16064,
+        "guest_id": 9927183,
+        "arrival": "2026-12-01",
+        "departure": "2026-12-03",
+        "type": "booking",
+        "status": "canceled",
+        "listing_site": "Direct",
+        "currency_code": "USD"
+      }
+    ],
+    "limit": 100,
+    "offset": 0
+  },
+  "guests": {
+    "items": [
+      {
+        "id": 9927181,
+        "first_name": "Alex",
+        "last_name": "Morgan",
+        "email_addresses": [
+          {
+            "id": 100,
+            "address": "alex@example.com",
+            "is_default": true
+          }
+        ],
+        "phones": [
+          {
+            "id": 200,
+            "number": "+12025550101",
+            "is_default": true
+          }
+        ]
+      },
+      {
+        "id": 9927182,
+        "first_name": "Sam",
+        "last_name": "Rivera",
+        "email_addresses": [
+          {
+            "id": 101,
+            "address": "sam@example.com",
+            "is_default": true
+          }
+        ],
+        "phones": [
+          {
+            "id": 201,
+            "number": "+12025550102",
+            "is_default": true
+          }
+        ]
+      },
+      {
+        "id": 9927183,
+        "first_name": "Casey",
+        "last_name": "Chen",
+        "email_addresses": [
+          {
+            "id": 102,
+            "address": "casey@example.com",
+            "is_default": true
+          }
+        ]
+      }
+    ],
+    "limit": 100,
+    "offset": 0
+  }
+}

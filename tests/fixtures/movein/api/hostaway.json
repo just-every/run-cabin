@@ -1,0 +1,88 @@
+{
+  "listings": {
+    "status": "success",
+    "result": [
+      {
+        "id": 40160,
+        "name": "Juniper Cabin",
+        "currencyCode": "USD",
+        "timeZoneName": "America/New_York"
+      },
+      {
+        "id": 40161,
+        "name": "River House",
+        "currencyCode": "USD",
+        "timeZoneName": "America/New_York"
+      }
+    ]
+  },
+  "reservations": {
+    "status": "success",
+    "result": [
+      {
+        "id": 41288001,
+        "hostawayReservationId": 41288001,
+        "listingMapId": 40160,
+        "channelId": 2018,
+        "channelName": "airbnbOfficial",
+        "channelReservationId": "HM-SYNTH-001",
+        "guestName": "Alex Morgan",
+        "guestFirstName": "Alex",
+        "guestLastName": "Morgan",
+        "guestEmail": "alex@example.com",
+        "phone": "+12025550101",
+        "arrivalDate": "2026-10-25",
+        "departureDate": "2026-10-28",
+        "status": "new",
+        "currency": "USD"
+      },
+      {
+        "id": 41288002,
+        "hostawayReservationId": 41288002,
+        "listingMapId": 40161,
+        "channelId": 2002,
+        "channelName": "homeaway",
+        "channelReservationId": "VR-SYNTH-002",
+        "guestName": "Sam Rivera",
+        "guestFirstName": "Sam",
+        "guestLastName": "Rivera",
+        "guestEmail": "sam@example.com",
+        "phone": "+12025550102",
+        "arrivalDate": "2026-11-02",
+        "departureDate": "2026-11-06",
+        "status": "modified",
+        "currency": "USD"
+      },
+      {
+        "id": 41288003,
+        "hostawayReservationId": 41288003,
+        "listingMapId": 40160,
+        "channelId": 2000,
+        "channelName": "direct",
+        "channelReservationId": "DIRECT-SYNTH-003",
+        "guestName": "Casey Chen",
+        "guestFirstName": "Casey",
+        "guestLastName": "Chen",
+        "guestEmail": "casey@example.com",
+        "phone": "",
+        "arrivalDate": "2026-12-01",
+        "departureDate": "2026-12-03",
+        "status": "cancelled",
+        "currency": "USD"
+      }
+    ]
+  },
+  "ownerStatements": {
+    "status": "success",
+    "result": {
+      "id": 1,
+      "statementName": "Synthetic October statement",
+      "summaryDataJson": [
+        {
+          "formulaName": "ownerPayout",
+          "totalValue": 1750.42
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,4 @@
+Reservation ID,Confirmation code,Listing ID,Listing's nickname,Guest's name,Guest's email,Guest's phone,Check-in,Check-out,Integration,Status,Currency
+65b000000000000000000001,HM-SYNTH-001,65a000000000000000000001,Juniper Cabin,Alex Morgan,alex@example.com,+12025550101,2026-10-25,2026-10-28,Airbnb,Confirmed,USD
+65b000000000000000000002,VR-SYNTH-002,65a000000000000000000002,River House,Sam Rivera,sam@example.com,+12025550102,2026-11-02,2026-11-06,Vrbo,Confirmed,USD
+65b000000000000000000003,DIRECT-SYNTH-003,65a000000000000000000001,Juniper Cabin,Casey Chen,casey@example.com,,2026-12-01,2026-12-03,Manual,Canceled,USD

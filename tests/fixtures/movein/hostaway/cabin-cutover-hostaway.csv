@@ -1,0 +1,14 @@
+Record type,Provider,Listing ID,Listing name,Owner name,Owner email,Commission percent,Reservation ID,Channel,Status,Channel reference,iCal UID,Balance ID,Opening balance,Currency,As of,iCal URL
+home,hostaway,40160,Juniper Cabin,Rae Ellis,rae@example.com,18.50,,,,,,,,,,
+home,hostaway,40161,River House,Devon Park,devon@example.com,20,,,,,,,,,,
+reservation,hostaway,,,,,,41288001,,,HM-SYNTH-001,synthetic-juniper-airbnb-1,,,,,
+reservation,hostaway,,,,,,41288002,,,VR-SYNTH-002,synthetic-river-vrbo-2,,,,,
+reservation,hostaway,,,,,,41288003,,,,,,,,,
+balance,hostaway,40160,,,rae@example.com,,,,,,,opening-40160-20261017,1845.67,USD,2026-10-17,
+balance,hostaway,40161,,,devon@example.com,,,,,,,opening-40161-20261017,-95.25,USD,2026-10-17,
+link,hostaway,40160,,,,,,airbnb,,,,,,,,https://calendar.example.com/airbnb/40160.ics?token=synthetic
+link,hostaway,40160,,,,,,vrbo,,,,,,,,https://calendar.example.com/vrbo/40160.ics?token=synthetic
+link,hostaway,40160,,,,,,booking.com,,,,,,,,https://calendar.example.com/booking.com/40160.ics?token=synthetic
+link,hostaway,40161,,,,,,airbnb,,,,,,,,https://calendar.example.com/airbnb/40161.ics?token=synthetic
+link,hostaway,40161,,,,,,vrbo,,,,,,,,https://calendar.example.com/vrbo/40161.ics?token=synthetic
+link,hostaway,40161,,,,,,booking.com,,,,,,,,https://calendar.example.com/booking.com/40161.ics?token=synthetic

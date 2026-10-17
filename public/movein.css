@@ -1,0 +1,32 @@
+/* Provider move-in uses Cabin's existing panels, type, colors and form controls. */
+.cabin .movein-job h4{font-size:15px;margin:0 0 10px}
+.cabin .movein-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0 22px}
+.cabin .movein-metric{padding:16px;border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);border-radius:10px;min-width:0}
+.cabin .movein-metric dl{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 10px}
+.cabin .movein-metric dt{font-size:13px;color:var(--rer-muted)}
+.cabin .movein-metric dd{margin:4px 0 0;font-size:21px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cabin .movein-metric p{font-size:12px;margin:0}
+.cabin .movein-details{border-top:1px solid color-mix(in srgb,var(--rer-border) 25%,transparent);padding:14px 0}
+.cabin .movein-details summary{font-weight:500;min-height:32px}
+.cabin .movein-details[open]>summary{margin-bottom:14px}
+.cabin .movein-scroll{max-width:100%;overflow-x:auto;margin:14px 0 20px;-webkit-overflow-scrolling:touch}
+.cabin .movein-scroll:focus-visible{outline:2px solid var(--rer-accent);outline-offset:3px}
+.cabin .movein-scroll table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}
+.cabin .movein-scroll caption{text-align:left;font-weight:600;padding:0 10px 10px}
+.cabin .movein-scroll th,.cabin .movein-scroll td{padding:10px;vertical-align:top;border-bottom:1px solid color-mix(in srgb,var(--rer-border) 25%,transparent);min-width:110px;max-width:320px;overflow-wrap:anywhere}
+.cabin .movein-scroll th{font-size:12px;color:var(--rer-muted);font-weight:600}
+.cabin .movein-scroll small{display:block;font-size:12px;color:var(--rer-muted);margin-top:4px}
+.cabin .movein-job form{margin-top:18px}
+.cabin .movein-job .check input{width:20px;height:20px;flex:0 0 20px;min-height:20px}
+@media(max-width:700px){.cabin .movein-metrics{grid-template-columns:1fr;gap:10px}.cabin .movein-metric{padding:14px}.cabin .movein-metric dl{margin-bottom:6px}.cabin .movein-metric dd{font-size:20px}}
+
+@media(max-width:700px){
+ .cabin .movein-scroll{overflow:visible}
+ .cabin .movein-scroll table,.cabin .movein-scroll tbody,.cabin .movein-scroll tr{display:block;width:100%}
+ .cabin .movein-scroll thead{display:none}
+ .cabin .movein-scroll tr{padding:10px 0;border-bottom:1px solid color-mix(in srgb,var(--rer-border) 25%,transparent)}
+ .cabin .movein-scroll td{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;min-width:0;max-width:none;border:0;padding:7px 0;font-size:13px}
+ .cabin .movein-scroll td::before{content:attr(data-label);font-size:12px;color:var(--rer-muted);font-weight:600}
+ .cabin .movein-scroll td>div{min-width:0;overflow-wrap:anywhere}
+ .cabin .movein-scroll caption{display:block;padding-left:0}
+}

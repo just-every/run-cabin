@@ -16,7 +16,7 @@ export function managedInstall(env: Bindings) {
  if (!env.RER_INSTALLATION_ID || !env.RER_MANAGEMENT_ORIGIN) return false
  try { return !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(env.RER_MANAGEMENT_ORIGIN).hostname) } catch { return true }
 }
-function feedUrl(value: unknown) {
+export function feedUrl(value: unknown) {
  const raw = text(value, 'calendar link', 2000); let url: URL
  try { url = new URL(raw) } catch { return fail('Paste the full calendar link, starting with https://') }
  need(url.protocol === 'https:', 'Use the https:// calendar link the channel gives you')

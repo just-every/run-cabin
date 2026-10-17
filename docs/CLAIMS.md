@@ -51,10 +51,10 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 41 | Owner statements | "and a portal" | code | Separate email-link sign-in and HttpOnly session; home ownership and frozen recipient checked on downloads. `src/cabin/owners/`; FIN-005. |
 | 42 | Owner statements | "QuickBooks via export; Pantry sync live" | code | QuickBooks via export; Pantry sync live. Exact source evidence, scoped API proposal, human Pantry posting approval and confirmed journal ID; CSV/IIF exports. `src/cabin/finance/books.ts`; QBO developer app later. FIN-007. |
 | 43 | Owner statements | Statement card arithmetic (gross, fees, management 20%, payout) | code | Gross, imported channel fees, management percentage and owner payout computed in integer cents and frozen. `src/cabin/statements.ts`; `tests/finance.test.mjs`; FIN-003. |
-| 44 | Move in | "Move from Guesty, Hostaway or OwnerRez" | contract | Only Cabin's own five-column property-register CSV: `src/cabin/movein/`. MIGRATE-002, MIGRATE-003, MIGRATE-004. |
-| 45 | Move in | "with your listings" | partial | Homes with owner and commission from the register CSV, previewed, approved, journalled, undoable: `src/cabin/movein/index.ts`, `src/cabin/movein/csv.ts`. MIGRATE-001. |
-| 46 | Move in | "reservations, guests and owner balances" | contract | MIGRATE-002–004, MIGRATE-007. |
-| 47 | Move in | "Channels reconnect to the same listings" | contract | SYNC-002–004, MIGRATE-003. |
+| 44 | Move in | "Move from Guesty, Hostaway or OwnerRez" | code | Documented native CSV reports for all three, supplemental owner terms/balances and channel links, per-row refusals, immutable preview, import, reconciliation, sign-off and guarded undo: `src/cabin/movein/providers/`; `provider-import.ts`; `tests/movein.test.mjs`. API adapters use recorded synthetic fixtures only; live accounts and wider history remain MIGRATE-002–004 gaps. |
+| 45 | Move in | "with your listings" | code | Provider listing identities map to stable Cabin homes, retain owner terms and iCal links, and are previewed before import; the original property-register kit remains. `src/cabin/movein/provider-plan.ts`; `provider-records.ts`. MIGRATE-001. |
+| 46 | Move in | "reservations, guests and owner balances" | code | Source reservations and guest contacts become calendar stays and guest records; USD opening balances retain source IDs and dates. Reservation counts, future nights and balances reconcile against source totals; each difference and all refusals require explanation before owner sign-off. `src/cabin/movein/`; MIGRATE-002–004, MIGRATE-007. |
+| 47 | Move in | "Channels reconnect to the same listings" | code | Imported links become scheduled calendar connections on the stable listing; imported stays hold shared inventory and survive absent feed events until adopted by matching channel dates. Cabin publishes export links; overlapping requests decline. `provider-records.ts`; `src/cabin/calendars.ts`. iCal scope, with managed-host outbound limitation named; channel API accounts remain SYNC-002–004 gaps. |
 | 48 | Ownership | "Run Cabin on your own computer or server" (five commands) | code | `rer install`, `rer setup`, `rer dev` via `@runeditrun/rer` 0.2.40 (`package.json`, `scripts/installer/local.mjs`); `rer deploy` for a server. |
 | 49 | Ownership | "keep every booking, guest and payout" / "Your guests, your data" | code | Local D1 database and private photos in the installation: `src/cabin/storage.ts`, `src/cabin/photos.ts`. (Guest and payout records themselves are contract: GUEST-001, FIN-002.) |
 | 50 | Ownership | "Export everything, any time" | code | `rer export` / `rer import` with the archive policy: `src/cabin/archive-policy.mjs`, `tests/archive.test.mjs`. |
@@ -71,12 +71,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 48, 49, 50, 51, 53, 54, 57 | 40 |
-| partial | 5, 15, 37, 39, 45, 52, 56 | 7 |
-| contract | 24, 26, 34, 35, 36, 38, 44, 46, 47, 55 | 10 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 44 |
+| partial | 5, 15, 37, 39, 52, 56 | 6 |
+| contract | 24, 26, 34, 35, 36, 38, 55 | 7 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 40 code, 7 partial, 10 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 44 code, 6 partial, 7 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 

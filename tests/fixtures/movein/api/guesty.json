@@ -1,0 +1,173 @@
+{
+  "listings": {
+    "results": [
+      {
+        "_id": "65a000000000000000000001",
+        "nickname": "Juniper Cabin",
+        "title": "Juniper Cabin in the pines"
+      },
+      {
+        "_id": "65a000000000000000000002",
+        "nickname": "River House",
+        "title": "River House by the water"
+      }
+    ],
+    "fields": "_id nickname title",
+    "limit": 100
+  },
+  "reservations": {
+    "results": [
+      {
+        "reservationId": "65b000000000000000000001",
+        "confirmationCode": "HM-SYNTH-001",
+        "status": "confirmed",
+        "guestId": "65c000000000000000000001",
+        "checkIn": "2026-10-25T20:00:00.000Z",
+        "checkOut": "2026-10-28T15:00:00.000Z",
+        "checkInDateLocalized": "2026-10-25",
+        "checkOutDateLocalized": "2026-10-28",
+        "source": "airbnb",
+        "channel": "airbnb",
+        "createdAt": "2026-09-10T12:00:00.000Z",
+        "notes": {},
+        "stay": [
+          {
+            "listingId": "65a000000000000000000001",
+            "checkIn": "2026-10-25T20:00:00.000Z",
+            "checkOut": "2026-10-28T15:00:00.000Z",
+            "checkInDateLocalized": "2026-10-25",
+            "checkOutDateLocalized": "2026-10-28",
+            "guestsCount": 2
+          }
+        ]
+      },
+      {
+        "reservationId": "65b000000000000000000002",
+        "confirmationCode": "VR-SYNTH-002",
+        "status": "confirmed",
+        "guestId": "65c000000000000000000002",
+        "checkIn": "2026-11-02T20:00:00.000Z",
+        "checkOut": "2026-11-06T15:00:00.000Z",
+        "checkInDateLocalized": "2026-11-02",
+        "checkOutDateLocalized": "2026-11-06",
+        "source": "homeaway",
+        "channel": "homeaway",
+        "createdAt": "2026-09-10T12:00:00.000Z",
+        "notes": {},
+        "stay": [
+          {
+            "listingId": "65a000000000000000000002",
+            "checkIn": "2026-11-02T20:00:00.000Z",
+            "checkOut": "2026-11-06T15:00:00.000Z",
+            "checkInDateLocalized": "2026-11-02",
+            "checkOutDateLocalized": "2026-11-06",
+            "guestsCount": 2
+          }
+        ]
+      },
+      {
+        "reservationId": "65b000000000000000000003",
+        "confirmationCode": "DIRECT-SYNTH-003",
+        "status": "canceled",
+        "guestId": "65c000000000000000000003",
+        "checkIn": "2026-12-01T20:00:00.000Z",
+        "checkOut": "2026-12-03T15:00:00.000Z",
+        "checkInDateLocalized": "2026-12-01",
+        "checkOutDateLocalized": "2026-12-03",
+        "source": "manual",
+        "channel": "manual",
+        "createdAt": "2026-09-10T12:00:00.000Z",
+        "notes": {},
+        "stay": [
+          {
+            "listingId": "65a000000000000000000001",
+            "checkIn": "2026-12-01T20:00:00.000Z",
+            "checkOut": "2026-12-03T15:00:00.000Z",
+            "checkInDateLocalized": "2026-12-01",
+            "checkOutDateLocalized": "2026-12-03",
+            "guestsCount": 2
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "skip": 0,
+      "limit": 100,
+      "hasMore": false
+    }
+  },
+  "guests": [
+    {
+      "_id": "65c000000000000000000001",
+      "firstName": "Alex",
+      "lastName": "Morgan",
+      "fullName": "Alex Morgan",
+      "email": "alex@example.com",
+      "phone": "+12025550101",
+      "returningGuest": false
+    },
+    {
+      "_id": "65c000000000000000000002",
+      "firstName": "Sam",
+      "lastName": "Rivera",
+      "fullName": "Sam Rivera",
+      "email": "sam@example.com",
+      "phone": "+12025550102",
+      "returningGuest": false
+    },
+    {
+      "_id": "65c000000000000000000003",
+      "firstName": "Casey",
+      "lastName": "Chen",
+      "fullName": "Casey Chen",
+      "email": "casey@example.com",
+      "phone": "",
+      "returningGuest": false
+    }
+  ],
+  "ownerStatements": {
+    "results": [
+      {
+        "id": "65d000000000000000000001",
+        "ownerName": "Rae Ellis",
+        "ownerId": "65e000000000000000000001",
+        "listings": [
+          {
+            "id": "65a000000000000000000001",
+            "name": "Juniper Cabin"
+          }
+        ],
+        "businessModels": [],
+        "periodStartDate": "2026-10-01T00:00:00.000Z",
+        "periodEndDate": "2026-10-17T00:00:00.000Z",
+        "minimumAccountBalance": 500,
+        "endingBalance": 1845.67,
+        "dueToOwner": 1345.67,
+        "currency": "USD",
+        "sharedVia": [],
+        "generatedAt": "2026-10-17T12:00:00.000Z",
+        "status": "APPROVED",
+        "statementType": "MONTHLY",
+        "pdfDownloadUrl": null
+      }
+    ],
+    "count": 1,
+    "limit": 25,
+    "skip": 0,
+    "total": 1
+  },
+  "importedCalendars": [
+    {
+      "id": "65f000000000000000000001",
+      "listingId": "65a000000000000000000001",
+      "accountId": "650000000000000000000001",
+      "createdAt": "2026-09-01T00:00:00.000Z",
+      "updatedAt": "2026-09-01T00:00:00.000Z",
+      "status": "active",
+      "url": "https://calendar.example.com/airbnb/juniper.ics?token=synthetic",
+      "name": "Airbnb export copied by operator",
+      "adjustmentValueStart": 0,
+      "adjustmentValueEnd": 0
+    }
+  ]
+}

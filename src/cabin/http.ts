@@ -35,6 +35,10 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  await settle(env);return result
 }
 function actionMessage(name:string,result:any){
+ if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
+ if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
+ if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
+ if(name==='import.provider.undo')return 'Move-in undone. Imported listings, stays, guests, balances and calendar links were removed.'
  if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
  if(name==='statement.approve')return 'Statement approved and frozen. Owner email delivery status is shown below.'
@@ -76,7 +80,8 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
  if(type.includes('multipart/form-data')){
   const form=await new Response(bytes,{headers:{'content-type':type}}).formData();input={}
   for(const key of new Set(form.keys())){const value=form.get(key)
-   if(key==='payoutFile'){need(value instanceof File&&value.size>0&&value.size<=2_000_000,'Choose a payout CSV up to 2 MB');input.csv=await value.text()}
+   if(key==='sourceFiles'){const files=[];for(const file of form.getAll(key)){if(file===''||(file instanceof File&&!file.name&&!file.size))continue;need(file instanceof File&&file.size>0&&file.size<=2_000_000,'Choose export files up to 2 MB');files.push({name:file.name,text:await file.text()})}input.files=files}
+   else if(key==='payoutFile'){need(value instanceof File&&value.size>0&&value.size<=2_000_000,'Choose a payout CSV up to 2 MB');input.csv=await value.text()}
    else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }

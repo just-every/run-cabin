@@ -1,0 +1,4 @@
+Booking #,Property,Owner,Arrival,Check-In,Departure,Check-Out,Cleaning Date,Events,Guest,Phone,Email,N,A,C,P,Door Code,Tags,Other Fields
+ORB3812041,Juniper Cabin,Rae Ellis,10/25/2026,4:00 PM,10/28/2026,11:00 AM,,"Arriving, Departing",Alex Morgan,+12025550101,alex@example.com,3,2,0,0,,,
+ORB3812042,River House,Devon Park,11/02/2026,3:00 PM,11/06/2026,10:00 AM,,"Arriving, Departing",Sam Rivera,+12025550102,sam@example.com,4,2,1,0,,,
+ORB3812043,Juniper Cabin,Rae Ellis,12/01/2026,4:00 PM,12/03/2026,11:00 AM,,"Arriving, Departing",Casey Chen,,casey@example.com,2,1,0,0,,,

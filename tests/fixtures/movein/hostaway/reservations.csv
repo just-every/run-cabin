@@ -1,0 +1,4 @@
+Reservation ID,Guest name,Channel name,Reservation status,Payment method,Paid,Arrival date,Departure date,Listing name,Reservation date
+41288001,Alex Morgan,airbnbOfficial,new,Credit card,Yes,2026-10-25,2026-10-28,Juniper Cabin,2026-09-10
+41288002,Sam Rivera,homeaway,modified,Credit card,Yes,2026-11-02,2026-11-06,River House,2026-09-15
+41288003,Casey Chen,direct,cancelled,Cash,No,2026-12-01,2026-12-03,Juniper Cabin,2026-09-20

@@ -626,10 +626,10 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
 | 42 | "QuickBooks via export; Pantry sync live" | FIN-007 | implemented (scope and remaining clause gaps below) |
 | 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (scope and remaining clause gaps below) |
-| 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | missing |
-| 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | partial |
-| 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | missing |
-| 47 | "Channels reconnect to the same listings" | MIGRATE-007, MIGRATE-002, MIGRATE-003 | missing |
+| 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
+| 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
+| 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | implemented (CSV move-in scope; see clause Status) |
+| 47 | "Channels reconnect to the same listings" | MIGRATE-007, MIGRATE-002, MIGRATE-003 | implemented (iCal move-in scope; see clause Status) |
 | 48 | "Run Cabin on your own computer or server" (five commands) | RUNTIME-001, HTTP-001 | partial |
 | 49 | "keep every booking, guest and payout" / "Your guests, your data" | DATA-003, DATA-001 | partial |
 | 50 | "Export everything, any time" | DATA-001 | partial |
@@ -657,10 +657,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 0 | 0 | 0 | 0 |
-| Target and push further | 6 | 46 | 36 | 88 |
-| All | 6 | 46 | 36 | 88 |
+| Target and push further | 6 | 50 | 32 | 88 |
+| All | 6 | 50 | 32 | 88 |
 
-**88 clauses: 6 done, 46 partial, 36 missing.**
+**88 clauses: 6 done, 50 partial, 32 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -729,12 +729,12 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `REPORT-002` | Saved reports and scheduled sharing | target | missing |  | No implementing flow in the audited tree. |
 | `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` (lines 31, 109) | Session commands and draft-only bearer API exist; booking/finance APIs, event webhooks, scoped app grants and Zapier do not. |
 | `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/index.ts`; `src/cabin/movein/csv.ts`; `src/cabin/movein/targets.ts`; `docs/move-in.md`; `tests/cabin.test.mjs` (line 124); `tests/archive.test.mjs` (line 27) | Basic inert preview, apply, journal, guarded undo and erasure round-trip are tested. All documented collision, resume and dependency cases are not independently exercised. |
-| `MIGRATE-002` | Migration from Guesty | target | missing |  | No implementing flow in the audited tree. |
-| `MIGRATE-003` | Migration from Hostaway | target | missing |  | No implementing flow in the audited tree. |
-| `MIGRATE-004` | Migration from OwnerRez | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-002` | Migration from Guesty | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |
+| `MIGRATE-003` | Migration from Hostaway | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |
+| `MIGRATE-004` | Migration from OwnerRez | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-005` | Migration from Lodgify | target | missing |  | No implementing flow in the audited tree. |
 | `MIGRATE-006` | Switching from Hospitable and Breezeway operations | target | missing |  | No implementing flow in the audited tree. |
-| `MIGRATE-007` | CSV history, cutover rehearsal and accountable go-live | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-007` | CSV history, cutover rehearsal and accountable go-live | target | partial | `src/cabin/movein/reconcile.ts`; `src/cabin/movein/provider-import.ts`; `src/cabin/ui/movein.ts`; `tests/movein.test.mjs` | Source versus saved reservation counts, future nights and opening owner balances; owner sign-off requires every difference and refused row accounted for. Stable listing IDs retain iCal links and imported holds; undo preserves edited/dependent data by refusing reversal. Full vendor history, live API parallel-run cutover and channel partner account reconnection remain open. |
 | `MOBILE-001` | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
 | `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
 | `DATA-001` | Complete portable product records and safe restore | target | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs` (line 27) | Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |

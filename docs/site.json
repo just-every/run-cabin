@@ -21,7 +21,8 @@
     {
       "title": "Keep your data",
       "pages": [
-        { "slug": "move-in", "title": "Move in your homes", "file": "move-in.md", "summary": "Preview a property register CSV, approve the exact plan, follow the journal and undo while records are untouched." },
+        { "slug": "move-in", "title": "Move in your homes", "file": "move-in.md", "summary": "Upload Guesty, Hostaway or OwnerRez exports, review records and refusals, reconcile totals and sign off or undo." },
+        { "slug": "move-in-formats", "title": "Provider export formats", "file": "move-in-formats.md", "summary": "Documented provider CSV columns, missing export data and the supplementary cutover file." },
         { "slug": "backup", "title": "Back up, restore and erase", "file": "backup.md", "summary": "Export the whole installation to one archive, restore it into a fresh copy, and erase a home for good." },
         { "slug": "commands", "title": "Command reference", "file": "commands.md", "summary": "Every command the app and the agent door accept, with its input and who may run it." }
       ]

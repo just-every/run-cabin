@@ -11,7 +11,7 @@ function clashes(bookings: { id: string; start: string; end: string }[]): Clash[
  return found
 }
 /** A channel's bookings against its calendar: Cabin's own holds are never removed by a feed. */
-export const channelBookings = (c: Context, propertyId: string, channel: Channel) => c.data.bookings.filter(b=>b.propertyId===propertyId&&b.channel===channel&&b.source!=='request')
+export const channelBookings = (c: Context, propertyId: string, channel: Channel) => c.data.bookings.filter(b=>b.propertyId===propertyId&&b.channel===channel&&b.source!=='request'&&b.source!=='migration')
 export function reconcile(old: Booking[], events: CalendarEvent[]) {
  const changes: CalendarChange[]=[]
  for(const e of events) {
@@ -29,8 +29,8 @@ export function applyChanges(c: Context, propertyId: string, channel: Channel, c
   let prior=c.data.bookings.find(b=>b.propertyId===propertyId&&b.channel===channel&&b.uid===change.uid)
   if(change.kind==='cancel'||change.kind==='remove') { need(prior,'Booking no longer exists',409);Object.assign(prior,{status:'cancelled',cancelled:true,revision:newId(),approvedAt:c.now});continue }
   const e=change.after!
-  prior??=c.data.bookings.find(b=>b.propertyId===propertyId&&b.channel===channel&&b.source==='request'&&b.status==='confirmed'&&b.start===e.start.slice(0,10)&&b.end===e.end.slice(0,10))
-  const row:Booking={...e,id:prior?.id??newId(),revision:newId(),propertyId,channel,status:'confirmed',approvedAt:c.now,source:'feed'}
+  prior??=c.data.bookings.find(b=>b.propertyId===propertyId&&b.channel===channel&&(b.source==='request'||b.source==='migration')&&b.status==='confirmed'&&b.start===e.start.slice(0,10)&&b.end===e.end.slice(0,10))
+  const row:Booking={...(prior??{}),...e,id:prior?.id??newId(),revision:newId(),propertyId,channel,status:'confirmed',approvedAt:c.now,source:'feed'}
   if(!e.guestName&&prior?.guestName)row.guestName=prior.guestName
   if(prior?.arrivalTime)row.arrivalTime=prior.arrivalTime
   if(prior)Object.assign(prior,row);else c.data.bookings.push(row)

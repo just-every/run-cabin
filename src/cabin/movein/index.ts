@@ -1,3 +1,4 @@
+import { providerCommand, providerJobs } from './provider-import'
 import { planD1Import, createD1ImportJob, applyD1ImportBatches, undoD1Import, resumeD1Import, readD1ImportJob, readD1ImportOriginals, readD1ImportUndoReport, canonicalJson } from '../../modules/import-kit/src/d1/index.ts'
 import type { D1ImportContext, D1Database as KitDatabase, ImportMapping, ImportPlan } from '../../modules/import-kit/src/d1/index.ts'
 import { namespace, propertySource } from './csv'
@@ -19,6 +20,7 @@ interface Review {id:string;fingerprint:string;plan:string;actor_id:string;job_i
 async function atomic(db:D1Database,actor:Actor,queries:ReturnType<typeof query>[]){const a=authority(actor);await db.batch([guard(a.sql,...a.params),...queries,query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard')].map(q=>db.prepare(q.sql).bind(...q.params)))}
 export async function importCommand(db:D1Database,actor:Actor,name:string,input:Record<string,unknown>):Promise<unknown>{
  owner(actor);await assertLive(db,actor)
+ if(name.startsWith('import.provider.'))return providerCommand(db,actor,name,input)
  try {
   if(name==='import.preview'){
    const plan=await planD1Import(propertySource(input.csv),mapping,importContext(db,actor)),id=newId(),conflicts=await nativeConflicts(db,values(plan))
@@ -57,5 +59,5 @@ export async function importCommand(db:D1Database,actor:Actor,name:string,input:
 export async function importJobs(db:D1Database,actor:Actor){
  if(actor.role!=='owner')return []
  const reviews=(await db.prepare('SELECT r.*,j.state,j.checkpoint,j.total,j.error FROM cb_import_reviews r LEFT JOIN ik_jobs j ON j.id=r.job_id WHERE r.actor_id=? ORDER BY r.rowid DESC LIMIT 30').bind(actor.id).all<any>()).results
- return reviews.map(r=>({id:r.id,jobId:r.job_id,fingerprint:r.fingerprint,status:r.state??(r.job_id?'retired':'review'),state:r.state??'review',checkpoint:r.checkpoint,total:r.total,error:r.error,createdAt:r.created_at,...(!r.job_id?{properties:properties(JSON.parse(r.plan))}:{})}))
+ return [...await providerJobs(db,actor),...reviews.map(r=>({id:r.id,jobId:r.job_id,fingerprint:r.fingerprint,status:r.state??(r.job_id?'retired':'review'),state:r.state??'review',checkpoint:r.checkpoint,total:r.total,error:r.error,createdAt:r.created_at,...(!r.job_id?{properties:properties(JSON.parse(r.plan))}:{})}))]
 }
