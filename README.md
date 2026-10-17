@@ -2,7 +2,7 @@
 
 Vacation rental operations for a US host or manager with 3–40 rentals: channel calendar imports, cleaner photo checklists and approved owner statements in USD. MIT licensed. [Target contract](CONTRACT.md) · [first-release scope](ACCEPTANCE.md) · [docs](docs/getting-started.md).
 
-The run site (homepage, `/docs` and `/run`) is **local for now**. Run `rer dev`, then open `http://127.0.0.1:<port>/`, using the port in the **RER_SITE** address RER prints. Its port differs from **RER_READY**, which serves the installed app and `/app`. `https://run-cabin.com` goes live once its domain is registered. Registration does not block using or deploying the app.
+The run site is at **https://run-cabin.com**, with its docs at `/docs` and its Run Cabin page at **https://run-cabin.com/run**. Locally, run `rer dev`, then open `http://127.0.0.1:<port>/`, using the port in the **RER_SITE** address RER prints. Its port differs from **RER_READY**, which serves the installed app and `/app`. The site does not block using or deploying the app.
 
 ## Start from a fresh clone
 
