@@ -1,3 +1,4 @@
+import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
 import { load, mutate, SYSTEM } from '../storage'
@@ -24,6 +25,7 @@ export async function deliverStatements(env:Bindings){
    const result=await sender.send({deliveryId:d.id,headers:{'Auto-Submitted':'auto-generated'},from:env.MAIL_FROM,to:[d.email],subject:`${s.propertyName} · ${month} owner statement`,text,html:`<div style="white-space:pre-wrap;font:16px/1.6 system-ui">${h(text)}</div>`})
    status=result?.status==='accepted'?'sent':result?.status==='development'?'suppressed':'failed';detail=status==='sent'?null:status==='suppressed'?'Development mode does not send email.':'The provider did not confirm acceptance. Check delivery before requesting another send.'
   }catch{status='failed';detail='Mail acceptance is uncertain. Check the provider before requesting another send.'}}
+  const bookingIds=[...new Set(s.lines.map(l=>l.bookingId).filter(Boolean))];for(const bookingId of bookingIds.length?bookingIds:[null])await record(env.DB,SYSTEM,'statement.provider.result',{kind:'deliveries',id:d.id,propertyId:d.propertyId,bookingId,revision:d.revision,result:status==='failed'?'failed-or-uncertain':status})
   await mutate(env.DB,SYSTEM,'statement.delivery.result',c=>{const row=c.data.deliveries.find(r=>r.id===d.id);if(row)Object.assign(row,{status,detail,sentAt:c.now})})
  }
 }

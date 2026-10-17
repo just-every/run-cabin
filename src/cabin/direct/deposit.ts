@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server'
+import { record, type AuditActor } from '../audit/write'
 import { need,newId } from '../model'
 import { load,mutate } from '../storage'
 import { homeSettings } from '../homes'
@@ -17,7 +18,7 @@ export async function depositSchedule(env:Bindings,s:DirectStay){
  })
 }
 function result(p:any,s:DirectStay){const before=p.latest_charge?.payment_method_details?.card?.capture_before;return {id:p.id,status:p.status,amountCents:s.quote.depositCents,expiresAt:before?new Date(before*1000).toISOString():null,...(Number.isSafeInteger(p.amount_received)?{capturedCents:p.amount_received}:{})}}
-export async function reconcileDeposit(env:Bindings,s:DirectStay){
+export async function reconcileDeposit(env:Bindings,s:DirectStay,actor:AuditActor=DIRECT_SYSTEM){
  s=await depositSchedule(env,s);const stripeEnv=paymentEnv(env,s)
  if(s.depositCheckout?.status==='open'){
   const session=await readCheckout(stripeEnv,s.depositCheckout.id),pi=session.payment_intent
@@ -25,7 +26,14 @@ export async function reconcileDeposit(env:Bindings,s:DirectStay){
    need(pi&&typeof pi==='object'&&pi.status==='requires_capture'&&pi.amount===s.quote.depositCents&&pi.currency==='usd'&&session.metadata?.stayId===s.id&&session.metadata?.purpose==='security_deposit','Stripe damage authorization does not match this stay',409)
    const p=await readPayment(stripeEnv,pi.id),old=s.deposit
    s=await change(env,s.id,'direct.deposit.renewed',row=>{row.deposit=result(p,row);row.depositCheckout!.status='complete';delete row.error})
-   if(old?.status==='requires_capture'&&old.id!==pi.id)await releaseDeposit(stripeEnv,old.id)
+   if(old?.status==='requires_capture'&&old.id!==pi.id){
+    const scope={kind:'direct-stay',id:s.id,propertyId:s.propertyId,bookingId:s.bookingId,revision:s.revision}
+    await record(env.DB,actor,'direct.deposit.previous.release.request',{...scope,result:'pending'})
+    try { await releaseDeposit(stripeEnv,old.id) } catch(error) {
+     await record(env.DB,actor,'direct.deposit.previous.release.result',{...scope,result:'failed-or-uncertain'});throw error
+    }
+    await record(env.DB,actor,'direct.deposit.previous.release.result',{...scope,result:'completed'})
+   }
   }else if(session.status==='expired')s=await change(env,s.id,'direct.deposit.checkout.expired',row=>{row.depositCheckout!.status='expired'})
  }
  if(!s.deposit&&!s.depositCheckout&&Date.now()>=Date.parse(s.depositDueAt!)&&Date.now()<departure(s)){
@@ -55,7 +63,10 @@ export async function guestDeposit(env:Bindings,id:string,token:string){
  need(s.deposit?.status!=='requires_capture'||(expires&&expires<departure(s)),'A damage hold already covers this stay',409)
  const attempt=newId()
  s=await change(env,id,'direct.deposit.checkout.requested',r=>{r.depositAttempt=attempt})
- const session=await createDepositCheckout(paymentEnv(env,s),{id,attempt,token,origin:env.AUTH_ORIGIN,customer:s.customerId!,amountCents:s.quote.depositCents})
+ let session:any
+ try { session=await createDepositCheckout(paymentEnv(env,s),{id,attempt,token,origin:env.AUTH_ORIGIN,customer:s.customerId!,amountCents:s.quote.depositCents}) } catch(error) {
+  await record(env.DB,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0},'guest.deposit.checkout.result',{kind:'direct-stay',id:s.id,propertyId:s.propertyId,bookingId:s.bookingId,revision:s.revision,result:'failed-or-uncertain'});throw error
+ }
  await change(env,id,'direct.deposit.checkout.ready',r=>{r.depositCheckout={id:session.id,url:session.url,attempt,status:'open'}})
  return session.url
 }

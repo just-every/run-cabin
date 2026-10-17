@@ -1,3 +1,4 @@
+import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
 import { themeFrame } from '../base/theme-frame'
 import branding from '../branding.json'
@@ -18,6 +19,7 @@ export async function guestStayResponse(request: Request, env: Bindings) {
  const data = await load(env.DB), code = data.codes.find(r => r.holder === 'guest' && r.link === token)
  const booking = code && data.bookings.find(b => b.id === code.bookingId), home = code && data.properties.find(p => p.id === code.propertyId)
  if (!code || !booking || !home) return new Response('Not found', { status: 404, headers })
+ if(request.method==='GET'&&code.status==='issued'){await record(env.DB,{...SYSTEM,id:code.id},'guest.access.release',{kind:'codes',id:code.id,propertyId:home.id,bookingId:booking.id,revision:code.revision,result:'released'})}
  let reported = false
  if (request.method === 'POST') {
   if (request.headers.get('origin') !== env.AUTH_ORIGIN || Number(request.headers.get('content-length') ?? 0) > 8000) return new Response('Request refused', { status: 403, headers })
@@ -25,7 +27,7 @@ export async function guestStayResponse(request: Request, env: Bindings) {
   if (reader) { const decoder = new TextDecoder(); try { for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > 8000) { await reader.cancel(); return new Response('Problem report is too large', { status: 413, headers }) } source += decoder.decode(value, { stream: true }) } source += decoder.decode() } finally { reader.releaseLock() } }
   const form = new URLSearchParams(source), reason = (form.get('reason') ?? '').trim()
   if (!reason || reason.length > 2000 || code.status !== 'issued' || booking.status !== 'confirmed') return new Response('Enter a problem of up to 2000 characters for your active stay.', { status: 400, headers })
-  try { await mutate(env.DB, SYSTEM, 'recovery.guest.report', c => {
+  try { await mutate(env.DB, {...SYSTEM,id:code.id}, 'recovery.guest.report', c => {
    const current = c.data.codes.find(r => r.link === token && r.status === 'issued'), b = current && c.data.bookings.find(b => b.id === current.bookingId && b.status === 'confirmed')
    if (!b) throw new Error('Stay changed')
    const turnover = c.data.turnovers.find(t => t.nextBookingId === b.id && t.status !== 'cancelled') ?? c.data.turnovers.find(t => t.bookingId === b.id && t.status !== 'cancelled')

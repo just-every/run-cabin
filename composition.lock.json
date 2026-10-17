@@ -568,14 +568,14 @@
       "source": "modules/operator-auth/accounts/schema/owner-signin.sql"
     },
     "package.json": {
-      "sha256": "adccc3c51ff20ebc2d59e3ba20674f93d0a718b60bcc2839f2aa9d65b63adfa1",
+      "sha256": "f01385f36fccc2564620b432a0162eddb2385dd4aafcc97731e9db57dd895434",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
       "source": "editions/cabin/package.json"
     },
     "pnpm-lock.yaml": {
-      "sha256": "50d2ff7492e751c6054917a853b31a411353cc89122e6869c60f5bc988334914",
+      "sha256": "8311a686e059ccf91306034bce900d1049939b2f573505b3e220939ce4150e08",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -603,7 +603,7 @@
       "source": "editions/cabin/public/fonts/fonts.css"
     },
     "rer-setup.json": {
-      "sha256": "33aa3d023732d21fd2c3ed737c6b820deea4b4764dfeec04f5b367ff1b89abd3",
+      "sha256": "6ca8d8cc00ccba6fb73baf17707eccf242d7e06cb903520e1d11bc82c9bb8b12",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "c82a48dea6775fb46067872a8a40587b50de033b7450ea0fdcf96cb2c986a76e",
+      "sha256": "cc5ca9cd117c87badede29efc6e8f6247a0f580776a5f03d97bbb9f8e32cbbd4",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

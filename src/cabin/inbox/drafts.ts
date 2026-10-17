@@ -29,7 +29,7 @@ export async function finishDrafts(env: Bindings) {
   let result: { text: string; grounds: string[]; detail: string | null; source: GuestMessage['source'] }
   try {
    if (!config) throw new DraftError('The saved AI key cannot be used on this install.')
-   const r = await aiDraft(config, f, history)
+   const r = await aiDraft(config, f, history, { db: env.DB, actor: { ...SYSTEM, id: 'cabin:ai-replies', isAgent: true }, kind: 'messages', id: d.id, revision: d.revision, propertyId: d.propertyId, bookingId: d.bookingId })
    result = { text: r.text, grounds: r.grounds, detail: [r.needsHost ? 'Needs you: the facts do not settle this.' : '', r.note].filter(Boolean).join(' ') || null, source: 'ai' }
   } catch (error) {
    result = { text: '', grounds: [], detail: `AI draft failed: ${error instanceof DraftError ? error.message : 'unexpected error'} Write the reply here, or fix the AI settings before the next guest message.`, source: 'ai' }

@@ -28,7 +28,7 @@ function cancel(row: Scheduled, reason: string) { if (row.status === 'scheduled'
 export function scheduleMessages(c: Context) {
  const settings = inboxSettings(c), now = Date.parse(c.now)
  for (const b of c.data.bookings) {
-  if (!isStay(b) || !c.data.properties.some(p => p.id === b.propertyId)) continue
+  if (!isStay(b) || b.guestErasedAt || !c.data.properties.some(p => p.id === b.propertyId)) continue
   const rows = c.data.scheduled.filter(r => r.bookingId === b.id)
   if (b.status !== 'confirmed') { for (const r of rows) cancel(r, 'The stay was cancelled'); continue }
   const t = times(c, b)

@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server'
+import { record, type AuditActor } from '../audit/write'
 import { need,text,newId,type Actor } from '../model'
 import { managedInstall } from '../channels'
 import { stripe,stripeCredentials,MANAGED_STRIPE_LINE,CARD_ONLY } from './stripe'
@@ -39,13 +40,19 @@ export async function providerCommand(env:Bindings,actor:Actor,name:string,p:Rec
  if(name==='direct.stripe.test'){
   const saved=await providerSettings(env.DB)
   if(saved?.check?.status==='pending')return {url:saved.check.url}
-  const id=newId(),session=await stripe({...env,DIRECT_STRIPE_MODE:'test'},'/checkout/sessions','POST',{
+  const id=newId()
+  await record(env.DB,actor,'direct.stripe.test.request',{kind:'stripe-connection',id,revision:id,result:'pending'})
+  let session:any
+  try { session=await stripe({...env,DIRECT_STRIPE_MODE:'test'},'/checkout/sessions','POST',{
    mode:'payment',...CARD_ONLY,'metadata[purpose]':'cabin_connection_check',
    'line_items[0][price_data][currency]':'usd','line_items[0][price_data][unit_amount]':'100',
    'line_items[0][price_data][product_data][name]':'Cabin connection check — test money only','line_items[0][quantity]':'1',
    success_url:env.AUTH_ORIGIN+(env.AUTH_LOCAL==='true'?'/book/stripe-check':'/app/direct?stripeCheck=returned'),cancel_url:env.AUTH_ORIGIN+'/app/direct',
   },'cabin:connection-check:'+id)
   need(typeof session.id==='string'&&typeof session.url==='string','Stripe did not return a test checkout',502)
+  } catch(error) {
+   await record(env.DB,actor,'direct.stripe.test.result',{kind:'stripe-connection',id,revision:id,result:'failed-or-uncertain'});throw error
+  }
   await saveProvider(env,actor,name,row=>{row.check={id:session.id,url:session.url,status:'pending',at:new Date().toISOString()}})
   return {url:session.url}
  }

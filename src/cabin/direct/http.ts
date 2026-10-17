@@ -30,9 +30,9 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
   if(saved){
    let s=await byToken(env.DB,await sha(saved[1]))
    if(saved[2]==='agreement'&&request.method==='GET')return signedAgreement(s)
-   if(request.method==='POST'&&saved[2]==='refresh'){s=await refresh(env,s.id);return json?Response.json({stay:{id:s.id,phase:s.phase,quote:s.quote,identity:s.identity,deposit:s.deposit}}):stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')}
+   if(request.method==='POST'&&saved[2]==='refresh'){s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0});return json?Response.json({stay:{id:s.id,phase:s.phase,quote:s.quote,identity:s.identity,deposit:s.deposit}}):stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')}
    if(request.method==='POST'&&(saved[2]==='identity'||saved[2]==='deposit'||saved[2]==='pay')){const target=saved[2]==='identity'?await identity(env,s.id,saved[1]):saved[2]==='pay'?await retryCheckout(env,s.id,saved[1]):await guestDeposit(env,s.id,saved[1]);return new Response(null,{status:303,headers:{location:target,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
-   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id)}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],guestText(error),env.AUTH_LOCAL==='true')}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')
+   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0})}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],guestText(error),env.AUTH_LOCAL==='true')}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')
   }
   const data=await load(env.DB),all=(await homes(env.DB)).filter(h=>h.enabled)
   if(path==='/book'&&request.method==='GET')return shell('Find your stay',`<p class="eyebrow">Book directly</p><h1>Find your next stay</h1>${all.length?all.map(home=>`<section class="panel"><h2><a href="/book/${h(home.slug)}">${h(data.properties.find(p=>p.id===home.propertyId)?.name)}</a></h2><p>${h(home.description)}</p></section>`).join(''):'<p>No homes are accepting direct bookings yet.</p>'}`)

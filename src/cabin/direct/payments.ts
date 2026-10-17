@@ -1,4 +1,5 @@
 import type { Bindings } from '../../auth.server'
+import { record, type AuditActor } from '../audit/write'
 import { need,newId,type Actor } from '../model'
 import { mutate } from '../storage'
 import { stay,dueStays,saveStay,DIRECT_SYSTEM } from './store'
@@ -9,7 +10,7 @@ import { queueConfirmation } from './confirmation'
 import { deliverGuestMessages } from '../inbox/deliver'
 import type { DirectStay } from './types'
 const update=async(env:Bindings,id:string,action:string,change:(s:DirectStay)=>void,actor=DIRECT_SYSTEM)=>mutate(env.DB,actor,action,async c=>{const s=await stay(env.DB,id);change(s);saveStay(c,s);return s})
-export async function refresh(env:Bindings,id:string) {
+export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYSTEM) {
  let s=await stay(env.DB,id)
  if(s.phase==='expired')return s
  if(s.checkoutId&&!s.paymentId){
@@ -23,7 +24,7 @@ export async function refresh(env:Bindings,id:string) {
  if(s.requireIdentity&&s.identity&&s.identity.status!=='verified'){const identity=await readIdentity(paymentEnv(env,s),s.identity.id);s=await update(env,id,'direct.identity.checked',row=>{row.identity={id:identity.id,status:identity.status}})}
  // The receipt states the damage hold as it now stands, so it is written once the hold step has run, even when that step failed.
  let failure:unknown=null
- if(s.quote.depositCents)try{s=await reconcileDeposit(env,s)}catch(error){failure=error;s=await stay(env.DB,id)}
+ if(s.quote.depositCents)try{s=await reconcileDeposit(env,s,actor)}catch(error){failure=error;s=await stay(env.DB,id)}
  if(!s.paymentMessageId)s=await mutate(env.DB,DIRECT_SYSTEM,'direct.receipt',async c=>{const row=await stay(env.DB,id);await queueConfirmation(env,c,row,'payment');saveStay(c,row);return row})
  if(failure){await deliverGuestMessages(env);throw failure}
  const deferred=!!s.depositDueAt&&Date.now()<Date.parse(s.depositDueAt)
@@ -40,7 +41,13 @@ async function expire(env:Bindings,id:string) {return mutate(env.DB,DIRECT_SYSTE
 export async function identity(env:Bindings,id:string,token:string) {
  let s=await stay(env.DB,id);need(s.paymentId&&s.requireIdentity,'Pay for the stay before starting the required ID check',409)
  if(s.identity){const saved=await readIdentity(paymentEnv(env,s),s.identity.id);if(saved.url)return saved.url;need(saved.status!=='verified','Your ID check is already complete',409)}
- const result=await createIdentity(paymentEnv(env,s),{id,token,origin:env.AUTH_ORIGIN});await update(env,id,'direct.identity.started',row=>{row.identity={id:result.id,status:result.status}});return result.url
+ const actor:AuditActor={id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0},scope={kind:'direct-stay',id:s.id,propertyId:s.propertyId,bookingId:s.bookingId,revision:s.revision}
+ await record(env.DB,actor,'guest.identity.request', {...scope,result:'pending'})
+ let result:any
+ try { result=await createIdentity(paymentEnv(env,s),{id,token,origin:env.AUTH_ORIGIN}) } catch(error) {
+  await record(env.DB,actor,'guest.identity.result',{...scope,result:'failed-or-uncertain'});throw error
+ }
+ await update(env,id,'direct.identity.started',row=>{row.identity={id:result.id,status:result.status}});return result.url
 }
 export async function settleDeposit(env:Bindings,actor:Actor,id:string,action:'release'|'capture',amount=0,reason='',evidence='') {
  const s=await update(env,id,`direct.deposit.${action}.requested`,row=>{

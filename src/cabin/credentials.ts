@@ -1,3 +1,4 @@
+import { event, record } from './audit/write'
 import { operatorAuth, type Bindings } from '../auth.server'
 import { type Actor, need, fail, text, newId, sha, owner, guard, query } from './model'
 import { assertLive, authority } from './storage'
@@ -18,8 +19,9 @@ export async function credentialCommand(request:Request,env:Bindings,actor:Actor
  owner(actor);await assertLive(env.DB,actor);const a=authority(actor),at=Date.now(),id=newId()
  if(name==='member.invite'){
   const member=await env.DB.prepare('SELECT * FROM cb_members WHERE id=? AND active=1').bind(text(p.id,'member ID')).first<any>();need(member,'Activate a member before inviting them',409)
-  await operatorAuth(env).invite(request,{email:member.email,displayName:member.name,role:'member',returnTo:'/app'})
-  await assertLive(env.DB,actor);return {id:member.id,invited:true}
+  await record(env.DB,actor,'member.invite.requested',{kind:'member',id:member.id,revision:String(member.version),result:'requested'})
+  try{await operatorAuth(env).invite(request,{email:member.email,displayName:member.name,role:'member',returnTo:'/app'})}catch(error){await record(env.DB,actor,'member.invite.result',{kind:'member',id:member.id,revision:String(member.version),result:'failed-or-uncertain'});throw error}
+  await env.DB.batch([guard(a.sql,...a.params),event(actor,name,new Date().toISOString(),{kind:'member',id:member.id,revision:String(member.version),result:'invited'}),guard(a.sql,...a.params),query('DELETE FROM cb_guard')].map(q=>env.DB.prepare(q.sql).bind(...q.params)));await assertLive(env.DB,actor);return {id:member.id,invited:true}
  }
  const queries=[]
  let result:unknown
@@ -30,6 +32,6 @@ export async function credentialCommand(request:Request,env:Bindings,actor:Actor
   const keyId=text(p.id,'key ID');need(await env.DB.prepare('SELECT 1 FROM cb_agent_keys WHERE id=? AND owner_id=?').bind(keyId,actor.id).first(),'Agent key not found',404)
   queries.push(query('UPDATE cb_agent_keys SET revoked_at=? WHERE id=? AND owner_id=?',at,keyId,actor.id));result={id:keyId,revoked:true}
  }else fail('Unknown access command',404)
- await env.DB.batch([guard(a.sql,...a.params),...queries,query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at) VALUES(?,?,?,?,?,?)',newId(),actor.id,actor.role,name,(result as {id:string}).id,new Date(at).toISOString()),guard(a.sql,...a.params),query('DELETE FROM cb_guard')].map(q=>env.DB.prepare(q.sql).bind(...q.params)))
+ await env.DB.batch([guard(a.sql,...a.params),...queries,event(actor,name,new Date(at).toISOString(),{kind:'agent-key',id:(result as {id:string}).id,revision:(result as {id:string}).id,result:name==='agent.create'?'created':'revoked'}),guard(a.sql,...a.params),query('DELETE FROM cb_guard')].map(q=>env.DB.prepare(q.sql).bind(...q.params)))
  return result
 }

@@ -93,6 +93,18 @@
       "clauses": [
         "HTTP-001"
       ]
+    },
+    {
+      "id": "reservation-trust-ledger",
+      "clauses": [
+        "FIN-001"
+      ]
+    },
+    {
+      "id": "activity-history",
+      "clauses": [
+        "AUDIT-001"
+      ]
     }
   ],
   "nonGoals": [
@@ -100,7 +112,7 @@
     "Dynamic pricing or PriceLabs and Wheelhouse connections",
     "A live QuickBooks Online connection (QuickBooks gets CSV and IIF export files)",
     "Text messages in the guest inbox until the owner's Twilio A2P registration",
-    "Trust accounting, owner disbursements or lodging-tax filing",
+    "Owner disbursements or lodging-tax filing",
     "Review replies"
   ],
   "externals": [

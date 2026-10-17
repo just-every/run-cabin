@@ -1,3 +1,4 @@
+import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
 import { type AccessCode, type LockState } from './model'
 import { load, mutate, SYSTEM } from './storage'
@@ -40,7 +41,9 @@ export async function pushLocks(env: Bindings) {
  if (!lockAccount(env)) return []
  const data = await load(env.DB), due = data.codes.filter(r => r.lock.state === 'pending').slice(0, 20), results = []
  for (const code of due) {
+  await record(env.DB,SYSTEM,'lock.requested',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:'requested'})
   const lock = await push(env, code, homeSettings({ data }, code.propertyId).lockDeviceId)
+  await record(env.DB,SYSTEM,'lock.result',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:lock.state})
   results.push(await mutate(env.DB, SYSTEM, 'lock.push', c => { const row = c.data.codes.find(r => r.id === code.id); if (!row || row.revision !== code.revision) return null; row.lock = lock; c.entityId = row.id; return row }).catch(() => null))
  }
  return results

@@ -1,3 +1,4 @@
+import type { LedgerSetting } from './ledger/types'
 import type { Recovery, RecoveryPolicy } from './recovery/types'
 import type { Payout, Delivery, Posting } from './finance/types'
 export type Role = 'owner' | 'manager' | 'cleaner' | 'agent' | 'system'
@@ -8,7 +9,7 @@ export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct'
 /** A stay holds a guest; a block closes nights without one (a channel's "Not available", an owner stay or maintenance). */
 export interface CalendarEvent { uid: string; start: string; end: string; summary: string; cancelled: boolean; kind?: 'stay' | 'block'; guestName?: string }
 /** source 'request' marks a hold Cabin itself granted (reservation.request); feeds never remove it, and a feed's matching stay adopts it. */
-export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string }
+export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; guestErasedAt?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string }
 /** A channel's iCal export URL that Cabin polls (SYNC-009). */
 export interface Connection { id: string; revision: string; propertyId: string; channel: Channel; url: string; intervalMinutes: number; status: 'pending' | 'ok' | 'stale'; error: string | null; lastAttemptAt: string | null; lastSuccessAt: string | null; lastChangeAt: string | null; nextPollAt: string; events: number; createdBy: string }
 /** The listing's secret export token; replacing it revokes every old link. */
@@ -45,12 +46,12 @@ export interface InboxSettings { id: string; revision: string; address: string |
 export interface StatementLine { description: string; amountCents: number; payoutId?:string; bookingId?:string; category?:'gross'|'channelFee'|'expense' }
 export interface Statement { id: string; revision: string; propertyId: string; propertyRevision: number; propertyName: string; ownerName: string; ownerEmail: string; month: string; lines: StatementLine[]; source?:'imported'|'manual'|'recovery'; recoveryId?:string; reversalOf?:string; payoutIds?:string[]; channelFeeCents?:number; settlementCents?:number; expenseCents?:number; sourceBaseline?:string; commissionBps: number; grossCents: number; managementFeeCents: number; netCents: number; status: 'draft' | 'approved'; preparedBy: string; preparedAt: string; approval?: Approval }
 export interface Event { id: string; actorId: string; actorRole: Role; action: string; entityId: string | null; at: string }
-export const kinds = ['feeds', 'calendarDrafts', 'bookings', 'turnovers', 'statements', 'connections', 'exports', 'requests', 'homeSettings', 'codes', 'notices', 'tasks', 'payouts', 'deliveries', 'postings', 'messages', 'scheduled', 'inbox', 'recoveries', 'recoveryPolicies'] as const
+export const kinds = ['ledgerSettings', 'feeds', 'calendarDrafts', 'bookings', 'turnovers', 'statements', 'connections', 'exports', 'requests', 'homeSettings', 'codes', 'notices', 'tasks', 'payouts', 'deliveries', 'postings', 'messages', 'scheduled', 'inbox', 'recoveries', 'recoveryPolicies'] as const
 export type RecordKind = typeof kinds[number]
-export interface Data { recoveries: Recovery[]; recoveryPolicies: RecoveryPolicy[]; version: number; properties: Property[]; members: Member[]; feeds: Feed[]; calendarDrafts: CalendarDraft[]; bookings: Booking[]; turnovers: Turnover[]; statements: Statement[]; connections: Connection[]; exports: ExportFeed[]; requests: Request[]; homeSettings: HomeSettings[]; codes: AccessCode[]; notices: Notice[]; tasks: Task[]; messages: GuestMessage[]; scheduled: Scheduled[]; inbox: InboxSettings[]; payouts:Payout[]; deliveries:Delivery[]; postings:Posting[]; approvals: Approval[]; events: Event[] }
+export interface Data { ledgerSettings: LedgerSetting[]; recoveries: Recovery[]; recoveryPolicies: RecoveryPolicy[]; version: number; properties: Property[]; members: Member[]; feeds: Feed[]; calendarDrafts: CalendarDraft[]; bookings: Booking[]; turnovers: Turnover[]; statements: Statement[]; connections: Connection[]; exports: ExportFeed[]; requests: Request[]; homeSettings: HomeSettings[]; codes: AccessCode[]; notices: Notice[]; tasks: Task[]; messages: GuestMessage[]; scheduled: Scheduled[]; inbox: InboxSettings[]; payouts:Payout[]; deliveries:Delivery[]; postings:Posting[]; approvals: Approval[]; events: Event[] }
 export interface State extends Data { actor: Actor; origin: string; local: boolean; workerName: string | null; managed: boolean; lockAccount: boolean; messaging: { sms: boolean; booking: boolean }; agentKeys: Record<string, unknown>[]; importJobs: Record<string, unknown>[] }
 export interface Query { sql: string; params: any[] }
-export interface Context { db: D1Database; actor: Actor; before: Data; data: Data; queries: Query[]; now: string; entityId: string | null }
+export interface Context { audit?:import('./audit/write').Scope[]; db: D1Database; actor: Actor; before: Data; data: Data; queries: Query[]; now: string; entityId: string | null }
 export const fail = (message: string, status = 400): never => { throw Object.assign(new Error(message), { status }) }
 export function need(condition: unknown, message: string, status = 400): asserts condition { if (!condition) fail(message, status) }
 export function text(value: unknown, label: string, max = 200): string { need(typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max, `Enter ${label} (up to ${max} characters)`); return value.trim() }

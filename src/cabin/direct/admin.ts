@@ -21,7 +21,7 @@ export async function directCommand(env:Bindings,actor:Actor,name:string,input:R
  })
  const id=text(input.id,'stay ID');await stay(env.DB,id)
  if(name==='direct.checkout.complete')return mutate(env.DB,actor,name,async c=>{const row=await stay(env.DB,id);need(row.phase==='confirmed'&&!row.checkedOutAt,'Only a confirmed stay awaiting checkout can be checked out',409);const home=homeSettings(c,row.propertyId),checkin=arrival(row,home);need(Date.now()>=checkin,`This guest checks in ${timeLabel(new Date(checkin).toISOString(),home.timeZone)}. Mark them checked out after that.`,409);row.checkedOutAt=c.now;saveStay(c,row);return row})
- if(name==='direct.refresh')return refresh(env,id)
+ if(name==='direct.refresh')return refresh(env,id,actor)
  if(name==='direct.deposit.release')return settleDeposit(env,actor,id,'release')
  if(name==='direct.deposit.capture')return settleDeposit(env,actor,id,'capture',integer('amountDollars' in input?decimalUnits(input.amountDollars,'damage amount'):Number(input.amountCents),'Capture amount',1),text(input.reason,'damage reason',1000),text(input.evidence,'evidence reference',2000))
  if(name==='direct.tax.filed')return mutate(env.DB,actor,name,async c=>{const row=await stay(env.DB,id),jurisdiction=text(input.jurisdiction,'jurisdiction');need(row.paymentId,'Tax has not been collected for this stay',409);need(row.quote.taxes.some(t=>t.jurisdiction===jurisdiction),'This stay has no tax in that jurisdiction');row.taxFilings??=[];need(!row.taxFilings.some(f=>f.jurisdiction===jurisdiction),'Filing evidence is already recorded',409);row.taxFilings.push({jurisdiction,reference:text(input.reference,'filing confirmation reference',1000),actorId:actor.id,at:c.now});saveStay(c,row);return row})
