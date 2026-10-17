@@ -47,7 +47,7 @@ function actionMessage(name:string,result:any){
  if(name==='turnover.checkout')return 'Check-out recorded.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
  if(name==='turnover.approve')return 'Approved and assigned. The cleaner is emailed the window, address and door code.'
- if(name==='home.settings')return 'Turnover settings saved. New stays at this home use them.'
+ if(name==='home.settings')return 'Turnover settings saved. Unfinished jobs now use this checklist and photo requirement.'
  if(name==='task.raise')return result.assigneeId?'Maintenance task added and its assignee emailed.':'Maintenance task added. Choose who fixes it.'
  if(name==='task.assign')return 'Task assigned and emailed.'
  if(name==='task.close')return 'Task closed.'
@@ -58,6 +58,8 @@ function actionMessage(name:string,result:any){
  if(name==='message.compose')return 'Sending. The thread shows when it went out, or why it could not.'
  if(name==='message.discard')return 'Draft discarded. Nothing was sent.'
  if(name==='message.retry')return 'Sending again.'
+ if(name==='member.invite')return 'Sign-in invitation sent. Ask your teammate to check their email.'
+ if(name.startsWith('direct.stripe.')&&result.message)return result.message
  if(name==='inbox.address')return result.address?`Guest email now arrives at ${result.address}.`:'Inbox address removed.'
  if(name==='inbox.schedule')return 'Scheduled messages saved. Every upcoming stay follows them.'
  if(name==='inbox.ai.save')return 'AI key saved. New guest messages get an AI draft.'
@@ -87,6 +89,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
   }
  }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
  else return fail('Use JSON, a form, or a photo upload',415)
+ if('commissionPercent' in input){const amount=String(input.commissionPercent);need(/^\d+(?:\.\d{1,2})?$/.test(amount),'Enter a commission percentage with at most two decimal places');input.commissionBps=Math.round(Number(amount)*100);delete input.commissionPercent}
  for(const key of ['commissionBps','managementFeeCents'])if(key in input&&input[key]!=='')input[key]=Number(input[key]);else if(input[key]==='')delete input[key]
  if(typeof input.revision==='string'&&/^\d+$/.test(input.revision))input.revision=Number(input.revision)
  if('active'in input)input.active=input.active==='true'||input.active==='on'||input.active==='1'
@@ -127,6 +130,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(photo||direct){const saved=await turnoverPhoto(env.DB,who,(photo??direct)![1],!!direct);return new Response(saved.bytes,{headers:{...headers,'content-type':saved.mimeType,'content-disposition':'inline','content-security-policy':"default-src 'none'; sandbox"}})}
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
+   if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
    return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')

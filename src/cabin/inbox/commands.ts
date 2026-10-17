@@ -7,6 +7,7 @@ import { settingsCommand, stored, inboxSettings } from './settings'
 import { threads } from './threads'
 import { route } from './deliver'
 import { receiveEmail } from './inbound'
+import { facts } from './render'
 import { AI_MANAGED, AI_MODEL, AI_PURPOSE, aiDraft, aiKey, DraftError } from './ai'
 // What a person does in the inbox. A draft is sent only by message.send, which
 // records who approved exactly which text; message.compose is a reply the
@@ -25,9 +26,15 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   })
  }
  if (name === 'inbox.ai.test') {
-  const config = await aiKey(env, inboxSettings(await load(env.DB)))
+  const data = await load(env.DB), config = await aiKey(env, inboxSettings(data))
   if (!config) return { ok: false, message: managedInstall(env) ? AI_MANAGED : 'Save a key first.' }
-  try { const d = await aiDraft(config, { guest: 'Sam', home: 'Sample Cabin', checkin: 'Fri Oct 23, 4 pm', checkout: 'Mon Oct 26, 10 am', address: '1 Sample Road', code: '2580', stay_link: 'https://example.com/stay' }, [{ from: 'guest', text: 'What time can we check in?' }]); return { ok: true, message: `Working: “${d.text.slice(0, 160)}”` } }
+  const stay = [...data.bookings].filter(b => b.kind === 'stay' && b.status === 'confirmed').sort((a, b) => b.start.localeCompare(a.start))[0]
+  if (!stay) return { ok: false, message: 'Add a confirmed stay in Calendar first. The test uses its real saved details; nothing is sent to the guest.' }
+  try {
+   const f = facts(data, env.AUTH_ORIGIN, stay), d = await aiDraft(config, f, [{ from: 'guest', text: 'Any chance we can check in early, around 1 pm?' }])
+   if (!d.needsHost) return { ok: false, message: `Anthropic replied, but did not flag early check-in for your approval. Review the model setting before using it. Test reply for ${f.home}: “${d.text}” Nothing was sent.` }
+   return { ok: true, message: `Working with ${config.model}, using ${f.home}'s saved stay: “${d.text}” Needs you: ${d.note || 'Early check-in requires your approval.'} Nothing was sent to the guest.` }
+  }
   catch (error) { return { ok: false, message: error instanceof DraftError ? error.message : 'The AI provider could not be reached.' } }
  }
  if (name === 'inbox.try') {

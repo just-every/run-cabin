@@ -155,6 +155,7 @@ function stripeDate(value: unknown): string {
  * Fail rather than attach unassigned balance activity to an invented payout.
  */
 export async function stripePayoutLines(env: StripeEnv): Promise<SourceLine[]> {
+ env = { ...env, DIRECT_STRIPE_MODE: 'test' }
  const lines: SourceLine[] = [], transactions = new Set<string>()
  for await (const payout of stripePages(env, '/payouts', {})) {
   if (payout.status !== 'paid' || payout.currency !== 'usd') continue

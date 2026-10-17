@@ -2,7 +2,7 @@ import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
 import { need, text, sha, newId, fail } from '../model'
 import { load } from '../storage'
-import { csvCell } from '../statements'
+import { approvedStatementCsv } from '../statements'
 import { h } from '../ui/shared'
 const cookieName='cabin_owner_session'
 export async function ownerEmail(request:Request,env:Bindings){
@@ -44,5 +44,5 @@ export async function signOutOwner(request:Request,env:Bindings){
 }
 export async function ownerCsv(env:Bindings,email:string,id:string){
  const s=(await portalState(env,email)).statements.find(s=>s.id===id);need(s,'Approved statement not found',404)
- return [['Cabin owner statement'],['Property',s.propertyName],['Month',s.month],['Revision',s.revision],['Description','Amount (cents)'],...s.lines.map(l=>[l.description,l.amountCents]),['Gross (cents)',s.grossCents],['Channel fees (cents)',s.channelFeeCents??0],['Management fee (cents)',s.managementFeeCents],['Owner payout (cents)',s.netCents],['Approved',s.approval!.at]].map(r=>r.map(csvCell).join(',')).join('\r\n')+'\r\n'
+ return approvedStatementCsv(s)
 }

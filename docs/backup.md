@@ -1,4 +1,4 @@
-Everything Cabin holds lives in your own installation. One command exports it to a single archive you keep; another restores that archive into a fresh copy.
+Everything Cabin holds lives in your own installation. For a local installation, one command exports an archive and another restores it into a fresh copy. Hosted data needs a separate remote database backup below.
 
 ## Export
 
@@ -10,6 +10,24 @@ rer export --output exports/cabin.rer
 ```
 
 Keep archives private: they hold your owners' details, bookings, photos and statements.
+
+## Back up a hosted installation
+
+Local `rer export` reads the local installation. It cannot back up a hosted Cabin, and `--origin` does not turn it into a hosted export.
+
+Before removing hosting, stop new bookings and operational writes while you capture a consistent backup. In Cloudflare’s dashboard open **Storage & databases → D1**, select this environment’s database and confirm its name against the deployment record in `.rer/deploy`. The default production name is `cabin-production-db`; an environment named `trial` uses `cabin-trial-db`.
+
+With `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` privately available in your shell, run from the Cabin checkout:
+
+```sh
+mkdir -p exports
+pnpm exec wrangler d1 export cabin-production-db --remote --output exports/cabin-production.sql
+chmod 600 exports/cabin-production.sql
+```
+
+For another environment, replace the database name and output filename with that environment’s. Wrangler reads the credentials from your environment; it does not read `.env.cabin` automatically. Confirm the export succeeded and that the SQL file is nonempty before removal. Keep it and a private copy of the deploy configuration securely. Cabin stores its operational records and photos in D1; if you have extended your installation with other storage, back that up separately.
+
+This is a database SQL backup for administrator recovery with Wrangler, not a `.rer` archive for `rer import`. Restore into a separately prepared D1 database with `wrangler d1 execute DATABASE --remote --file BACKUP.sql`, review the data there and re-establish private settings and sign-in before serving users. Do not restore over a populated installation. See [hosting and irreversible removal](/docs/hosting#remove-a-deployment).
 
 ## What an archive holds
 

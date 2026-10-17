@@ -1,4 +1,4 @@
-Every reservation turns itself over. When a stay is booked on Airbnb, Vrbo or Booking.com (through its calendar link or file) or taken directly in Cabin, Cabin makes its turnover between that guest's check-out and the next guest's check-in, issues the guest a door code for the stay and, once a cleaner is assigned, gives the cleaner their own code for the turnover window and emails them the window, address and code. The cleaner marks the home ready from their phone with photos, and **Readiness** shows the owner which homes are ready for their next guests.
+Every reservation turns itself over. When a stay is booked on Airbnb, Vrbo or Booking.com (through its calendar link or file) or taken directly in Cabin, Cabin makes its turnover between that guest's check-out and the next guest's check-in, issues the guest a door code for the stay and, once a cleaner is assigned, gives the cleaner their own code for up to six hours after check-out and emails them the window, address and code. The cleaner marks the home ready from their phone with photos, and **Readiness** shows the owner which homes are ready for their next guests.
 
 ## Set up each home once
 
@@ -10,12 +10,13 @@ Open **Turnovers** and, under **Turnover settings by home**, open a home:
 - **Checklist**, one item per line, and **Photos to mark ready** (1 to 12).
 - **Smart-lock device ID** (optional): see [Door codes](#door-codes).
 
-Settings apply to turnovers Cabin makes from then on. Setting a default cleaner also assigns the home's turnovers that have no cleaner yet.
+Checklist and photo settings apply immediately to every unfinished turnover, including jobs already assigned. The cleaner gets an updated email and must reload an open form to use the new checklist. Completed jobs retain the requirements and photos they were completed with. Setting a default cleaner also assigns the home's turnovers that have no cleaner yet.
 
 ## What happens for each stay
 
 - **A new stay** gets one turnover, from its check-out to the next check-in at that home (or the same day's check-in time when no next stay is booked yet). Stays that checked out before today start nothing.
 - **A moved stay** (a channel changes the dates) moves its turnover window and codes, and so does the turnover before it. The cleaner gets an email that replaces the earlier one.
+- **A new next arrival** updates the gap shown on a completed turnover too. Changing the preceding stay reopens its completed turnover, as does a check-out change that makes the earlier cleaning invalid. The home needs fresh completion evidence after that stay checks out.
 - **A cancelled stay** cancels its turnover and both its codes, and the cleaner is told.
 - **Reassigning** a turnover (choose **Reassign to** on the job) gives the new cleaner fresh digits and an email; the old cleaner's code stops working and they are told it is no longer theirs.
 
@@ -25,20 +26,29 @@ You can also prepare a turnover by hand for review (or an agent can): approving 
 
 ## Door codes
 
-Each stay's guest code works from check-in to check-out; each cleaner's code works for their turnover window. No two codes at a home overlap with the same digits. Guests see their code on their stay page: copy the **Guest stay page** link from the turnover and send it to the guest. A cancelled stay's page says so and shows no code.
+Each stay's guest code works from check-in to check-out; each cleaner's code starts at check-out and expires six hours later, or at the next arrival if earlier. Completing the turnover revokes the cleaner's code immediately. A long gap before the next booking does not leave the cleaner's code active for days. If cleaning will happen later, arrange separate access with the manager. No two codes at a home overlap with the same digits. Guests see their code on their stay page: copy the **Guest stay page** link from the turnover and send it to the guest. A cancelled stay's page says so and shows no code.
 
-Cabin pushes codes to a smart lock through [Seam](https://www.seam.co/) (which connects Schlage, Yale, August, Kwikset, igloohome, Nuki and other locks) when the owner's Seam API key is set as the `SEAM_API_KEY` secret and the home names its lock's Seam device ID. That account is a later step: until then every code says to set it on the keypad by hand. On RER Managed hosting, live lock push is not available yet (it cannot reach lock providers until RER adds a provider relay); it works on a self-hosted install. A lock that accepted a code is not a tested door: check it on site.
+Cabin connects to smart locks through Seam, a service that links your lock maker's account to Cabin. You can use a keypad manually without Seam: leave the device ID empty, enter the displayed code with its start and end times, and remove it when revoked or when cleaning is done.
+
+To connect an automatic lock on your own installation:
+
+1. Open the [Seam dashboard](https://console.seam.co/), create a workspace for real devices, and connect the lock maker's account. Follow [Seam's connection guide](https://www.seam.co/guides/how-to-connect-a-smart-lock-to-your-app). A sandbox workspace uses virtual locks and does not operate the real door.
+2. Open the connected lock in that workspace and copy its **device_id** into this home's **Smart-lock device ID** field. This is Seam's ID, not the manufacturer's serial number. The [device list reference](https://www.seam.co/docs/api/devices/list) shows the ID returned for each connected device.
+3. In Seam's **Developer → API Keys**, create an API key for the same workspace. Locally, put `SEAM_API_KEY=your-key` in the private `.dev.vars` file and restart Cabin. For your own Cloudflare deployment, open [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages), select this Cabin, then **Settings → Variables and Secrets**; add `SEAM_API_KEY` as a secret and deploy. Keep the key private; only the device ID belongs in the turnover form.
+4. Save the home settings. The setup status says whether the account and device ID are configured. Each job's code shows whether Seam accepted it or why the request failed. An accepted code is not a tested door: try it on the physical keypad during its allowed hours, then check expiry/removal on the lock.
+
+On RER Managed hosting, live lock push is not available yet because it needs a provider relay. Use manual keypad setup there.
 
 ## What the cleaner does
 
 The cleaner signs in on their phone and opens **Turnovers**, where they see only their own jobs: the window, the address (tap for directions) and their door code. For each job they:
 
-1. Choose **Guests have left** when they find the home empty: Cabin records the actual check-out time (a manager can also choose **Record check-out now**).
+1. After the stay's scheduled check-out in the home's time zone, choose **Guests have left** when they find the home empty: Cabin records the actual check-out time (a manager can also choose **Record check-out now**). Both departure recording and **Mark ready** are refused before that check-out, even through a direct request.
 2. Tick every checklist item.
 3. Add the home's photos (at least the number the home asks for, up to 12). Phone photos are shrunk to fit before they upload.
 4. Write a short note and choose **Mark ready**.
 
-A job cannot be marked ready with an item unticked or too few photos, and it cannot be marked ready twice. If something is broken, they choose **Report something broken** on the job, say what is wrong, add photos and say whether the next guests can arrive. That becomes a maintenance task.
+A job cannot be marked ready before the preceding stay's check-out, with an item unticked or too few photos, and it cannot be marked ready twice without being reopened by a changed stay. If something is broken, they choose **Report something broken** on the job, say what is wrong, add photos and say whether the next guests can arrive. That becomes a maintenance task.
 
 ## Maintenance
 

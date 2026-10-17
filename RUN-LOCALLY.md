@@ -219,12 +219,24 @@ provider request. The default environment is `production`; select another with
 `--environment NAME`. Local validation does not establish provider acceptance,
 hosted health or mail delivery.
 
+For Cabin’s hosted setup, supply `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `OWNER_EMAIL`, `MAIL_PROVIDER` (`sendgrid`, `resend` or `cloudflare`), `MAIL_API_KEY` and `MAIL_FROM` (a verified plain sender address) through the environment or a mode-0600 `--env-file`. Provider and sender are private secret bindings, not committed configuration. Cloudflare mail additionally needs `MAIL_ACCOUNT_ID`. Connect Stripe and test checkout on **Direct bookings → Connect Stripe**, then save a live key for real bookings. Optional server keys are `STRIPE_TEST_SECRET_KEY` (`sk_test_`) and `STRIPE_SECRET_KEY` (`sk_live_`); locally put them in `.dev.vars` and restart. Statement payout import supports test-mode USD payouts only. RER generates and retains session/setup secrets itself. See [hosting](docs/hosting.md).
+
+Back up hosted D1 with `pnpm exec wrangler d1 export cabin-production-db --remote --output exports/cabin-production.sql`, using the actual database name for the selected environment and privately supplied Cloudflare credentials. Local `rer export` does not read hosted data; `--origin` is not a hosted export option. Follow the [hosted backup guide](docs/backup.md#back-up-a-hosted-installation) before removal.
+
+To remove hosting permanently, from its original checkout run:
+
+```sh
+rer deploy --remove --yes --env-file .env.cabin
+```
+
+Include `--environment NAME` if one was used on deploy. This irreversibly deletes the Worker and every D1, R2, KV and queue the environment’s deploy record says RER created, including data. Keep `.rer/deploy` until RER confirms **read back: none of them remains**. It reads back every resource; an already empty deployment removes nothing. See [removal](docs/hosting.md#remove-a-deployment).
+
 `rer describe` reads the current checkout's actual verbs,
 flags, aliases, pins, effects and local state without installing or running
 project commands. New verbs accept `--help`, `--cwd PATH`, `--non-interactive`
 and `--json`. Setup also accepts `--owner-name`, `--port`, `--host`, a
 private JSON `--answers FILE` and `--door`. Dev and preview accept `--port`,
-`--host`, `--idle-timeout`, and `--stop`; dev also `--door` and `--direct`. Deploy accepts `--environment` and `--dry-run`;
+`--host`, `--idle-timeout`, and `--stop`; dev also `--door` and `--direct`. Deploy accepts `--environment`, `--dry-run`, `--env-file`, `--set-secret`, and `--remove --yes`;
 export/import accept their target, file and restore options. `rer check` accepts
 `--profile first-party`. Heavy commands accept `--no-queue` only when the
 original caller has `CI=true`. Release retains its own compatibility flags.

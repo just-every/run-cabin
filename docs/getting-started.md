@@ -47,3 +47,5 @@ While you try Cabin locally, development mail is not sent. To see what a manager
 2. Bring in each home's channel calendars in [Channel calendars](/docs/calendars).
 3. Send a cleaner their first job in [Turnovers](/docs/turnovers).
 4. Prepare the month's figures in [Owner statements](/docs/statements).
+
+To make Cabin available away from this computer, follow [Put Cabin online](/docs/hosting). That guide also covers backing up and permanently removing a deployment.

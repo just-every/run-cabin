@@ -13,5 +13,7 @@ export const form = (name: string, page: string, body: string, button: string, a
 export const approve = (name: string, page: string, record: any, text: string) => form(name, page, hidden('id', record.id) + hidden('revision', record.revision), text)
 export const propertyName = (s: any, id: string) => s.properties.find((p: any) => p.id === id)?.name ?? id
 export const memberName = (s: any, id: string) => s.members.find((p: any) => p.id === id)?.name ?? id
-export const dateRange = (b: any) => `${h(b.start)} → ${h(b.end)} (checkout)`
+export const day = (value: string) => new Date(value.slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+export const moment = (value: string | number) => new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+export const dateRange = (b: any) => `${h(day(b.start))} → ${h(day(b.end))} (checkout)`
 export const heading = (eyebrow: string, title: string, text: string) => `<div class="page-heading"><p class="eyebrow">${h(eyebrow)}</p><h1>${h(title)}</h1><p>${h(text)}</p></div>`

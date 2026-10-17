@@ -33,12 +33,12 @@ export async function aiDraft(config: { key: string; model: string; workspace: s
  try {
   response = await fetch('https://api.anthropic.com/v1/messages', {
    method: 'POST', signal: AbortSignal.timeout(60_000),
-   headers: { 'x-api-key': config.key, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01', 'content-type': 'application/json', ...(config.workspace ? { 'anthropic-workspace-id': config.workspace } : {}) },
-   body: JSON.stringify({ model: config.model, max_tokens: 4000, system: INSTRUCTIONS, fallbacks: 'default', output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } }, messages: [{ role: 'user', content: `The stay's facts:\n${stay}\n\nThe thread so far, oldest first; reply to the guest's last message:\n${thread}` }] }),
+   headers: { 'x-api-key': config.key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', ...(config.workspace ? { 'anthropic-workspace-id': config.workspace } : {}) },
+   body: JSON.stringify({ model: config.model, max_tokens: 4000, system: INSTRUCTIONS, output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } }, messages: [{ role: 'user', content: `The stay's facts:\n${stay}\n\nThe thread so far, oldest first; reply to the guest's last message:\n${thread}` }] }),
   })
  } catch { throw new DraftError('The AI provider could not be reached.') }
  let body: any = null; try { body = await response.json() } catch { /* the status explains it */ }
- if (!response.ok) throw new DraftError(response.status === 401 || response.status === 403 ? 'The AI key was refused. Check it on the Inbox page.' : `The AI provider answered ${response.status}.`)
+ if (!response.ok) throw new DraftError(response.status === 401 || response.status === 403 ? 'The AI key was refused. Check it on the Inbox page.' : response.status === 402 ? 'Anthropic billing needs credit. Open your Anthropic billing settings.' : response.status === 404 ? 'Anthropic could not find this model. Check the model ID in Advanced AI settings.' : `The AI provider answered ${response.status}${typeof body?.error?.message === 'string' ? `: ${body.error.message.slice(0, 240)}` : '.'}`)
  if (body?.stop_reason === 'refusal') throw new DraftError('The AI model declined to draft this reply.')
  let answer: any; try { answer = JSON.parse(body?.content?.find((p: any) => p.type === 'text')?.text ?? '') } catch { answer = null }
  if (typeof answer?.reply !== 'string' || !answer.reply.trim()) throw new DraftError('The AI model gave no usable draft.')

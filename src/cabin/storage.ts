@@ -17,7 +17,7 @@ export async function load(db: D1Database): Promise<Data> {
  const results = await db.batch<any>([
   db.prepare('SELECT version FROM cb_meta WHERE id=1'), db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
   db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare('SELECT kind,data FROM cb_records ORDER BY rowid'),
-  db.prepare('SELECT id,kind,record_id AS recordId,revision,actor_id AS actorId,at FROM cb_approvals ORDER BY at,id'),
+  db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
   db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
  ])
  const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }

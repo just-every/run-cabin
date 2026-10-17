@@ -44,7 +44,42 @@
     {
       "binding": "MAIL_FROM",
       "environment": "MAIL_FROM",
-      "verifyStandIn": "Cabin <auth@example.test>"
+      "verifyStandIn": "auth@example.test"
+    },
+    {
+      "binding": "STRIPE_SECRET_KEY",
+      "environment": "STRIPE_SECRET_KEY",
+      "optional": true
+    },
+    {
+      "binding": "SEAM_API_KEY",
+      "environment": "SEAM_API_KEY",
+      "optional": true
+    },
+    {
+      "binding": "TWILIO_ACCOUNT_SID",
+      "environment": "TWILIO_ACCOUNT_SID",
+      "optional": true
+    },
+    {
+      "binding": "TWILIO_AUTH_TOKEN",
+      "environment": "TWILIO_AUTH_TOKEN",
+      "optional": true
+    },
+    {
+      "binding": "TWILIO_FROM",
+      "environment": "TWILIO_FROM",
+      "optional": true
+    },
+    {
+      "binding": "CABIN_WORKER_NAME",
+      "environment": "CABIN_WORKER_NAME",
+      "optional": true
+    },
+    {
+      "binding": "MAIL_ACCOUNT_ID",
+      "environment": "MAIL_ACCOUNT_ID",
+      "optional": true
     }
   ],
   "crons": [

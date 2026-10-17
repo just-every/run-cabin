@@ -4,8 +4,8 @@ import { managedInstall } from '../../channels'
 // A2P 10DLC registration first, so this stays off until the owner adds
 // TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM after registering. It
 // is tested against responses in Twilio's documented shape (tests/fixtures/twilio).
-export const SMS_LINE = 'Texts connect after the owner’s US A2P 10DLC texting registration with Twilio. Until then Cabin sends no texts; it emails guests who have an email on their stay.'
-export const SMS_MANAGED = 'Texts are not available on RER Managed hosting yet: it cannot reach Twilio until RER adds a provider relay.'
+export const SMS_LINE = 'Texts are not connected. You need your own Twilio texting account, an approved number and the connection steps below. Until then Cabin emails guests who have an email on their stay.'
+export const SMS_MANAGED = 'Texts are not available on RER Managed hosting yet because it cannot connect to Twilio. Use guest email for now.'
 export const smsAccount = (env: Bindings) => !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM) && !managedInstall(env)
 export async function sendSms(env: Bindings, to: string, body: string) {
  const sid = env.TWILIO_ACCOUNT_SID!, response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
