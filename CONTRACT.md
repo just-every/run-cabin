@@ -18,6 +18,29 @@ Each `AREA-NNN` identifier is stable. Every clause states a buyer behavior and a
 | Incumbents a buyer switches from | Guesty, Hostaway, OwnerRez, Lodgify, Hospitable, Breezeway |
 | First buyer | A US owner or manager of 3–40 vacation rentals operating in USD, selling stays on Airbnb, Vrbo, Booking.com and their own website, who must be able to run the complete booking-to-owner-close business in Cabin |
 
+## What Cabin 0.1.0 does
+
+These published clauses state what this release does today, each in a narrower scope than the target clauses below that carry the complete product. Each is proven by the test named in its Status row.
+
+### Released operations
+
+- **CABIN-01 — Homes, people and roles.** An owner adds homes with their owner, owner email and management commission, and managers and cleaners who sign in through an invitation (emailed when hosted). Every private door checks the signed-in person's current role on each request; a cleaner sees only their own jobs and Maintenance, and deactivated access stops at once.
+- **CABIN-02 — Calendars both ways by iCal.** Each home polls its Airbnb, Vrbo and Booking.com calendar links every 15 to 60 minutes and shows last-synced time and errors, and publishes its own link per channel listing every night held anywhere else, direct bookings included. A request for held nights is declined with the overlapping stay named; a collision arriving from two channels is kept and shown as a double booking to resolve.
+- **CABIN-03 — Direct bookings with payment, agreement, ID check and deposit hold.** A published home's booking page quotes nights, fees and lodging tax under its stay rules; the guest signs the agreement, pays through the owner's Stripe account, passes Stripe Identity when required, and a separate damage deposit is held on the card and released after check-out or captured with a reason. A guest is marked checked out only after their check-in time. The receipt itemizes the charges and states the hold as it is.
+- **CABIN-04 — Turnovers, door codes and cleaner notices.** Every confirmed stay from any channel creates one turnover between its check-out and the next check-in, a guest door code for the stay and, once assigned, the cleaner's own code for the window; the cleaner is emailed the window, address and code, and a moved or cancelled stay re-emails or cancels it.
+- **CABIN-05 — Cleaner completion with checklist and photos.** The assigned cleaner records the guests' departure, ticks every checklist item and marks the home ready with the required photos. A job finished after the next guests' check-in stays done and is labelled late; a job reopened because its stay or check-out time changed says why and can be marked ready again without storing its photos twice.
+- **CABIN-06 — Readiness and maintenance.** Readiness shows for any day whether each home's turnover before its next arrival is done with its photos and no blocking task is open. A cleaner reports a broken thing with photos; it becomes a task for the home's maintenance person, emailed to them.
+- **CABIN-07 — Guest inbox and scheduled messages.** One thread per guest joins their stays and email. Check-in details with the door code, a checkout reminder and a review request are sent on time in the home's time zone, move with the stay and are sent again only when their words change. Every guest message gets a drafted reply that is sent only when a person sends it.
+- **CABIN-08 — Stay recovery within approved limits.** When a cleaner cancels, a recovery case proposes an available backup cleaner, a new door code and a guest credit; it acts only on exact approval or within the owner's per-home limits, posts a reversible owner adjustment and closes once the home is verified ready.
+
+### Released owner money and custody
+
+- **CABIN-09 — Payout-matched owner statements and portal.** Imported Airbnb and Vrbo USD payout lines match their stays; a monthly statement of gross, actual channel fees, paid owner expenses and management commission is approved, frozen and emailed to the owner, who signs in separately and sees only their own homes, stays and approved statements.
+- **CABIN-10 — Books posted once to Pantry and QuickBooks exports.** An approved statement is posted once to the owner's Pantry with a scoped, revocable integration credential and its matched evidence attached; replays keep the original journal and a revoked credential shows a broken connection. QuickBooks Online CSV and Desktop IIF journal files are exported for a person to import.
+- **CABIN-11 — Move-in with preview, reconciliation and undo.** A property register, or Guesty, Hostaway and OwnerRez CSV reports, are previewed with each refused row, imported into homes, stays, guests, owner balances and channel links, reconciled and signed off, and can be undone without losing records changed since.
+- **CABIN-12 — Agent access prepares, people approve.** An owner-made bearer key lets an assistant read and prepare work but reach no approval door; revoking it stops access at once.
+- **CABIN-13 — Backup and restore.** `rer export` and `rer import` save and restore the copy on the owner's computer, refusing damaged or populated stores; `rer run backup:hosted` saves a hosted Cabin to an owner-only file without printing a download link and restores it into a fresh hosted environment.
+
 ## Target clauses
 
 Every clause below is a target clause; the agent clauses under "Push further" are push-further clauses. Their status against the current code is in [Status](#status).
@@ -653,6 +676,8 @@ Every capability claim and demo action on the approved homepage maps to the clau
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
+18 October 2026, release 0.1.0: published clauses CABIN-01 to CABIN-13 state what this release does, judged against `e45b78304c9dc439f76c4addb500d714c18a00b3` by an independent release gate run locally and hosted; target statuses are unchanged.
+
 17 October 2026, homepage-claims pass: SITE-002 is added as partial from the existing demo seed, effect boundary, deployment workflow and test. All 88 pre-existing clause statuses and the existing homepage row status assessments are preserved. The product target table and target/push-further section boundaries now match the public parser.
 
 17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, QuickBooks CSV/IIF export files, and live Pantry posting of approved statements with scoped, revocable integration credentials (tested in `tests/finance.test.mjs`) implemented. Nothing syncs to QuickBooks. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
@@ -666,14 +691,27 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 0 | 0 | 0 | 0 |
+| Published | 13 | 0 | 0 | 13 |
 | Target and push further | 6 | 53 | 30 | 89 |
-| All | 6 | 53 | 30 | 89 |
+| All | 19 | 53 | 30 | 102 |
 
-**89 clauses: 6 done, 53 partial, 30 missing.**
+**102 clauses: 19 done, 53 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
+| `CABIN-01` | Homes, people and roles | published | done | `src/cabin/people.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 17) |  |
+| `CABIN-02` | Calendars both ways by iCal | published | done | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs` (lines 144, 179) |  |
+| `CABIN-03` | Direct bookings with payment, agreement, ID check and deposit hold | published | done | `src/cabin/direct/`; `tests/direct.test.mjs` (lines 8, 55, 75) |  |
+| `CABIN-04` | Turnovers, door codes and cleaner notices | published | done | `src/cabin/dispatch.ts`; `src/cabin/codes.ts`; `src/cabin/notices.ts`; `tests/turnovers.test.mjs` (line 15) |  |
+| `CABIN-05` | Cleaner completion with checklist and photos | published | done | `src/cabin/turnovers.ts`; `src/cabin/turnover-window.ts`; `src/cabin/photos.ts`; `tests/turnovers.test.mjs` (lines 15, 162); `tests/cabin.test.mjs` (line 67) |  |
+| `CABIN-06` | Readiness and maintenance | published | done | `src/cabin/readiness.ts`; `src/cabin/maintenance.ts`; `tests/turnovers.test.mjs` (line 15) |  |
+| `CABIN-07` | Guest inbox and scheduled messages | published | done | `src/cabin/inbox/`; `tests/inbox.test.mjs` (lines 17, 154) |  |
+| `CABIN-08` | Stay recovery within approved limits | published | done | `src/cabin/recovery/`; `tests/recovery.test.mjs` (line 9) |  |
+| `CABIN-09` | Payout-matched owner statements and portal | published | done | `src/cabin/finance/`; `src/cabin/statements.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` (line 7) |  |
+| `CABIN-10` | Books posted once to Pantry and QuickBooks exports | published | done | `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-posting.ts`; `tests/finance.test.mjs` (line 7) |  |
+| `CABIN-11` | Move-in with preview, reconciliation and undo | published | done | `src/cabin/movein/`; `tests/movein.test.mjs` (line 9); `tests/cabin.test.mjs` (line 125) |  |
+| `CABIN-12` | Agent access prepares, people approve | published | done | `src/cabin/credentials.ts`; `tests/cabin.test.mjs` (line 109) |  |
+| `CABIN-13` | Backup and restore | published | done | `src/cabin/archive-policy.mjs`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs` (line 27) |  |
 | `PROPERTY-001` | A usable vacation-rental property register | target | partial | `src/cabin/people.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (line 17) | Only names, owner contact and a fixed commission are implemented; property content, time zones and versioned management agreements are absent. |
 | `AUTH-001` | Current native authority on every private door | target | done | `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 17, 67) |  |
 | `AUTH-002` | PMS roles and property-specific permissions | target | missing |  | No implementing flow in the audited tree. |
