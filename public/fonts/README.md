@@ -28,5 +28,7 @@ Latin and Latin Extended WOFF2 subsets (5.3.0):
 | JetBrains Mono | commands and code | `jetbrains-mono/` | https://github.com/JetBrains/JetBrainsMono |
 
 Their `@font-face` rules are in `fonts.css` with Outfit's. The site's tokens
-(`public/site/theme.css`) name them; the app keeps Outfit until its screens
-take the new look.
+(`public/site/theme.css`) name them, and so does the app: its theme
+(`public/rer-theme.css`) sets Inter for text and Inter Tight for headings, so the
+app, sign-in and first-run setup read in the same faces as the homepage. Outfit
+stays as Base's foundation copy (`base-copies.json`).
