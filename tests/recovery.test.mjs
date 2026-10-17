@@ -3,7 +3,12 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { harness } from './harness.mjs'
 
-const day = n => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10)
+// The stays are set on the home's own clock: the previous guests leave at midnight today and Ana arrives two hours
+// from now (still ahead if a daylight-saving change makes that wall time ambiguous), so at any time of day the
+// turnover can be finished and her check-in message is already due.
+const zone = 'America/New_York'
+const local = ms => { const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(ms).map(x => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` } }
+const plus = (date, n) => new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10)
 const photo = (await readFile('tests/fixtures/checklist.png')).toString('base64')
 
 test('cancelled cleaner recovery binds approval, rebooks, rotates only changed messages, credits, verifies photos and posts a reversible owner balance', async () => {
@@ -14,10 +19,11 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   const home = await h.cmd('property.save', { name: 'Fernwood Cabin', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 2000 })
   const original = await h.person('Taylor'), replacement = await h.person('Casey'), outsider = await h.person('Dale')
   const manager = await h.person('Riley', 'manager')
-  await h.cmd('home.settings', { propertyId: home.id, address: '18 Fernwood Lane, Boone, NC', timeZone: 'America/New_York', checkInTime: '16:00', checkOutTime: '00:00', cleanerId: original.id, checklist: ['Beds made', 'Kitchen clean'], photosRequired: 1 })
+  const today = local(Date.now()).date, arrival = local(Date.now() + 7_200_000)
+  await h.cmd('home.settings', { propertyId: home.id, address: '18 Fernwood Lane, Boone, NC', timeZone: zone, checkInTime: arrival.time, checkOutTime: '00:00', cleanerId: original.id, checklist: ['Beds made', 'Kitchen clean'], photosRequired: 1 })
   let policy = await h.cmd('recovery.settings', { propertyId: home.id, cleanerIds: [original.id, replacement.id], auto: false, creditLimitCents: 10_000, cleaningLimitCents: 5000 })
-  const prior = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Jo', start: day(-1), end: day(0) })
-  const stay = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Ana Ruiz', guestEmail: 'ana@stay.example', start: day(0), end: day(3) })
+  const prior = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Jo', start: plus(today, -1), end: today })
+  const stay = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Ana Ruiz', guestEmail: 'ana@stay.example', start: arrival.date, end: plus(arrival.date, 3) })
   let s = await h.state(), turnover = s.turnovers.find(t => t.bookingId === prior.bookingId)
   const oldCode = s.codes.find(c => c.bookingId === stay.bookingId && c.holder === 'guest' && c.status === 'issued')
   let recovery = await h.cmd('recovery.open', { turnoverId: turnover.id, trigger: 'cleaner_cancelled', reason: 'Vehicle broke down before the arrival clean' }, original.cookie)
