@@ -1,4 +1,6 @@
 import type { Booking, Data, GuestMessage, Scheduled } from '../model'
+import { homeSettings } from '../homes'
+import { instant } from '../clock'
 // One thread per guest. A guest is known by the email on their stay, else the
 // phone, else the stay itself (a channel stay with no contact yet). Every stay
 // of that guest, from any channel or booked direct, its scheduled messages and
@@ -14,12 +16,13 @@ export function phoneOf(value: unknown) {
 }
 const isStay = (b: Booking) => (b.kind ?? 'stay') === 'stay'
 export const guestKey = (b: Booking) => b.guestEmail ? `e:${b.guestEmail}` : b.guestPhone ? `p:${b.guestPhone}` : `b:${b.id}`
-/** The stay a guest's message is about: their current or next stay, else their latest one. */
-export function stayFor(data: Pick<Data, 'bookings'>, who: { email?: string | null; phone?: string | null; bookingId?: string | null }, today = new Date().toISOString().slice(0, 10)) {
+/** The stay a guest's message is about: their current or next stay, else their latest one. A stay is over once its home's check-out time passes, so on a changeover day the stay that starts wins over the one that just ended. */
+export function stayFor(data: Pick<Data, 'bookings' | 'homeSettings'>, who: { email?: string | null; phone?: string | null; bookingId?: string | null }, now = Date.now()) {
  if (who.bookingId) return data.bookings.find(b => b.id === who.bookingId) ?? null
  const mine = data.bookings.filter(b => isStay(b) && ((who.email && b.guestEmail === who.email) || (who.phone && b.guestPhone === who.phone)))
  const live = mine.filter(b => b.status === 'confirmed'), pool = live.length ? live : mine
- const ahead = pool.filter(b => b.end.slice(0, 10) >= today).sort((a, b) => a.start.localeCompare(b.start))
+ const checkout = (b: Booking) => { const s = homeSettings(data, b.propertyId); return instant(`${b.end.slice(0, 10)}T${s.checkOutTime}`, s.timeZone) }
+ const ahead = pool.filter(b => checkout(b) > now).sort((a, b) => a.start.localeCompare(b.start))
  return ahead[0] ?? pool.sort((a, b) => b.end.localeCompare(a.end))[0] ?? null
 }
 export function messageKey(data: Pick<Data, 'bookings'>, m: Pick<GuestMessage, 'bookingId' | 'email' | 'phone' | 'ref'>) {

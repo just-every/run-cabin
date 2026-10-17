@@ -13,21 +13,28 @@ Keep archives private: they hold your owners' details, bookings, photos and stat
 
 ## Back up a hosted installation
 
-Local `rer export` reads the local installation. It cannot back up a hosted Cabin, and `--origin` does not turn it into a hosted export.
+Local `rer export` reads the local installation. It cannot back up a hosted Cabin, and refuses when you name a hosted address.
 
-Before removing hosting, stop new bookings and operational writes while you capture a consistent backup. In Cloudflare’s dashboard open **Storage & databases → D1**, select this environment’s database and confirm its name against the deployment record in `.rer/deploy`. The default production name is `cabin-production-db`; an environment named `trial` uses `cabin-trial-db`.
-
-With `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` privately available in your shell, run from the Cabin checkout:
+Before removing hosting, stop new bookings and operational writes while you capture a consistent backup. Then, from the Cabin folder you deployed from, run:
 
 ```sh
-mkdir -p exports
-pnpm exec wrangler d1 export cabin-production-db --remote --output exports/cabin-production.sql
-chmod 600 exports/cabin-production.sql
+rer run backup:hosted -- --env-file .env.cabin
 ```
 
-For another environment, replace the database name and output filename with that environment’s. Wrangler reads the credentials from your environment; it does not read `.env.cabin` automatically. Confirm the export succeeded and that the SQL file is nonempty before removal. Keep it and a private copy of the deploy configuration securely. Cabin stores its operational records and photos in D1; if you have extended your installation with other storage, back that up separately.
+For another environment add `--environment NAME`, for example `--environment trial`. This works for an install.sh install: `rer run` uses the Node and pnpm rer keeps for itself, so you need no `pnpm`, `npx` or Node of your own. It reads `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` from `.env.cabin`, finds the environment's database in the deploy record rer keeps in `.rer/deploy`, and saves it with Wrangler to `exports/cabin-ENVIRONMENT-db-DATE.sql`, readable only by you (mode 600). It prints how many rows it saved and refuses an empty backup. Cabin keeps its operational records and turnover photos in that database and creates no R2 storage, so this one file is the whole hosted installation's data. Keep it and a private copy of `.env.cabin` and `.rer/deploy` securely: it holds guests, owners, bookings and photos.
 
-This is a database SQL backup for administrator recovery with Wrangler, not a `.rer` archive for `rer import`. Restore into a separately prepared D1 database with `wrangler d1 execute DATABASE --remote --file BACKUP.sql`, review the data there and re-establish private settings and sign-in before serving users. Do not restore over a populated installation. See [hosting and irreversible removal](/docs/hosting#remove-a-deployment).
+This is a database SQL backup, not a `.rer` archive for `rer import`.
+
+### Restore a hosted backup
+
+Restore into a new, separate hosted environment, never over the one you are replacing:
+
+```sh
+rer deploy --environment restored --env-file .env.cabin
+rer run backup:hosted -- --restore exports/FILE.sql --environment restored --env-file .env.cabin --yes
+```
+
+The first command creates a fresh Cabin with its own Worker and database. The second replaces every table in that new database with the backup. Then sign in to the new address again and re-enter private settings sealed with the old installation's secret: saved Stripe keys and the inbox AI key. Check the homes, stays and statements before pointing guests or a domain at it. See [hosting and irreversible removal](/docs/hosting#remove-a-deployment).
 
 ## What an archive holds
 

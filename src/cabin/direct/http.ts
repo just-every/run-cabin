@@ -3,11 +3,11 @@ import { need,sha } from '../model'
 import { load } from '../storage'
 import { homes,byToken } from './store'
 import { quote } from './rules'
-import { checkout } from './checkout'
+import { checkout,retryCheckout } from './checkout'
 import { refresh,identity } from './payments'
 import { guestDeposit } from './deposit'
 import { stripeCredentials } from './stripe'
-import { homePage,quotePage,stayPage,shell,signedAgreement } from './public-ui'
+import { homePage,quotePage,stayPage,shell,signedAgreement,guestText } from './public-ui'
 import { h } from '../ui/shared'
 export async function bookingResponse(request:Request,env:Bindings):Promise<Response|null> {
  const url=new URL(request.url),path=url.pathname;if(path!=='/book'&&!path.startsWith('/book/'))return null
@@ -24,13 +24,13 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
    if(request.headers.get('content-type')?.includes('application/json')){json=true;input=JSON.parse(body);need(input&&typeof input==='object'&&!Array.isArray(input),'Use an input object')}else input=Object.fromEntries(new URLSearchParams(body))
   }
   if(path==='/book/stripe-check'&&request.method==='GET')return shell('Check your Stripe connection','<h1>Check your Stripe connection</h1><p>You have returned from Stripe. Open Direct bookings to see whether Stripe confirmed the test payment.</p><a class="button" href="/app/direct">Check Stripe test result</a>')
-  const saved=path.match(/^\/book\/stay\/([a-f0-9-]{72})(?:\/(refresh|identity|agreement|deposit))?$/)
+  const saved=path.match(/^\/book\/stay\/([a-f0-9-]{72})(?:\/(refresh|identity|agreement|deposit|pay))?$/)
   if(saved){
    let s=await byToken(env.DB,await sha(saved[1]))
    if(saved[2]==='agreement'&&request.method==='GET')return signedAgreement(s)
    if(request.method==='POST'&&saved[2]==='refresh'){s=await refresh(env,s.id);return json?Response.json({stay:{id:s.id,phase:s.phase,quote:s.quote,identity:s.identity,deposit:s.deposit}}):stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')}
-   if(request.method==='POST'&&(saved[2]==='identity'||saved[2]==='deposit')){const target=saved[2]==='identity'?await identity(env,s.id,saved[1]):await guestDeposit(env,s.id,saved[1]);return new Response(null,{status:303,headers:{location:target,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
-   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id)}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],(error as Error).message,env.AUTH_LOCAL==='true')}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')
+   if(request.method==='POST'&&(saved[2]==='identity'||saved[2]==='deposit'||saved[2]==='pay')){const target=saved[2]==='identity'?await identity(env,s.id,saved[1]):saved[2]==='pay'?await retryCheckout(env,s.id,saved[1]):await guestDeposit(env,s.id,saved[1]);return new Response(null,{status:303,headers:{location:target,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
+   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id)}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],guestText(error),env.AUTH_LOCAL==='true')}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')
   }
   const data=await load(env.DB),all=(await homes(env.DB)).filter(h=>h.enabled)
   if(path==='/book'&&request.method==='GET')return shell('Find your stay',`<p class="eyebrow">Book directly</p><h1>Find your next stay</h1>${all.length?all.map(home=>`<section class="panel"><h2><a href="/book/${h(home.slug)}">${h(data.properties.find(p=>p.id===home.propertyId)?.name)}</a></h2><p>${h(home.description)}</p></section>`).join(''):'<p>No homes are accepting direct bookings yet.</p>'}`)
@@ -42,7 +42,7 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
   need(false,'Not found',404)
  }catch(error){const stayToken=(error as any)?.stayToken as string|undefined
   if(stayToken&&!json)return new Response(null,{status:303,headers:{location:'/book/stay/'+stayToken,'cache-control':'no-store','referrer-policy':'no-referrer'}})
-  const status=Number((error as any)?.status)||500,message=status<500||(status===502||status===503)?(error as Error).message:'Could not complete this request. Contact the host or try again.'
-  return json?Response.json({error:message,...(stayToken?{bookingUrl:env.AUTH_ORIGIN+'/book/stay/'+stayToken}:{})},{status,headers:{'cache-control':'no-store'}}):shell('Booking needs attention',`<h1>Booking needs attention</h1><div class="notice error" role="alert">${h(message)}</div><p>${path.startsWith('/book/stay/')?'Your payment or verification may still be pending. Return to your saved stay page to check its status.':'Choose other dates or contact the host.'}</p><a href="${h(path.startsWith('/book/stay/')?path.replace(/\/(refresh|identity)$/,''):'/book/'+(path.split('/')[2]??''))}">Return to booking</a>`,status)
+  const status=Number((error as any)?.status)||500,message=status<500||(status===502||status===503)?guestText(error):'Could not complete this request. Contact the host or try again.'
+  return json?Response.json({error:message,...(stayToken?{bookingUrl:env.AUTH_ORIGIN+'/book/stay/'+stayToken}:{})},{status,headers:{'cache-control':'no-store'}}):shell('Booking needs attention',`<h1>Booking needs attention</h1><div class="notice error" role="alert">${h(message)}</div><p>${path.startsWith('/book/stay/')?'Your payment or verification may still be pending. Return to your saved stay page to check its status.':'Choose other dates or contact the host.'}</p><a href="${h(path.startsWith('/book/stay/')?path.replace(/\/(refresh|identity|deposit|pay)$/,''):'/book/'+(path.split('/')[2]??''))}">Return to booking</a>`,status)
  }
 }

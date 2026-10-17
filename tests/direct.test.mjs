@@ -8,9 +8,9 @@ async function home(h){const p=await h.cmd('property.save',{name:'Pine Ridge Cab
 test('a signed direct checkout receives Stripe test payment, verifies identity, holds a deposit and closes every channel export',async()=>{
  let payment=false,session,verification=false,holdRequests=0,releaseRequests=0,depositStatus='requires_capture'
  const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:async request=>{
-  const u=new URL(request.url),p=u.pathname,form=new URLSearchParams(request.method==='POST'?await request.text():'');assert.equal(u.hostname,'api.stripe.com')
+  const u=new URL(request.url),p=u.pathname,form=new URLSearchParams(request.method==='POST'?await request.text():'');assert.equal(u.hostname,'api.stripe.com');assert.ok(request.headers.get('stripe-version'),'every Stripe call names the API version Cabin is written against');assert.equal(form.has('payment_method_types[0]'),false)
   if(p==='/v1/checkout/sessions'&&request.method==='POST'){
-   assert.equal(form.get('payment_intent_data[setup_future_usage]'),'off_session');assert.equal(form.get('payment_method_types[0]'),'card')
+   assert.equal(form.get('payment_intent_data[setup_future_usage]'),'off_session');assert.equal(form.get('allowed_payment_method_types[0]'),'card')
    session={id:'cs_test_booking',url:'https://checkout.stripe.com/c/pay/cs_test_booking',metadata:{stayId:form.get('metadata[stayId]')},customer:'cus_synthetic',amount_total:74250};return Response.json(session)
   }
   if(p==='/v1/checkout/sessions/cs_test_booking')return Response.json({...session,status:'complete',payment_status:payment?'paid':'unpaid',payment_intent:payment?{id:'pi_rent',status:'succeeded',amount_received:74250,currency:'usd',payment_method:'pm_synthetic'}:null})
@@ -46,6 +46,26 @@ test('a signed direct checkout receives Stripe test payment, verifies identity, 
   await h.cmd('direct.deposit.capture',{id,amountCents:5000,reason:'Broken lamp',evidence:'photo:synthetic-lamp'},h.owner,409);await h.cmd('direct.deposit.capture',{id,amountCents:5000,reason:'Broken lamp',evidence:'photo:synthetic-lamp'},h.owner,409)
   assert.equal((await h.state()).direct.stays[0].deposit.status,'requires_capture')
   await h.cmd('direct.checkout.complete',{id});await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await h.state()).direct.stays[0].deposit.status,'canceled');assert.equal(releaseRequests,1)
+ }finally{await h.close()}
+})
+
+test('a guest whose checkout Stripe refuses gets guest wording, keeps the hold and can try payment again',async()=>{
+ let refuse=true,created=0
+ const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:async request=>{
+  const u=new URL(request.url)
+  if(u.pathname==='/v1/checkout/sessions'&&request.method==='POST'){created++;return refuse?Response.json({error:{type:'invalid_request_error',param:'payment_method_types'}},{status:400}):Response.json({id:'cs_test_retry',url:'https://checkout.stripe.com/c/pay/cs_test_retry'})}
+  assert.fail('Unexpected provider call '+u.pathname)
+ }})
+ try{
+  const cfg=await home(h)
+  const book=await h.send('/book/pine-ridge/checkout',{start:day(10),end:day(13),guests:2,homeRevision:cfg.revision,guestName:'Alex Example',email:'alex@stay.example',signature:'Alex Example',consent:'yes',identityConsent:'yes'})
+  assert.equal(book.status,400);assert.doesNotMatch(book.value.error,/dashboard/i)
+  const path=new URL(book.value.bookingUrl).pathname,page=await h.send(path)
+  assert.equal(page.status,200);assert.doesNotMatch(page.text,/dashboard|Developers/i);assert.match(page.text,/Try payment again/)
+  assert.match((await h.state()).direct.stays[0].error,/HTTP 400/)
+  refuse=false
+  const retry=await h.send(path+'/pay',{});assert.equal(retry.status,303);assert.equal(retry.headers.get('location'),'https://checkout.stripe.com/c/pay/cs_test_retry');assert.equal(created,2)
+  const after=await h.send(path);assert.match(after.text,/Pay with Stripe/);assert.doesNotMatch(after.text,/Try payment again/)
  }finally{await h.close()}
 })
 

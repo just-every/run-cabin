@@ -50,7 +50,8 @@ function conversation(s: any, t: Thread) {
   const shown = t.messages.filter(m => m.status !== 'draft' && m.status !== 'drafting'), drafts = t.messages.filter(m => m.status === 'draft' || m.status === 'drafting')
   const bubbles = shown.map(m => `<article class="msg ${m.direction}">${m.subject && m.channel === 'email' ? `<p class="subject">${h(m.subject)}</p>` : ''}<div class="text">${h(m.text)}</div>${status(s, m, t)}</article>`).join('')
   const reach = t.email ?? t.phone
-  const compose = form('message.compose', page(t), hidden('thread', t.id) + `<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
+  const lastIn = [...t.messages].reverse().find((m: any) => m.direction === 'in')
+  const compose = form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="/app/inbox">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
   ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${schedule(s, t)}`
 }

@@ -1,4 +1,4 @@
-import { h, propertyName, memberName } from './shared'
+import { h, propertyName, memberName, manager } from './shared'
 import { between, wall, when, ZONES } from '../clock'
 import { codeState } from '../codes'
 import { lockLine } from '../locks'
@@ -12,7 +12,8 @@ export function codeLine(s: any, code: any, label: string) {
   const [state, tone] = CODE[codeState(code)]
   return `<div class="door"><span class="door-label">${h(label)}</span><strong class="door-code">${h(code.code)}</strong>${chip(`${state}`, tone)}<span class="muted">${code.status === 'revoked' ? h(code.reason ?? '') : `Works ${h(between(code.validFrom, code.validUntil))}`}</span></div>`
 }
-export const lockNote = (s: any, code: any) => code ? `<p class="muted lock-line">${h(lockLine({ managed: s.managed, lockAccount: s.lockAccount }, code))}</p>` : ''
+/** Lock status for whoever is looking: setup advice is the manager's, a cleaner only learns whether to expect the code at the door. */
+export const lockNote = (s: any, code: any) => code ? `<p class="muted lock-line">${h(manager(s) ? lockLine({ managed: s.managed, lockAccount: s.lockAccount }, code) : code.lock.state === 'set' ? 'The smart lock has this code.' : 'Your manager sets this code on the door’s keypad. If it does not open the door, contact your manager.')}</p>` : ''
 export const windowText = (t: any) => t.windowStart ? between(t.windowStart, t.windowEnd) : `Due ${t.dueDate}`
 export const zoneName = (zone: string) => ZONES.find(([z]) => z === zone)?.[1] ?? zone
 export const address = (s: any, propertyId: string) => { const a = homeSettings(s, propertyId).address; return a ? `<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(a)}" rel="noreferrer" target="_blank">${h(a)}</a>` : '<span class="muted">No address entered yet</span>' }
