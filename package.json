@@ -27,7 +27,7 @@
     "check": "rer check",
     "deps": "rer install",
     "rer": "rer",
-    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/demo.test.mjs",
+    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/direct.test.mjs tests/demo.test.mjs",
     "test:archive": "node --test --test-concurrency=1 tests/archive.test.mjs",
     "test:launch": "node --test --test-concurrency=1 tests/launch.test.mjs",
     "test:site": "node --test tests/site/*.test.mjs"
@@ -43,7 +43,7 @@
     "@cloudflare/vite-plugin": "1.54.5",
     "@cloudflare/workers-types": "5.20260908.1",
     "@playwright/test": "1.63.0",
-    "@runeditrun/rer": "0.2.38",
+    "@runeditrun/rer": "0.2.40",
     "@types/node": "22.20.5",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",

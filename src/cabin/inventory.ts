@@ -42,6 +42,7 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
  }
  if (name === 'reservation.cancel') {
   manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b, 'Booking not found', 404); property(c, b.propertyId)
+  need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Review its payment and deposit in Direct bookings before changing inventory.', 409)
   need(b.source === 'request', 'Cancel a channel stay on the channel; its next sync reopens the nights.', 409); need(b.status === 'confirmed', 'This hold is already cancelled', 409)
   Object.assign(b, { status: 'cancelled', cancelled: true, revision: newId(), approvedAt: c.now }); c.entityId = b.id; return b
  }

@@ -7,14 +7,20 @@ import { channelCommand } from './channels'
 import { icalExportResponse } from './ical-export'
 import { fail,need,type Actor } from './model'
 import { renderApp } from './ui'
+import { bookingResponse } from './direct/http'
+import { directCommand } from './direct/admin'
+import { stay } from './direct/store'
+import { signedAgreement } from './direct/public-ui'
+import { manager } from './model'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/turnovers','/app/statements','/app/people','/app/import','/app/agent'])
+const pages=new Set(['/app','/app/calendar','/app/turnovers','/app/statements','/app/people','/app/import','/app/agent','/app/direct'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
+ if(name.startsWith('direct.'))return directCommand(env,who,name,input)
  if(name.startsWith('channel.'))return channelCommand(env,who,name,input)
  return command(env.DB,who,name,input)
 }
@@ -56,6 +62,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
 }
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
+ if(path==='/book'||path.startsWith('/book/'))return bookingResponse(request,runtimeBindings(original))
  if(path.startsWith('/ical/'))return icalExportResponse(request,runtimeBindings(original))
  if(!path.startsWith('/api/cabin/')&&path!=='/app'&&!path.startsWith('/app/'))return null
  const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),back=pages.has(url.searchParams.get('returnTo')??'')?url.searchParams.get('returnTo')!:'/app';let who:Actor|undefined
@@ -69,6 +76,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   if(request.method==='GET'){
    if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from')})
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
+   const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
+   if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
    const csv=path.match(/^\/api\/cabin\/statements\/([\w-]+)\.csv$/)
    if(csv)return new Response(await statementCsv(env.DB,who,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
    const photo=path.match(/^\/api\/cabin\/turnovers\/([\w-]+)\/photo$/),direct=path.match(/^\/api\/cabin\/photos\/([\w-]+)$/)

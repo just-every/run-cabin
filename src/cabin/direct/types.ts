@@ -1,0 +1,20 @@
+export interface DirectHome {
+ propertyId:string; revision:string; enabled:boolean; slug:string; description:string;
+ nightlyCents:number; cleaningCents:number; extraGuestCents:number; includedGuests:number; maxGuests:number;
+ minNights:number; maxNights:number; minGapNights:number; depositCents:number; releaseHours:number;
+ taxLabel:string; taxBps:number; countyTaxLabel:string; countyTaxBps:number; agreement:string; requireIdentity:boolean;
+}
+export interface Quote {
+ start:string; end:string; guests:number; nights:number; nightlyCents:number; rentCents:number;
+ cleaningCents:number; extraGuestCents:number; taxes:{label:string; bps:number; amountCents:number; jurisdiction:'state'|'county'}[];
+ totalCents:number; depositCents:number;
+}
+export interface DirectStay {
+ id:string; propertyId:string; bookingId:string; revision:string; homeRevision:string; phase:'held'|'paid'|'confirmed'|'expired';
+ start:string; end:string; guestName:string; email:string; quote:Quote; createdAt:string; holdUntil:string;
+ signature:{name:string; at:string; version:string; text:string; sha256:string; consent:string};
+ requireIdentity:boolean; identity?:{id:string; status:string}; checkoutId?:string; checkoutUrl?:string;
+ paymentId?:string; customerId?:string; paymentMethod?:string;
+ deposit?:{id:string; status:string; amountCents:number; capturedCents?:number; claimCents?:number; expiresAt:string|null; reason?:string; evidence?:string};
+ releaseHours:number; checkedOutAt?:string; error?:string; taxFilings?:{jurisdiction:string; reference:string; actorId:string; at:string}[];
+}

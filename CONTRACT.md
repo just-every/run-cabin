@@ -600,14 +600,14 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 15 | "Airbnb, Vrbo, Booking.com, text and email in one thread per guest" | MESSAGE-001, GUEST-001 | missing |
 | 16 | "Scheduled messages go out on time" | MESSAGE-003 | missing |
 | 17 | "drafted replies wait for your nod" | MESSAGE-004 | missing |
-| 18 | "Your own booking site" / "Guests book you directly" | WEB-001, WEB-002 | missing |
-| 19 | "pay with Stripe" | PAY-001, WEB-001 | missing |
-| 20 | "rental agreement" | WEB-003, WEB-001 | missing |
-| 21 | "ID check" | WEB-004, WEB-001 | missing |
-| 22 | "damage deposit happen at checkout" | PAY-003, WEB-001 | missing |
-| 23 | Lodging tax line (ME 9%) | FIN-008, RES-004 | missing |
+| 18 | "Your own booking site" / "Guests book you directly" | WEB-001, WEB-002 | implemented (direct-booking scope; see clause Status) |
+| 19 | "pay with Stripe" | PAY-001, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 20 | "rental agreement" | WEB-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 21 | "ID check" | WEB-004, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 22 | "damage deposit happen at checkout" | PAY-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 23 | Lodging tax line (ME 9%) | FIN-008, RES-004 | implemented (direct-booking scope; see clause Status) |
 | 24 | "Connect PriceLabs or Wheelhouse" | PRICE-001 | missing |
-| 25 | "set minimum nights, gap rules and fees" | RES-004 | missing |
+| 25 | "set minimum nights, gap rules and fees" | RES-004 | implemented (direct-booking scope; see clause Status) |
 | 26 | "every channel gets the same price" | PRICE-003, PRICE-001 | missing |
 | 27 | "All five homes ready for Saturday" | OPS-008, OPS-003 | partial |
 | 28 | "Every reservation creates its turnover" | OPS-001 | partial |
@@ -633,8 +633,8 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 48 | "Run Cabin on your own computer or server" (five commands) | RUNTIME-001, HTTP-001 | partial |
 | 49 | "keep every booking, guest and payout" / "Your guests, your data" | DATA-003, DATA-001 | partial |
 | 50 | "Export everything, any time" | DATA-001 | partial |
-| 51 | Damage deposits: "Held on the card, released after checkout" | PAY-003 | missing |
-| 52 | Lodging tax: "Collected and filed by state and county" | FIN-008 | missing |
+| 51 | Damage deposits: "Held on the card, released after checkout" | PAY-003 | implemented (direct-booking scope; see clause Status) |
+| 52 | Lodging tax: "Collected and filed by state and county" | FIN-008 | partial |
 | 53 | Owner portal: "Owners see stays and statements any time" | FIN-005 | missing |
 | 54 | Maintenance: "Broken things become tasks with photos" | OPS-004 | missing |
 | 55 | Review replies: "Thank-yous and replies sent on schedule" | GUEST-003, MESSAGE-003, GUEST-004 | missing |
@@ -645,6 +645,8 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 
 Judged from the code and tests at commit `473fa9a23b724caa73699399febfd475f551edc8` (17 October 2026).
 
+Direct-booking implementation updated 17 October 2026. The narrow homepage rows and broader clauses are assessed separately below; Stripe is test mode, and tax filing/remittance integration remains open.
+
 Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 16 October 2026, equal to current `main` at drafting. The inventory audit assessed 75 inventory rows (1 done, 16 partial, 58 missing); the table below assesses the differently grouped named contract clauses, including preserved foundations and new US/product requirements. No Cabin code or test changed after that audit, on this branch or on `main` through `f0c750fd3e325df82e2eaf15a85a7f1b5c35237a`. Revised 17 October 2026 in response to buyer review round 1: SYNC-008, SYNC-009, PRICE-002, GUEST-004 and OPS-007 were added, and SYNC-006, OPS-001, OPS-003, OPS-005 and INTERFACE-001 were sharpened. Revised again 17 October 2026 in response to buyer review round 2: SYNC-010 and PAY-005 were added, and SYNC-002, SYNC-003, SYNC-004, PAY-002, FIN-002, MIGRATE-002 and MIGRATE-003 were sharpened. Revised a third time 17 October 2026 in response to buyer review round 3: PAY-006 was added, and SYNC-004, PAY-002 and FIN-002 were sharpened. Revised a fourth time 17 October 2026 so every capability claim on the approved homepage has a clause (see [Homepage claims](#homepage-claims)): OPS-008, PRICE-003, DATA-003 and OPEN-001 were added, and SYNC-008, WEB-001, PAY-003, MESSAGE-001, MESSAGE-003, MESSAGE-004, GUEST-003, OPS-004, OPS-005, FIN-004, FIN-008, MIGRATE-007, RUNTIME-001 and AGENT-006 were sharpened. Re-judged at the commit above: since the baseline, `src/cabin` changed only in five display strings (US wording and USD formatting), so every earlier status stands, and the new clauses are judged from the same tree. Re-judged 17 October 2026 for the calendar and channels area: live iCal links both ways on a schedule, the homes-by-days grid, holds and blocks that decline overlapping requests moved SYNC-003, SYNC-006, SYNC-007, SYNC-008 and RES-003 from missing to partial, and refreshed the evidence of SYNC-002, SYNC-004, SYNC-009, RES-001 and OPS-008.
 
 `done` means the narrowly stated clause has implementation and an exercising test. `partial` means cited foundations exist but the full target behavior/evidence does not; `missing` means no implementing product flow was found. Source/test citations describe the current tree, not proof of live providers. All external integrations and agent outcomes need their stated acceptance journey. An unused shared module is not a product capability.
@@ -652,10 +654,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 0 | 0 | 0 | 0 |
-| Target and push further | 6 | 30 | 52 | 88 |
-| All | 6 | 30 | 52 | 88 |
+| Target and push further | 6 | 38 | 44 | 88 |
+| All | 6 | 38 | 44 | 88 |
 
-**88 clauses: 6 done, 30 partial, 52 missing.**
+**88 clauses: 6 done, 38 partial, 44 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -677,20 +679,20 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `RES-001` | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 143, 178) | A two-week homes-by-days grid with one row per channel, channel-coloured stays, blocks, closed nights and collisions at 1440 and 390. No day/month views, filters, payment, readiness or drill-down to a reservation record. |
 | `RES-002` | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
 | `RES-003` | Owner stays and maintenance blocks | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178) | Managers block nights with a reason; blocks hold inventory, publish to every channel's export link and can be removed. No owner portal, billable owner-use rules or readiness tasks. |
-| `RES-004` | Stay rules, fees and cancellation policies | target | missing |  | No implementing flow in the audited tree. |
+| `RES-004` | Stay rules, fees and cancellation policies | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Per-home min/max nights, orphan gaps, occupancy, cleaning/extra-guest fees and tax-inclusive totals enforced through direct quote and checkout. Seasonal rates, buffers, cancellation policies and OTA restriction publication remain open. |
 | `RES-005` | Linked rooms and whole-property inventory | target | missing |  | No implementing flow in the audited tree. |
 | `RES-006` | Quotes and conversion to a reserved stay | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-001` | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-002` | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
-| `WEB-001` | Branded direct-booking website | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-001` | Branded direct-booking website | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Public responsive per-home pages and published-home directory use shared availability and one signed, Stripe test-paid checkout with optional Identity/deposit requirements. Custom-domain branding, galleries, rich search and SEO/consent controls remain open. |
 | `WEB-002` | Embeddable booking engine | target | missing |  | No implementing flow in the audited tree. |
-| `WEB-003` | Signed rental agreements | target | missing |  | No implementing flow in the audited tree. |
-| `WEB-004` | Guest identity verification | target | missing |  | No implementing flow in the audited tree. |
-| `WEB-005` | Promotions, upsells and gap-night offers | target | missing |  | No implementing flow in the audited tree. |
-| `PAY-001` | Processor-backed USD checkout and manual payments | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-003` | Signed rental agreements | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Versioned home agreement signed with guest name, consent, timestamp and digest; exact signed text and price downloadable on the stay. Amendment and renewed-signature workflow remains open. |
+| `WEB-004` | Guest identity verification | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Real Stripe Identity test sessions, explicit consent, reference/state only, required verified outcome before confirmation; pending/failed cases visible to managers. Manual-review alternatives and access-code integration remain open. |
+| `WEB-005` | Promotions, upsells and gap-night offers | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Per-home orphan-gap restrictions and fee calculation exist for direct checkout. Coupons, upsells and paid extension offers remain open. |
+| `PAY-001` | Processor-backed USD checkout and manual payments | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Stripe-hosted USD test-card checkout, server reconciliation, saved mandate and distinct holds/paid/confirmed states. Real test-card browser acceptance plus network-edge route test. Live mode, ACH and manual receipts remain open. |
 | `PAY-002` | Scheduled collection and payment follow-up | target | missing |  | No implementing flow in the audited tree. |
-| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Separate test-card authorization, actual expiry, expiry alerts, scheduled post-checkout release and evidenced human partial capture; idempotent provider effects. Refunds, cancellation settlement, renewed holds and guest receipt delivery remain open. |
 | `PAY-004` | Protection partners and chargeback casework | target | missing |  | No implementing flow in the audited tree. |
 | `PAY-005` | Booking.com virtual credit cards | target | missing |  | No implementing flow in the audited tree. |
 | `PAY-006` | Booking.com property-collect guest cards | target | missing |  | No implementing flow in the audited tree. |
@@ -718,7 +720,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `FIN-005` | Rental-owner portal and personal stays | target | missing |  | No implementing flow in the audited tree. |
 | `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
 | `FIN-007` | QuickBooks Online accounting synchronization | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-008` | US occupancy, lodging and sales-tax obligations | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Configured state/county lines collected separately with rent and fees; stay retains each jurisdiction/rate/amount and manual filing confirmation references. No automatic filing/remittance provider, exemption/refund adjustments or city levies yet. |
 | `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-002` | Saved reports and scheduled sharing | target | missing |  | No implementing flow in the audited tree. |

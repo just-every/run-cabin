@@ -1,6 +1,6 @@
 # Cabin homepage claims → code (run-site gate table)
 
-Branch `br/style` on just-every/run-cabin, 17 Oct 2026; rows 1, 8, 11, 12, 13 and 14 updated on `main` by the calendar and channels area, 17 Oct 2026. Every capability the homepage states, in page order, with the code that backs it today, **partial** (a narrower version exists, named), or **contract** (contract, not yet in code), with the target-contract clause that carries it. The copy is the design desk's (owner-accepted, 16 Oct 2026) and is not watered down; this table is what the run-site gate reads before any deploy.
+Branch `br/style` on just-every/run-cabin, 17 Oct 2026; rows 1, 8, 11, 12, 13 and 14 updated on `main` by the calendar and channels area, 17 Oct 2026. Direct booking rows 18–23, 25, 51 and 52 updated 17 October 2026. Every capability the homepage states, in page order, with the code that backs it today, **partial** (a narrower version exists, named), or **contract** (contract, not yet in code), with the target-contract clause that carries it. The copy is the design desk's (owner-accepted, 16 Oct 2026) and is not watered down; this table is what the run-site gate reads before any deploy.
 
 Note on "the contract": `CONTRACT.md` on `main` (17082d6, "Target contract: US vacation-rental PMS and channel manager") **is** the new contract this brief describes: a US PMS with channel manager replacing Guesty, Hostaway, OwnerRez and Lodgify. Its own audit table scores today's code against each clause; the statuses below agree with it. Under the owner's 17 Oct rule (platform/SEED-HOMEPAGE-PROCESS.md, principle 12) a core-feature claim may be backed by a contract clause and is a build priority to ship within about a week.
 
@@ -25,14 +25,14 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 15 | Guest inbox | "Airbnb, Vrbo, Booking.com, text and email in one thread per guest" | contract | MESSAGE-001. |
 | 16 | Guest inbox | "Scheduled messages go out on time" | contract | MESSAGE-003. |
 | 17 | Guest inbox | "drafted replies wait for your nod" | contract | MESSAGE-004. (The draft-then-approve pattern exists for calendars, turnovers and statements: `src/cabin/model.ts` `approve`.) |
-| 18 | Direct bookings | "Your own booking site" / "Guests book you directly" | contract | WEB-001, WEB-002. |
-| 19 | Direct bookings | "pay with Stripe" | contract | PAY-001. |
-| 20 | Direct bookings | "rental agreement" | contract | WEB-003. |
-| 21 | Direct bookings | "ID check" | contract | WEB-004. |
-| 22 | Direct bookings | "damage deposit happen at checkout" | contract | PAY-003. |
-| 23 | Direct bookings | Lodging tax line (ME 9%) | contract | FIN-008. |
+| 18 | Direct bookings | "Your own booking site" / "Guests book you directly" | code | Public per-home booking pages and published-home directory on the install: `src/cabin/direct/http.ts`, `public-ui.ts`; availability uses the shared channel calendar. Branded custom-domain galleries, search and embeds remain open (WEB-001/002). |
+| 19 | Direct bookings | "pay with Stripe" | code | Stripe-hosted card checkout in real Stripe test mode, server-verified payment before confirmation: `src/cabin/direct/stripe.ts`, `checkout.ts`, `payments.ts`; `tests/direct.test.mjs`. Live mode and ACH remain open (PAY-001). |
+| 20 | Direct bookings | "rental agreement" | code | Guest reviews and signs the versioned home agreement; exact signed text, price, name, consent, timestamp and SHA-256 retained on stay and downloadable by guest/staff: `src/cabin/direct/checkout.ts`, `public-ui.ts`. Amendments remain open (WEB-003). |
+| 21 | Direct bookings | "ID check" | code | Required Stripe Identity test-mode sessions and provider-state reconciliation; no ID images retained and no confirmation until verified: `src/cabin/direct/stripe.ts`, `payments.ts`. No runtime fixture fallback; manual-review controls remain open (WEB-004). |
+| 22 | Direct bookings | "damage deposit happen at checkout" | code | Separate Stripe manual-capture authorization on the saved test card after rent payment, required before confirmation; expiry and errors visible: `src/cabin/direct/payments.ts`. PAY-003 remains partial for broader refunds and renewals. |
+| 23 | Direct bookings | Lodging tax line (ME 9%) | code | Each configured state/county lodging tax is itemized at its basis-point rate and collected with rent and fees: `src/cabin/direct/rules.ts`, `public-ui.ts`, `stripe.ts`; Maine 9% covered. FIN-008 filing/remittance integration remains open. |
 | 24 | Pricing | "Connect PriceLabs or Wheelhouse" | contract | PRICE-001. |
-| 25 | Pricing | "set minimum nights, gap rules and fees" | contract | RES-004, WEB-005. |
+| 25 | Pricing | "set minimum nights, gap rules and fees" | code | Per-home minimum/maximum nights, orphan-gap rule, cleaning and per-extra-guest fees; rejected requests give the reason and cannot allocate nights: `src/cabin/direct/rules.ts`, `admin.ts`; `tests/direct.test.mjs`. RES-004 broader seasonal/channel restrictions and WEB-005 offers remain open. |
 | 26 | Pricing | "every channel gets the same price" | contract | PRICE-002, SYNC-002–004. |
 | 27 | Interlude | "All five homes ready for Saturday" | partial | Completed turnovers per home (row 7); no portfolio readiness view. OPS-003. |
 | 28 | Turnovers | "Every reservation creates its turnover" | partial | As row 3. OPS-001. |
@@ -58,8 +58,8 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 48 | Ownership | "Run Cabin on your own computer or server" (five commands) | code | `rer install`, `rer setup`, `rer dev` via `@runeditrun/rer` 0.2.38 (`package.json`, `scripts/installer/local.mjs`); `rer deploy` for a server. |
 | 49 | Ownership | "keep every booking, guest and payout" / "Your guests, your data" | code | Local D1 database and private photos in the installation: `src/cabin/storage.ts`, `src/cabin/photos.ts`. (Guest and payout records themselves are contract: GUEST-001, FIN-002.) |
 | 50 | Ownership | "Export everything, any time" | code | `rer export` / `rer import` with the archive policy: `src/cabin/archive-policy.mjs`, `tests/archive.test.mjs`. |
-| 51 | Quiet details | Damage deposits: "Held on the card, released after checkout" | contract | PAY-003. |
-| 52 | Quiet details | Lodging tax: "Collected and filed by state and county" | contract | FIN-008. |
+| 51 | Quiet details | Damage deposits: "Held on the card, released after checkout" | code | Test-card deposit held separately, released by the five-minute job after the configured post-checkout window, or captured by staff after checkout with amount, reason and evidence; provider idempotency and refresh reconciliation: `src/cabin/direct/payments.ts`. Early authorization expiry is flagged for a person, not silently renewed (PAY-003). |
+| 52 | Quiet details | Lodging tax: "Collected and filed by state and county" | partial | Configured state/county levies are separately itemized and collected; managers record separate filing/remittance confirmation references on each paid stay (`src/cabin/direct/admin.ts`, `ui/direct.ts`). Cabin does not yet file or remit through a tax provider. FIN-008 remains partial; no filing-provider account is configured. |
 | 53 | Quiet details | Owner portal: "Owners see stays and statements any time" | contract | FIN-005. |
 | 54 | Quiet details | Maintenance: "Broken things become tasks with photos" | contract | OPS-004. |
 | 55 | Quiet details | Review replies: "Thank-yous and replies sent on schedule" | contract | GUEST-003, MESSAGE-003. |
@@ -71,13 +71,13 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 6, 8, 10, 11, 12, 13, 14, 30, 32, 48, 49, 50, 57 | 14 |
-| partial | 3, 5, 7, 27, 28, 31, 37, 40, 43, 45, 56 | 11 |
-| contract | 2, 4, 9, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 33, 34, 35, 36, 38, 39, 41, 42, 44, 46, 47, 51, 52, 53, 54, 55 | 32 |
+| code | 1, 6, 8, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 30, 32, 48, 49, 50, 51, 57 | 22 |
+| partial | 3, 5, 7, 27, 28, 31, 37, 40, 43, 45, 52, 56 | 12 |
+| contract | 2, 4, 9, 15, 16, 17, 24, 26, 29, 33, 34, 35, 36, 38, 39, 41, 42, 44, 46, 47, 53, 54, 55 | 23 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 14 code, 11 partial, 32 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 22 code, 12 partial, 23 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 
-Reservation-triggered turnovers with several photos (OPS-001, OPS-002); payout import into statements (FIN-002); owner portal and statement delivery (FIN-004, FIN-005); move-in from Hostaway, Guesty and OwnerRez (MIGRATE-002–004); then messaging, direct booking with Stripe, locks and pricing connections.
+Reservation-triggered turnovers with several photos (OPS-001, OPS-002); payout import into statements (FIN-002); owner portal and statement delivery (FIN-004, FIN-005); move-in from Hostaway, Guesty and OwnerRez (MIGRATE-002–004); then messaging, locks and pricing connections. Direct-booking follow-on work includes live payments/ACH, embeds, agreement amendments and tax filing/remittance integration.

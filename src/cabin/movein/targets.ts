@@ -3,7 +3,7 @@ import type { D1TargetAdapter, D1Sql, TargetRow, D1Database } from '../../module
 import { need } from '../model'
 export const destination='cabin:properties',mappingVersion='property-csv-v1'
 export const fields=['id','name','owner_name','owner_email','commission_bps','version'] as const
-const inUse="EXISTS(SELECT 1 FROM cb_records d WHERE json_extract(d.data,'$.propertyId')=p.id)"
+const inUse="(EXISTS(SELECT 1 FROM cb_records d WHERE json_extract(d.data,'$.propertyId')=p.id) OR EXISTS(SELECT 1 FROM cb_direct_homes h WHERE h.property_id=p.id) OR EXISTS(SELECT 1 FROM cb_direct_stays s WHERE s.property_id=p.id))"
 const select=`SELECT p.*,r.revision AS import_revision,${inUse} AS in_use FROM cb_properties p LEFT JOIN cb_import_revisions r ON r.property_id=p.id`
 const sql=(sql:string,...params:any[]):D1Sql=>({sql,params})
 function scope(dest:string,kind:string){need(dest===destination&&kind==='property','Invalid import target',409)}

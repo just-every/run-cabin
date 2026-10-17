@@ -10,6 +10,7 @@ import { turnoverCommand } from './turnovers'
 import { statementCommand } from './statements'
 import { privacyCommand } from './privacy'
 import { importJobs } from './movein'
+import { directState } from './direct/admin'
 import { agentKeys } from './credentials'
 export type * from './model'
 export async function command(db:D1Database,actor:Actor,name:string,input:Record<string,unknown>){
@@ -31,7 +32,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  }
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[]}
- const state={...data,actor,origin:env.AUTH_ORIGIN,managed:managedInstall(env),agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ const state={...data,direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,managed:managedInstall(env),agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
 export async function turnoverPhoto(db:D1Database,actor:Actor,id:string,byPhotoId=false){

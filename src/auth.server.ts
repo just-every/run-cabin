@@ -14,6 +14,8 @@ const theme = { href: '/rer-theme.css', productName: branding.name, accentColor:
 
 export interface Bindings {
  DB: D1Database
+ STRIPE_TEST_SECRET_KEY?: string
+ STRIPE_SECRET_KEY?: string
  /** Built browser files; hosted deploys run the Worker first (staticAssetResponse). */
  ASSETS?: Fetcher
  RER_DEPLOY_SOURCE?: string

@@ -10,6 +10,7 @@ import { setupStateResponse } from './base/setup-state'
 import { authResponse, runtimeBindings, type Bindings } from './auth.server'
 import { identity } from './identity'
 import { cabinResponse } from './cabin/http'
+import { directDue } from './cabin/direct/payments'
 import { syncDue } from './cabin/channels'
 import { seedDemo } from './demo'
 
@@ -43,6 +44,6 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
   },
   // Cron polls every connected channel calendar whose interval is due (SYNC-009).
   async scheduled(_controller, env, execution) {
-    execution.waitUntil(syncDue(runtimeBindings(env)))
+    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env))]))
   },
 } satisfies ExportedHandler<Bindings>, { seed: seedDemo })

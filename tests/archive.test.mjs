@@ -41,12 +41,13 @@ test('public CLI archive round trip refuses damaged or populated stores and resp
     const turnover=await h.cmd('turnover.prepare',{bookingId:booking.id,cleanerId:cleaner.id,checklist:['Linen changed']})
     await h.cmd('turnover.approve',{id:turnover.id,revision:turnover.revision})
     await h.cmd('turnover.complete',{id:turnover.id,revision:turnover.revision,checks:turnover.checklist,photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png',caption:'Linen ready'},cleaner.cookie)
-    await h.cmd('agent.create',{label:'Excluded secret'})
+    const key=await h.cmd('agent.create',{label:'Excluded secret'})
+    const agentHash=(await h.db.prepare('SELECT token_hash FROM cb_agent_keys').first()).token_hash
     const identity={auth:h.auth,owner:h.owner}
     await h.close();h=null
     const old=join(temporary,'before.rer'),later=join(temporary,'later.rer'),again=join(temporary,'again.rer')
     await command(source,['export','--output',old])
-    const bytes=await readFile(old,'utf8');assert.ok(bytes.includes('Temporary property'));assert.ok(!bytes.includes('Excluded secret'));assert.ok(!bytes.includes('token_hash'))
+    const bytes=await readFile(old,'utf8');assert.ok(bytes.includes('Temporary property'));assert.ok(!bytes.includes('Excluded secret'));assert.ok(!bytes.includes(agentHash));assert.ok(!bytes.includes(key.token))
     await command(restored,['import','--input',old,'--yes'])
     await command(restored,['export','--output',again])
     h=await harness({root:restored,...identity}); const signed=await h.signIn(h.auth.OWNER_EMAIL); const saved=await h.state(signed); assert.equal(saved.turnovers[0].status,'completed'); assert.ok(saved.importJobs.some(j=>j.status==='completed')); assert.equal((await h.send(`/api/cabin/turnovers/${turnover.id}/photo`,undefined,signed)).status,200); await h.close();h=null
