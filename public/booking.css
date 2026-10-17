@@ -20,3 +20,4 @@
 .cabin .stay-sheet .code-card{margin:18px 0;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(120deg,#fff,var(--wash))}
 .cabin .stay-sheet .code-card .code{margin:4px 0 10px;font:800 40px/1 var(--rer-font-heading);letter-spacing:.08em;color:var(--pine)}
 .cabin .stay-page>.panel+.panel{margin-top:16px}
+.cabin.guest:has(main.stay-page) header{max-width:640px}
