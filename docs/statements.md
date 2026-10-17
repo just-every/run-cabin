@@ -1,31 +1,29 @@
-An owner statement sets out one home's month: the income and costs you enter, the management fee from the home's commission, and what the owner nets. Once you approve it, it is frozen and ready to download.
+Open **Statements** as a manager. Import an Airbnb transaction-history CSV or a Vrbo payment-history CSV for a home. CSV partner exports are supported now; Airbnb/Vrbo partner payout APIs require the owner's later partner accounts. Only USD is supported. Every monetary value is parsed as integer cents; fees come from provider columns, never a typed percentage.
 
-## Prepare a statement
+Airbnb reservation rows use Date, Type, Confirmation code, Start date and Nights (or Check-in / Check-out), Currency, Gross earnings, Host service fee and Amount. Payout summary rows are excluded. Vrbo reservation rows use Date, Reservation ID (or Reservation number), Check-in / Check-out, Currency, Gross booking amount (or Rental amount), Commission, Processing fee and Net amount. Native Vrbo RefID, Your Revenue, Payment Processing Fee and Payable To You exports are supported; traveler Service Fee is distinct from host deductions. ISO and US M/D/YYYY dates work. Include transaction IDs and payout IDs to distinguish split payments. Refund rows carry negative gross and returned fees. Inconsistent gross/fees/net, foreign currency, ambiguous rows and unsupported records stop the import with a visible error.
 
-1. Open **Statements**. Under **Prepare an owner statement**, choose the **Property** and the **Statement month**.
-2. Add a line for each amount, with a **Description** and an **Amount (USD)**. Positive amounts are income; negative amounts are costs. Choose **Add another line** for more.
-3. Choose **Prepare statement**.
+Cabin matches a source reference to an iCal reservation UID, or the same home's exact channel and stay dates. Ambiguous and unmatched rows remain exceptions. Sync the calendar and confirm the correct candidate; Cabin never guesses a stay. Importing an unchanged provider transaction again does not duplicate it. A changed transaction requires reconciliation rather than silently replacing approved money.
 
-Enter amounts in dollars with up to two decimal places, such as `1240.00` or `-185.00`.
+**Import live Stripe payouts** reads Stripe's test-mode paid automatic USD payouts and their balance transactions, including actual fees. Payment intents match Cabin's direct-booking stays. Configure `STRIPE_TEST_SECRET_KEY`; live keys are refused. Pending charges are not payouts. Stripe cannot attribute manual payouts to charges; non-USD payouts are excluded and Cabin does not invent FX conversions. The supplied fleet test account currently settles in AUD and has no eligible paid automatic USD payout; live Stripe settlement-to-Cabin matching still needs such a payout. Stripe-shaped network fixtures cover the USD path; the application does not synthesize settlements.
 
-## Check the figures
+Choose a payout month and prepare the statement. Gross receipts minus imported channel fees minus the home's management commission gives owner payout. Commission is half-up integer arithmetic on gross. Every line must match a stay. Approval binds the exact revision, source lines, home owner and commission. Changed data invalidates a draft; approved statements stay frozen. Existing entered adjustment statements remain readable and their API is retained for existing integrations; the payout workflow does not accept typed channel fees.
 
-The draft shows the owner's name and email and three totals:
+Approval queues an owner email with a private portal link. Status shows pending, sending, sent (provider accepted), unavailable, suppressed in development, or failed/uncertain. Check the provider before explicitly sending another copy after an uncertain outcome. Local and demo mail stays silently suppressed; there is no application inbox.
 
-| Total | How Cabin works it out |
-| --- | --- |
-| Line total | Every line added together, costs included. It cannot be below zero. |
-| Management fee | The line total times the home's commission, rounded to the nearest cent. |
-| Owner net | The line total less the management fee. |
+## Owner portal
 
-For example, lines of $1,240.00 and $865.50 income with $185.00 cleaning and $95.00 pool service make a line total of $1,825.50. At a 20% commission the management fee is $365.10 and the owner nets $1,460.40.
+Owners use `/owners/signin`, independently of operator accounts. Their home owner email receives a 20-minute, one-use sign-in link. The confirmation creates a separate HttpOnly session. Owners see only homes currently assigned to their email, those homes' stays, and approved statements whose frozen recipient also matches. Changed ownership removes access immediately and does not disclose the prior owner's statements to a new owner. Owner sessions cannot call operator commands. Operators can preview a home's owner view from Statements.
 
-Record booking income from your own channel reports: Cabin does not import payouts or reconcile channel payments, and it does not move money.
+## Pantry and QuickBooks
 
-## Approve and download
+Open **Books**. Run your Pantry installation (`rer dev` for a local Pantry), create a scoped agent credential in its People & settings page, and connect its origin and token in Cabin. Tokens are encrypted with the installation session secret and excluded from backup archives. A loopback Pantry is supported only from a local Cabin; hosted Cabin needs a reachable HTTPS Pantry.
 
-Choose **Approve and freeze statement**. Cabin records who approved it and when, and freezes the owner details, lines, commission and fee: later edits to the home do not change it. A home has one approved statement per month.
+Download an approved statement CSV, upload the unchanged file in Pantry Documents, and choose that uploaded file in Cabin. Choose payout clearing (asset), owner funds (ordinary liability) and management income accounts. Cabin checks the file against the exact frozen statement, then submits a balanced journal proposal with booking, payout and fee references. A person chooses **Approve and post** in Pantry; refresh its status in Cabin to see the posted journal ID. Pantry's current API requires that human document upload and posting approval. This is live API synchronization, not unattended posting. Uncertain submissions retain their marker and are reconciled by refresh; they are never blindly resubmitted.
 
-Then choose **Download approved CSV**. The file lists every line in cents and is safe to open in a spreadsheet. Only you and your managers can download statements.
+Owner funds accounting debits clearing for imported net, credits owner liability for gross, debits owner liability for actual channel fees and management fee, and credits management income. The liability's net is the statement owner payout. This does not transfer funds. Choose dedicated owner liability accounts; Pantry's accounts payable control account is reserved for bills. Proposals over Pantry's 200 journal-line / 100 KB limits stop for an accountant's reviewed breakdown.
 
-An agent can prepare statement drafts for you to check: see [Agent access](/docs/agent-access).
+QuickBooks users can prepare a separate export mapping using their own account names without connecting Pantry. Saved mappings also download as a QuickBooks journal CSV and QuickBooks Desktop IIF. Review account names in QuickBooks before importing, and do not import a journal a second time. **QuickBooks via export; Pantry sync live.** QBO OAuth synchronization requires a later owner developer app.
+
+## Hosted email configuration
+
+Before `rer deploy`, provide `OWNER_EMAIL`, `MAIL_PROVIDER` (`sendgrid`, `resend` or `cloudflare`), a verified sender in `MAIL_FROM`, and its `MAIL_API_KEY` through your environment or a private `--env-file`. The deploy declaration accepts the provider and sender as configurable bindings. Session and initial setup secrets are generated by rer. Development never sends email.

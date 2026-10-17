@@ -12,9 +12,7 @@
   ],
   "originVar": "AUTH_ORIGIN",
   "vars": {
-    "AUTH_LOCAL": "false",
-    "MAIL_PROVIDER": "resend",
-    "MAIL_FROM": "auth@example.invalid"
+    "AUTH_LOCAL": "false"
   },
   "secrets": [
     {
@@ -37,6 +35,16 @@
       "binding": "STRIPE_TEST_SECRET_KEY",
       "environment": "STRIPE_TEST_SECRET_KEY",
       "optional": true
+    },
+    {
+      "binding": "MAIL_PROVIDER",
+      "environment": "MAIL_PROVIDER",
+      "verifyStandIn": "sendgrid"
+    },
+    {
+      "binding": "MAIL_FROM",
+      "environment": "MAIL_FROM",
+      "verifyStandIn": "Cabin <auth@example.test>"
     }
   ],
   "crons": [

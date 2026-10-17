@@ -27,7 +27,7 @@
     "check": "rer check",
     "deps": "rer install",
     "rer": "rer",
-    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/direct.test.mjs tests/turnovers.test.mjs tests/demo.test.mjs",
+    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/direct.test.mjs tests/turnovers.test.mjs tests/finance.test.mjs tests/demo.test.mjs",
     "test:archive": "node --test --test-concurrency=1 tests/archive.test.mjs",
     "test:launch": "node --test --test-concurrency=1 tests/launch.test.mjs",
     "test:site": "node --test tests/site/*.test.mjs"

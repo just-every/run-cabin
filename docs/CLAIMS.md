@@ -12,7 +12,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 2 | Hero | "answers your guests" | contract | No messaging in `src/cabin`. MESSAGE-001, MESSAGE-004. |
 | 3 | Hero | "sends the cleaner" | code | Every reservation, from any channel or direct, is dispatched to the home's default cleaner, who is emailed the turnover window, address and door code; reassigning re-notifies both cleaners, and a moved or cancelled stay re-emails or cancels (`src/cabin/dispatch.ts`, `src/cabin/notices.ts`, `src/cabin/notify.ts`, `src/cabin/turnovers.ts` `turnover.assign`). Without a mail provider (and always in development) the job says the email was not sent. Accept/decline, capacity and travel-time routing remain contract (OPS-001). `tests/turnovers.test.mjs` (line 15). |
 | 4 | Hero | "and the door code" | code | Cabin issues each stay a guest code (check-in to check-out) and each assigned turnover a cleaner code (its window), emails the cleaner theirs and shows the guest theirs on a secret stay page (`src/cabin/codes.ts`, `src/cabin/guest.ts`). Pushing codes to a smart lock goes through a Seam adapter (`src/cabin/locks.ts`) tested against Seam-shaped fixtures; the owner's Seam account is a later step, so codes are set on the keypad by hand and the page says so (on RER Managed, "not available yet" until its provider relay). OPS-005. `tests/turnovers.test.mjs` (line 15). |
-| 5 | Hero | "turns every payout into an owner statement" | partial | Owner statements from entered lines, commission applied, approved and frozen, CSV export: `src/cabin/statements.ts`, `src/cabin/ui/statements.ts`. No payout import. FIN-002, FIN-004. |
+| 5 | Hero | "turns every payout into an owner statement" | partial | Imported Airbnb/Vrbo CSV payouts become frozen statements with delivery; Stripe automatic USD payout reader implemented. Live Stripe matching awaits an eligible USD payout (fleet test account settles AUD). `src/cabin/finance/`, `statements.ts`; FIN-002, FIN-004. |
 | 6 | Hero | "100% free, open source alternative to Guesty, Hostaway and OwnerRez" | code (free, open source) | `LICENSE` (MIT); nothing charges. "Alternative to" rests on the target contract as a whole (BOUNDARY-001). |
 | 7 | Hero tags | Ready ✓ · Pine Ridge Cabin; Checked out 10:00 am · Sandy Shores | code | "Ready ✓": Readiness marks a home ready when the turnover before its next arrival is done with its photos and nothing blocks it (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). "Checked out": the cleaner's "Guests have left" (or a manager's entry) records the actual check-out time on the turnover, shown on Turnovers and Readiness (`src/cabin/turnovers.ts` `turnover.checkout`). Check-out from lock events or a guest portal remains contract (OPS-008). `tests/turnovers.test.mjs` (line 15). |
 | 8 | Hero tags | Guest arriving 4 pm · Airbnb · Lake Loft | code | Each stay carries a guest name and arrival time from the feed ("Reserved - Name") or entered by a manager (`booking.details`, `src/cabin/inventory.ts`); the calendar grid bar and "Arrivals in the next two weeks" show guest, time, channel and home (`src/cabin/ui/calendar-grid.ts`, `src/cabin/ui/requests.ts`). OPS-008 day board remains contract. |
@@ -46,11 +46,11 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 36 | Stay recovery | "offers the credit you approved" (within your $100 limit) | contract | AGENT-003, AGENT-006. |
 | 37 | Stay recovery | "confirms the home is ready" | partial | Photo-evidenced completion (row 7). AGENT-001, OPS-003. |
 | 38 | Stay recovery | "Owner balance updated −$75.00" | contract | FIN-001. |
-| 39 | Owner statements | "Airbnb, Vrbo and Stripe payouts match to their stays" | contract | FIN-002. |
-| 40 | Owner statements | "Owners get a statement" | partial | Approved frozen statement and CSV for owners and managers to download: `src/cabin/statements.ts`. No delivery to owners. FIN-004. |
-| 41 | Owner statements | "and a portal" | contract | FIN-005. |
-| 42 | Owner statements | "the books sync to QuickBooks" | contract | FIN-007. |
-| 43 | Owner statements | Statement card arithmetic (gross, fees, management 20%, payout) | partial | Commission applied with integer half-up maths to entered lines: `src/cabin/statements.ts`. Channel fees are entered lines, not imported. FIN-003. |
+| 39 | Owner statements | "Airbnb, Vrbo and Stripe payouts match to their stays" | partial | Airbnb/Vrbo CSV reports match iCal stays; Stripe test payout reader matches direct payment intents with imported fees. Live USD Stripe matching awaits a paid automatic USD payout; network-edge USD path tested. Partner payout APIs later. `src/cabin/finance/`; FIN-002. |
+| 40 | Owner statements | "Owners get a statement" | code | Frozen approval emails the home owner a portal link; delivery acceptance and explicit resend recorded. `src/cabin/finance/delivery.ts`; FIN-004. |
+| 41 | Owner statements | "and a portal" | code | Separate email-link sign-in and HttpOnly session; home ownership and frozen recipient checked on downloads. `src/cabin/owners/`; FIN-005. |
+| 42 | Owner statements | "QuickBooks via export; Pantry sync live" | code | QuickBooks via export; Pantry sync live. Exact source evidence, scoped API proposal, human Pantry posting approval and confirmed journal ID; CSV/IIF exports. `src/cabin/finance/books.ts`; QBO developer app later. FIN-007. |
+| 43 | Owner statements | Statement card arithmetic (gross, fees, management 20%, payout) | code | Gross, imported channel fees, management percentage and owner payout computed in integer cents and frozen. `src/cabin/statements.ts`; `tests/finance.test.mjs`; FIN-003. |
 | 44 | Move in | "Move from Guesty, Hostaway or OwnerRez" | contract | Only Cabin's own five-column property-register CSV: `src/cabin/movein/`. MIGRATE-002, MIGRATE-003, MIGRATE-004. |
 | 45 | Move in | "with your listings" | partial | Homes with owner and commission from the register CSV, previewed, approved, journalled, undoable: `src/cabin/movein/index.ts`, `src/cabin/movein/csv.ts`. MIGRATE-001. |
 | 46 | Move in | "reservations, guests and owner balances" | contract | MIGRATE-002–004, MIGRATE-007. |
@@ -60,7 +60,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 50 | Ownership | "Export everything, any time" | code | `rer export` / `rer import` with the archive policy: `src/cabin/archive-policy.mjs`, `tests/archive.test.mjs`. |
 | 51 | Quiet details | Damage deposits: "Held on the card, released after checkout" | code | Test-card deposit held separately, released by the five-minute job after the configured post-checkout window, or captured by staff after checkout with amount, reason and evidence; provider idempotency and refresh reconciliation: `src/cabin/direct/payments.ts`. Early authorization expiry is flagged for a person, not silently renewed (PAY-003). |
 | 52 | Quiet details | Lodging tax: "Collected and filed by state and county" | partial | Configured state/county levies are separately itemized and collected; managers record separate filing/remittance confirmation references on each paid stay (`src/cabin/direct/admin.ts`, `ui/direct.ts`). Cabin does not yet file or remit through a tax provider. FIN-008 remains partial; no filing-provider account is configured. |
-| 53 | Quiet details | Owner portal: "Owners see stays and statements any time" | contract | FIN-005. |
+| 53 | Quiet details | Owner portal: "Owners see stays and statements any time" | code | Owners see only their homes’ stays and approved statements; other owners’ homes and operator APIs are refused. `src/cabin/owners/`; `tests/finance.test.mjs`; FIN-005. |
 | 54 | Quiet details | Maintenance: "Broken things become tasks with photos" | code | As row 33: tasks with photos raised from a turnover or by hand, assigned, emailed and closed with notes and photos (`src/cabin/maintenance.ts`). Vendors, quotes, invoices and recurring inspections remain contract (OPS-004). `tests/turnovers.test.mjs` (line 15). |
 | 55 | Quiet details | Review replies: "Thank-yous and replies sent on schedule" | contract | GUEST-003, MESSAGE-003. |
 | 56 | Quiet details | Activity log: "Every change, message and payout, recorded" | partial | Domain and credential events and every approval with actor and revision: `src/cabin/storage.ts`, `src/cabin/model.ts` (`approve`), approval history in `src/cabin/ui/admin.ts`. No messages or payouts to record yet. AUDIT-001. |
@@ -71,12 +71,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 48, 49, 50, 51, 54, 57 | 32 |
-| partial | 5, 37, 40, 43, 45, 52, 56 | 7 |
-| contract | 2, 15, 16, 17, 24, 26, 34, 35, 36, 38, 39, 41, 42, 44, 46, 47, 53, 55 | 18 |
+| code | 1, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 48, 49, 50, 51, 53, 54, 57 | 37 |
+| partial | 5, 37, 39, 45, 52, 56 | 6 |
+| contract | 2, 15, 16, 17, 24, 26, 34, 35, 36, 38, 44, 46, 47, 55 | 14 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 32 code, 7 partial, 18 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 37 code, 6 partial, 14 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 

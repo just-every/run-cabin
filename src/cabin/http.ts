@@ -1,3 +1,10 @@
+import { quickBooksCommand } from './finance/quickbooks'
+import { booksCommand, exportBooks } from './finance/books'
+import { portalState } from './owners/access'
+import { portalPage } from './owners/ui'
+import { ownersResponse } from './owners/http'
+import { financeImport } from './finance/import'
+import { resendStatement } from './finance/delivery'
 import { runtimeBindings,type Bindings } from '../auth.server'
 import { command,snapshot,turnoverPhoto } from './domain'
 import { statementCsv } from './statements'
@@ -16,17 +23,20 @@ import { signedAgreement } from './direct/public-ui'
 import { manager } from './model'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
- const result=name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 function actionMessage(name:string,result:any){
  if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
+ if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
+ if(name==='statement.approve')return 'Statement approved and frozen. Owner email delivery status is shown below.'
+ if(name==='statement.deliver')return 'Owner email requested. Check delivery status below.'
  if(name==='turnover.complete')return `Marked ready with ${result.completion.photos.length} photo${result.completion.photos.length===1?'':'s'}. The owner sees it on Readiness.`
  if(name==='turnover.checkout')return 'Check-out recorded.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
@@ -53,7 +63,8 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
  if(type.includes('multipart/form-data')){
   const form=await new Response(bytes,{headers:{'content-type':type}}).formData();input={}
   for(const key of new Set(form.keys())){const value=form.get(key)
-   if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
+   if(key==='payoutFile'){need(value instanceof File&&value.size>0&&value.size<=2_000_000,'Choose a payout CSV up to 2 MB');input.csv=await value.text()}
+   else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }
  }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
@@ -70,6 +81,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
 }
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
+ if(path==='/owners'||path.startsWith('/owners/'))return ownersResponse(request,original)
  if(path==='/book'||path.startsWith('/book/'))return bookingResponse(request,runtimeBindings(original))
  if(path.startsWith('/ical/'))return icalExportResponse(request,runtimeBindings(original))
  if(path.startsWith('/stay/'))return guestStayResponse(request,runtimeBindings(original))
@@ -83,6 +95,9 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   if(request.method==='POST'&&!isAgent)need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   who=await principal(request,env,isAgent)
   if(request.method==='GET'){
+   if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
+   const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
+   if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
    if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from')})
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
@@ -100,7 +115,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }
   return json({error:'Not found'},404)
  }catch(error){
-  const status=Number((error as any)?.status)||500,message=status<500?(error as Error).message:'Could not complete this request. Refresh and try again.'
+  const status=Number((error as any)?.status)||500,message=(error as any)?.status?(error as Error).message:'Could not complete this request. Refresh and try again.'
   if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{error:message})}catch{/* Revocation cannot fall back to a stale page. */}}
   if(pages.has(path)&&status===401)return new Response(null,{status:303,headers:{...headers,location:'/signin?returnTo='+encodeURIComponent(path)}})
   return json({error:message},status)

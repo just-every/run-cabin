@@ -14,6 +14,8 @@ test('a signed direct checkout receives Stripe test payment, verifies identity, 
    session={id:'cs_test_booking',url:'https://checkout.stripe.com/c/pay/cs_test_booking',metadata:{stayId:form.get('metadata[stayId]')},customer:'cus_synthetic',amount_total:74250};return Response.json(session)
   }
   if(p==='/v1/checkout/sessions/cs_test_booking')return Response.json({...session,status:'complete',payment_status:payment?'paid':'unpaid',payment_intent:payment?{id:'pi_rent',status:'succeeded',amount_received:74250,currency:'usd',payment_method:'pm_synthetic'}:null})
+  if(p==='/v1/payouts')return Response.json({data:[{id:'po_usd_fixture',status:'paid',currency:'usd',automatic:true,arrival_date:Math.floor(Date.now()/1000)}],has_more:false})
+  if(p==='/v1/balance_transactions')return Response.json({data:[{id:'txn_rent_fixture',type:'charge',currency:'usd',amount:74250,fee:2250,net:72000,source:{id:'ch_rent_fixture',payment_intent:'pi_rent'}}],has_more:false})
   if(p==='/v1/payment_intents'){holdRequests++;assert.equal(form.get('capture_method'),'manual');assert.equal(form.get('amount'),'25000');return Response.json({id:'pi_deposit',status:'requires_capture'})}
   if(p==='/v1/payment_intents/pi_deposit')return Response.json({id:'pi_deposit',status:depositStatus,latest_charge:{payment_method_details:{card:{capture_before:Math.floor(Date.now()/1000)+6*86400}}}})
   if(p==='/v1/payment_intents/pi_deposit/cancel'){releaseRequests++;depositStatus='canceled';return Response.json({id:'pi_deposit',status:depositStatus})}
@@ -36,6 +38,8 @@ test('a signed direct checkout receives Stripe test payment, verifies identity, 
   const ready=await h.send(`/book/stay/${token}/refresh`,{});assert.equal(ready.value.stay.phase,'confirmed');assert.equal(ready.value.stay.identity.status,'verified')
   await h.send(`/book/stay/${token}/refresh`,{});assert.equal(holdRequests,1)
   const state=await h.state();assert.equal(state.bookings.filter(b=>b.channel==='direct'&&b.kind==='stay').length,1);assert.equal(state.direct.stays[0].paymentId,'pi_rent')
+  const payouts=await h.cmd('payout.stripe',{});assert.equal(payouts.matched,1);assert.equal(payouts.imported[0].bookingId,state.bookings.find(b=>b.channel==='direct').id);assert.equal(payouts.imported[0].feeCents,2250);assert.equal(payouts.imported[0].netCents,72000)
+  assert.equal((await h.cmd('payout.stripe',{})).duplicates.length,1)
   await h.cmd('direct.tax.filed',{id,jurisdiction:'state',reference:'Synthetic state filing fixture'});await h.cmd('direct.tax.filed',{id,jurisdiction:'county',reference:'Synthetic county filing fixture'});assert.equal((await h.state()).direct.stays[0].taxFilings.length,2)
   const agreement=await h.send(`/book/stay/${token}/agreement`);assert.match(agreement.text,/Signed electronically by: Alex Example/);assert.match(agreement.text,/USD 742.50/)
   assert.equal((await h.send(`/api/cabin/direct/stays/${id}/agreement`,undefined,'')).status,401)

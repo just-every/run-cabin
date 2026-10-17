@@ -587,7 +587,7 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 2 | "answers your guests" | MESSAGE-001, MESSAGE-004 | missing |
 | 3 | "sends the cleaner" | OPS-001 | partial |
 | 4 | "and the door code" | OPS-005 | partial |
-| 5 | "turns every payout into an owner statement" | FIN-002, FIN-004 | partial |
+| 5 | "turns every payout into an owner statement" | FIN-002, FIN-004 | partial (live Stripe USD payout prerequisite) |
 | 6 | "100% free, open source alternative to Guesty, Hostaway and OwnerRez" | OPEN-001, BOUNDARY-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | partial |
 | 7 | Ready ✓ · Pine Ridge Cabin; Checked out 10:00 am · Sandy Shores | OPS-008, OPS-003, RES-002 | partial |
 | 8 | Guest arriving 4 pm · Airbnb · Lake Loft | OPS-008, RES-002, GUEST-001 | partial |
@@ -621,11 +621,11 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006 | partial |
 | 37 | "confirms the home is ready" | AGENT-001, OPS-003 | partial |
 | 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | partial |
-| 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | missing |
-| 40 | "Owners get a statement" | FIN-004 | partial |
-| 41 | "and a portal" | FIN-005 | missing |
-| 42 | "the books sync to QuickBooks" | FIN-007 | missing |
-| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | partial |
+| 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
+| 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
+| 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
+| 42 | "QuickBooks via export; Pantry sync live" | FIN-007 | implemented (scope and remaining clause gaps below) |
+| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (scope and remaining clause gaps below) |
 | 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | missing |
 | 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | partial |
 | 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | missing |
@@ -635,7 +635,7 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 50 | "Export everything, any time" | DATA-001 | partial |
 | 51 | Damage deposits: "Held on the card, released after checkout" | PAY-003 | implemented (direct-booking scope; see clause Status) |
 | 52 | Lodging tax: "Collected and filed by state and county" | FIN-008 | partial |
-| 53 | Owner portal: "Owners see stays and statements any time" | FIN-005 | missing |
+| 53 | Owner portal: "Owners see stays and statements any time" | FIN-005 | implemented (scope and remaining clause gaps below) |
 | 54 | Maintenance: "Broken things become tasks with photos" | OPS-004 | partial |
 | 55 | Review replies: "Thank-yous and replies sent on schedule" | GUEST-003, MESSAGE-003, GUEST-004 | missing |
 | 56 | Activity log: "Every change, message and payout, recorded" | AUDIT-001 | partial |
@@ -644,6 +644,9 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 ## Status
 
 Judged from the code and tests at commit `473fa9a23b724caa73699399febfd475f551edc8` (17 October 2026).
+
+17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, live Pantry posting with human approval, and QuickBooks CSV/IIF exports implemented. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
+
 
 Direct-booking implementation updated 17 October 2026. The narrow homepage rows and broader clauses are assessed separately below; Stripe is test mode, and tax filing/remittance integration remains open.
 
@@ -654,10 +657,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 0 | 0 | 0 | 0 |
-| Target and push further | 6 | 40 | 42 | 88 |
-| All | 6 | 40 | 42 | 88 |
+| Target and push further | 6 | 43 | 39 | 88 |
+| All | 6 | 43 | 39 | 88 |
 
-**88 clauses: 6 done, 40 partial, 42 missing.**
+**88 clauses: 6 done, 43 partial, 39 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -714,12 +717,12 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/turnovers.test.mjs` (line 15); `tests/cabin.test.mjs` (lines 31, 67) | A readiness view for any chosen day shows each home's next arrival (guest, channel, time), the turnover before it with cleaner and window, the door code state (scheduled, active, expired, revoked) and photos, with a summary such as "All 5 homes ready for Saturday" naming any not ready. The actual check-out time is recorded when the cleaner finds the guests gone or staff enter it; check-out from lock events or a guest portal, provider-confirmed code state and a departures list are absent. |
 | `FIN-001` | Reservation-linked USD trust subledgers | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-002` | Payout reconciliation per reservation | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/people.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (line 90) | Fixed property commission and manually supplied signed lines exist; agreement models and derived allocation rules are absent. |
-| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/ui/statements.ts`; `tests/cabin.test.mjs` (line 90) | Manual AUD statement arithmetic, exact approval, frozen details and formula-safe CSV ship. USD, reconciliation, PDF, scheduled generation/delivery and owner access are missing. |
-| `FIN-005` | Rental-owner portal and personal stays | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD CSV payouts match stays with imported fees. Stripe test automatic USD payouts match direct payment intents; live USD matching awaits a paid automatic USD payout (supplied test account settles AUD). Partner APIs, FX, bank receipts and full exception closure remain later. |
+| `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `tests/finance.test.mjs` | Imported gross less channel fees less fixed home commission gives owner payout with integer half-up arithmetic. Versioned agreements and wider expense allocation remain absent. |
+| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly imported USD statements freeze source lines, recipient and commission; approval emails a portal link with acceptance status. CSV and owner access ship. Scheduled generation, PDF, distribution rails and later-period adjustments remain absent. |
+| `FIN-005` | Rental-owner portal and personal stays | target | partial | `src/cabin/owners/`; `tests/finance.test.mjs` | Separate one-use email sign-in, owner session, scoped stays and approved statements; current ownership and frozen recipient guard downloads. Owner personal-stay requests, wider documents and performance reporting remain absent. |
 | `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-007` | QuickBooks Online accounting synchronization | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/ui/books.ts`; `docs/statements.md` | QuickBooks via CSV/IIF export; Pantry sync live through exact uploaded statement evidence, scoped proposals, human approval and confirmed journal IDs, proven against local Pantry. Document upload is a person’s step under the current Pantry API. QBO developer app, OAuth sync and QBO conflicts remain later. |
 | `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Configured state/county lines collected separately with rent and fees; stay retains each jurisdiction/rate/amount and manual filing confirmation references. No automatic filing/remittance provider, exemption/refund adjustments or city levies yet. |
 | `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |

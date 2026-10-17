@@ -1,3 +1,4 @@
+import { booksState } from './finance/books'
 import type { Bindings } from '../auth.server'
 import { type Actor, type Context, type State, need, text, kinds } from './model'
 import { load, assertLive, commit } from './storage'
@@ -31,7 +32,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   data.tasks=data.tasks.filter(t=>t.assigneeId===actor.memberId||t.raisedBy===actor.id)
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
-  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null}));data.notices=[]
+  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
   data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({guestName:_,...b})=>({...b,summary:'Reserved'}))
   data.properties=data.properties.filter(p=>propertyIds.has(p.id)).map(p=>({...p,ownerName:'',ownerEmail:'',commissionBps:0}))
   data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
@@ -39,7 +40,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  }
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}))}
- const state={...data,direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,managed:managedInstall(env),lockAccount:lockAccount(env),agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ const state={...data,books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,managed:managedInstall(env),lockAccount:lockAccount(env),agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
 /** A turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */

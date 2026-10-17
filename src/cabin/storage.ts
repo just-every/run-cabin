@@ -19,7 +19,7 @@ export async function load(db: D1Database): Promise<Data> {
   db.prepare('SELECT id,kind,record_id AS recordId,revision,actor_id AS actorId,at FROM cb_approvals ORDER BY at,id'),
   db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
  ])
- const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], approvals: results[4].results, events: results[5].results }
+ const data: Data = { version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  return data
 }
