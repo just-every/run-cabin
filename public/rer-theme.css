@@ -20,10 +20,10 @@
   --rer-font-body: Inter, Arial, sans-serif;
   --rer-font-heading: 'Inter Tight', Inter, Arial, sans-serif;
   --rer-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --rer-page: #f4f6f7;
+  --rer-page: #f8fafb;
   --rer-surface: #ffffff;
-  --rer-text: #0d2b24;
-  --rer-muted: #56616c;
+  --rer-text: #101b2c;
+  --rer-muted: #5d6b80;
   --rer-border: #c3cbd2;
   --rer-focus: #0f3d2e;
   --rer-link: #0f3d2e;
