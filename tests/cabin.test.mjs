@@ -111,6 +111,7 @@ test('bearer agents prepare all three jobs but no approval door, and revocation 
   const headers={authorization:`Bearer ${key.token}`}
   const send=(name,input)=>h.send('/api/cabin/agent/command',{name,input},'',headers)
   assert.equal((await h.send('/api/cabin/agent/context',undefined,'',headers)).status,200)
+  const page=await h.send('/app/agent',undefined,h.owner);assert.equal(page.status,200);assert.match(page.text,/Created [^<]+ (EDT|EST)</)
   for(const [name,input] of [['calendar.prepare',{propertyId:p.id,channel:'Booking.com',calendar:ics([{uid:'next',start:'20261108',end:'20261110'}])}],['turnover.prepare',{bookingId:b.id,cleanerId:cleaner.id,checklist:['Check keys']}],['statement.prepare',{propertyId:p.id,month:'2026-11',lines:[{description:'Income',amountCents:10000}]}]]){
     const prepared=await send(name,input);assert.equal(prepared.status,200,prepared.text)
     const d=prepared.value.result

@@ -8,7 +8,7 @@ Run one line to install the `rer` launcher, clone Cabin and start it:
 npx -y @runeditrun/rer dev just-every/run-cabin
 ```
 
-No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it changes no shell settings, so if it prints an `export PATH=…` line, run that line to use `rer` again later. To set Cabin up without starting it, use `setup` in place of `dev`.
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it does not edit your shell files itself. If it ends by printing a line to run, run it: that line puts `rer` on your PATH now and appends the same `export PATH=…` setting to your shell's startup file (`~/.zshrc` for zsh, otherwise `~/.profile` or `~/.bash_profile`), so `rer` also works in new terminals. To set Cabin up without starting it, use `setup` in place of `dev`.
 
 The first launch installs dependencies, sets up the local database and prepares a local owner. It can take several minutes. Run the same command again if it is interrupted.
 

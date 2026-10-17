@@ -12,7 +12,7 @@ Install Git, then run one line to install the launcher, clone Cabin and start it
 npx -y @runeditrun/rer dev just-every/run-cabin
 ```
 
-No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it changes no shell settings, so if it prints an `export PATH=…` line, run that line to use `rer` again later. To set Cabin up without starting it, use `setup` in place of `dev`.
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it does not edit your shell files itself. If it ends by printing a line to run, run it: that line puts `rer` on your PATH now and appends the same `export PATH=…` setting to your shell's startup file (`~/.zshrc` for zsh, otherwise `~/.profile` or `~/.bash_profile`), so `rer` also works in new terminals. To set Cabin up without starting it, use `setup` in place of `dev`.
 
 To start it again later, run `cd run-cabin && rer dev`. RER selects pinned Node 22.20.0 and pnpm 10.12.4, installs dependencies, migrates local D1 and prepares a local owner. First launch can take several minutes. Open the private **RER_OPEN** link from the terminal, confirm the owner on **Finish setup**, and open `/app`. Keep that link private. **RER_READY** is the ordinary app address. Run the same command again if interrupted. Stop with `rer dev --stop` or Ctrl-C.
 

@@ -22,7 +22,7 @@ function status(s: any, m: any, t: Thread) {
   const when = at(s, m.propertyId, m.sentAt ?? m.createdAt)
   if (m.direction === 'in') return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(when)}</p>`
   const sched = m.scheduledId ? s.scheduled.find((r: any) => r.id === m.scheduledId) : null, late = sched ? lateMinutes(sched) : null
-  const who = m.source === 'scheduled' ? `Scheduled · ${RULE_NAMES[sched?.rule as keyof typeof RULE_NAMES] ?? 'message'}` : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
+  const who = m.source === 'scheduled' ? (sched ? `Scheduled · ${RULE_NAMES[sched.rule as keyof typeof RULE_NAMES]}` : 'Direct booking · sent automatically') : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
   const state = m.status === 'sent' ? `Sent ${when}${sched ? (late !== null && late <= 5 ? ' · on time' : ` · ${late} min late`) : ''}` : m.status === 'suppressed' ? 'Not sent: development mode sends no email' : m.status === 'unavailable' ? `Not sent: ${(m.detail ?? '').split(/(?<=\.) /)[0]}` : m.status === 'failed' ? `Could not send: ${m.detail ?? ''}` : 'Sending…'
   const retry = m.status === 'failed' ? form('message.retry', page(t), hidden('id', m.id), 'Send again', 'class="quiet inline"') : ''
   return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(who)}</p><p class="state ${m.status === 'sent' ? 'ok' : m.status === 'failed' || m.status === 'unavailable' ? 'bad' : ''}">${h(state)}</p>${retry}`

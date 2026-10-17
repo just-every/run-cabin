@@ -13,6 +13,8 @@ const offset = (ms: number, zone: string) => { const p = parts(ms, zone); return
 export function instant(local: string, zone: string) { const guess = Date.parse(local + ':00Z'); let t = guess - offset(guess, zone); t = guess - offset(t, zone); return t }
 /** The property-local wall time of an instant. */
 export function wall(ms: number, zone: string) { const p = parts(ms, zone), two = (n: number) => String(n).padStart(2, '0'); return `${p.y}-${two(p.m)}-${two(p.d)}T${two(p.h)}:${two(p.min)}` }
+/** The zone's short name at that instant, such as EDT or HST. */
+export const zoneAbbr = (ms: number, zone: string) => new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'short' }).formatToParts(new Date(ms)).find(p => p.type === 'timeZoneName')?.value ?? zone
 export const localDay = (ms: number, zone: string) => wall(ms, zone).slice(0, 10)
 export const time12 = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return `${h % 12 || 12}${m ? ':' + String(m).padStart(2, '0') : ''} ${h < 12 ? 'am' : 'pm'}` }
 const day = (date: string, weekday = true) => new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { ...(weekday ? { weekday: 'short' } : {}), month: 'short', day: 'numeric', timeZone: 'UTC' } as Intl.DateTimeFormatOptions)

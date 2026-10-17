@@ -16,13 +16,16 @@ export async function refresh(env:Bindings,id:string) {
   const session=await readCheckout(paymentEnv(env,s),s.checkoutId)
   if(session.payment_status==='paid'){
    const pi=session.payment_intent;need(pi&&typeof pi==='object'&&pi.status==='succeeded'&&pi.amount_received===s.quote.totalCents&&pi.currency==='usd'&&session.metadata?.stayId===s.id,'Stripe payment does not match this stay',409)
-   s=await mutate(env.DB,DIRECT_SYSTEM,'direct.paid',async c=>{const row=await stay(env.DB,id);row.paymentId=pi.id;row.customerId=typeof session.customer==='string'?session.customer:session.customer?.id;row.paymentMethod=typeof pi.payment_method==='string'?pi.payment_method:pi.payment_method?.id;row.phase='paid';delete row.error;await queueConfirmation(env,c,row,'payment');saveStay(c,row);return row})
-   await deliverGuestMessages(env)
+   s=await mutate(env.DB,DIRECT_SYSTEM,'direct.paid',async c=>{const row=await stay(env.DB,id);row.paymentId=pi.id;row.customerId=typeof session.customer==='string'?session.customer:session.customer?.id;row.paymentMethod=typeof pi.payment_method==='string'?pi.payment_method:pi.payment_method?.id;row.phase='paid';delete row.error;saveStay(c,row);return row})
   }else if(session.status==='expired')return expire(env,id)
  }
  if(!s.paymentId){if(!s.checkoutId&&Date.now()>Date.parse(s.holdUntil))return expire(env,id);return s}
  if(s.requireIdentity&&s.identity&&s.identity.status!=='verified'){const identity=await readIdentity(paymentEnv(env,s),s.identity.id);s=await update(env,id,'direct.identity.checked',row=>{row.identity={id:identity.id,status:identity.status}})}
- if(s.quote.depositCents)s=await reconcileDeposit(env,s)
+ // The receipt states the damage hold as it now stands, so it is written once the hold step has run, even when that step failed.
+ let failure:unknown=null
+ if(s.quote.depositCents)try{s=await reconcileDeposit(env,s)}catch(error){failure=error;s=await stay(env.DB,id)}
+ if(!s.paymentMessageId)s=await mutate(env.DB,DIRECT_SYSTEM,'direct.receipt',async c=>{const row=await stay(env.DB,id);await queueConfirmation(env,c,row,'payment');saveStay(c,row);return row})
+ if(failure){await deliverGuestMessages(env);throw failure}
  const deferred=!!s.depositDueAt&&Date.now()<Date.parse(s.depositDueAt)
  const ready=(!s.requireIdentity||s.identity?.status==='verified')&&(!s.quote.depositCents||deferred||activeDeposit(s))
  if(ready&&s.phase==='paid')s=await mutate(env.DB,DIRECT_SYSTEM,'direct.confirmed',async c=>{
@@ -30,7 +33,7 @@ export async function refresh(env:Bindings,id:string) {
   row.phase='confirmed';delete row.error;const booking=c.data.bookings.find(b=>b.id===row.bookingId);need(booking&&booking.status==='confirmed','The booking hold is missing. Contact the host.',409)
   Object.assign(booking,{kind:'stay',summary:row.guestName,guestName:row.guestName,guestEmail:row.email,revision:newId()});await queueConfirmation(env,c,row,'confirmation');saveStay(c,row);return row
  })
- if(s.confirmationMessageId)await deliverGuestMessages(env)
+ await deliverGuestMessages(env)
  return s
 }
 async function expire(env:Bindings,id:string) {return mutate(env.DB,DIRECT_SYSTEM,'direct.expired',async c=>{const row=await stay(env.DB,id);need(!row.paymentId,'A paid stay cannot expire',409);row.phase='expired';const b=c.data.bookings.find(b=>b.id===row.bookingId);if(b)Object.assign(b,{status:'cancelled',cancelled:true,revision:newId()});saveStay(c,row);return row})}

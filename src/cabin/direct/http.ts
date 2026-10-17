@@ -9,6 +9,8 @@ import { guestDeposit } from './deposit'
 import { stripeCredentials } from './stripe'
 import { homePage,quotePage,stayPage,shell,signedAgreement,guestText } from './public-ui'
 import { h } from '../ui/shared'
+import { homeSettings } from '../homes'
+import { instant,localDay } from '../clock'
 export async function bookingResponse(request:Request,env:Bindings):Promise<Response|null> {
  const url=new URL(request.url),path=url.pathname;if(path!=='/book'&&!path.startsWith('/book/'))return null
  let json=false
@@ -35,9 +37,9 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
   const data=await load(env.DB),all=(await homes(env.DB)).filter(h=>h.enabled)
   if(path==='/book'&&request.method==='GET')return shell('Find your stay',`<p class="eyebrow">Book directly</p><h1>Find your next stay</h1>${all.length?all.map(home=>`<section class="panel"><h2><a href="/book/${h(home.slug)}">${h(data.properties.find(p=>p.id===home.propertyId)?.name)}</a></h2><p>${h(home.description)}</p></section>`).join(''):'<p>No homes are accepting direct bookings yet.</p>'}`)
   const match=path.match(/^\/book\/([a-z0-9-]+)(?:\/(quote|checkout))?$/),home=all.find(h=>h.slug===match?.[1]);need(match&&home,'Booking page not found',404)
-  const name=data.properties.find(p=>p.id===home.propertyId)?.name??home.slug
-  if(request.method==='GET'&&!match[2])return homePage(home,name,data.bookings,env.AUTH_ORIGIN)
-  if(request.method==='POST'&&match[2]==='quote'){const price=quote(home,data.bookings,input);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode)}
+  const name=data.properties.find(p=>p.id===home.propertyId)?.name??home.slug,settings=homeSettings(data,home.propertyId)
+  if(request.method==='GET'&&!match[2])return homePage(home,name,data.bookings,localDay(Date.now(),settings.timeZone))
+  if(request.method==='POST'&&match[2]==='quote'){const price=quote(home,data.bookings,input);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode,instant(`${price.start}T${settings.checkInTime}`,settings.timeZone)-48*3_600_000<=Date.now())}
   if(request.method==='POST'&&match[2]==='checkout'){const result=await checkout(env,home.slug,input);return json?Response.json(result):new Response(null,{status:303,headers:{location:result.url,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
   need(false,'Not found',404)
  }catch(error){const stayToken=(error as any)?.stayToken as string|undefined

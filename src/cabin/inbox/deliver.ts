@@ -2,7 +2,7 @@ import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
 import { type Booking, type Data, type GuestMessage, type InboxSettings, type MessageChannel, newId } from '../model'
 import { load, mutate } from '../storage'
-import { facts, fill } from './render'
+import { facts, fill, statement } from './render'
 import { inboxSettings } from './settings'
 import { INBOX_SYSTEM } from './inbound'
 import { smsAccount, sendSms, SMS_LINE, SMS_MANAGED } from './adapters/twilio'
@@ -30,7 +30,7 @@ function claimDue(env: Bindings, id: string) {
   if (Date.now() >= Date.parse(row.deadline)) { Object.assign(row, { status: 'skipped', reason: 'Its moment passed before Cabin could send it', revision: newId() }); return null }
   const inbox = inboxSettings(c), set = inbox.schedule[row.rule], f = facts(c.data, env.AUTH_ORIGIN, b), r = route(env, inbox, b)
   const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b.propertyId, bookingId: b.id, email: 'unavailable' in r ? b.guestEmail ?? null : r.email, phone: 'unavailable' in r ? b.guestPhone ?? null : r.phone, ref: null, channel: 'unavailable' in r ? 'email' : r.channel, direction: 'out', source: 'scheduled', status: 'sending', subject: (row.updated ? 'Updated: ' : '') + fill(set.subject, f), text: (row.updated ? 'These details changed. This message replaces the earlier one.\n\n' : '') + fill(set.template, f), detail: null, replyTo: null, headerId: null, sentBy: null, approvalId: null, scheduledId: row.id, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
-  c.data.messages.push(m); c.entityId = row.id
+  c.data.messages.push(m); c.entityId = row.id; row.content = statement(c.data, b, set)
   if ('unavailable' in r) { Object.assign(m, { status: 'unavailable', detail: r.unavailable }); Object.assign(row, { status: 'unavailable', reason: r.unavailable, messageId: m.id, revision: newId() }); return null }
   Object.assign(row, { status: 'sending', messageId: m.id, revision: newId() }); return { ...m }
  }, () => false).catch(() => null)

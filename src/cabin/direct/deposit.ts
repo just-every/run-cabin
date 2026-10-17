@@ -29,7 +29,7 @@ export async function reconcileDeposit(env:Bindings,s:DirectStay){
   }else if(session.status==='expired')s=await change(env,s.id,'direct.deposit.checkout.expired',row=>{row.depositCheckout!.status='expired'})
  }
  if(!s.deposit&&!s.depositCheckout&&Date.now()>=Date.parse(s.depositDueAt!)&&Date.now()<departure(s)){
-  need(s.customerId&&s.paymentMethod,'The saved card is unavailable. Ask the guest to authorize the deposit from their booking page.',409)
+  if(!s.customerId||!s.paymentMethod)return s.error?s:change(env,s.id,'direct.deposit.needs-guest',r=>{r.error='The saved card is unavailable. No damage funds are secured. Ask the guest to open their booking link and authorize the deposit with Stripe.'})
   const attempt=s.depositAttempt??newId()
   if(!s.depositAttempt)s=await change(env,s.id,'direct.deposit.requested',r=>{r.depositAttempt=attempt})
   try{

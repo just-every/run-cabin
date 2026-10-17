@@ -162,7 +162,10 @@ test('a returning guest’s question is answered for their upcoming stay, and a 
     const hours = async out => h.cmd('home.settings', { propertyId: home.id, revision: (await h.state()).homeSettings.find(r => r.propertyId === home.id)?.revision ?? '', address: ADDRESS, timeZone: 'America/New_York', checkInTime: '16:00', checkOutTime: out, checklist: ['Beds made'], photosRequired: 1 })
     await hours('00:00')
     await h.cmd('inbox.address', { address: INBOX, revision: '' })
-    await h.cmd('inbox.schedule', { checkinEnabled: true, checkinHours: 48, checkoutEnabled: false, checkoutHours: 14, reviewEnabled: false, reviewHours: 4, revision: (await settings()).revision })
+    await h.cmd('inbox.schedule', { checkinEnabled: true, checkinHours: 48, checkoutEnabled: false, checkoutHours: 14, reviewEnabled: true, reviewHours: 4, revision: (await settings()).revision })
+    await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Rowan Price', guestEmail: 'rowan@guest.example', start: local(-6), end: local(-2) })
+    const thanks = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('rowan@guest.example') && m.subject.includes('Thank you for staying'))
+    assert.equal((await thanks()).length, 1)
     const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-3), end: local(0) })
     const next = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(1), end: local(3) })
     assert.notEqual(past.bookingId, next.bookingId)
@@ -188,5 +191,6 @@ test('a returning guest’s question is answered for their upcoming stay, and a 
     assert.ok(sent[1].text.includes(moved.code) && sent[1].text.includes('3 am'), sent[1].text)
     await hours('03:00')
     assert.equal((await mail()).filter(m => m.subject.includes('Check-in details')).length, 2, 'sent once per change')
+    assert.equal((await thanks()).length, 1, 'a review request whose words did not change is not sent again')
   } finally { await h.close() }
 })

@@ -1,4 +1,5 @@
 import { h, heading, panel, form, field, area, hidden, empty, badge, money, select } from './shared'
+import { atHome } from './ops'
 
 const providers: [string, string][] = [['guesty', 'Guesty'], ['hostaway', 'Hostaway'], ['ownerrez', 'OwnerRez']]
 const metrics = [
@@ -53,19 +54,19 @@ function signoff(job: any) {
     '<label class="check"><input type="checkbox" name="confirm" value="yes" required> I have reviewed the imported records, reconciliation and every refused row.</label>', 'Sign off cutover')
 }
 
-function providerJob(job: any) {
+function providerJob(s: any, job: any) {
   const plan = job.plan
   const name = providers.find(([id]) => id === job.provider)?.[1] ?? job.provider
   const refusals = plan.refusals.length ? `<div class="notice error"><strong>${plan.refusals.length} refused row${plan.refusals.length === 1 ? '' : 's'} — excluded from import</strong><p>Accepted rows can still be imported. Explain how every refused row is resolved before signing off.</p></div>${table('Refused rows', ['File', 'Row', 'Kind / source ID', 'Reason'], plan.refusals.map((r: any) => [h(r.file), h(r.row), `${h(r.kind)}${r.externalId ? `<small>${h(r.externalId)}</small>` : ''}`, h(r.reason)]))}` : '<p class="muted">No refused rows.</p>'
   const accepted = plan.homes.length
-  return `<article class="record movein-job"><div class="record-title"><h3>${h(name)} move-in</h3>${badge(job.status)}</div><p class="muted">Cutover ${h(plan.asOf)} · Previewed ${h(job.createdAt)}</p>
+  return `<article class="record movein-job"><div class="record-title"><h3>${h(name)} move-in</h3>${badge(job.status)}</div><p class="muted">Cutover ${h(plan.asOf)} · Previewed ${h(atHome(s, null, job.createdAt))}</p>
     ${reconciliation(job)}${refusals}
     ${plan.warnings.length ? `<div class="notice"><strong>Review notes</strong><ul>${plan.warnings.map((w: string) => `<li>${h(w)}</li>`).join('')}</ul></div>` : ''}
     ${records(plan)}
     <details class="movein-details"><summary>Source mapping &amp; fingerprint</summary>${table('Recognized source columns', ['File', 'Record kind', 'Columns'], plan.mappings.map((m: any) => [h(m.file), h(m.kind), m.columns.map(h).join(', ')]))}<p>Job <code>${h(job.id)}</code></p><p>Fingerprint <code>${h(job.fingerprint)}</code></p></details>
     ${job.status === 'review' ? accepted ? form('import.provider.apply', 'import', hidden('id', job.id) + hidden('fingerprint', job.fingerprint) + '<p>Import the accepted homes, guests, reservations and balances in this exact preview. Refused rows stay excluded.</p>', 'Import accepted records') : '<p>No accepted records to import. Correct the source files and preview again.</p>' : ''}
     ${job.status === 'imported' ? signoff(job) : ''}
-    ${job.signedOffAt ? `<p>Signed off ${h(job.signedOffAt)}.</p><details class="movein-details"><summary>Recorded explanations</summary><dl class="facts">${[...metrics, ['refusals', 'Refused rows']].filter(([key]) => job.explanations?.[key]).map(([key, label]) => `<dt>${h(label)}</dt><dd>${h(job.explanations[key])}</dd>`).join('') || '<dd>No differences or refused rows required explanations.</dd>'}</dl></details>` : ''}
+    ${job.signedOffAt ? `<p>Signed off ${h(atHome(s, null, job.signedOffAt))}.</p><details class="movein-details"><summary>Recorded explanations</summary><dl class="facts">${[...metrics, ['refusals', 'Refused rows']].filter(([key]) => job.explanations?.[key]).map(([key, label]) => `<dt>${h(label)}</dt><dd>${h(job.explanations[key])}</dd>`).join('') || '<dd>No differences or refused rows required explanations.</dd>'}</dl></details>` : ''}
     ${['imported', 'signed-off'].includes(job.status) ? form('import.provider.undo', 'import', hidden('id', job.id) + '<p class="muted">Undo removes this import only while its records are unchanged. Later edits or dependent work prevent undo.</p>', 'Undo provider import', 'class="quiet"') : ''}
     ${job.undoReason ? `<p>${h(job.undoReason)}</p>` : ''}</article>`
 }
@@ -92,7 +93,7 @@ export function movein(s: any, extras: any) {
   return heading('Move in with a review', 'Move in', 'Bring your homes, reservations, guests and opening owner balances from Guesty, Hostaway or OwnerRez. Preview the exports, import the accepted records, then reconcile and sign off.') +
     panel('Preview provider exports', upload) +
     '<div class="notice"><strong>Provider API not connected · exports work</strong><p>The documented API adapters have been exercised with recorded synthetic fixtures only. Live provider access needs owner accounts.</p><p>Imported reservations block Cabin’s shared calendar. iCal links are retained for ongoing calendar sync.</p>' + (s.managed ? '<p>On RER managed hosting, outbound iCal refresh is unavailable. Self-host Cabin for live iCal refresh; file imports still work here.</p>' : '<p>Self-hosted Cabin refreshes live iCal links. Review sync status in Calendar after move-in.</p>') + '</div>' +
-    panel('Provider imports', jobs.filter((j: any) => j.provider).map(providerJob).join('') || empty('Preview your provider exports to see accepted records, refused rows and source totals here.')) +
+    panel('Provider imports', jobs.filter((j: any) => j.provider).map((job: any) => providerJob(s, job)).join('') || empty('Preview your provider exports to see accepted records, refused rows and source totals here.')) +
     panel('Property-register kit', legacy) + legacyResult(extras.result?.result ?? extras.result) +
     panel('Property-register journal', jobs.filter((j: any) => !j.provider).map(legacyJob).join('') || empty('Property-register imports will appear here.'))
 }

@@ -57,11 +57,16 @@ function database(environment) {
   return { name: names[0], worker: record.worker }
 }
 
+// Wrangler's own output is never shown: `d1 export` prints a presigned link that
+// downloads the whole database for an hour, and any failure text is shown with
+// every URL's query string removed. Cabin prints only what it saved and where.
+const hideLinks = text => text.replace(/https?:\/\/[^\s"'<>]+/g, url => url.replace(/[?#].*$/, '?[removed]'))
 function wrangler(env, list) {
   const bin = join(root, 'node_modules', 'wrangler', 'bin', 'wrangler.js')
   if (!existsSync(bin)) stop('Wrangler is not installed in this Cabin folder. Run rer install, then try again.', 1)
-  const run = spawnSync(process.execPath, [bin, ...list], { cwd: root, stdio: 'inherit', env: { ...process.env, ...env, WRANGLER_SEND_METRICS: 'false' } })
-  if (run.status !== 0) { console.error(`wrangler ${list.slice(0, 3).join(' ')} failed (exit ${run.status}). Nothing else was changed.`); process.exit(1) }
+  const run = spawnSync(process.execPath, [bin, ...list], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...env, WRANGLER_SEND_METRICS: 'false' } })
+  if (run.status !== 0) { console.error(hideLinks(`${run.stdout ?? ''}${run.stderr ?? ''}`).trim()); console.error(`wrangler ${list.slice(0, 3).join(' ')} failed (exit ${run.status}). Nothing else was changed.`); process.exit(1) }
+  return run.stdout
 }
 
 const o = args(process.argv.slice(2)), env = credentials(o.envFile), db = database(o.environment)
@@ -71,19 +76,20 @@ if (o.restore) {
   if (!o.yes) stop(`Restoring replaces every table in ${db.name} (Worker ${db.worker}) with ${o.restore}. Add --yes to confirm.`)
   console.log(`Clearing ${db.name}, then loading ${o.restore} into it.`)
   // The dump recreates every table, so the fresh deployment's own tables go first.
-  const tables = spawnSync(process.execPath, [join(root, 'node_modules', 'wrangler', 'bin', 'wrangler.js'), 'd1', 'execute', db.name, '--remote', '--json', '--command', "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"], { cwd: root, encoding: 'utf8', env: { ...process.env, ...env, WRANGLER_SEND_METRICS: 'false' } })
-  if (tables.status !== 0) { console.error(tables.stderr || tables.stdout); process.exit(1) }
-  const names = JSON.parse(tables.stdout)[0].results.map(r => r.name)
+  const names = JSON.parse(wrangler(env, ['d1', 'execute', db.name, '--remote', '--json', '--command', "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"]))[0].results.map(r => r.name)
   if (names.length) wrangler(env, ['d1', 'execute', db.name, '--remote', '--yes', '--command', `PRAGMA defer_foreign_keys=ON; ${names.map(n => `DROP TABLE IF EXISTS "${n.replace(/"/g, '""')}";`).join(' ')}`])
   wrangler(env, ['d1', 'execute', db.name, '--remote', '--yes', '--file', file])
   console.log(`Restored ${o.restore} into ${db.name}. Sign in again, then enter private settings (Stripe, AI keys) again: they were sealed with the old installation's secret.`)
 } else {
   const output = resolve(root, o.output ?? join('exports', `${db.name}-${new Date().toISOString().replace(/[:.]/g, '-')}.sql`))
+  if (existsSync(output)) stop(`${output} already exists. Name a new file with --output.`, 1)
   mkdirSync(dirname(output), { recursive: true, mode: 0o700 })
   console.log(`Saving ${db.name} (Worker ${db.worker}) to ${output}.`)
+  // Files the export creates are owner-only from their first byte.
+  process.umask(0o077)
   wrangler(env, ['d1', 'export', db.name, '--remote', '--output', output])
   chmodSync(output, 0o600)
   const sql = readFileSync(output, 'utf8'), rows = (sql.match(/^INSERT INTO/gm) ?? []).length
   if (!rows) { console.error(`${output} holds no rows. Do not remove hosting on the strength of it.`); process.exit(1) }
-  console.log(`Saved ${rows} rows (${statSync(output).size} bytes), readable only by you (mode 600). Keep it private: it holds guests, owners, bookings and photos.`)
+  console.log(`Saved ${rows} rows to ${output} (${statSync(output).size} bytes), readable only by you (mode 600). Keep it private: it holds guests, owners, bookings and photos.`)
 }

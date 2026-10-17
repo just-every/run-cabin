@@ -34,6 +34,13 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
+/** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
+function savedMessage(name:string|null,who:Actor){
+ if(name==='task.raise')return who.role==='cleaner'?'Reported. It is saved on this job below, and your manager sees it under Maintenance.':'Maintenance task added. It is listed under Maintenance with its photos.'
+ if(name==='turnover.complete')return 'Marked ready. The owner sees it on Readiness.'
+ if(name==='task.close')return 'Task closed. The fix and its photos are kept on the task.'
+ return undefined
+}
 function actionMessage(name:string,result:any,local:boolean){
  if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
@@ -121,7 +128,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
-   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from'),thread})
+   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from'),thread,message:savedMessage(url.searchParams.get('done'),who)})
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}

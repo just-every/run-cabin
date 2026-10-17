@@ -4,6 +4,7 @@ import { newId } from '../model'
 import { unseal } from '../seal'
 import type { DirectStay } from './types'
 import { dateLabel,depositLabel } from './presentation'
+const usd=(cents:number)=>`$${(cents/100).toFixed(2)}`
 /** Queued in the same guarded commit as payment/confirmation, delivered by the Inbox transport. */
 export async function queueConfirmation(env:Bindings,c:Context,s:DirectStay,kind:'payment'|'confirmation'){
  const field=kind==='payment'?'paymentMessageId':'confirmationMessageId';if(s[field])return
@@ -11,7 +12,8 @@ export async function queueConfirmation(env:Bindings,c:Context,s:DirectStay,kind
  const token=s.bookingLinkSealed?await unseal(env.SESSION_SECRET,'direct-booking-link',s.bookingLinkSealed):null
  const link=token?`${env.AUTH_ORIGIN}/book/stay/${token}`:null
  const text=[`${s.guestName}, ${kind==='confirmation'?'your stay is confirmed.':'we received your booking payment.'}`,`${home}: ${dateLabel(s.start)} to ${dateLabel(s.end)} (checkout).`,
-  `Paid: $${(s.quote.totalCents/100).toFixed(2)} USD${s.paymentMode==='live'?'':' in Stripe test mode (no real money)'}.`,
+  [`${s.quote.nights} nights × ${usd(s.quote.nightlyCents)}: ${usd(s.quote.rentCents)}`,`Cleaning fee: ${usd(s.quote.cleaningCents)}`,s.quote.extraGuestCents?`Extra guests: ${usd(s.quote.extraGuestCents)}`:'',...s.quote.taxes.map(t=>`${t.label} (${t.bps/100}%): ${usd(t.amountCents)}`)].filter(Boolean).join('\n'),
+  `Paid: ${usd(s.quote.totalCents)} USD${s.paymentMode==='live'?'':' in Stripe test mode (no real money)'}.`,
   s.requireIdentity&&s.identity?.status!=='verified'?'Your required ID check is still pending. Open your booking link to finish it.':'',
   `Damage authorization: ${depositLabel(s)}. A new hold may be needed if the authorization expires during your stay.`,
   link?`Keep your private booking link to see payment status, complete ID verification, authorize the damage deposit and download your signed agreement:\n${link}`:'Contact your host for your booking link.',

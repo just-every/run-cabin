@@ -1,5 +1,5 @@
 import { h, propertyName, memberName, manager } from './shared'
-import { between, wall, when, ZONES } from '../clock'
+import { between, wall, when, zoneAbbr, ZONES } from '../clock'
 import { codeState } from '../codes'
 import { lockLine } from '../locks'
 import { homeSettings } from '../homes'
@@ -25,7 +25,7 @@ export function photos(list: any[] = [], alt: string) {
 export function noticeLine(s: any, recordId: string, memberId?: string | null) {
   const n = [...s.notices].filter((r: any) => r.recordId === recordId && (!memberId || r.memberId === memberId)).sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt))[0]
   if (!n) return ''
-  const at = (iso: string) => when(wall(Date.parse(iso), homeSettings(s, n.propertyId).timeZone))
+  const at = (iso: string) => atHome(s, n.propertyId, iso)
   const who = memberName(s, n.memberId)
   const text = n.status === 'sent' ? `Emailed ${who} · ${at(n.sentAt)}` : n.status === 'suppressed' ? `Email to ${who} not sent: development mode sends no mail` : n.status === 'unavailable' ? `Email to ${who} not sent: no mail provider is set up` : n.status === 'failed' ? `Email to ${who} failed: ${n.detail ?? ''}` : `Emailing ${who}…`
   return `<p class="notice-line ${n.status === 'sent' ? 'ok' : n.status === 'failed' ? 'bad' : ''}">${h(text)}</p>`
@@ -33,7 +33,8 @@ export function noticeLine(s: any, recordId: string, memberId?: string | null) {
 export const homeName = propertyName
 export const checkedOut = (s: any, t: any) => t.checkedOut ? `Checked out ${atHome(s, t.propertyId, t.checkedOut.at).split(', ').pop()} · ${t.checkedOut.source === 'cleaner' ? 'found by the cleaner' : 'recorded by staff'}` : ''
 /** An instant shown at the home, e.g. "Sat Oct 24, 1:15 pm". */
-export const atHome = (s: any, propertyId: string, iso?: string | null) => iso ? when(wall(Date.parse(iso), homeSettings(s, propertyId).timeZone)) : ''
+/** Every timestamp Cabin shows is in the home's own time zone, labelled; one not tied to a home uses the first home's zone. */
+export const atHome = (s: any, propertyId: string | null, at?: string | number | null) => { if (at === null || at === undefined || at === '') return ''; const zone = homeSettings(s, propertyId ?? s.properties?.[0]?.id ?? '').timeZone, ms = typeof at === 'number' ? at : Date.parse(at); return `${when(wall(ms, zone))} ${zoneAbbr(ms, zone)}` }
 export const optionList = (choices: [string, string][], value: string | null | undefined, blank = '') => (blank ? `<option value="">${h(blank)}</option>` : '') + choices.map(([id, label]) => `<option value="${h(id)}"${id === value ? ' selected' : ''}>${h(label)}</option>`).join('')
 export const choose = (name: string, label: string, choices: [string, string][], value?: string | null, blank = '', attrs = '') => `<label>${h(label)}<select name="${h(name)}" ${attrs}>${optionList(choices, value, blank)}</select></label>`
 export const photoInput = (label: string, min: number, max: number) => `<label>${h(label)}<input name="photoFiles" type="file" accept="image/jpeg,image/png,image/*" multiple ${min ? `required data-min="${min}"` : ''} data-max="${max}"></label><p class="muted">${min ? `At least ${min}, up to ${max}` : `Up to ${max}`}. Phone photos are shrunk to fit before they upload; they stay private to this job.</p>`

@@ -42,12 +42,14 @@ function cleanerJob(s: any, t: any) {
   const code = codeOf(s, t, 'cleaner'), need = t.photosRequired ?? 1, wait = checkoutWait(s, t)
   const done = form('turnover.complete', 'turnovers', hidden('id', t.id) + hidden('revision', t.revision) + `<fieldset><legend>Checklist</legend>${t.checklist.map((item: string) => `<label class="check"><input type="checkbox" name="checks" value="${h(item)}" required> ${h(item)}</label>`).join('')}</fieldset>` + photoInput(`Photos of the ready home (${need} or more)`, need, 12) + '<label>Note for the owner<input name="caption" required maxlength="300" placeholder="All rooms ready"></label>', 'Mark ready', 'enctype="multipart/form-data" data-photos')
   const report = form('task.raise', 'turnovers', hidden('turnoverId', t.id) + '<label>What is wrong<input name="title" required maxlength="120" placeholder="Patio light out"></label><label>Details (optional)<textarea name="note" rows="3" maxlength="1000"></textarea></label><label class="check"><input type="checkbox" name="blocking" value="on"> The next guests cannot arrive until this is fixed</label>' + photoInput('Photos of the problem', 0, 6), 'Report it', 'enctype="multipart/form-data" data-photos')
-  return `<article class="record job mine"><div class="record-title"><h3>${h(propertyName(s, t.propertyId))}</h3>${turnoverChip(t)}</div>
+  const reported = s.tasks.filter((k: any) => k.turnoverId === t.id).map((k: any) => `<li>${h(k.title)} · ${h(k.status === 'open' ? `reported ${atHome(s, k.propertyId, k.raisedAt)}${k.blocking ? ', blocks the next arrival' : ''}` : 'fixed')}</li>`).join('')
+  return `<article class="record job mine" id="turnover-${h(t.id)}"><div class="record-title"><h3>${h(propertyName(s, t.propertyId))}</h3>${turnoverChip(t)}</div>
   <p class="when"><strong>${h(windowText(t))}</strong></p><p class="address">${address(s, t.propertyId)}</p>
   ${t.status === 'approved' && code ? `<div class="doors">${codeLine(s, code, 'Your door code')}</div><p class="muted">Your code lasts up to six hours after check-out, ending sooner if the next guests arrive. For later cleaning, arrange access with your manager.</p>${lockNote(s, code)}` : ''}
   ${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : t.status === 'approved' ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), 'Guests have left', 'class="quiet"') : ''}
   ${t.status === 'approved' ? (!wait ? done : '') + `<details class="report"><summary>Report something broken</summary>${report}</details>` : ''}
   ${t.status === 'completed' ? `<p>Marked ready · ${h(t.completion?.photos?.length ?? 1)} photos</p>${photos(t.completion?.photos ?? [{ id: t.completion?.photoId }], 'Your photo')}<details class="report"><summary>Report something broken</summary>${report}</details>` : ''}
+  ${reported ? `<div class="reported"><p><strong>You reported</strong> · saved; your manager sees these under Maintenance</p><ul>${reported}</ul></div>` : ''}
   ${t.status === 'cancelled' ? `<p class="muted">${h(t.cancelReason ?? 'Cancelled')}</p>` : ''}</article>`
 }
 function settingsForm(s: any, p: any) {

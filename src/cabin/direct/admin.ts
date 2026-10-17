@@ -5,7 +5,8 @@ import { homes,stays,stay,saveHome,saveStay } from './store'
 import { configure } from './rules'
 import { refresh,settleDeposit } from './payments'
 import { providerState,providerCommand } from './provider'
-import { decimalUnits } from './presentation'
+import { decimalUnits,arrival,timeLabel } from './presentation'
+import { homeSettings } from '../homes'
 export async function directState(env:Bindings,actor:Actor) {
  if(!['owner','manager'].includes(actor.role)||actor.isAgent)return {homes:[],stays:[]}
  await assertLive(env.DB,actor);const data={homes:await homes(env.DB),stays:(await stays(env.DB)).map(({bookingLinkSealed,...row})=>row),provider:await providerState(env)};await assertLive(env.DB,actor);return data
@@ -19,7 +20,7 @@ export async function directCommand(env:Bindings,actor:Actor,name:string,input:R
   const row=configure(input,propertyId);need(!(await homes(env.DB)).some(h=>h.slug===row.slug&&h.propertyId!==row.propertyId),'Another home uses this booking address',409);saveHome(c,row);return row
  })
  const id=text(input.id,'stay ID');await stay(env.DB,id)
- if(name==='direct.checkout.complete')return mutate(env.DB,actor,name,async c=>{const row=await stay(env.DB,id);need(row.phase==='confirmed'&&!row.checkedOutAt,'Only a confirmed stay awaiting checkout can be checked out',409);need(c.now.slice(0,10)>=row.start,'This guest has not arrived yet',409);row.checkedOutAt=c.now;saveStay(c,row);return row})
+ if(name==='direct.checkout.complete')return mutate(env.DB,actor,name,async c=>{const row=await stay(env.DB,id);need(row.phase==='confirmed'&&!row.checkedOutAt,'Only a confirmed stay awaiting checkout can be checked out',409);const home=homeSettings(c,row.propertyId),checkin=arrival(row,home);need(Date.now()>=checkin,`This guest checks in ${timeLabel(new Date(checkin).toISOString(),home.timeZone)}. Mark them checked out after that.`,409);row.checkedOutAt=c.now;saveStay(c,row);return row})
  if(name==='direct.refresh')return refresh(env,id)
  if(name==='direct.deposit.release')return settleDeposit(env,actor,id,'release')
  if(name==='direct.deposit.capture')return settleDeposit(env,actor,id,'capture',integer('amountDollars' in input?decimalUnits(input.amountDollars,'damage amount'):Number(input.amountCents),'Capture amount',1),text(input.reason,'damage reason',1000),text(input.evidence,'evidence reference',2000))
