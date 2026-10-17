@@ -67,7 +67,7 @@ export function turnoverChip(s: any, v: View, t: any, width: number): Item | nul
   const state = done ? 'ready' : draft ? 'draft for review' : none ? 'no cleaner yet' : 'scheduled'
   const title = `Turnover · ${none ? 'no cleaner yet' : memberName(s, t.cleanerId)} · ${state} · ${short(due, true)}${start ? ` ${time12(start)}` : ''}${end ? ` until ${t.windowEnd.slice(0, 10) === due ? '' : short(t.windowEnd.slice(0, 10), true) + ' '}${time12(end)}` : ''}${same ? ' · same-day turnover: the next guests arrive that day' : ''}`
   const status = done ? 'st-done' : draft ? 'st-draft' : none ? 'st-none' : 'st-set'
-  return { a: at, z: Math.min(v.days, at + width), html: cls => `<a class="clean ${status}${same ? ' same' : ''} ${cls}" href="/app/turnovers#turnover-${h(t.id)}" title="${h(title)}">${done ? icon('check') : '<i class="dot" aria-hidden="true"></i>'}${same ? `<span class="same-mark">${icon('turn')}<span class="sr">Same-day turnover</span></span>` : ''}<span class="t">${fitted('b', [...new Set([...forms, initials(who)])])}</span><small class="when">${h(short(due, true))}${same ? ' · same day' : ''} · ${h(state)}</small></a>` }
+  return { a: at, z: Math.min(v.days, at + width), html: cls => `<a class="clean ${status}${same ? ' same' : ''} ${cls}" href="/app/turnovers#turnover-${h(t.id)}" title="${h(title)}">${done ? icon('check') : '<i class="dot" aria-hidden="true"></i>'}${same ? `<span class="same-mark" role="img" aria-label="Same-day turnover">${icon('turn')}</span>` : ''}<span class="t">${fitted('b', [...new Set([...forms, initials(who)])])}</span><small class="when">${h(short(due, true))}${same ? ' · same day' : ''} · ${h(state)}</small></a>` }
 }
 
 /** A request Cabin declined, dashed red with its reason: what was asked, then why. */
