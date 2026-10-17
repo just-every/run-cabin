@@ -1,9 +1,9 @@
-import { type Booking, type Context, type HomeSettings, type Turnover, newId } from './model'
+import { type Booking, type Context, type HomeSettings, type Turnover, newId, need } from './model'
 import { homeSettings } from './homes'
 import { issue, move, revoke } from './codes'
 import { localDay } from './clock'
 import { assignmentNotice, taskNotice } from './notices'
-import { checkoutTime, cleaningAccess, validCompletion } from './turnover-window'
+import { checkoutTime, cleaningAccess, staleCompletion } from './turnover-window'
 import { instant } from './clock'
 // Run inside every commit (storage.commit), after the command changed the data:
 // each confirmed stay, from any channel or a direct booking, gets exactly one
@@ -59,14 +59,18 @@ export function dispatch(c: Context) {
    c.data.turnovers.push(row)
   } else {
    // A finished cleaning is evidence for this preceding stay only. A new next
-   // arrival shortens the displayed gap; changed or premature evidence reopens.
+   // arrival shortens the displayed gap, and a cleaning finished after it stays
+   // done, shown as late; changed or premature evidence reopens, with its reason.
    const oldSettings = homeSettings(c.before, b.propertyId)
    if (t.status !== 'completed' && (t.bookingRevision !== b.revision || t.windowStart !== w.windowStart || oldSettings.timeZone !== s.timeZone)) delete t.checkedOut
-   if (t.status === 'completed' && (!validCompletion(t, b, s) || t.windowStart !== w.windowStart || oldSettings.timeZone !== s.timeZone || (w.nextBookingId && Date.parse(t.completion!.completedAt) > instant(w.windowEnd, s.timeZone)))) {
+   const stale = t.status === 'completed' ? staleCompletion(t, b, s, w.windowStart, oldSettings.timeZone) : null
+   if (stale) {
+    // Marking ready and reopening never land in one commit: the cleaner is refused with the reason instead.
+    need(c.before.turnovers.find(x => x.id === t.id)?.status === 'completed', `Not marked ready: ${stale}. Reload the job.`, 409)
     const cleaner = activeCleaner(c, t.cleanerId) ?? activeCleaner(c, s.cleanerId)
     Object.assign(t, { status: cleaner ? 'approved' : 'unassigned', cleanerId: cleaner?.id ?? null, revision: newId(), checklist: [...s.checklist], photosRequired: s.photosRequired })
     delete t.completion; delete t.checkedOut
-    t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'reopened: preceding stay or checkout changed', cleanerId: t.cleanerId }]
+    t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: `reopened: ${stale}`, cleanerId: t.cleanerId }]
     if (t.notified) t.notified = { ...t.notified, code: '' }
    }
    // A first window (a turnover approved by hand) keeps its revision; a moved one takes a new one.

@@ -624,8 +624,8 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
 | 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
 | 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
-| 42 | "QuickBooks via export; Pantry sync live" | FIN-007 | implemented (scope and remaining clause gaps below) |
-| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (scope and remaining clause gaps below) |
+| 42 | "the books sync to QuickBooks" / QuickBooks · synced | FIN-007 | partial (QuickBooks CSV/IIF export only; nothing syncs) |
+| 43 | Statement card arithmetic (gross, fees, cleaning, management 20%, payout) | FIN-003, FIN-004 | partial (no cleaning or other expense line on a statement) |
 | 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
 | 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
 | 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | implemented (CSV move-in scope; see clause Status) |
@@ -645,7 +645,7 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 
 Judged from the code and tests at commit `473fa9a23b724caa73699399febfd475f551edc8` (17 October 2026).
 
-17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, live Pantry posting with human approval, and QuickBooks CSV/IIF exports implemented. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
+17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, QuickBooks CSV/IIF export files, and Pantry journal proposals that a person approves and posts in Pantry (no test or live posting proven in this repository) implemented. Nothing syncs to QuickBooks. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
 
 
 Direct-booking implementation updated 17 October 2026. The narrow homepage rows and broader clauses are assessed separately below; Stripe is test mode, and tax filing/remittance integration remains open.
@@ -722,7 +722,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly imported USD statements freeze source lines, recipient and commission; approval emails a portal link with acceptance status. CSV and owner access ship. Scheduled generation, PDF, distribution rails and later-period adjustments remain absent. |
 | `FIN-005` | Rental-owner portal and personal stays | target | partial | `src/cabin/owners/`; `tests/finance.test.mjs` | Separate one-use email sign-in, owner session, scoped stays and approved statements; current ownership and frozen recipient guard downloads. Owner personal-stay requests, wider documents and performance reporting remain absent. |
 | `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/ui/books.ts`; `docs/statements.md` | QuickBooks via CSV/IIF export; Pantry sync live through exact uploaded statement evidence, scoped proposals, human approval and confirmed journal IDs, proven against local Pantry. Document upload is a person’s step under the current Pantry API. QBO developer app, OAuth sync and QBO conflicts remain later. |
+| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/ui/books.ts`; `docs/statements.md` | QuickBooks Online journal CSV and QuickBooks Desktop IIF export files that a person downloads and imports (`src/cabin/finance/quickbooks.ts`; `tests/finance.test.mjs`); Cabin has no QuickBooks connection and nothing syncs. Cabin can send an approved statement to a connected Pantry as a scoped journal proposal with the exact uploaded statement as evidence; a person approves and posts it in Pantry, and Cabin records the confirmed journal ID. No test in this repository exercises the Pantry path and no live posting is proven here. Document upload is a person’s step under the current Pantry API. QBO developer app, OAuth sync and QBO conflicts remain later. |
 | `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Configured state/county lines collected separately with rent and fees; stay retains each jurisdiction/rate/amount and manual filing confirmation references. No automatic filing/remittance provider, exemption/refund adjustments or city levies yet. |
 | `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
