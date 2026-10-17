@@ -1,4 +1,4 @@
-import { Dot, StageHead, Status } from './parts'
+import { Dot, Parts, StageHead, Status } from './parts'
 
 const ROWS = [['Listings', '5'], ['Upcoming reservations', '61'], ['Guests', '1,284']] as const
 const CHANNELS = [['airbnb', 'Airbnb', '5 listings reconnected'], ['vrbo', 'Vrbo', '4 listings reconnected']] as const
@@ -7,7 +7,7 @@ const CHANNELS = [['airbnb', 'Airbnb', '5 listings reconnected'], ['vrbo', 'Vrbo
 export function MovingIn() {
   return <section id="moving-in" className="stage side flip moving" aria-labelledby="moving-in-title">
     <div className="s-wrap side-row">
-      <StageHead id="moving-in" eyebrow="Moving in" title={<>Bring your<br />homes with&nbsp;you.</>}>
+      <StageHead id="moving-in" eyebrow={['Moving in']} title={<>Bring your<br />homes with&nbsp;you.</>}>
         Move from Guesty, Hostaway or OwnerRez with listings, reservations, guests and owner balances. Your channel listings and reviews stay where they are.
       </StageHead>
       <div className="moving-art">
@@ -16,7 +16,7 @@ export function MovingIn() {
           <p className="import-progress"><span className="import-bar" aria-hidden="true"><span /></span>100%</p>
           <ul className="import-rows">
             {ROWS.map(([label, value]) => <li key={label}><Status tone="ok" /><span>{label}</span><span>{value}</span></li>)}
-            <li><Status tone="ok" /><span>Owner balances</span><span>$18,406.22<i>·</i><span className="muted">matched</span></span></li>
+            <li><Status tone="ok" /><span>Owner balances</span><span><Parts of={['$18,406.22', <span className="muted">matched</span>]} /></span></li>
             {CHANNELS.map(([key, name, line]) => <li key={key}><Status tone="ok" /><span><Dot channel={key} />{name}</span><span>{line}</span></li>)}
             <li><Status tone="amber" /><span><Dot channel="booking" />Booking.com</span><span>1 listing awaiting approval</span></li>
           </ul>

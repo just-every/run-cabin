@@ -19,7 +19,7 @@ const LOG = [
 export function Booked() {
   return <section id="booked" className="stage booked" aria-labelledby="booked-title">
     <div className="s-wrap">
-      <StageHead id="booked" eyebrow={<>Booked<i>·</i>Tue Sep&nbsp;29<i>·</i>9:41&nbsp;PM</>} title={<>Booked&nbsp;once. Closed everywhere.</>}>
+      <StageHead id="booked" eyebrow={['Booked', 'Tue Sep\u00a029', '9:41\u00a0PM']} title={<>Booked&nbsp;once. Closed everywhere.</>}>
         Megan books the Lake Loft on Airbnb. Seconds later those nights close on Vrbo, Booking.com and your own site.
       </StageHead>
       <div className="booked-art">

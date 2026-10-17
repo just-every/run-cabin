@@ -6,6 +6,14 @@
 /* A line may break after a separator dot, so times and dates bound with non-breaking spaces wrap as whole units. */
 .card i, .float-chip i { margin: 0 .36em; color: #8d959e; }
 .card i::after, .float-chip i::after { content: "\200b"; }
+/* A line of values (Parts): each value is a flex item with its dot drawn before it. A value that starts a line has its dot
+   in the negative margin, where the box clips it away, so lines break at a dot and drop it. --sep-w is the dot with its spacing
+   (1.008em: the .36em either side of a dot the old inline separators had). The box
+   shrinks to its values, so a centred heading centres it with --parts-inline: auto (the 1px is rounding slack). */
+.parts { display: block; width: fit-content; max-width: 100%; margin-inline: var(--parts-inline, 0); overflow: hidden; }
+.parts > span { display: flex; flex-wrap: wrap; margin: 0 -1px 0 calc(-1 * var(--sep-w, 1.008em)); }
+.parts > span > span { position: relative; padding-left: var(--sep-w, 1.008em); }
+.parts > span > span::before { content: '·'; position: absolute; left: 0; width: var(--sep-w, 1.008em); text-align: center; color: var(--sep-color, #8d959e); }
 .muted { color: var(--soft); }
 .nowrap { white-space: nowrap; }
 

@@ -24,7 +24,7 @@ li:last-child > .step-node::before { bottom: 50%; }
 .step-bad .step-node::after { background: #e8333a; }
 .step-warn .step-node::after { background: #f5a623; }
 .step-text { font-size: calc(var(--u) * 20.5); line-height: 1.35; color: #111c24; }
-.step-text i { margin: 0 .3em; color: #111c24; }
+.step-text { --sep-w: .888em; --sep-color: #111c24; }
 .step-area { padding: calc(var(--u) * 4) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); background: #eef1f4; font: 400 calc(var(--u) * 14.5)/1.4 var(--font-mono); color: #4b5560; }
 .recovery-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: calc(var(--u) * 18); padding: 0 calc(var(--u) * 8); font-size: calc(var(--u) * 18.5); color: #1c2a33; }
 .recovery-foot p + p { color: #2e4a6b; }
@@ -32,6 +32,16 @@ li:last-child > .step-node::before { bottom: 50%; }
 @media (max-width: 1179px) {
   .recovery { padding: 80px 0 84px; }
   .recovery-log { margin-top: 36px; }
+}
+/* Tablets: a compact time column and type that scales with the screen, so every step stays on one line as page-05 draws it. */
+@media (min-width: 761px) and (max-width: 1179px) {
+  .recovery-log { padding: 22px 14px 18px; }
+  .recovery-head { padding: 0 8px; }
+  .recovery-log li { grid-template-columns: 4.4em 1.9em minmax(0, 1fr) auto; column-gap: 0; min-height: 2.9em; padding: 0 10px 0 12px; font-size: clamp(14.5px, 1.9vw, 19.5px); }
+  .step-time { font-size: .92em; }
+  .step-text { font-size: 1em; }
+  .step-node::after { width: .8em; height: .8em; }
+  .step-area { margin-left: 10px; padding: 3px 10px; font-size: max(11.5px, .68em); }
 }
 @media (max-width: 760px) {
   .recovery { padding: 56px 0 60px; }

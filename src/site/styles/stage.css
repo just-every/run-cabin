@@ -9,20 +9,19 @@
 
 /* Heading block: the eyebrow, the heading in the hero's face, weight, tracking (-.025em as the hero renders) and ink,
    and one paragraph. Each stage sets its heading's size to the desk's width for it. */
-.stage-eyebrow { font: 700 calc(var(--u) * 14.5)/1.3 var(--font-body); letter-spacing: .24em; text-transform: uppercase; color: var(--eyebrow); }
-.stage-eyebrow i { margin: 0 .55em; }
+.stage-eyebrow { --sep-w: 1.674em; --sep-color: currentColor; font: 700 calc(var(--u) * 14.5)/1.3 var(--font-body); letter-spacing: .24em; text-transform: uppercase; color: var(--eyebrow); }
 .stage h2 { font: 800 calc(var(--u) * 73)/.98 var(--font-head); letter-spacing: -.025em; word-spacing: .03em; color: var(--display); text-wrap: balance; }
 .stage-lede { color: var(--body); letter-spacing: -.006em; text-wrap: pretty; }
 .stage h3 { font-family: var(--font-body); letter-spacing: -.015em; color: #0b1f1b; }
 
 /* Centred stages (Booked, Payout, Stay recovery): eyebrow, one-line heading and subhead over the drawing. */
-.stage-head { text-align: center; }
+.stage-head { --parts-inline: auto; text-align: center; }
 .stage-head h2 { margin-top: calc(var(--u) * 18); }
 .stage-head .stage-lede { margin: calc(var(--u) * 14) auto 0; font-size: calc(var(--u) * 21.5); line-height: 1.35; text-wrap: balance; }
 
 /* Side-by-side stages: copy beside the drawing; `flip` draws the drawing first. */
 .side .side-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: calc(var(--u) * 56); }
-.side .stage-head { text-align: left; }
+.side .stage-head { --parts-inline: 0; text-align: left; }
 .side .stage-head h2 { margin-top: calc(var(--u) * 26); line-height: .94; }
 .side .stage-head .stage-lede { margin: calc(var(--u) * 28) 0 0; max-width: calc(var(--u) * 560); font-size: calc(var(--u) * 28); line-height: 1.42; }
 .side.flip .stage-head { order: 2; }
@@ -32,6 +31,9 @@
 .float-chip .status { width: calc(var(--u) * 38); height: calc(var(--u) * 38); }
 .float-chip .icon { width: calc(var(--u) * 34); height: calc(var(--u) * 34); }
 .float-chip b { font-weight: 600; color: #0b1f1b; }
+/* Text that wraps inside a drawing never leaves one short word alone on its last line; a chip's lines balance. */
+.stage .card { text-wrap: pretty; }
+.float-chip { text-wrap: balance; }
 
 /* The stage rail: drawn at the top of Booked, sticky through the six stages; it scrolls sideways where it does not fit. */
 .stage-rail { position: sticky; top: calc(var(--u) * 12); z-index: 4; display: flex; justify-content: safe center; margin-top: calc(var(--u) * 36); pointer-events: none; }
@@ -54,13 +56,19 @@
   .stage-head .stage-lede { font-size: 20px; max-width: 720px; }
 }
 
+/* Tablets: the side stages stack centred in the column, as Booked and Payout do, at their designed card sizes. */
+@media (min-width: 761px) and (max-width: 1179px) {
+  .side .stage-head { --parts-inline: auto; text-align: center; }
+  .side .stage-head .stage-lede { margin-inline: auto; }
+  .side .side-row > :not(.stage-head) { justify-self: center; width: 100%; }
+}
+
 /* Phones (390 drawn): the rail scrolls sideways with the current stage in view; headings wrap. */
 @media (max-width: 760px) {
-  .stage-eyebrow { font-size: 12.5px; letter-spacing: .18em; }
-  .stage-eyebrow i { margin: 0 .35em; }
+  .stage-eyebrow { --sep-w: 1.215em; font-size: 12.5px; letter-spacing: .18em; }
   .landing .stage h2 { font-size: clamp(38px, 12.4vw, 50px); }
   .stage-head h2, .side .stage-head h2 { margin-top: 14px; line-height: .98; }
-  .stage-head, .side .stage-head { text-align: left; }
+  .stage-head, .side .stage-head { --parts-inline: 0; text-align: left; }
   .stage-head .stage-lede, .side .stage-head .stage-lede { margin: 16px 0 0; font-size: 18px; line-height: 1.45; }
   .side .side-row { row-gap: 32px; }
   .stage-rail { top: 8px; justify-content: flex-start; margin-top: 18px; }

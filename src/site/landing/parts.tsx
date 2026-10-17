@@ -3,9 +3,9 @@
 import type { ReactNode } from 'react'
 
 /** A stage's heading block: the eyebrow with the stage and its date, the heading in the hero's face, and one short paragraph. */
-export function StageHead({ id, eyebrow, title, children }: { id: string; eyebrow: ReactNode; title: ReactNode; children: ReactNode }) {
+export function StageHead({ id, eyebrow, title, children }: { id: string; eyebrow: ReactNode[]; title: ReactNode; children: ReactNode }) {
   return <div className="stage-head">
-    <p className="stage-eyebrow">{eyebrow}</p>
+    <p className="stage-eyebrow"><Parts of={eyebrow} /></p>
     <h2 id={`${id}-title`}>{title}</h2>
     <p className="stage-lede">{children}</p>
   </div>
@@ -60,5 +60,13 @@ export const Dot = ({ channel }: { channel: 'airbnb' | 'vrbo' | 'booking' | 'dir
 /** An initials avatar on a soft disc. */
 export const Initials = ({ children, tone = 'soft' }: { children: string; tone?: 'soft' | 'pine' }) => <span className={`initials initials-${tone}`} aria-hidden="true">{children}</span>
 
-/** The separator dot between the parts of a line; a line may break after it, never inside a time or a date. */
-export const Sep = () => <i className="sep">·</i>
+/**
+ * A line of values joined by separator dots, such as "Code 7102 for Ana · 1:30 – 4:00 pm". It wraps only at a separator and
+ * drops the dot there (card.css), so each value stays whole and no line starts or ends with a dot. A string splits at " · ".
+ */
+export const Parts = ({ of }: { of: ReactNode[] | string }) => <span className="parts"><span>
+  {(typeof of === 'string' ? of.split(' · ') : of).map((part, i) => <span key={i}>{part}</span>)}
+</span></span>
+
+/** A value that never breaks inside, such as a time range or "held, not charged". */
+export const Whole = ({ children }: { children: ReactNode }) => <span className="nowrap">{children}</span>

@@ -4,7 +4,9 @@
 .payout { padding: calc(var(--u) * 108) 0 calc(var(--u) * 112); }
 .payout h2 { font-size: calc(var(--u) * 86); }
 @media (min-width: 1180px) { .payout .stage-head .stage-lede { font-size: calc(var(--u) * 24); } }
-.payout-art { display: grid; grid-template-columns: minmax(0, 286fr) calc(var(--u) * 72) minmax(0, 476fr) calc(var(--u) * 72) minmax(0, 293fr); align-items: center; margin-top: calc(var(--u) * 36); }
+/* The side cards take their own width and end on the column's right edge; the payout card and the statement share the rest
+   at the plate's 286 : 476, and the connectors are 48 wide. */
+.payout-art { display: grid; grid-template-columns: minmax(0, 286fr) calc(var(--u) * 48) minmax(0, 476fr) calc(var(--u) * 48) max-content; align-items: center; margin-top: calc(var(--u) * 36); }
 
 .flow { display: block; width: 100%; height: auto; overflow: visible; }
 .flow-line, .flow-head { fill: none; stroke: #1f5a3a; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
@@ -22,7 +24,7 @@
 
 .statement { padding: calc(var(--u) * 28) calc(var(--u) * 26) calc(var(--u) * 26); }
 .statement h3 { padding: 0 calc(var(--u) * 6); font-size: calc(var(--u) * 22.5); font-weight: 700; line-height: 1.2; }
-.statement h3 i { margin: 0 .25em; color: #0b1f1b; }
+.statement h3 { --sep-w: .82em; --sep-color: #0b1f1b; }
 .statement-sub { margin-top: calc(var(--u) * 4); padding: 0 calc(var(--u) * 6); font-size: calc(var(--u) * 16.5); color: var(--soft); }
 .statement-stays { margin-top: calc(var(--u) * 16); border-top: 1px solid var(--line); }
 .statement-stays li { display: grid; grid-template-columns: calc(var(--u) * 84) calc(var(--u) * 90) minmax(0, 1fr) auto; column-gap: calc(var(--u) * 10); align-items: center; min-height: calc(var(--u) * 44); padding: 0 calc(var(--u) * 6); border-bottom: 1px solid var(--line); font-size: calc(var(--u) * 15.5); color: #33404a; white-space: nowrap; }
@@ -36,12 +38,11 @@
 .statement-total b { font-weight: 700; }
 
 .payout-after { display: grid; gap: calc(var(--u) * 35); }
-.payout-after li { display: flex; align-items: center; gap: calc(var(--u) * 20); min-height: calc(var(--u) * 106); padding: calc(var(--u) * 12) calc(var(--u) * 18) calc(var(--u) * 12) calc(var(--u) * 22); }
+.payout-after li { display: flex; align-items: center; gap: calc(var(--u) * 20); min-height: calc(var(--u) * 106); padding: calc(var(--u) * 12) calc(var(--u) * 16) calc(var(--u) * 12) calc(var(--u) * 22); }
 .payout-after .status { width: calc(var(--u) * 46); height: calc(var(--u) * 46); }
 .payout-after li > span { display: grid; gap: calc(var(--u) * 4); min-width: 0; }
 .payout-after b { font-size: calc(var(--u) * 19.5); font-weight: 700; letter-spacing: -.015em; line-height: 1.25; color: #0b1f1b; }
-.payout-after b i { margin: 0 .25em; color: #0b1f1b; }
-.payout-after b span { white-space: nowrap; }
+.payout-after b { --sep-w: .82em; --sep-color: #0b1f1b; }
 .payout-after li > span > span { font-size: calc(var(--u) * 17.5); color: var(--soft); }
 
 @media (max-width: 1179px) {
@@ -79,6 +80,5 @@
   .payout-after li { gap: 14px; min-height: 0; padding: 16px 16px; }
   .payout-after .status { width: 36px; height: 36px; }
   .payout-after b { font-size: 17px; }
-  .payout-after b span { white-space: normal; }
   .payout-after li > span > span { font-size: 15px; }
 }

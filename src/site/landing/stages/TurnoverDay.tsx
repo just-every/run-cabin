@@ -1,4 +1,4 @@
-import { Icon, Initials, StageHead, Status } from '../parts'
+import { Icon, Initials, Parts, StageHead, Status, Whole } from '../parts'
 
 const CHECKLIST = ['Strip and remake 3 beds', 'Restock coffee and towels', 'Hot tub cleaned and tested', 'Photos 12 / 12']
 const PROOF = [['bed', 'The made bed with a pine throw'], ['coffee', 'The stocked coffee shelf'], ['tub', 'The cedar hot tub, cleaned']] as const
@@ -13,7 +13,7 @@ const Proof = ({ name, alt }: { name: string; alt: string }) => <picture>
 export function TurnoverDay() {
   return <section id="turnover-day" className="stage side flip turnover" aria-labelledby="turnover-day-title">
     <div className="s-wrap side-row">
-      <StageHead id="turnover-day" eyebrow={<>Turnover day<i>·</i>Sat Oct&nbsp;24</>} title={<>Checkout sends<br />the cleaner.</>}>
+      <StageHead id="turnover-day" eyebrow={[<Whole>Turnover day</Whole>, <Whole>Sat Oct 24</Whole>]} title={<>Checkout sends<br />the cleaner.</>}>
         Every checkout opens a turnover: the cleaner, the checklist, the photos and a fresh door code for the next guest.
       </StageHead>
       <div className="turnover-art">
@@ -22,23 +22,23 @@ export function TurnoverDay() {
             <p className="handset-day">Today<i>·</i>Sat Oct&nbsp;24</p>
             <p className="handset-who"><Initials tone="pine">LR</Initials>Luis Ramos</p>
             <div className="card job">
-              <p className="job-title"><b>Desert Casita</b><i>·</i>11:00&nbsp;am – 3:00&nbsp;pm</p>
+              <p className="job-title"><Parts of={[<b>Desert Casita</b>, <Whole>11:00 am – 3:00 pm</Whole>]} /></p>
               <p className="job-ready"><Status tone="pine" size="sm" />Ready 2:41&nbsp;pm</p>
               <ul className="job-list">{CHECKLIST.map(item => <li key={item}><Status tone="ok" size="sm" />{item}</li>)}</ul>
               <div className="job-photos">{PROOF.map(([name, alt]) => <Proof key={name} name={name} alt={alt} />)}</div>
             </div>
-            <p className="job-next"><Icon name="calendar" /><span><b>Pine Ridge Cabin</b><i>·</i>Sun 10:00&nbsp;am</span></p>
+            <p className="job-next"><Icon name="calendar" /><Parts of={[<b>Pine Ridge Cabin</b>, <Whole>Sun 10:00 am</Whole>]} /></p>
           </div>
         </div>
         <div className="card door">
           <Icon name="padlock" className="violet" />
           <div>
-            <p className="door-title">Desert Casita<i>·</i>front door</p>
-            <p className="door-line">Luis<i>·</i>code 3308<i>·</i>today 10:45&nbsp;am – 3:15&nbsp;pm</p>
-            <p className="door-line">Next guest<i>·</i>code 5521<i>·</i>Sat 4&nbsp;pm → Wed 10&nbsp;am</p>
+            <p className="door-title"><Parts of={[<Whole>Desert Casita</Whole>, <Whole>front door</Whole>]} /></p>
+            <p className="door-line"><Parts of={['Luis', <Whole>code 3308</Whole>, <Whole>today 10:45 am – 3:15 pm</Whole>]} /></p>
+            <p className="door-line"><Parts of={[<Whole>Next guest</Whole>, <Whole>code 5521</Whole>, <Whole>Sat 4 pm → Wed 10 am</Whole>]} /></p>
           </div>
         </div>
-        <p className="float-chip patio"><Status tone="warn" /><span><b>Patio light out</b><i>·</i>task added for Dale</span></p>
+        <p className="float-chip patio"><Status tone="warn" /><Parts of={[<b className="nowrap">Patio light out</b>, <Whole>task added for Dale</Whole>]} /></p>
       </div>
     </div>
   </section>

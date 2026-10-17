@@ -101,6 +101,7 @@
   .hero-tags { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding-top: 28px; }
   .tag { gap: 9px; padding: 10px 10px 10px 9px; border-radius: 11px; align-items: flex-start; }
   .tag .status { width: 26px; height: 26px; }
+  .tag-text > * { white-space: nowrap; }
   .tag-text { font-size: 12.5px; }
   .tag-text strong { font-size: 13.5px; line-height: 1.25; }
   .hero-art { margin-top: -20px; }
@@ -116,6 +117,10 @@
   .closing .site-pill { width: 100%; }
   .closing-art img { aspect-ratio: 390 / 330; object-fit: cover; object-position: 40% 100%; }
   .closing-art { margin-top: -48px; }
+}
+/* Narrow phones: each tag's disc sits above its text, so every title and line keeps its values whole on one line. */
+@media (max-width: 479px) {
+  .tag { flex-direction: column; gap: 7px; padding: 10px 9px 11px 10px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -32,8 +32,7 @@
 .door { position: absolute; left: calc(var(--u) * 396); top: calc(var(--u) * 99); display: flex; align-items: flex-start; gap: calc(var(--u) * 28); width: calc(var(--u) * 510); padding: calc(var(--u) * 26) calc(var(--u) * 16) calc(var(--u) * 22) calc(var(--u) * 30); }
 .door .icon { width: calc(var(--u) * 42); height: calc(var(--u) * 42); margin-top: calc(var(--u) * 6); }
 .door > div { flex: 1; min-width: 0; }
-.door-title { font-size: calc(var(--u) * 21.5); font-weight: 700; letter-spacing: -.015em; color: #0b1f1b; }
-.door-title i { color: #0b1f1b; }
+.door-title { --sep-w: 1.039em; --sep-color: #0b1f1b; font-size: calc(var(--u) * 21.5); font-weight: 700; letter-spacing: -.015em; color: #0b1f1b; }
 .door-line { margin-top: calc(var(--u) * 12); font-size: calc(var(--u) * 16); line-height: 1.35; color: #33404a; }
 .door-line + .door-line { margin-top: calc(var(--u) * 14); padding-top: calc(var(--u) * 14); border-top: 1px solid var(--line); }
 .patio { position: absolute; left: calc(var(--u) * 504); top: calc(var(--u) * 296); max-width: none; margin: 0; font-size: calc(var(--u) * 17.5); }
@@ -43,9 +42,12 @@
   .turnover .side-row { grid-template-columns: minmax(0, 1fr); }
   .turnover .stage-head { padding-bottom: 0; }
 }
+/* 1024-1179: the phone with the door card overlapping it and the patio chip, centred as one drawing. */
+@media (min-width: 1024px) and (max-width: 1179px) { .turnover-art { max-width: 920px; } }
+@media (min-width: 761px) and (max-width: 1023px) { .turnover-art { display: grid; justify-items: center; } }
 @media (max-width: 1023px) {
   .door, .patio { position: static; }
-  .door { width: auto; max-width: 560px; margin-top: 24px; }
+  .door { width: 100%; max-width: 560px; margin-top: 24px; }
   .patio { max-width: 100%; margin-top: 12px; }
 }
 @media (max-width: 760px) {
