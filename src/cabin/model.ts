@@ -1,10 +1,17 @@
-export type Role = 'owner' | 'manager' | 'cleaner' | 'agent'
+export type Role = 'owner' | 'manager' | 'cleaner' | 'agent' | 'system'
 export interface Actor { id: string; email: string; role: Role; isAgent: boolean; memberId?: string; operatorVersion: number; keyId?: string }
 export interface Property { id: string; revision: number; name: string; ownerName: string; ownerEmail: string; commissionBps: number }
 export interface Member { id: string; revision: number; name: string; email: string; role: 'manager' | 'cleaner'; active: boolean }
-export type Channel = 'airbnb' | 'booking.com'
-export interface CalendarEvent { uid: string; start: string; end: string; summary: string; cancelled: boolean }
-export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string }
+export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct'
+/** A stay holds a guest; a block closes nights without one (a channel's "Not available", an owner stay or maintenance). */
+export interface CalendarEvent { uid: string; start: string; end: string; summary: string; cancelled: boolean; kind?: 'stay' | 'block'; guestName?: string }
+/** source 'request' marks a hold Cabin itself granted (reservation.request); feeds never remove it, and a feed's matching stay adopts it. */
+export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request'; arrivalTime?: string; collision?: string }
+/** A channel's iCal export URL that Cabin polls (SYNC-009). */
+export interface Connection { id: string; revision: string; propertyId: string; channel: Channel; url: string; intervalMinutes: number; status: 'pending' | 'ok' | 'stale'; error: string | null; lastAttemptAt: string | null; lastSuccessAt: string | null; lastChangeAt: string | null; nextPollAt: string; events: number; createdBy: string }
+/** The listing's secret export token; replacing it revokes every old link. */
+export interface ExportFeed { id: string; revision: string; propertyId: string; token: string; createdAt: string; createdBy: string }
+export interface Request { id: string; revision: string; propertyId: string; channel: Channel; kind: 'stay' | 'block'; start: string; end: string; guestName: string; arrivalTime: string | null; note: string; status: 'accepted' | 'declined'; reason: string | null; overlaps: string | null; bookingId: string | null; requestedBy: string; requestedAt: string }
 export interface Feed { id: string; propertyId: string; channel: Channel; importedAt: string; approvedAt: string; draftId: string }
 export interface Clash { a: string; b: string; start: string; end: string }
 export interface CalendarChange { kind: 'add' | 'change' | 'cancel' | 'remove'; uid: string; before?: Booking; after?: CalendarEvent }
@@ -15,10 +22,10 @@ export interface Turnover { id: string; revision: string; bookingId: string; boo
 export interface StatementLine { description: string; amountCents: number }
 export interface Statement { id: string; revision: string; propertyId: string; propertyRevision: number; propertyName: string; ownerName: string; ownerEmail: string; month: string; lines: StatementLine[]; commissionBps: number; grossCents: number; managementFeeCents: number; netCents: number; status: 'draft' | 'approved'; preparedBy: string; preparedAt: string; approval?: Approval }
 export interface Event { id: string; actorId: string; actorRole: Role; action: string; entityId: string | null; at: string }
-export const kinds = ['feeds', 'calendarDrafts', 'bookings', 'turnovers', 'statements'] as const
+export const kinds = ['feeds', 'calendarDrafts', 'bookings', 'turnovers', 'statements', 'connections', 'exports', 'requests'] as const
 export type RecordKind = typeof kinds[number]
-export interface Data { version: number; properties: Property[]; members: Member[]; feeds: Feed[]; calendarDrafts: CalendarDraft[]; bookings: Booking[]; turnovers: Turnover[]; statements: Statement[]; approvals: Approval[]; events: Event[] }
-export interface State extends Data { actor: Actor; agentKeys: Record<string, unknown>[]; importJobs: Record<string, unknown>[] }
+export interface Data { version: number; properties: Property[]; members: Member[]; feeds: Feed[]; calendarDrafts: CalendarDraft[]; bookings: Booking[]; turnovers: Turnover[]; statements: Statement[]; connections: Connection[]; exports: ExportFeed[]; requests: Request[]; approvals: Approval[]; events: Event[] }
+export interface State extends Data { actor: Actor; origin: string; managed: boolean; agentKeys: Record<string, unknown>[]; importJobs: Record<string, unknown>[] }
 export interface Query { sql: string; params: any[] }
 export interface Context { db: D1Database; actor: Actor; before: Data; data: Data; queries: Query[]; now: string; entityId: string | null }
 export const fail = (message: string, status = 400): never => { throw Object.assign(new Error(message), { status }) }

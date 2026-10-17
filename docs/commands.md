@@ -11,6 +11,13 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/turnovers`, `/app/
 | `member.invite` | `id` | Owner. Sends a native invitation for an active grant. Never returns an invitation token. Development mail uses Base’s silent suppression. |
 | `calendar.prepare` | `propertyId, channel, calendar` | Owner, manager or agent. Returns the immutable calendar review described below. |
 | `calendar.approve` | `id, revision` | Owner or manager. Approves exactly the reviewed revision and records the human’s identity and time. |
+| `channel.connect` | `propertyId, channel, url`, optional `intervalMinutes` (15–60, default 15) | Owner or manager. Saves the channel's https iCal link for that home and syncs it at once. Returns `{connection, changes}`. Refused with 409 on RER Managed hosting, which cannot reach channels yet. |
+| `channel.sync` | `id` | Owner or manager. Reads that link now. A failed read marks it `stale` with `error` and keeps its last nights. |
+| `channel.disconnect` | `id` | Owner or manager. Stops reading the link; its stays remain. |
+| `export.publish` | `propertyId` | Owner or manager. Creates or replaces the home's secret export token; old links stop working. |
+| `reservation.request` | `propertyId, kind: "stay"\|"block", start, end` (`YYYY-MM-DD`, checkout exclusive); stays add `channel, guestName`, optional `arrivalTime` (`HH:MM`); blocks optional `note` | Owner or manager. Returns the request with `status` `accepted` (and `bookingId`) or `declined` with `reason` and the overlapping booking in `overlaps`. |
+| `reservation.cancel` | `id` (booking) | Owner or manager. Cancels a hold or block made in Cabin. Channel stays are cancelled on the channel. |
+| `booking.details` | `id`, optional `guestName, arrivalTime` | Owner or manager. Sets or clears a stay's guest name and arrival time. |
 | `turnover.prepare` | `bookingId, cleanerId, checklist: string[]` | Owner, manager or agent. Booking must be approved and confirmed; cleaner must have an active cleaner grant. Returns an immutable assignment draft. |
 | `turnover.approve` | `id, revision` | Owner or manager. Publishes that exact checklist, cleaner and booking revision. A booking has at most one approved turnover. |
 | `turnover.complete` | `id, revision, checks: string[], photo, mimeType, caption` | Only the currently assigned cleaner. `checks` must contain every approved checklist item once. `photo` is plain base64 PNG or JPEG, at most 256,000 decoded bytes, with matching MIME type. Returns the completed immutable evidence record. |
@@ -25,13 +32,15 @@ Move-in commands, fingerprints, jobs, undo reports and CSV fixtures are specifie
 
 ## Calendar semantics
 
-Channels are `airbnb` and `booking.com`, case-insensitively. Upload the complete exported `.ics` contents in `calendar`; no provider credential or network fetch is needed. The importer supports unfolded RFC 5545 text, all-day dates and UTC date-times. Floating local times, recurrences and files without booking UIDs or explicit start/end dates are refused. Expand recurring calendars and export UTC times first. A cancelled event may omit dates only when its UID already belongs to a known booking.
+Channels are `airbnb`, `vrbo`, `booking.com` and, for requests, `direct`, case-insensitively. Upload the complete exported `.ics` contents in `calendar`, or connect the channel's link with `channel.connect`. The importer supports unfolded RFC 5545 text, all-day dates and UTC date-times. Floating local times, recurrences and files without booking UIDs or explicit start/end dates are refused. A cancelled event may omit dates only when its UID already belongs to a known booking. Events titled "Not available", "Blocked", "Closed" or similar are blocks (`kind: "block"`); others are stays, and a title such as "Reserved - Ana Ruiz" sets `guestName`.
 
 All-day checkout dates are **end-exclusive**: a stay ending on the 5th does not clash with one starting on the 5th. Identical repeated UIDs in one file collapse; conflicting duplicate UIDs are refused. An approved property/channel/UID is reconciled into the existing booking, rather than duplicated.
 
-A prepared review contains `id, revision, propertyId, channel, importedAt, events, changes, clashes, baseline, status, preparedBy, preparedAt`. Each change is `add`, `change`, `cancel` or `remove`. Each clash includes the two booking identifiers and the intersecting dates. Preparation changes no approved booking. Cancellation and removal take effect only when a human approves that exact review. A changed approved booking baseline invalidates an earlier prepared review. Approval stores an independent `{kind, recordId, revision, actorId, at}` record.
+A prepared review contains `id, revision, propertyId, channel, importedAt, events, changes, clashes, baseline, status, preparedBy, preparedAt`. Each change is `add`, `change`, `cancel` or `remove`. Each clash includes the two booking identifiers and the intersecting dates. Preparation changes no approved booking. A changed approved booking baseline invalidates an earlier prepared review. Approval stores an independent `{kind, recordId, revision, actorId, at}` record.
 
-Feeds retain both the file import timestamp and approval timestamp. They are snapshots, without automatic polling or a guarantee of source freshness. Review clashes on the channel itself. **Cabin does not prevent double bookings.**
+A connected link (`connections` in the state) applies the same reconciliation without a review on every successful read: by the Worker's Cron every five minutes for each link whose `nextPollAt` has passed, or on `channel.sync`. It records `status` (`pending`, `ok` or `stale`), `error`, `lastAttemptAt`, `lastSuccessAt`, `lastChangeAt`, `nextPollAt` and `events`. A failed read never releases nights. Holds made with `reservation.request` are never removed by a feed; a feed stay on the same channel and dates adopts the hold.
+
+Every confirmed booking and block holds its nights. `reservation.request` declines any overlap; commits are serialised, so two concurrent requests cannot both hold a night. `GET /ical/TOKEN/CHANNEL.ics` (`airbnb`, `vrbo`, `booking-com` or `all`) needs no session: it lists every future held night except that channel's own, as all-day `Not available` events without guest details. Polled links leave a window in which a channel can sell a night before it hears; overlapping stays are then kept and shown, never overwritten.
 
 ## Completion evidence
 

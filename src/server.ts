@@ -10,6 +10,7 @@ import { setupStateResponse } from './base/setup-state'
 import { authResponse, runtimeBindings, type Bindings } from './auth.server'
 import { identity } from './identity'
 import { cabinResponse } from './cabin/http'
+import { syncDue } from './cabin/channels'
 import { seedDemo } from './demo'
 
 const api = new Hono<{ Bindings: Bindings }>()
@@ -39,5 +40,9 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
     const lobby = await lobbyResponse(request, runtimeBindings(env), identity)
     if (lobby) return lobby
     return rejectedResponse(request, await dispatch(request, () => api.fetch(request, env, execution), async () => noTransform(await start.fetch(request))))
+  },
+  // Cron polls every connected channel calendar whose interval is due (SYNC-009).
+  async scheduled(_controller, env, execution) {
+    execution.waitUntil(syncDue(runtimeBindings(env)))
   },
 } satisfies ExportedHandler<Bindings>, { seed: seedDemo })

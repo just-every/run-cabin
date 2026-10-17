@@ -33,5 +33,8 @@
       "binding": "MAIL_API_KEY",
       "environment": "MAIL_API_KEY"
     }
+  ],
+  "crons": [
+    "*/5 * * * *"
   ]
 }
