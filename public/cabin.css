@@ -9,7 +9,7 @@
 .cabin .cal-line{display:grid;grid-template-columns:150px repeat(14,minmax(52px,1fr));grid-template-rows:40px;align-items:center;border-bottom:1px solid #edeef1}
 .cabin .cal-line>*{grid-row:1}.cabin .cal-line .lab{grid-column:1;position:sticky;left:0;z-index:3;height:100%;display:flex;align-items:center;padding:0 12px;background:#fff;border-right:1px solid #edeef1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cabin .cal-head{grid-template-rows:48px;position:relative}.cabin .cal-head .day{display:grid;justify-items:center;gap:2px;font-size:12px;line-height:1;color:#5c6670}.cabin .cal-head .day b{font-weight:500;font-size:14px;color:#2b3640}.cabin .cal-head .day.today b{color:#fff;background:var(--rer-accent,#356c60);border-radius:12px;padding:3px 7px}
-.cabin .cal-home{grid-template-rows:34px;background:#f7f8f9}.cabin .cal-home .lab{background:#f7f8f9;grid-column:1/-1;border-right:0;font-size:15px}
+.cabin .cal-home{grid-template-rows:34px;background:#f7f8f9}.cabin .cal-home .lab{background:#f7f8f9;border-right:0;font-size:15px;overflow:visible;text-overflow:clip}
 .cabin .cal-group:last-child .cal-line:last-child{border-bottom:0}
 .cabin .cell{height:100%;border-left:1px solid #f0f1f3}.cabin .cell.weekend{background:#fafbfc}.cabin .cell.today{background:color-mix(in srgb,var(--rer-accent,#356c60) 7%,#fff)}
 .cabin .ch{font-weight:700;letter-spacing:-.01em}.cabin .ch-airbnb{color:#d9434f}.cabin .ch-vrbo{color:#234193;font-style:italic;font-weight:800}.cabin .ch-booking{color:#0f3a8d}.cabin .ch-direct{color:#1b6b45}
