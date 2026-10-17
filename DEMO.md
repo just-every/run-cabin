@@ -10,8 +10,12 @@ name, guest names the manager added to most upcoming Airbnb stays, a Vrbo reques
 Cabin declined because it overlaps an Airbnb stay, guests' questions with drafted
 replies, stays from three weeks back to four weeks ahead, turnovers finished with checklist
 photos, assigned for this week and waiting for approval, owner statements
-approved and in review, and three calendar reviews waiting for a person (new
-stays, a Booking.com stay that clashes with an Airbnb one, and a cancellation).
+approved and in review, three calendar reviews waiting for a person (new
+stays, a Booking.com stay that clashes with an Airbnb one, and a cancellation),
+and a stay recovery case: a cleaner cancelled an upcoming turnover this morning,
+and the manager proposed a free backup cleaner and a $40 guest credit within the
+home's $75 limit. It waits for the owner's approval in the Calendar's Stay
+recovery panel.
 The sample data is `src/demo.ts` with `src/cabin/demo/`, made by Cabin's own
 commands; it runs once, after the owner exists.
 

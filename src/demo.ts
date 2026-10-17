@@ -7,7 +7,8 @@
 // Vrbo request Cabin declined because it overlaps an Airbnb stay, stays from
 // three weeks back to four weeks ahead, photographed turnovers done, assigned and
 // waiting for approval, owner statements approved and in draft, calendar reviews
-// waiting for a person, and guests' questions with drafted replies.
+// waiting for a person, guests' questions with drafted replies, and a stay
+// recovery case: a cleaner cancelled, a backup and a guest credit proposed.
 // Every record is made by Cabin's own commands (calendar parsing and clash
 // checks, the approval fences, photo validation, the statement fee maths) run as
 // the person who would have done it, at the time they would have done it. The
@@ -29,6 +30,8 @@ import { calendarBaseline, calendarCommand } from './cabin/calendars'
 import { turnoverCommand } from './cabin/turnovers'
 import { statementCommand } from './cabin/statements'
 import { peopleCommand } from './cabin/people'
+import { recoveryCommand } from './cabin/recovery/commands'
+import { baseline } from './cabin/recovery/cases'
 import { sha } from './cabin/model'
 import { captions, cleaners, homes, members, type DemoHome } from './cabin/demo/portfolio'
 import { DAY, FEED_SUMMARY, calendarFile, channelUid, date, opening, plan, random, type Stay } from './cabin/demo/stays'
@@ -166,6 +169,20 @@ export async function seedDemo(env: Bindings, { ownerEmail, now: seededAt }: { o
   c.actor = dana; c.now = new Date(now - MIN).toISOString(); c.before = structuredClone(c.data)
   dispatch(c); scheduleMessages(c)
 
+  // Stay recovery: the owner's backup cleaners and limits for every home, saved
+  // months ago; then this morning a cleaner cancelled an upcoming turnover. The
+  // cleaner opens the case, and the manager proposes a free backup and a $40
+  // guest credit within the home's $75 limit. It waits for the owner's approval.
+  for (const [i, home] of homes.entries()) await run(owner, now - 100 * DAY + i * HOUR, recoveryCommand, 'recovery.settings', { propertyId: home.id, cleanerIds: cleaners.map(m => m.id), auto: false, creditLimitCents: 7500, cleaningLimitCents: 6000 })
+  const busy = (id: string, t: { id: string; windowStart?: string; windowEnd?: string }) => c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === id && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!)
+  const cancelled = c.data.turnovers.filter(t => t.status === 'approved' && t.cleanerId && t.windowStart && t.windowStart.slice(0, 10) > date(today) && t.windowStart.slice(0, 10) <= date(today + 4))
+    .map(t => ({ t, next: c.data.bookings.find(b => b.id === t.nextBookingId && b.status === 'confirmed' && b.guestName && c.data.codes.some(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')), backup: cleaners.find(m => m.id !== t.cleanerId && !busy(m.id, t)) }))
+    .filter(x => x.next && x.backup).sort((x, y) => Number(!x.next!.guestEmail) - Number(!y.next!.guestEmail) || x.t.windowStart!.localeCompare(y.t.windowStart!))[0]
+  if (!cancelled) throw new Error('The demo needs an upcoming assigned turnover for its recovery case')
+  const gone = cleaners.find(m => m.id === cancelled.t.cleanerId)!, guest = cancelled.next!.guestName!
+  const reported = await run(person(gone.id, 'cleaner', gone.email), now - 4 * HOUR, recoveryCommand, 'recovery.open', { turnoverId: cancelled.t.id, bookingId: cancelled.next!.id, trigger: 'cleaner_cancelled', reason: `Cleaner unavailable (family emergency). The home needs a replacement before ${guest} arrives.` })
+  await run(dana, now - 3 * HOUR - 20 * MIN, recoveryCommand, 'recovery.propose', { id: reported.id, revision: reported.revision, cleanerId: cancelled.backup!.id, creditCents: 4000, extraCleaningCents: 0, why: `${cancelled.backup!.name} is on the home's backup list and free in this window. A $40 credit for the cleaner change, within the home's $75 limit.` })
+
   // Guests' questions that came in this morning, each with Cabin's drafted reply.
   const questions: [Stay | undefined, string, string, number][] = [
     [stays.find(s => s.channel === 'direct' && s.start >= today && s.start <= today + 9), 'Early check-in?', 'Hi! Our flight lands in Asheville at 10 am. Is there any chance we could check in early, around 1 pm? Happy to pay for it.', 25],
@@ -183,7 +200,7 @@ export async function seedDemo(env: Bindings, { ownerEmail, now: seededAt }: { o
 
   // Fixed, readable ids for every record the commands made.
   const name = (prefix: string, rows: { id: string }[]) => rows.forEach((row, i) => fixed.set(row.id, `demo-${prefix}-${i + 1}`))
-  name('stay', c.data.bookings); name('calendar-review', c.data.calendarDrafts); name('turnover', c.data.turnovers); name('statement', c.data.statements); name('approval', c.data.approvals)
+  name('stay', c.data.bookings); name('calendar-review', c.data.calendarDrafts); name('turnover', c.data.turnovers); name('statement', c.data.statements); name('approval', c.data.approvals); name('recovery', c.data.recoveries)
   name('photo', c.data.turnovers.flatMap(t => t.completion ? [{ id: t.completion.photoId }] : []))
   let revision = 0
   const remap = (text: string) => text.replace(uuid, id => { if (!fixed.has(id)) fixed.set(id, `demo-rev-${++revision}`); return fixed.get(id)! })
@@ -205,6 +222,13 @@ export async function seedDemo(env: Bindings, { ownerEmail, now: seededAt }: { o
     q('INSERT INTO cb_agent_keys(id,owner_id,owner_version,label,token_hash,created_at,expires_at,revoked_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING', 'demo-agent-key-old', operator.id, operator.version, 'Calendar sync script (old laptop)', await sha('demo-agent-key-old:' + crypto.randomUUID()), now - 75 * DAY, now - 45 * DAY, now - 52 * DAY),
     q('UPDATE cb_meta SET version=version+1 WHERE id=1'),
   ])
+  // A proposal's approval binds the workspace exactly as Cabin loads it (rows
+  // come back from storage in their own shape), so take it again from the rows.
+  const stored = await load(db), loaded: Context = { ...c, data: stored, before: stored }
+  for (const r of stored.recoveries.filter(r => r.status === 'proposed' && r.proposal)) {
+    r.proposal!.baseline = baseline(loaded, r, r.proposal!.cleanerId)
+    await q("UPDATE cb_records SET data=? WHERE kind='recoveries' AND id=?", JSON.stringify(r), r.id).run()
+  }
 }
 
 function need(condition: boolean): asserts condition { if (!condition) throw new Error('The demo writes only turnover photos from command queries') }

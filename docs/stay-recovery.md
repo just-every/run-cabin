@@ -1,4 +1,4 @@
-Open **Stay recovery** when a cleaner cancels, the home is not ready, checkout runs late or a guest reports a problem. Cleaners can report against their own turnovers; a guest can report from their private stay page. The case stays with the affected arrival and the turnover that prepares the home for it.
+Open **Stay recovery** when a cleaner cancels, the home is not ready, checkout runs late or a guest reports a problem. Cleaners can report against their own turnovers; a guest can report from their private stay page. The case stays with the affected arrival and the turnover that prepares the home for it. An open case also leads the **Stay recovery** panel beside the **Calendar**, where you can draft its plan, approve or reject its proposal, and see what it does to the owner's balance.
 
 ## Set the owner's limits
 

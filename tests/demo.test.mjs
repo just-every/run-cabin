@@ -6,12 +6,28 @@ import { harness } from './harness.mjs'
 // A hosted demo's app gets only deploy-demo.json's settings, not deploy.json's vars.
 const { settings = {} } = JSON.parse(await readFile('deploy-demo.json', 'utf8'))
 
-test('a demo opens on a lived-in rental business whose waiting drafts approve, and an invitation is simulated', async () => {
+test('a demo opens on a lived-in rental business whose waiting drafts and recovery proposal approve, and an invitation is simulated', async () => {
   const h = await harness({ entry: 'tests/demo-worker.ts', auth: { RER_DEMO: '1', MAIL_FROM: '', ...settings } })
   try {
     const s = await h.state()
     assert.equal(s.properties.length, 12)
     assert.ok(s.bookings.length > 60 && s.feeds.length > 12)
+    // The calendar's Stay recovery panel leads with the seeded case, and its Approve applies it.
+    const proposed = s.recoveries.find(r => r.status === 'proposed')
+    assert.equal(proposed.proposal.creditCents, 4000)
+    const calendar = await h.send('/app/calendar', undefined, h.owner), panel = calendar.text.slice(calendar.text.indexOf('<aside class="panel stay-panel"'))
+    assert.match(panel, /Cleaner cancelled/)
+    const form = panel.match(/<form method="post" action="(\/app\/action\?name=recovery\.approve[^"]*)"[^>]*>(.*?)<\/form>/)
+    assert.ok(form, 'the panel offers Approve for the proposal')
+    const fields = new URLSearchParams([...form[2].matchAll(/name="([^"]+)" value="([^"]*)"/g)].map(m => [m[1], m[2]]))
+    const approved = await h.mf.dispatchFetch(h.origin + form[1].replaceAll('&amp;', '&'), { method: 'POST', headers: { origin: h.origin, cookie: h.owner, 'content-type': 'application/x-www-form-urlencoded' }, body: fields.toString() })
+    assert.equal(approved.status, 200)
+    const after = await approved.text()
+    assert.match(after, /Approved and applied/)
+    assert.match(after.slice(after.indexOf('<aside class="panel stay-panel"')), /Verifying readiness/)
+    const applied = (await h.state()).recoveries.find(r => r.id === proposed.id)
+    assert.equal(applied.status, 'active')
+    assert.equal(applied.balanceCents, -4000)
     assert.deepEqual(new Set(s.turnovers.map(t => t.status)), new Set(['completed', 'approved', 'draft']))
     assert.deepEqual(new Set(s.statements.map(r => r.status)), new Set(['approved', 'draft']))
     const waiting = s.calendarDrafts.filter(d => d.status === 'draft')
