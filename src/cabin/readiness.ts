@@ -1,5 +1,8 @@
 import type { AccessCode, Booking, Data, Property, Task, Turnover } from './model'
 import { codeState } from './codes'
+import { homeSettings } from './homes'
+import { checkoutInstant, validCompletion } from './turnover-window'
+import { instant } from './clock'
 // Is each home ready for its next guests on or after a day? Ready means the
 // turnover before that arrival is done with its photos and no blocking
 // maintenance task is open. Anything Cabin cannot see (no turnover recorded
@@ -11,14 +14,17 @@ export function homeReadiness(s: Pick<Data, 'properties' | 'bookings' | 'turnove
  const stays = s.bookings.filter(b => b.propertyId === p.id && stay(b)).sort((a, b) => a.start.localeCompare(b.start))
  const arrival = stays.find(b => b.start.slice(0, 10) >= day) ?? null
  const before = arrival ? stays.filter(b => b.end.slice(0, 10) <= arrival.start.slice(0, 10)).at(-1) : stays.filter(b => b.end.slice(0, 10) <= day).at(-1)
- const turnover = (arrival && s.turnovers.find(t => t.propertyId === p.id && live(t) && t.nextBookingId === arrival.id)) || (before && s.turnovers.find(t => t.bookingId === before.id && live(t))) || null
+ const turnover = (before && s.turnovers.find(t => t.bookingId === before.id && live(t))) || null
  const blockers = s.tasks.filter(t => t.propertyId === p.id && t.status === 'open' && t.blocking)
  const reasons: string[] = []
  const cleaner = turnover?.cleanerId ? s.members.find(m => m.id === turnover.cleanerId)?.name ?? 'the cleaner' : null
  if (!turnover) reasons.push(before ? 'No turnover recorded after the last stay' : arrival ? 'No turnover recorded before this arrival' : 'No stays recorded yet')
+ else if (!before || (turnover.status === 'completed' && !validCompletion(turnover, before, homeSettings(s, p.id)))) reasons.push('Cleaning must be done after the preceding stay checks out')
+ else if (now < checkoutInstant(homeSettings(s, p.id), before)) reasons.push('The preceding guests have not checked out yet')
  else if (turnover.status === 'unassigned') reasons.push('No cleaner assigned')
  else if (turnover.status === 'approved') reasons.push(`Cleaning not done yet (${cleaner})`)
- else if ((turnover.completion?.photos?.length ?? 1) < (turnover.photosRequired ?? 1)) reasons.push('Photos missing')
+ else if (!turnover.completion || (turnover.completion.photos?.length ?? (turnover.completion.photoId ? 1 : 0)) < (turnover.photosRequired ?? 1)) reasons.push('Photos missing')
+ if (turnover?.status === 'completed' && arrival && Date.parse(turnover.completion?.completedAt ?? '') > instant(`${arrival.start.slice(0, 10)}T${arrival.arrivalTime ?? homeSettings(s, p.id).checkInTime}`, homeSettings(s, p.id).timeZone)) reasons.push('Cleaning finished after this arrival')
  for (const t of blockers) reasons.push(`Blocked: ${t.title}`)
  const guestCode = arrival ? s.codes.find(r => r.bookingId === arrival.id && r.holder === 'guest' && r.status === 'issued') ?? null : null
  if (arrival && !guestCode && arrival.end.slice(0, 10) >= day) reasons.push('No door code issued')

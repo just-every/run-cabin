@@ -1,3 +1,6 @@
+// Keep successful form responses on their workspace page, including one-time credentials.
+if (location.pathname === '/app/action' && document.body.dataset.page) history.replaceState(null, '', document.body.dataset.page)
+
 document.querySelector('[data-signout]')?.addEventListener('click', async () => {
   const response = await fetch('/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
   if (response.ok) location.assign('/signin')

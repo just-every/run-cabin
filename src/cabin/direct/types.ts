@@ -14,7 +14,10 @@ export interface DirectStay {
  start:string; end:string; guestName:string; email:string; quote:Quote; createdAt:string; holdUntil:string;
  signature:{name:string; at:string; version:string; text:string; sha256:string; consent:string};
  requireIdentity:boolean; identity?:{id:string; status:string}; checkoutId?:string; checkoutUrl?:string;
- paymentId?:string; customerId?:string; paymentMethod?:string;
+ paymentId?:string; customerId?:string; paymentMethod?:string; paymentMode?:'test'|'live';
+ bookingLinkSealed?:string; timeZone?:string; arrivalAt?:string; departureAt?:string; depositDueAt?:string; depositAttempt?:string;
+ depositCheckout?:{id:string;url:string;attempt:string;status:'open'|'complete'|'expired'};
+ paymentMessageId?:string; confirmationMessageId?:string;
  deposit?:{id:string; status:string; amountCents:number; capturedCents?:number; claimCents?:number; expiresAt:string|null; reason?:string; evidence?:string};
  releaseHours:number; checkedOutAt?:string; error?:string; taxFilings?:{jurisdiction:string; reference:string; actorId:string; at:string}[];
 }

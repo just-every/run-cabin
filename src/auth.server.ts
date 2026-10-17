@@ -18,6 +18,7 @@ export interface Bindings {
  STRIPE_SECRET_KEY?: string
  /** Built browser files; hosted deploys run the Worker first (staticAssetResponse). */
  ASSETS?: Fetcher
+ CABIN_WORKER_NAME?: string
  RER_DEPLOY_SOURCE?: string
  RER_DEPLOY_FINGERPRINT?: string
  RER_VERSION?: { id: string }

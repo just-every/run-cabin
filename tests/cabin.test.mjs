@@ -6,8 +6,8 @@ import { run, harness } from './harness.mjs'
 const property = (h, extra = {}) => h.cmd('property.save', { name: 'Banksia House', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 1500, ...extra })
 const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documented fixture//EN\r\n' + events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART;VALUE=DATE:${e.start}\r\nDTEND;VALUE=DATE:${e.end}\r\nSUMMARY:${e.summary ?? 'Reserved'}\r\n${e.cancelled ? 'STATUS:CANCELLED\r\n' : ''}END:VEVENT\r\n`).join('') + 'END:VCALENDAR\r\n'
 const event = { uid: 'stay-1', start: '20261101', end: '20261105', summary: 'Coastal stay' }
-async function booking(h, p) {
-  const d = await h.cmd('calendar.prepare', { propertyId: p.id, channel: 'Airbnb', calendar: ics([event]) })
+async function booking(h, p, stay = event) {
+  const d = await h.cmd('calendar.prepare', { propertyId: p.id, channel: 'Airbnb', calendar: ics([stay]) })
   await h.cmd('calendar.approve', { id: d.id, revision: d.revision })
   return (await h.state()).bookings.find(b => b.uid === event.uid)
 }
@@ -65,7 +65,7 @@ test('end-exclusive dates, stale snapshots and malformed calendar files cannot s
 }))
 
 test('approved turnover reaches only its cleaner and needs all checks plus authenticated photo evidence', () => run(async h => {
-  const p=await property(h),b=await booking(h,p),cleaner=await h.person('Taylor'),other=await h.person('Casey')
+  const p=await property(h),b=await booking(h,p,{...event,start:'20260101',end:'20260105'}),cleaner=await h.person('Taylor'),other=await h.person('Casey')
   const draft=await h.cmd('turnover.prepare',{bookingId:b.id,cleanerId:cleaner.id,checklist:['Linen changed','Keys checked']})
   assert.equal((await h.state(cleaner.cookie)).turnovers.length,0)
   await h.cmd('turnover.approve',{id:draft.id,revision:draft.revision},cleaner.cookie,403)
@@ -97,7 +97,7 @@ test('owner statement amounts are integer cents, approved once per month and fro
   await h.cmd('statement.approve',{id:d.id,revision:d.revision})
   await h.cmd('statement.approve',{id:rival.id,revision:rival.revision},h.owner,409)
   const path=`/api/cabin/statements/${d.id}.csv`,a=await h.send(path,undefined,h.owner)
-  assert.equal(a.status,200);assert.ok(a.text.includes("'=Income"));assert.ok(a.text.includes('97751'))
+  assert.equal(a.status,200);assert.ok(a.text.includes("'=Income"));assert.ok(a.text.includes('977.51'))
   assert.equal((await h.send(path,undefined,cleaner.cookie)).status,403)
   const fields=new URLSearchParams({propertyId:p.id,month:'2026-12'});fields.append('lineDescription','Room income');fields.append('lineAmount','12.75');fields.append('lineDescription','Cleaning');fields.append('lineAmount','-2.25')
   const form=await h.mf.dispatchFetch(h.origin+'/app/action?name=statement.prepare&returnTo=/app/statements',{method:'POST',headers:{origin:h.origin,cookie:h.owner,'content-type':'application/x-www-form-urlencoded'},body:fields.toString()});assert.equal(form.status,200)

@@ -45,7 +45,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
- const state={...data,books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ const state={...data,books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
 /** A turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */

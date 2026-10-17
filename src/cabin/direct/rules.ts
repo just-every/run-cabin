@@ -1,8 +1,9 @@
 import { need, text, integer, newId, type Booking } from '../model'
 import { overlaps, addDays } from '../inventory'
 import type { DirectHome, Quote } from './types'
+import { decimalUnits } from './presentation'
 export function configure(p:Record<string,unknown>, propertyId:string):DirectHome {
- const n=(key:string,min=0,max=100_000_000)=>integer(Number(p[key]),key,min,max)
+ const n=(key:string,min=0,max=100_000_000)=>{const human=key.endsWith('Cents')?key.replace('Cents','Dollars'):key.endsWith('Bps')?key.replace('Bps','Percent'):null;return integer(human&&human in p?decimalUnits(p[human],human):Number(p[key]),human??key,min,max)}
  const slug=text(p.slug,'booking page address',80).toLowerCase();need(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)&&slug!=='stay','Use a booking address with lowercase letters, numbers and hyphens')
  const home:DirectHome={propertyId,revision:newId(),enabled:p.enabled===true||p.enabled==='true'||p.enabled==='on',slug,description:text(p.description,'property description',3000),nightlyCents:n('nightlyCents',1),cleaningCents:n('cleaningCents'),extraGuestCents:n('extraGuestCents'),includedGuests:n('includedGuests',1,100),maxGuests:n('maxGuests',1,100),minNights:n('minNights',1,365),maxNights:n('maxNights',1,365),minGapNights:n('minGapNights',0,30),depositCents:n('depositCents'),releaseHours:n('releaseHours',0,168),taxLabel:String(p.taxLabel??'').trim().slice(0,120),taxBps:n('taxBps',0,10000),countyTaxLabel:String(p.countyTaxLabel??'').trim().slice(0,120),countyTaxBps:n('countyTaxBps',0,10000),agreement:text(p.agreement,'rental agreement',20_000),requireIdentity:p.requireIdentity===true||p.requireIdentity==='true'||p.requireIdentity==='on'}
  need(home.minNights<=home.maxNights,'Maximum nights must be at least minimum nights');need(home.includedGuests<=home.maxGuests,'Included guests cannot exceed occupancy');need(!home.taxBps||home.taxLabel,'Name the state tax jurisdiction');need(!home.countyTaxBps||home.countyTaxLabel,'Name the county tax jurisdiction');return home

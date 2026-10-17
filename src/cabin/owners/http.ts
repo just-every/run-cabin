@@ -13,7 +13,7 @@ export async function ownersResponse(request:Request,original:Bindings):Promise<
    need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
    need(Number(request.headers.get('content-length')??0)<4096,'Request too large',413)
    const value=request.headers.get('content-type')?.includes('application/json')?await request.json():Object.fromEntries(await request.formData())
-   if(path==='/owners/signin'){await requestOwnerLink(env,value as Record<string,unknown>);return signInPage('If this address owns a home, a sign-in link is on its way. Local development does not send email.')}
+   if(path==='/owners/signin'){await requestOwnerLink(env,value as Record<string,unknown>);return signInPage(env.AUTH_LOCAL==='true'||env.RER_DEMO==='1'?'Local development does not send email. Ask your manager to preview your owner portal from Statements.':'If this address owns a home, a sign-in link is on its way.')}
    if(path==='/owners/confirm')return new Response(null,{status:303,headers:{...headers,location:'/owners','set-cookie':await confirmOwner(env,(value as any).token)}})
    if(path==='/owners/signout')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin','set-cookie':await signOutOwner(request,env)}})
   }else{

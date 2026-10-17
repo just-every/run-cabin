@@ -9,7 +9,7 @@ Open **Properties & people** and fill in **Add a property**:
 | Property name | The name your team uses, such as Lake Loft. |
 | Property owner name | The home's owner, who receives the statement. |
 | Property owner email | The owner's email address. |
-| Management commission | In basis points: `1500` means 15%, `2000` means 20%. From 0 to 10,000. |
+| Management commission | As a percentage: `15` means 15%, `20` means 20%. From 0 to 100. |
 
 Choose **Save property**. To change a home later, open **Edit property** on its card and choose **Save property changes**. A statement you have already approved keeps the owner details and commission it was approved with.
 

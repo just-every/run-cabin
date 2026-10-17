@@ -1,6 +1,7 @@
 import { type Context, type Statement, type StatementLine, type Actor, need, text, integer, newId, preparer, manager, property, approve } from './model'
 import { sha } from './model'
 import { assertLive, load } from './storage'
+import { statementMonth, usd } from './finance/presentation'
 export async function statementCommand(c:Context,name:string,p:Record<string,unknown>){
  if(name==='statement.prepare'){
   preparer(c.actor);const prop=property(c,p.propertyId),month=text(p.month,'statement month',7);need(/^\d{4}-(0[1-9]|1[0-2])$/.test(month),'Use a YYYY-MM month')
@@ -33,7 +34,10 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
    need(payouts.every(r=>r.match==='matched'),'Match every imported payout before approval',409)
    for(const payout of payouts)payout.statementId=row.id
   }
-  approve(c,'statement',row,p.revision)
+  const operator=await c.db.prepare('SELECT display_name FROM oa_operators WHERE id=?').bind(c.actor.id).first<{display_name:string}>()
+  need(operator,'Approving operator not found',409)
+  const approval=approve(c,'statement',row,p.revision)
+  approval.actorName=c.data.members.find(m=>m.email.toLowerCase()===c.actor.email.toLowerCase())?.name||operator.display_name
   c.data.deliveries.push({id:newId(),revision:newId(),propertyId:row.propertyId,statementId:row.id,email:row.ownerEmail,status:'pending',at:c.now,detail:null})
   c.entityId=row.id;return row
  }
@@ -41,8 +45,11 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
 }
 /** Prevent spreadsheet formulas even when prefixed by whitespace or controls. */
 export function csvCell(value:unknown){const s=String(value??'');return '"'+(typeof value==='number'?s:/^[\s\u0000-\u001f]*[=+@-]/.test(s)?"'"+s:s).replaceAll('"','""')+'"'}
+export function approvedStatementCsv(s:Statement){
+ const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Management commission',`${(s.commissionBps/100).toFixed(2)}%`],['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational statement only. No payment processing or trust accounting.']]
+ return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
+}
 export async function statementCsv(db:D1Database,actor:Actor,id:string){
  manager(actor);await assertLive(db,actor);const s=(await load(db)).statements.find(s=>s.id===id);need(s&&s.status==='approved','Approved statement not found',404)
- const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',s.month],['Revision',s.revision],['Description','Amount (cents)'],...s.lines.map(l=>[l.description,l.amountCents]),['Gross (cents)',s.grossCents],['Imported channel fees (cents)',s.channelFeeCents??0],['Commission (basis points)',s.commissionBps],['Management fee (cents)',s.managementFeeCents],['Owner net (cents)',s.netCents],['Approved by',s.approval!.actorId,s.approval!.at],['Operational statement only. No payment processing or trust accounting.']]
- await assertLive(db,actor);return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
+ await assertLive(db,actor);return approvedStatementCsv(s)
 }

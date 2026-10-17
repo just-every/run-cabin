@@ -8,14 +8,16 @@ Airbnb, Vrbo and Booking.com calendar links carry no guest contact details. Unti
 
 ## Receive guest email
 
-Guest email reaches Cabin through an address on your own domain:
+Guest email uses a domain you own, with DNS managed by Cloudflare in the same account as your deployed Cabin. A **Worker** is the deployed app. The hosted **Inbox → Guest email** card names your Cabin Worker and its address. A custom-domain install that cannot identify its Worker shows how to find the name in the `rer deploy` output; an operator can also set `CABIN_WORKER_NAME` to the actual name.
 
-1. In Cloudflare, open your domain's **Email → Email Routing**, add a custom address (for example `guests@example.com`) and choose **Send to a Worker**, picking this Cabin's Worker.
-2. In Cabin, open **Inbox → Guest email**, enter that address and choose **Save address**.
+1. Open [Cloudflare Email Routing](https://dash.cloudflare.com/?to=/:account/email-service/routing), choose your domain and enable routing. Follow Cloudflare's DNS setup; review existing mail records before changing a domain already used for email. See [Cloudflare's routing guide](https://developers.cloudflare.com/email-service/get-started/route-emails/).
+2. Create a routing rule for your chosen guest address. Choose **Send to a Worker** and select the exact Worker named on Cabin's Guest email card. Save the rule.
+3. Save the same address in **Inbox → Guest email**. Cabin uses it as the reply address on outgoing guest messages.
+4. **Check it works:** email that address from a personal mailbox, then reload Inbox. The incoming email and an unsent draft should appear. Send from a stay's guest email to match that stay. Send a reply from Cabin and check that mailbox for delivery.
 
-Mail to that address lands in the sender's thread, tied to their current or next stay. A message sent through a forwarding service that names the guest in **Reply-To** joins the guest's thread too, because that is where a reply goes. Mail to any other address is refused unread. The quoted history a mail app adds under a reply is left out of the thread.
+Mail to another address is refused unread. A forwarding service's **Reply-To** determines the guest's thread when present. Quoted reply history is omitted.
 
-Every message Cabin sends asks guests to reply to this address, so their answers come back to the same thread. On this computer no mail server can reach Cabin; a hosted install receives guest email. Locally, **Try a guest email here** takes a saved email's source (.eml) and puts it through the same receiving code. RER Managed hosting has no domain of yours yet, so guest email cannot reach Cabin there.
+Locally, first save an address on the Guest email card. **Try a guest email here** then appears. In your mail app choose Show original, View source or Download original, copy the full .eml source including headers and paste it there. This imports a real incoming message, matched by sender; it tests parsing and drafting, not internet delivery. The local app receives no internet mail and sends no email. RER Managed hosting cannot receive guest mail yet; scheduled emails still go out.
 
 ## Scheduled messages
 
@@ -35,16 +37,32 @@ Cabin checks for due messages every five minutes and after every change, so each
 
 ## Drafted replies wait for your nod
 
-When a guest writes, Cabin drafts a reply beside their message:
+With no AI key, templates provide saved arrival details or checkout time. Early check-in, changes and questions outside those facts carry a **Needs you** note and a reply saying you will check. Confirm the answer before sending.
 
-- **With an AI key**: in **Inbox → Drafted replies**, paste your own Anthropic API key (it is sealed with this install's secret and never shown again; only its last four characters are). The draft is written from the stay's dates, the home's times and address, the guest's door code, their stay page and the thread. It lists the facts it used, and says when something needs you: anything the facts do not settle, and every refund, discount, early check-in, late checkout or safety question. **Test the key** checks it with a made-up stay. On RER Managed hosting AI drafts are not available yet.
-- **Without one**, or if the AI provider fails (the draft says so), the draft comes from a template picked by what the guest asked: how to get in, check-out, or anything else.
+To connect AI in **Inbox → Drafted replies**:
 
-Edit the draft and choose **Send to guest**, or **Discard draft**. Cabin records who approved exactly which text, and sends it once on the channel the guest wrote on: email replies are threaded under the guest's message. A newer guest message replaces a draft nobody sent. You can also **Write a message yourself** from any thread. A failed send says why and offers **Send again**.
+1. Cabin supports the direct Anthropic API. An **Anthropic API key** authorizes paid Claude requests on your account; other provider keys do not work. Create a key for one workspace on [Anthropic's API keys page](https://platform.claude.com/settings/keys) and copy it when shown.
+2. Set up [API billing](https://platform.claude.com/settings/billing), paste the key in Cabin and save. The key is encrypted with this installation's secret; only its final four characters are shown later.
+3. Keep the default model. A **model** is the Claude version writing the reply. **Advanced AI settings** lets you enter another structured-output-capable model's API ID from [Anthropic's model list](https://platform.claude.com/docs/en/about-claude/models/overview). **Workspace ID** is blank for an ordinary single-workspace key; a key covering multiple workspaces needs the chosen ID from [Anthropic Workspaces](https://platform.claude.com/settings/workspaces).
+4. Add a confirmed stay in Calendar, then choose **Test a reply**. Cabin sends that saved stay's real details to Anthropic and asks about early check-in. Success shows the actual reply and a host-approval flag; a failure explains what needs fixing. Nothing is sent to the guest or added to their thread.
+
+Anthropic bills separately for text read and written in tokens, small pieces of text. Both drafts and tests cost money. At the default Opus 5.5 rates of $4 per million input tokens and $20 per million output tokens, a 2,000-input / 300-output-token request costs about $0.014 USD. Longer threads cost more; see [current API prices](https://platform.claude.com/docs/en/about-claude/pricing) and your billing limits.
+
+AI drafts use the saved stay details and conversation, show their supporting facts and flag questions requiring you. If Anthropic fails, Cabin shows the failure and leaves an empty reply for you to write. On RER Managed hosting AI drafts are unavailable.
+
+Edit and **Send to guest**, or **Discard draft**. Cabin records who approved the exact text and sends it once on the guest's channel; email replies remain threaded. A newer guest message replaces an unsent draft. **Write a message yourself** composes a reply; failed sends explain why and offer **Send again**.
 
 ## Texts and channel messages
 
-- **Texts** go through Twilio. US texting from an app needs the owner's A2P 10DLC registration first, so Cabin sends no texts until the owner registers and sets `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM` as secrets, then points the Twilio number's incoming-message webhook at `https://YOUR-CABIN/inbound/sms`. Then a guest with only a phone number on their stay gets their scheduled messages as texts, and texts from a guest's phone join their thread. Cabin reads only requests Twilio signed with the auth token.
+**Texts are not connected until you bring your own Twilio account.** Twilio is a paid phone and text provider. For US ten-digit numbers, carriers require business and message-use registration, called **A2P 10DLC**. Cabin does not register you or purchase a number.
+
+1. Get a paid [Twilio account](https://console.twilio.com/) and texting number. Complete [Twilio's registration guide](https://www.twilio.com/docs/messaging/compliance/a2p-10dlc/quickstart) and wait for approval; number, registration and message fees apply.
+2. In your Cabin Worker's Cloudflare **Settings → Variables and Secrets**, add encrypted `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (from Twilio) and `TWILIO_FROM` (the approved number including +1). Save and deploy. Local values go in private `.dev.vars`; restart `rer dev`.
+3. In the number's Twilio Messaging settings, set **A message comes in** to **Webhook**, **POST**, using the full `/inbound/sms` URL shown on Cabin's page. It must be a public HTTPS deployment; localhost cannot receive replies.
+4. Add your phone to a test stay, text the Twilio number and reload Inbox. The text should join that guest's thread. Send a reply and check your phone. Saved credentials alone do not prove carrier approval or delivery. Cabin checks Twilio's request signature.
+
+On RER Managed hosting texts are unavailable because it cannot connect to Twilio. Use email for now.
+
 - **Airbnb, Vrbo and Booking.com messages** connect later, with the owner's channel partner accounts. Airbnb and Vrbo publish no messaging API outside their partner programs. For Booking.com, a connectivity partner's machine account (`BOOKING_MESSAGING_USER`, `BOOKING_MESSAGING_PASSWORD`) turns it on: enter each home's Booking.com property ID on the Inbox page and each Booking.com stay's reservation number on the stay; guests' Booking.com messages then arrive every five minutes and replies go back through Booking.com.
 
 Both are tested against responses in Twilio's and Booking.com's documented shapes, not live accounts. Until they are connected the Inbox page says so.

@@ -22,5 +22,13 @@ export async function homeCommand(c: Context, name: string, p: Record<string, un
  const row: HomeSettings = { id: prop.id, revision: newId(), propertyId: prop.id, address: text(p.address, 'home address', 300), timeZone, checkInTime: clock(p.checkInTime ?? '16:00', 'check-in time'), checkOutTime: clock(p.checkOutTime ?? '10:00', 'check-out time'), cleanerId, maintenanceId, checklist: checklist(p.checklist), photosRequired: integer(Number(p.photosRequired ?? 1), 'Photos required', 1, 12), lockDeviceId: lock }
  need(row.checkOutTime <= row.checkInTime, 'Check-out must be no later than check-in so a same-day turnover fits')
  if (old) Object.assign(old, row); else c.data.homeSettings.push(row)
+ for (const job of c.data.turnovers) {
+  if (job.propertyId !== prop.id || job.status === 'completed' || job.status === 'cancelled') continue
+  if (JSON.stringify(job.checklist) === JSON.stringify(row.checklist) && job.photosRequired === row.photosRequired) continue
+  Object.assign(job, { checklist: [...row.checklist], photosRequired: row.photosRequired, revision: newId() })
+  job.history = [...job.history ?? [], { at: c.now, by: c.actor.id, action: 'home checklist and photo requirements updated', cleanerId: job.cleanerId }]
+  // Retain the prior assignee/window so their notice is a replacement email.
+  if (job.notified) job.notified = { ...job.notified, code: '' }
+ }
  c.entityId = prop.id; return row
 }

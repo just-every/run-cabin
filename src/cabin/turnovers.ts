@@ -2,11 +2,19 @@ import { type Context, type Turnover, need, text, newId, preparer, manager, appr
 import { photoList, storePhotos } from './photos'
 import { checklist, homeSettings } from './homes'
 import { liveTurnover } from './dispatch'
+import { checkoutInstant, checkoutTime } from './turnover-window'
+import { when } from './clock'
 // Cabin dispatches each stay's turnover itself (dispatch.ts). People and agents
 // can still prepare one by hand for review; approving it replaces the stay's
 // dispatched turnover unless that one is already done. A manager reassigns; the
 // assigned cleaner completes every checklist item with the home's photos.
 const history = (c: Context, t: Turnover, action: string) => { t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action, cleanerId: t.cleanerId }] }
+const afterCheckout = (c: Context, row: Turnover) => {
+ const b = c.data.bookings.find(b => b.id === row.bookingId)
+ need(b?.status === 'confirmed' && b.revision === row.bookingRevision, 'Booking changed. Ask the manager to review this turnover.', 409)
+ const s = homeSettings(c, row.propertyId)
+ need(Date.parse(c.now) >= checkoutInstant(s, b), `Guests have not checked out yet. Record departure and mark ready after ${when(checkoutTime(s, b))} (${s.timeZone}).`, 409)
+}
 export async function turnoverCommand(c:Context,name:string,p:Record<string,unknown>){
  if(name==='turnover.prepare'){
   preparer(c.actor);const booking=c.data.bookings.find(b=>b.id===text(p.bookingId,'booking ID'));need(booking&&booking.status==='confirmed','Choose an approved confirmed booking',409)
@@ -34,13 +42,14 @@ export async function turnoverCommand(c:Context,name:string,p:Record<string,unkn
   // The actual check-out, as the cleaner finds it on arrival or a manager records it.
   const row=c.data.turnovers.find(t=>t.id===text(p.id,'turnover ID'));need(row&&(c.actor.role!=='cleaner'||row.cleanerId===c.actor.memberId),'Turnover not found',404)
   if(c.actor.role!=='cleaner')manager(c.actor);need(row.status==='approved'||row.status==='unassigned','Only an open turnover records a check-out',409);need(!row.checkedOut,'Check-out is already recorded',409)
+  afterCheckout(c,row)
   row.checkedOut={at:c.now,by:c.actor.id,source:c.actor.role==='cleaner'?'cleaner':'staff'};history(c,row,'checked out');c.entityId=row.id;return row
  }
  if(name==='turnover.complete'){
   need(c.actor.role==='cleaner','Only the assigned cleaner can complete a turnover',403)
   const row=c.data.turnovers.find(t=>t.id===text(p.id,'turnover ID'));need(row&&row.cleanerId===c.actor.memberId,'Turnover not found',404);exact(row,p.revision)
   need(row.status==='approved','Only an approved turnover can be completed once',409)
-  const booking=c.data.bookings.find(b=>b.id===row.bookingId);need(booking?.status==='confirmed'&&booking.revision===row.bookingRevision,'Booking changed. Ask the manager to review this turnover.',409)
+  afterCheckout(c,row)
   const checks=checklist(p.checks);need(checks.length===row.checklist.length&&row.checklist.every(item=>checks.includes(item)),'Complete every item from the approved checklist')
   const photos=photoList(p,row.photosRequired??1),caption=text(p.caption,'photo caption',300),stored=await storePhotos(c,row.id,photos,caption)
   row.checkedOut??={at:c.now,by:c.actor.id,source:'cleaner'}

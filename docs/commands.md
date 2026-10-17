@@ -28,7 +28,7 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/
 | `task.raise` | `title, note?, blocking, photos?` plus `turnoverId` (cleaner, their own turnover) or `propertyId` or `turnoverId` (manager, who may add `assigneeId`) | A maintenance task with up to 6 photos, assigned to `assigneeId` or the home's maintenance person, who is emailed. |
 | `task.assign` | `id, revision, assigneeId, blocking` | Owner or manager. |
 | `task.close` | `id, revision, note?, photos?` | Owner, manager or the task's assignee. |
-| `statement.prepare` | `propertyId, month, lines: [{description, amountCents}]`, optional `managementFeeCents` | Owner, manager or agent. Month is `YYYY-MM`. Returns a frozen draft including property/owner details and all money totals. |
+| `statement.prepare` | `propertyId, month`; legacy adjustments also accept `lines: [{description, amountCents}]`, optional `managementFeeCents` | Owner, manager or agent. Month is `YYYY-MM`. Without lines, prepares the month’s matched imported payouts with their actual channel fees. Returns an exact draft for review. |
 | `statement.approve` | `id, revision` | Owner or manager. Property terms must still match the reviewed revision. Only one approved statement per property and month. |
 | `inbox.address` | `address, revision` | Owner or manager. The address routed to Cabin; guest email to exactly it lands in threads, and Cabin's messages ask guests to reply to it. Empty removes it. `revision` is the inbox settings revision (empty for the first save). |
 | `inbox.schedule` | `revision` and for each of `checkin`, `checkout`, `review`: `…Enabled, …Hours, …Subject, …Template` | Owner or manager. The three lifecycle messages: hours before check-in or check-out, or after check-out (0–720). Every upcoming stay follows them at once. |
@@ -70,9 +70,11 @@ Every commit that adds, moves or cancels a stay also schedules, moves or cancels
 
 ## Statement money and CSV
 
-Positive lines are income and negative lines are expenses or adjustments. `grossCents` is the signed sum of all lines, including costs, and must be non-negative. The default management fee applies the property’s commission to this net line sum: `round-half-up(grossCents × commissionBps / 10,000)`, calculated with integer arithmetic. An explicit management fee may be any integer from zero to that sum. `netCents = grossCents - managementFeeCents`. Review that base before approval; Cabin does not infer channel fees or reconcile payments.
+The Statements page prepares matched imported payout lines. Its `grossCents` is imported gross; `channelFeeCents` is the actual imported host deductions; management is `round-half-up(grossCents × commissionBps / 10,000)` and owner payout is gross minus channel fees minus management. Every source line must match a stay, and source changes invalidate approval. See [Owner statements](/docs/statements).
 
-Approval freezes owner details, lines, commission and fee. Later property edits do not change the approved CSV. `GET /api/cabin/statements/ID.csv` is restricted to owner/manager sessions and exports all amounts in integer cents, with spreadsheet formula protection on text cells. These are operational statements, not payment processing, trust accounting, bank reconciliation or tax statements.
+For legacy adjustment integrations that explicitly send `lines`, positive lines are income and negative lines are expenses or adjustments. `grossCents` is the signed sum of all lines, including costs, and must be non-negative. The default management fee applies the property’s commission to this net line sum: `round-half-up(grossCents × commissionBps / 10,000)`, calculated with integer arithmetic. An explicit management fee may be any integer from zero to that sum. `netCents = grossCents - managementFeeCents`. Review that base before approval; Cabin does not infer channel fees or reconcile payments.
+
+Approval freezes owner details, lines, commission and fee. Later property edits do not change the approved CSV. `GET /api/cabin/statements/ID.csv` is restricted to owner/manager sessions and exports amounts as USD currency, commission as a percentage and the frozen approver name, with spreadsheet formula protection on text cells. API command amounts remain integer cents. These are operational statements, not payment processing, trust accounting, bank reconciliation or tax statements.
 
 ## Agent door
 

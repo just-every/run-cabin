@@ -17,7 +17,7 @@ export interface Feed { id: string; propertyId: string; channel: Channel; import
 export interface Clash { a: string; b: string; start: string; end: string }
 export interface CalendarChange { kind: 'add' | 'change' | 'cancel' | 'remove'; uid: string; before?: Booking; after?: CalendarEvent }
 export interface CalendarDraft { id: string; revision: string; propertyId: string; channel: Channel; importedAt: string; events: CalendarEvent[]; changes: CalendarChange[]; clashes: Clash[]; baseline: string; status: 'draft' | 'approved'; preparedBy: string; preparedAt: string; approval?: Approval }
-export interface Approval { id: string; kind: string; recordId: string; revision: string; actorId: string; at: string }
+export interface Approval { id: string; kind: string; recordId: string; revision: string; actorId: string; actorName?: string; at: string }
 export interface StoredPhoto { id: string; mimeType: string; sha256: string }
 /** photoId, mimeType and sha256 name the first (cover) photo; photos lists every one. */
 export interface Completion { checks: string[]; photoId: string; caption: string; mimeType: string; sha256: string; photos?: StoredPhoto[]; completedBy: string; completedAt: string }
@@ -47,7 +47,7 @@ export interface Event { id: string; actorId: string; actorRole: Role; action: s
 export const kinds = ['feeds', 'calendarDrafts', 'bookings', 'turnovers', 'statements', 'connections', 'exports', 'requests', 'homeSettings', 'codes', 'notices', 'tasks', 'payouts', 'deliveries', 'postings', 'messages', 'scheduled', 'inbox'] as const
 export type RecordKind = typeof kinds[number]
 export interface Data { version: number; properties: Property[]; members: Member[]; feeds: Feed[]; calendarDrafts: CalendarDraft[]; bookings: Booking[]; turnovers: Turnover[]; statements: Statement[]; connections: Connection[]; exports: ExportFeed[]; requests: Request[]; homeSettings: HomeSettings[]; codes: AccessCode[]; notices: Notice[]; tasks: Task[]; messages: GuestMessage[]; scheduled: Scheduled[]; inbox: InboxSettings[]; payouts:Payout[]; deliveries:Delivery[]; postings:Posting[]; approvals: Approval[]; events: Event[] }
-export interface State extends Data { actor: Actor; origin: string; managed: boolean; lockAccount: boolean; messaging: { sms: boolean; booking: boolean }; agentKeys: Record<string, unknown>[]; importJobs: Record<string, unknown>[] }
+export interface State extends Data { actor: Actor; origin: string; local: boolean; workerName: string | null; managed: boolean; lockAccount: boolean; messaging: { sms: boolean; booking: boolean }; agentKeys: Record<string, unknown>[]; importJobs: Record<string, unknown>[] }
 export interface Query { sql: string; params: any[] }
 export interface Context { db: D1Database; actor: Actor; before: Data; data: Data; queries: Query[]; now: string; entityId: string | null }
 export const fail = (message: string, status = 400): never => { throw Object.assign(new Error(message), { status }) }
@@ -65,6 +65,6 @@ export function property(c: Context, id: unknown) { const p = c.data.properties.
 export function exact(row: { revision: string }, value: unknown) { need(typeof value === 'string' && row.revision === value, 'The revision changed. Review this exact draft again.', 409) }
 export function approve(c: Context, kind: string, row: { id: string; revision: string; status: string; approval?: Approval }, revision: unknown) {
  manager(c.actor); exact(row, revision); need(row.status === 'draft', 'This draft has already been approved', 409)
- const approval = { id: newId(), kind, recordId: row.id, revision: row.revision, actorId: c.actor.id, at: c.now }
+ const approval: Approval = { id: newId(), kind, recordId: row.id, revision: row.revision, actorId: c.actor.id, at: c.now }
  row.status = 'approved'; row.approval = approval; c.data.approvals.push(approval); return approval
 }

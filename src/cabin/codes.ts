@@ -2,7 +2,7 @@ import { type AccessCode, type Context, type HomeSettings, newId } from './model
 import { instant } from './clock'
 // Door codes: Cabin issues a four-digit code for each stay (the guest's, valid
 // check-in to check-out) and for each assigned turnover (the cleaner's, valid
-// for the turnover window). No two codes at a home overlap in time with the same
+// for at most six hours after checkout). No two codes at a home overlap in time with the same
 // digits. Pushing them to a smart lock is locks.ts; without a lock account the
 // code is set on the keypad by hand, and the page says so.
 const random = () => { const n = new Uint32Array(1); crypto.getRandomValues(n); return n[0] }
@@ -18,7 +18,10 @@ export function issue(c: Context, s: HomeSettings, fields: Pick<AccessCode, 'boo
  c.data.codes.push(row); return row
 }
 export function move(c: Context, s: HomeSettings, row: AccessCode, validFrom: string, validUntil: string) {
- if (row.validFrom === validFrom && row.validUntil === validUntil && row.timeZone === s.timeZone) return false
+ if (row.validFrom === validFrom && row.validUntil === validUntil && row.timeZone === s.timeZone) {
+  if (s.lockDeviceId && row.lock.state === 'manual') row.lock = { ...row.lock, state: 'pending', error: null }
+  return false
+ }
  Object.assign(row, { validFrom, validUntil, timeZone: s.timeZone, revision: newId() })
  if (s.lockDeviceId || row.lock.providerId) row.lock = { ...row.lock, state: 'pending', error: null }
  return true

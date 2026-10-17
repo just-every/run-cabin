@@ -35,7 +35,7 @@ test('public CLI archive round trip refuses damaged or populated stores and resp
     await h.cmd('import.approve',{id:preview.id,fingerprint:preview.fingerprint})
     const p=(await h.state()).properties[0]
     const cleaner=await h.person('Taylor')
-    const d=await h.cmd('calendar.prepare',{propertyId:p.id,channel:'Airbnb',calendar:'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:archive-stay\r\nDTSTART;VALUE=DATE:20261101\r\nDTEND;VALUE=DATE:20261105\r\nSUMMARY:Archive stay\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'})
+    const d=await h.cmd('calendar.prepare',{propertyId:p.id,channel:'Airbnb',calendar:'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:archive-stay\r\nDTSTART;VALUE=DATE:20260101\r\nDTEND;VALUE=DATE:20260105\r\nSUMMARY:Archive stay\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'})
     await h.cmd('calendar.approve',{id:d.id,revision:d.revision})
     const booking=(await h.state()).bookings[0]
     const turnover=await h.cmd('turnover.prepare',{bookingId:booking.id,cleanerId:cleaner.id,checklist:['Linen changed']})
