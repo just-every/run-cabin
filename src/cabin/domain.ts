@@ -50,10 +50,10 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  const state={...data,books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
-/** A turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */
+/** A completed turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */
 export async function turnoverPhoto(db:D1Database,actor:Actor,id:string,byPhotoId=false){
  need(!actor.isAgent,'Human access required for photo evidence',403);await assertLive(db,actor)
- const photo=await db.prepare(`SELECT p.id,p.mime_type,hex(p.bytes) AS bytes_hex,r.kind,r.data FROM cb_photos p JOIN cb_records r ON r.id=p.turnover_id AND r.kind IN ('turnovers','tasks') WHERE p.${byPhotoId?'id':'turnover_id'}=? ORDER BY p.position LIMIT 1`).bind(id).first<any>()
+ const photo=await db.prepare(`SELECT p.id,p.mime_type,hex(p.bytes) AS bytes_hex,r.kind,r.data FROM cb_photos p JOIN cb_records r ON r.id=p.turnover_id AND r.kind IN ('turnovers','tasks') WHERE p.id=${byPhotoId?'?':"(SELECT json_extract(data,'$.completion.photoId') FROM cb_records WHERE kind='turnovers' AND id=?)"}`).bind(id).first<any>()
  need(photo,'Photo not found',404);const row=JSON.parse(photo.data),cleaner=actor.role==='cleaner'
  const allowed=photo.kind==='turnovers'?cleaner&&row.cleanerId===actor.memberId&&row.status==='completed':cleaner&&(row.assigneeId===actor.memberId||row.raisedBy===actor.id)
  need(actor.role==='owner'||actor.role==='manager'||allowed,'Photo not found',404)

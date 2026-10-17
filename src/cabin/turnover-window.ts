@@ -13,6 +13,18 @@ export function validCompletion(t: Turnover, b: Booking, s: HomeSettings) {
   && (!t.checkedOut || Date.parse(t.checkedOut.at) >= checkout)
 }
 
+/** Why a completed cleaning no longer counts for its stay, or null while it still does. */
+export function staleCompletion(t: Turnover, b: Booking, s: HomeSettings, windowStart: string, oldZone: string) {
+ if (b.status !== 'confirmed' || t.bookingRevision !== b.revision) return 'the stay before it changed'
+ if (oldZone !== s.timeZone) return 'the home’s time zone changed'
+ // A job approved by hand takes its first window at the next commit; only a moved window counts.
+ if ((t.windowStart && t.windowStart !== windowStart) || !validCompletion(t, b, s)) return 'the check-out time changed after it was marked ready'
+ return null
+}
+
+/** Marked ready after the next guests' check-in: kept, and shown as finished late. */
+export const finishedLate = (t: Turnover, s: HomeSettings) => !!(t.status === 'completed' && t.completion && t.nextBookingId && t.windowEnd && Date.parse(t.completion.completedAt) > instant(t.windowEnd, s.timeZone))
+
 /** Cleaner access lasts up to six hours, ending sooner for the next arrival. */
 export function cleaningAccess(s: HomeSettings, t: Turnover) {
  const start = instant(t.windowStart!, s.timeZone)

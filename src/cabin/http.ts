@@ -17,6 +17,7 @@ import { settle } from './settle'
 import { guestStayResponse } from './guest'
 import { fail,need,type Actor } from './model'
 import { renderApp } from './ui'
+import { readyMessage } from './ui/turnovers'
 import { bookingResponse } from './direct/http'
 import { directCommand } from './direct/admin'
 import { stay } from './direct/store'
@@ -36,13 +37,13 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
-function savedMessage(name:string|null,who:Actor){
+function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  if(name==='task.raise')return who.role==='cleaner'?'Reported. It is saved on this job below, and your manager sees it under Maintenance.':'Maintenance task added. It is listed under Maintenance with its photos.'
- if(name==='turnover.complete')return 'Marked ready. The owner sees it on Readiness.'
+ if(name==='turnover.complete')return readyMessage(state,record)
  if(name==='task.close')return 'Task closed. The fix and its photos are kept on the task.'
  return undefined
 }
-function actionMessage(name:string,result:any,local:boolean){
+function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='recovery.ai.test')return result.message
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
  if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
@@ -56,7 +57,7 @@ function actionMessage(name:string,result:any,local:boolean){
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
  if(name==='statement.approve')return 'Statement approved and frozen. Owner email delivery status is shown below.'
  if(name==='statement.deliver')return 'Owner email requested. Check delivery status below.'
- if(name==='turnover.complete')return `Marked ready with ${result.completion.photos.length} photo${result.completion.photos.length===1?'':'s'}. The owner sees it on Readiness.`
+ if(name==='turnover.complete')return readyMessage(state,result.id)
  if(name==='turnover.checkout')return 'Check-out recorded.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
  if(name==='turnover.approve')return 'Approved and assigned. The cleaner is emailed the window, address and door code.'
@@ -133,7 +134,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
-   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from'),thread,message:savedMessage(url.searchParams.get('done'),who)})
+   if(pages.has(path)){const state=await snapshot(env,who);return renderApp(state,path,{from:url.searchParams.get('from'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
@@ -144,7 +145,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
-   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true'),result,thread})
+   const state=await snapshot(env,who);return renderApp(state,back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})

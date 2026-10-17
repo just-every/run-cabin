@@ -16,7 +16,8 @@ Checklist and photo settings apply immediately to every unfinished turnover, inc
 
 - **A new stay** gets one turnover, from its check-out to the next check-in at that home (or the same day's check-in time when no next stay is booked yet). Stays that checked out before today start nothing.
 - **A moved stay** (a channel changes the dates) moves its turnover window and codes, and so does the turnover before it. The cleaner gets an email that replaces the earlier one.
-- **A new next arrival** updates the gap shown on a completed turnover too. Changing the preceding stay reopens its completed turnover, as does a check-out change that makes the earlier cleaning invalid. The home needs fresh completion evidence after that stay checks out.
+- **A new next arrival** updates the gap shown on a completed turnover too. Changing the preceding stay reopens its completed turnover, as does a check-out change that makes the earlier cleaning invalid. The job says when and why it was reopened, and the cleaner marks it ready again after that stay checks out. Photos already uploaded for the job are reused rather than stored twice.
+- **Cleaning that runs late**: a job marked ready after the next guests' check-in time stays done. The cleaner is told at once that it finished after the check-in; the job shows it, and **Readiness** shows that arrival as not ready with "Cleaning finished after this arrival".
 - **A cancelled stay** cancels its turnover and both its codes, and the cleaner is told.
 - **Reassigning** a turnover (choose **Reassign to** on the job) gives the new cleaner fresh digits and an email; the old cleaner's code stops working and they are told it is no longer theirs.
 

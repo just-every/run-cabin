@@ -40,7 +40,7 @@ export async function taskCommand(c: Context, name: string, p: Record<string, un
   need(['owner', 'manager'].includes(c.actor.role) || (c.actor.role === 'cleaner' && row.assigneeId === c.actor.memberId), 'Task not found', 404); exact(row, p.revision)
   need(row.status === 'open', 'This task is already closed', 409)
   const photos = photoList(p, 0, 6), note = optional(p.note, 'note', 1000)
-  Object.assign(row, { status: 'closed', closedBy: c.actor.id, closedAt: c.now, closeNote: note, closePhotos: await storePhotos(c, row.id, photos, note || `Fixed: ${row.title}`, row.photos.length), revision: newId() })
+  Object.assign(row, { status: 'closed', closedBy: c.actor.id, closedAt: c.now, closeNote: note, closePhotos: await storePhotos(c, row.id, photos, note || `Fixed: ${row.title}`, row.photos.map(p => p.id)), revision: newId() })
   c.entityId = row.id; return row
  }
  return undefined

@@ -1,7 +1,7 @@
 // Keep successful form responses on their workspace page, including one-time credentials.
 if (location.pathname === '/app/action' && document.body.dataset.page) history.replaceState(null, '', document.body.dataset.page)
-// A saved-photo confirmation (?done=) shows once; a reload does not repeat it.
-if (new URLSearchParams(location.search).has('done')) { const here = new URL(location.href); here.searchParams.delete('done'); history.replaceState(null, '', here.pathname + here.search + here.hash) }
+// A saved-photo confirmation (?done=, with the saved ?record=) shows once; a reload does not repeat it.
+if (new URLSearchParams(location.search).has('done')) { const here = new URL(location.href); here.searchParams.delete('done'); here.searchParams.delete('record'); history.replaceState(null, '', here.pathname + here.search + here.hash) }
 
 document.querySelector('[data-signout]')?.addEventListener('click', async () => {
   const response = await fetch('/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
@@ -43,7 +43,7 @@ document.querySelectorAll('form[data-photos]').forEach(form => form.addEventList
     if (!response.ok) throw Error(result.error || 'This could not be saved.')
     // The page it returns to says what was saved (?done=), and opens at the card it came from.
     const next = new URL(action.searchParams.get('returnTo') || '/app', location.origin), card = form.closest('[id]')
-    next.searchParams.set('done', name)
+    next.searchParams.set('done', name); if (result.result?.id) next.searchParams.set('record', result.result.id)
     location.assign(next.pathname + next.search + (card ? '#' + card.id : ''))
   } catch (error) { notice.textContent = error.message; button.disabled = false }
 }))

@@ -143,6 +143,18 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(first.completion, undefined)
     assert.equal(first.checkedOut, undefined)
     assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready not-ready"/)
+
+    // Casey is told why. Once that stay has checked out, the reopened job is marked
+    // ready again: the photos it already holds are reused, and only a new one is stored.
+    assert.match((await h.send('/app/turnovers', undefined, casey.cookie)).text, /Reopened [^<]*<\/strong>: the stay before it changed/)
+    await h.cmd('reservation.move', { id: ana.id, start: day(-2), end: today })
+    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    const again = await h.cmd('turnover.complete', { ...ready, revision: first.revision, checks: first.checklist, photos: [...ready.photos, ready.photos[0]] }, casey.cookie)
+    assert.equal(again.status, 'completed')
+    assert.deepEqual(again.completion.photos.slice(0, 3).map(p => p.id), done.completion.photos.map(p => p.id))
+    assert.equal((await h.db.prepare('SELECT COUNT(*) AS n FROM cb_photos WHERE turnover_id=?').bind(first.id).first()).n, 4)
+    assert.match((await h.send(`/app/turnovers?done=turnover.complete&record=${first.id}`, undefined, casey.cookie)).text, /role="status">Marked ready with 4 photos\./)
+    assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready ready"/)
   } finally { await h.close() }
 })
 
