@@ -2,7 +2,7 @@ All private routes use the installation’s native operator session. The install
 
 `GET /api/cabin/state` returns the current state. `POST /api/cabin/command` accepts `{"name":"command.name","input":{}}` and returns `{"result":...}`. Human POSTs require the exact installation `Origin`; cross-site fetches are refused. This Origin check also protects plain HTML forms and multipart uploads from CSRF. Errors return `{"error":"..."}` with HTTP 400, 401, 403, 404 or 409. Domain money is always an integer number of cents.
 
-The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/turnovers`, `/app/maintenance`, `/app/statements`, `/app/people`, `/app/import` and `/app/agent`. Forms POST to `/app/action?name=COMMAND&returnTo=/app/PAGE`. JSON and urlencoded bodies are accepted; forms with photos also accept multipart, with each photo in a `photoFiles` field (up to 256 KB each). Requests are limited to 4,000,000 bytes. Revision UUIDs are opaque strings; property and member revisions are positive integers.
+The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/turnovers`, `/app/maintenance`, `/app/statements`, `/app/people`, `/app/import`, `/app/agent` and `/app/inbox` (add `?thread=ID` to open one guest's thread). Forms POST to `/app/action?name=COMMAND&returnTo=/app/PAGE`. JSON and urlencoded bodies are accepted; forms with photos also accept multipart, with each photo in a `photoFiles` field (up to 256 KB each). Requests are limited to 4,000,000 bytes. Revision UUIDs are opaque strings; property and member revisions are positive integers.
 
 | Command | Input | Authority and result |
 | --- | --- | --- |
@@ -15,9 +15,10 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/
 | `channel.sync` | `id` | Owner or manager. Reads that link now. A failed read marks it `stale` with `error` and keeps its last nights. |
 | `channel.disconnect` | `id` | Owner or manager. Stops reading the link; its stays remain. |
 | `export.publish` | `propertyId` | Owner or manager. Creates or replaces the home's secret export token; old links stop working. |
-| `reservation.request` | `propertyId, kind: "stay"\|"block", start, end` (`YYYY-MM-DD`, checkout exclusive); stays add `channel, guestName`, optional `arrivalTime` (`HH:MM`); blocks optional `note` | Owner or manager. Returns the request with `status` `accepted` (and `bookingId`) or `declined` with `reason` and the overlapping booking in `overlaps`. |
+| `reservation.request` | `propertyId, kind: "stay"\|"block", start, end` (`YYYY-MM-DD`, checkout exclusive); stays add `channel, guestName`, optional `arrivalTime` (`HH:MM`), `guestEmail`, `guestPhone`; blocks optional `note` | Owner or manager. Returns the request with `status` `accepted` (and `bookingId`) or `declined` with `reason` and the overlapping booking in `overlaps`. |
 | `reservation.cancel` | `id` (booking) | Owner or manager. Cancels a hold or block made in Cabin. Channel stays are cancelled on the channel. |
-| `booking.details` | `id`, optional `guestName, arrivalTime` | Owner or manager. Sets or clears a stay's guest name and arrival time. |
+| `booking.details` | `id`, optional `guestName, arrivalTime, guestEmail, guestPhone, channelRef` | Owner or manager. Sets or clears a stay's guest name and arrival time; when `guestEmail` or `guestPhone` is given, sets both (an empty value clears it). `channelRef` is a Booking.com reservation number. |
+| `reservation.move` | `id, start, end` | Owner or manager. New dates for a stay Cabin holds (not a channel stay or a Stripe checkout); refused with the overlapping stay named. Its turnover, door codes and scheduled messages follow. |
 | `turnover.prepare` | `bookingId, cleanerId, checklist: string[]` | Owner, manager or agent. Booking must be approved and confirmed; cleaner must have an active cleaner grant. Returns an immutable assignment draft. |
 | `turnover.approve` | `id, revision` | Owner or manager. Publishes that exact checklist, cleaner and booking revision, replacing the stay's open dispatched turnover; refused when the stay's turnover is already done. |
 | `turnover.assign` | `id, revision, cleanerId` | Owner or manager. Assigns or reassigns an open turnover; the new cleaner gets fresh door-code digits and an email, the previous one is told. |
@@ -29,6 +30,15 @@ The equivalent HTML routes are `/app`, `/app/calendar`, `/app/readiness`, `/app/
 | `task.close` | `id, revision, note?, photos?` | Owner, manager or the task's assignee. |
 | `statement.prepare` | `propertyId, month, lines: [{description, amountCents}]`, optional `managementFeeCents` | Owner, manager or agent. Month is `YYYY-MM`. Returns a frozen draft including property/owner details and all money totals. |
 | `statement.approve` | `id, revision` | Owner or manager. Property terms must still match the reviewed revision. Only one approved statement per property and month. |
+| `inbox.address` | `address, revision` | Owner or manager. The address routed to Cabin; guest email to exactly it lands in threads, and Cabin's messages ask guests to reply to it. Empty removes it. `revision` is the inbox settings revision (empty for the first save). |
+| `inbox.schedule` | `revision` and for each of `checkin`, `checkout`, `review`: `…Enabled, …Hours, …Subject, …Template` | Owner or manager. The three lifecycle messages: hours before check-in or check-out, or after check-out (0–720). Every upcoming stay follows them at once. |
+| `inbox.ai.save` | `revision, key?, model?, workspace?` | Owner or manager. Seals the install's Anthropic key (needed the first time); state shows only its last four characters. Refused on RER Managed hosting. |
+| `inbox.ai.remove` / `inbox.ai.test` | `revision` / none | Owner or manager. Removes the key, or drafts a reply for a made-up stay and returns `{ok, message}`. |
+| `inbox.channels` | `revision`, `booking_PROPERTYID` | Owner or manager. Each home's Booking.com property ID, used once a Booking.com machine account is connected. |
+| `message.send` | `id, revision, text?` | Owner or manager. Approves a waiting draft with that exact text (edited or not), records the approval and sends it once on the guest's channel. |
+| `message.discard` | `id, revision` | Owner or manager. Discards a draft; nothing is sent. |
+| `message.compose` | `thread, text, subject?` | Owner or manager. A message the person wrote, to the guest of that thread on the channel they last wrote on (else email). Refused with the reason when Cabin cannot reach the guest. |
+| `message.retry` | `id` | Owner or manager. Sends a failed message again. |
 | `agent.create` | `label` | Owner. Returns a random bearer token once, its ID and expiry. Credentials expire after 30 days and are bound to the current owner version. Only their hashes are stored. |
 | `agent.revoke` | `id` | Owner. Revokes that credential immediately. |
 | `privacy.erase` | `entity: "property", id, revision` | Owner. Erases the property, its bookings/calendar reviews, turnover checklist/photo evidence and statements. Also erases the property’s retained move-in source and invalidates older archive checkpoints. Destructive: export anything that must be kept before requesting erasure. |
@@ -53,6 +63,10 @@ Every confirmed booking and block holds its nights. `reservation.request` declin
 Turnovers are dispatched by Cabin itself: every commit that adds, moves or cancels a stay (a channel sync, an approved calendar file, a request) creates, moves or cancels that stay's one turnover, its guest door code and its cleaner's door code, and writes the cleaner's email; emails are sent right after the commit and retried by the Cron. The state read includes `homeSettings`, `codes` (door codes with their windows and lock state), `notices` (each email and whether it was sent) and `tasks`. Guests open their code at `GET /stay/TOKEN`, the secret link on their stay's guest code.
 
 Cleaners see only their published jobs, the associated property names, addresses and booking dates (no guest names), their own door codes, the tasks they raised or were given, and their own grant. Owner contacts, commission terms, other cleaners' jobs, guest codes, statements, calendar reviews and import journals are withheld. Agents never see door codes. Photo reads require the same current permission: `GET /api/cabin/turnovers/ID/photo` (the first photo) or `/api/cabin/photos/PHOTO_ID`. Photo bytes are persisted in D1, authenticated on retrieval and included in installation archives. PNG structure and CRCs or JPEG marker structure are checked; base64 text and a MIME label alone are insufficient. Completion cannot be overwritten or submitted twice.
+
+## Guest inbox
+
+Every commit that adds, moves or cancels a stay also schedules, moves or cancels its check-in, checkout and review messages (`scheduled`, with `dueAt` and `deadline` as UTC instants from the stay's dates and the home's times). Due messages are claimed and sent after each command and on the five-minute Cron, and recorded in `messages` with their status (`sent`, `suppressed` in development, `unavailable` with the reason, `failed` with the provider's reason). Guest email arrives through the Worker's `email` handler for the address in `inbox`; Twilio texts through `POST /inbound/sms` (signed requests only); Booking.com messages on the Cron. Each guest message gets a draft (`status: "draft"`, `source` `ai` or `template`) that only `message.send` sends. Cleaners and agents read no messages, schedules or inbox settings, and the AI key is never returned.
 
 ## Statement money and CSV
 

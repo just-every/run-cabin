@@ -1,0 +1,21 @@
+{
+  "meta": { "ruid": "fixture-ruid-3" },
+  "warnings": [],
+  "data": {
+    "messages": [
+      {
+        "message_id": "7c1b4e50-5f72-11ef-9b1f-0b4a7d2c1e02",
+        "message_type": "free_text",
+        "content": "",
+        "timestamp": "2026-10-17T05:10:00.000Z",
+        "attachment_ids": [],
+        "sender": { "participant_id": "a6b3c2f8-1c4e-5d8a-9b7f-2e3d4c5b6a71", "metadata": { "participant_type": "guest", "name": "Lena Park" } },
+        "conversation": { "conversation_id": "f3a9c29d-480d-5f5b-a6c0-65451e335353", "conversation_type": "reservation", "conversation_reference": "3812391309" }
+      }
+    ],
+    "ok": "true",
+    "number_of_messages": 1,
+    "timestamp": "2026-10-17T05:10:01.000Z"
+  },
+  "errors": []
+}

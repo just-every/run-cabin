@@ -1,4 +1,5 @@
 import { type Context, type Booking, type Channel, type Request, need, text, newId, manager, property } from './model'
+import { emailOf, phoneOf } from './inbox/threads'
 // One unit/night inventory per home: every confirmed booking or block holds its
 // nights [first night, checkout). Commits are serialised by cb_meta's version
 // guard, so two requests for the same night cannot both be accepted.
@@ -26,6 +27,12 @@ function arrival(value: unknown) {
  const v = text(value, 'arrival time', 5); need(/^([01]\d|2[0-3]):[0-5]\d$/.test(v), 'Enter the arrival time as HH:MM'); return v
 }
 const optional = (value: unknown, label: string, max: number) => value === undefined || value === null || String(value).trim() === '' ? '' : text(value, label, max)
+/** The guest's email and phone on a stay: their thread in the inbox and where scheduled messages go. */
+function contact(p: Record<string, unknown>) {
+ const email = optional(p.guestEmail, 'guest email', 254), phone = optional(p.guestPhone, 'guest phone', 40)
+ need(!email || emailOf(email), 'Enter the guest’s email like name@example.com'); need(!phone || phoneOf(phone), 'Enter a US phone number with its area code, or a number starting with +')
+ return { ...(email ? { guestEmail: emailOf(email)! } : {}), ...(phone ? { guestPhone: phoneOf(phone)! } : {}) }
+}
 export async function reservationCommand(c: Context, name: string, p: Record<string, unknown>) {
  if (name === 'reservation.request') {
   manager(c.actor); const prop = property(c, p.propertyId), kind = p.kind === 'block' ? 'block' : 'stay', ch = kind === 'block' ? 'direct' : channel(p.channel)
@@ -35,7 +42,7 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
   const hit = held(c, prop.id).find(b => overlaps(b, { start, end }))
   const row: Request = { id: newId(), revision: newId(), propertyId: prop.id, channel: ch, kind, start, end, guestName, arrivalTime: kind === 'stay' ? arrival(p.arrivalTime) : null, note, status: hit ? 'declined' : 'accepted', reason: hit ? `Overlaps ${describe(hit)}` : null, overlaps: hit?.id ?? null, bookingId: null, requestedBy: c.actor.id, requestedAt: c.now }
   if (!hit) {
-   const booking: Booking = { id: newId(), revision: newId(), uid: `cabin-${row.id}`, start, end, summary: kind === 'block' ? note || 'Blocked' : guestName, cancelled: false, kind, propertyId: prop.id, channel: ch, status: 'confirmed', approvedAt: c.now, source: 'request', ...(kind === 'stay' ? { guestName } : {}), ...(row.arrivalTime ? { arrivalTime: row.arrivalTime } : {}) }
+   const booking: Booking = { id: newId(), revision: newId(), uid: `cabin-${row.id}`, start, end, summary: kind === 'block' ? note || 'Blocked' : guestName, cancelled: false, kind, propertyId: prop.id, channel: ch, status: 'confirmed', approvedAt: c.now, source: 'request', ...(kind === 'stay' ? { guestName, ...contact(p) } : {}), ...(row.arrivalTime ? { arrivalTime: row.arrivalTime } : {}) }
    c.data.bookings.push(booking); row.bookingId = booking.id
   }
   c.data.requests.push(row); c.entityId = row.id; return row
@@ -52,7 +59,18 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
   const guestName = optional(p.guestName, 'guest name', 120), time = arrival(p.arrivalTime)
   if (guestName) b.guestName = guestName; else delete b.guestName
   if (time) b.arrivalTime = time; else delete b.arrivalTime
+  if ('guestEmail' in p || 'guestPhone' in p) { const k = contact(p); delete b.guestEmail; delete b.guestPhone; Object.assign(b, k) }
+  if ('channelRef' in p) { const ref = optional(p.channelRef, 'reservation number', 64); need(!ref || /^[\w-]+$/.test(ref), 'Use the reservation number as the channel shows it'); if (ref) b.channelRef = ref; else delete b.channelRef }
   c.entityId = b.id; return b
+ }
+ if (name === 'reservation.move') {
+  // New dates for a stay Cabin holds itself; its turnover, door code and scheduled messages follow it.
+  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId)
+  need(b.source === 'request', 'Change a channel stay on the channel; its next sync moves it here.', 409)
+  need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Its dates are part of the signed agreement.', 409)
+  const start = day(p.start, 'arrival date'), end = day(p.end, 'checkout date'); need(start < end, 'Checkout must follow arrival')
+  const hit = held(c, b.propertyId).find(o => o.id !== b.id && overlaps(o, { start, end })); need(!hit, `Those nights overlap ${hit ? describe(hit) : ''}`, 409)
+  Object.assign(b, { start, end, revision: newId(), approvedAt: c.now }); c.entityId = b.id; return b
  }
  return undefined
 }

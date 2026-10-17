@@ -1,0 +1,21 @@
+{
+  "ToCountry": "US",
+  "ToState": "NC",
+  "SmsMessageSid": "SMfixture00000000000000000000000002",
+  "NumMedia": "0",
+  "ToCity": "BOONE",
+  "FromZip": "28607",
+  "SmsSid": "SMfixture00000000000000000000000002",
+  "FromState": "NC",
+  "SmsStatus": "received",
+  "FromCity": "BOONE",
+  "Body": "",
+  "FromCountry": "US",
+  "To": "+18285550100",
+  "ToZip": "28607",
+  "NumSegments": "1",
+  "MessageSid": "SMfixture00000000000000000000000002",
+  "AccountSid": "ACfixture00000000000000000000000000",
+  "From": "",
+  "ApiVersion": "2010-04-01"
+}

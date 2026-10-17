@@ -21,7 +21,7 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
  owner(c.actor);const entity=text(p.entity??'property','entity'),id=text(p.id,'record ID'),revision=integer(p.revision,'revision',1),fence=await checkpoint(c.db)
  if(entity==='property'){
   const prop=c.data.properties.find(v=>v.id===id);need(prop,'Property not found',404);need(prop.revision===revision,'Property changed; reload before erasing',409)
-  const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if(row.propertyId===id)ids.push(row.id)
+  const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
   c.queries.push(query("DELETE FROM cb_photos WHERE turnover_id IN (SELECT id FROM cb_records WHERE kind IN ('turnovers','tasks') AND json_extract(data,'$.propertyId')=?)",id),query('DELETE FROM cb_approvals WHERE record_id IN (SELECT id FROM cb_records WHERE json_extract(data,\'$.propertyId\')=?)',id),query("DELETE FROM cb_records WHERE json_extract(data,'$.propertyId')=?",id),query('DELETE FROM cb_import_revisions WHERE property_id=?',id),query('DELETE FROM cb_direct_stays WHERE property_id=?',id),query('DELETE FROM cb_direct_homes WHERE property_id=?',id),query('DELETE FROM cb_properties WHERE id=?',id),query("INSERT INTO cb_erasure_fences(entity,id_hash,at) VALUES('property',?,?)",await sha(id),c.now))
   // Reviewed source bytes live only in these plans and kit custody. Remove any
   // review containing this property; kit retains anonymous source tombstones.

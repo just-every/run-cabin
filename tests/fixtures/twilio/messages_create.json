@@ -1,0 +1,22 @@
+{
+  "account_sid": "ACfixture00000000000000000000000000",
+  "api_version": "2010-04-01",
+  "body": "",
+  "date_created": "Sat, 17 Oct 2026 05:01:45 +0000",
+  "date_sent": null,
+  "date_updated": "Sat, 17 Oct 2026 05:01:45 +0000",
+  "direction": "outbound-api",
+  "error_code": null,
+  "error_message": null,
+  "from": "+18285550100",
+  "messaging_service_sid": null,
+  "num_media": "0",
+  "num_segments": "1",
+  "price": null,
+  "price_unit": "USD",
+  "sid": "SMfixture00000000000000000000000001",
+  "status": "queued",
+  "subresource_uris": { "media": "/2010-04-01/Accounts/ACfixture00000000000000000000000000/Messages/SMfixture00000000000000000000000001/Media.json" },
+  "to": "",
+  "uri": "/2010-04-01/Accounts/ACfixture00000000000000000000000000/Messages/SMfixture00000000000000000000000001.json"
+}

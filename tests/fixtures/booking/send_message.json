@@ -1,0 +1,6 @@
+{
+  "errors": [],
+  "warnings": [],
+  "meta": { "ruid": "fixture-ruid-2" },
+  "data": { "guest_has_account": true, "message_id": "6b9a3d40-5f72-11ef-9b1f-0b4a7d2c1e01", "ok": "true" }
+}

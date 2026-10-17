@@ -46,6 +46,13 @@ export interface Bindings {
  MAIL_ACCOUNT_ID?: string
  /** The owner's Seam API key: door codes go to connected smart locks (src/cabin/locks.ts). */
  SEAM_API_KEY?: string
+ /** Texts to guests after the owner's US A2P registration (src/cabin/inbox/adapters/twilio.ts). */
+ TWILIO_ACCOUNT_SID?: string
+ TWILIO_AUTH_TOKEN?: string
+ TWILIO_FROM?: string
+ /** A Booking.com connectivity machine account for guest messages (src/cabin/inbox/adapters/booking.ts). */
+ BOOKING_MESSAGING_USER?: string
+ BOOKING_MESSAGING_PASSWORD?: string
 }
 
 export const runtimeBindings = (env: Bindings): Bindings => env.RER_DEV_ORIGIN && env.AUTH_LOCAL === 'true' ? { ...env, AUTH_ORIGIN: env.RER_DEV_ORIGIN } : env
