@@ -651,99 +651,99 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Target | 6 | 22 | 54 | 82 |
-| Push further | 0 | 3 | 3 | 6 |
+| Published | 0 | 0 | 0 | 0 |
+| Target and push further | 6 | 25 | 57 | 88 |
 | All | 6 | 25 | 57 | 88 |
 
 **88 clauses: 6 done, 25 partial, 57 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
-| PROPERTY-001 | A usable vacation-rental property register | target | partial | `src/cabin/people.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (line 17) | Only names, owner contact and a fixed commission are implemented; property content, time zones and versioned management agreements are absent. |
-| AUTH-001 | Current native authority on every private door | target | done | `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 17, 67) |  |
-| AUTH-002 | PMS roles and property-specific permissions | target | missing |  | No implementing flow in the audited tree. |
-| CONTROL-001 | Exact human approval and immutable publication | target | done | `src/cabin/model.ts`; `src/cabin/storage.ts`; `src/cabin/calendars.ts`; `src/cabin/turnovers.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (lines 31, 55, 67, 90) |  |
-| CONTROL-002 | Revocable draft-only bearer access | target | done | `src/cabin/credentials.ts`; `src/cabin/http.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 109) |  |
-| SYNC-001 | Reviewed calendar files remain honest snapshots | target | done | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 31, 55) |  |
-| SYNC-002 | Airbnb two-way channel management | target | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (line 31) | Only manually supplied Airbnb calendar files exist. No approved two-way transport, rates or acknowledgement handling is implemented. |
-| SYNC-003 | Vrbo two-way channel management | target | missing |  | No implementing flow in the audited tree. |
-| SYNC-004 | Booking.com two-way channel management | target | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (line 31) | Manual Booking.com calendar snapshots exist; connectivity, rate plans, collection-method tracking and live acknowledgements do not. |
-| SYNC-005 | Listing content and distribution | target | missing |  | No implementing flow in the audited tree. |
-| SYNC-006 | Inventory holds, measured closure latency and double-booking prevention | target | missing |  | No implementing flow in the audited tree. |
-| SYNC-007 | Inspectable sync failures and safe recovery | target | missing |  | No implementing flow in the audited tree. |
-| SYNC-008 | Inquiries, booking requests, special offers and alterations | target | missing |  | No implementing flow in the audited tree. |
-| SYNC-009 | Automatic iCal sync for channels without an API | target | partial | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (lines 31, 55) | RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing. |
-| SYNC-010 | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
-| RES-001 | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 31) | A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not. |
-| RES-002 | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
-| RES-003 | Owner stays and maintenance blocks | target | missing |  | No implementing flow in the audited tree. |
-| RES-004 | Stay rules, fees and cancellation policies | target | missing |  | No implementing flow in the audited tree. |
-| RES-005 | Linked rooms and whole-property inventory | target | missing |  | No implementing flow in the audited tree. |
-| RES-006 | Quotes and conversion to a reserved stay | target | missing |  | No implementing flow in the audited tree. |
-| PRICE-001 | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
-| PRICE-002 | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
-| PRICE-003 | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
-| WEB-001 | Branded direct-booking website | target | missing |  | No implementing flow in the audited tree. |
-| WEB-002 | Embeddable booking engine | target | missing |  | No implementing flow in the audited tree. |
-| WEB-003 | Signed rental agreements | target | missing |  | No implementing flow in the audited tree. |
-| WEB-004 | Guest identity verification | target | missing |  | No implementing flow in the audited tree. |
-| WEB-005 | Promotions, upsells and gap-night offers | target | missing |  | No implementing flow in the audited tree. |
-| PAY-001 | Processor-backed USD checkout and manual payments | target | missing |  | No implementing flow in the audited tree. |
-| PAY-002 | Scheduled collection and payment follow-up | target | missing |  | No implementing flow in the audited tree. |
-| PAY-003 | Damage deposits, refunds and cancellation settlement | target | missing |  | No implementing flow in the audited tree. |
-| PAY-004 | Protection partners and chargeback casework | target | missing |  | No implementing flow in the audited tree. |
-| PAY-005 | Booking.com virtual credit cards | target | missing |  | No implementing flow in the audited tree. |
-| PAY-006 | Booking.com property-collect guest cards | target | missing |  | No implementing flow in the audited tree. |
-| GUEST-001 | Guest profiles and repeat-stay context | target | missing |  | No implementing flow in the audited tree. |
-| MESSAGE-001 | Unified channel, SMS, email and WhatsApp inbox | target | missing |  | No implementing flow in the audited tree. |
-| MESSAGE-002 | Team routing and response accountability | target | missing |  | No implementing flow in the audited tree. |
-| MESSAGE-003 | Lifecycle messaging and post-stay follow-up | target | missing |  | No implementing flow in the audited tree. |
-| MESSAGE-004 | Source-grounded AI replies with controlled sending | target | missing |  | No implementing flow in the audited tree. |
-| GUEST-002 | Guest check-in and stay portal | target | missing |  | No implementing flow in the audited tree. |
-| GUEST-003 | Reviews and consented repeat-guest marketing | target | missing |  | No implementing flow in the audited tree. |
-| GUEST-004 | Automated host reviews of Airbnb guests | target | missing |  | No implementing flow in the audited tree. |
-| OPS-001 | Reservation-triggered turnover dispatch | target | partial | `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (line 67) | Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment, capacity/travel-time routing and escalation are absent. |
-| EVIDENCE-001 | Private immutable cleaner completion evidence | target | done | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 67) |  |
-| OPS-002 | Cleaner mobile work with reliable uploads | target | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `public/cabin.css`; `tests/cabin.test.mjs` (line 67) | Online checklist/caption and one private photo exist; native/offline capture, multiple required photos and acceptance are missing. |
-| OPS-003 | Readiness is verified before arrival | target | partial | `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs` (line 67) | Cleaner photo completion is visible; cross-team readiness, supply/restock items, inspections and arrival gates are absent. |
-| OPS-004 | Maintenance, inspections and work-order expenses | target | missing |  | No implementing flow in the audited tree. |
-| OPS-005 | Stay-bound smart-lock automation | target | missing |  | No implementing flow in the audited tree. |
-| OPS-006 | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
-| OPS-007 | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
-| OPS-008 | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 31, 67) | Bookings per property and channel and each cleaner’s assigned turnovers are listed separately; no day board, actual checkout times, guest names or arrival times, door-code state, request outcomes or portfolio readiness summary exist. |
-| FIN-001 | Reservation-linked USD trust subledgers | target | missing |  | No implementing flow in the audited tree. |
-| FIN-002 | Payout reconciliation per reservation | target | missing |  | No implementing flow in the audited tree. |
-| FIN-003 | Management agreements and expense allocation | target | partial | `src/cabin/people.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (line 90) | Fixed property commission and manually supplied signed lines exist; agreement models and derived allocation rules are absent. |
-| FIN-004 | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/ui/statements.ts`; `tests/cabin.test.mjs` (line 90) | Manual AUD statement arithmetic, exact approval, frozen details and formula-safe CSV ship. USD, reconciliation, PDF, scheduled generation/delivery and owner access are missing. |
-| FIN-005 | Rental-owner portal and personal stays | target | missing |  | No implementing flow in the audited tree. |
-| FIN-006 | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
-| FIN-007 | QuickBooks Online accounting synchronization | target | missing |  | No implementing flow in the audited tree. |
-| FIN-008 | US occupancy, lodging and sales-tax obligations | target | missing |  | No implementing flow in the audited tree. |
-| FIN-009 | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
-| REPORT-001 | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
-| REPORT-002 | Saved reports and scheduled sharing | target | missing |  | No implementing flow in the audited tree. |
-| API-001 | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` (lines 31, 109) | Session commands and draft-only bearer API exist; booking/finance APIs, event webhooks, scoped app grants and Zapier do not. |
-| MIGRATE-001 | Reviewed property-register move-in | target | partial | `src/cabin/movein/index.ts`; `src/cabin/movein/csv.ts`; `src/cabin/movein/targets.ts`; `docs/move-in.md`; `tests/cabin.test.mjs` (line 124); `tests/archive.test.mjs` (line 27) | Basic inert preview, apply, journal, guarded undo and erasure round-trip are tested. All documented collision, resume and dependency cases are not independently exercised. |
-| MIGRATE-002 | Migration from Guesty | target | missing |  | No implementing flow in the audited tree. |
-| MIGRATE-003 | Migration from Hostaway | target | missing |  | No implementing flow in the audited tree. |
-| MIGRATE-004 | Migration from OwnerRez | target | missing |  | No implementing flow in the audited tree. |
-| MIGRATE-005 | Migration from Lodgify | target | missing |  | No implementing flow in the audited tree. |
-| MIGRATE-006 | Switching from Hospitable and Breezeway operations | target | missing |  | No implementing flow in the audited tree. |
-| MIGRATE-007 | CSV history, cutover rehearsal and accountable go-live | target | missing |  | No implementing flow in the audited tree. |
-| MOBILE-001 | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
-| INTERFACE-001 | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
-| DATA-001 | Complete portable product records and safe restore | target | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs` (line 27) | Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |
-| DATA-002 | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs` (line 27) | Property cascade/source retirement and later-journal refusal are exercised. Member erasure refuses used/invited grants; broad guest/operator erasure, retention holds and completion receipts need work. |
-| DATA-003 | Every booking, guest and payout stays in the owner’s installation | target | partial | `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/archive.test.mjs` (line 27) | Today’s properties, calendar bookings, turnovers, photos and statements live in the installation’s own D1 storage; guest, message and payout records do not exist yet, and no test records outbound requests to show nothing else leaves. |
-| AUDIT-001 | Permanent attributable business and automation history | target | partial | `src/cabin/storage.ts`; `src/cabin/credentials.ts`; `src/cabin/movein/index.ts`; `migrations/core/0015_cabin.sql`; `tests/cabin.test.mjs` (line 31); `tests/archive.test.mjs` (line 27) | Domain/credential events, independent approvals and import journals exist; comprehensive provider/read history, anonymization guarantees and search/export are incomplete. The state read shows only the latest 100 events. |
-| SECURITY-001 | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
-| HTTP-001 | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
-| RUNTIME-001 | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |
-| AGENT-001 | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/http.ts`; `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (lines 67, 109) | Bearer-prepared turnover drafts and human completion evidence are foundations only; no recovery agent, automatic dispatch, relocation, compensation, locks or financial closure exists. |
-| AGENT-002 | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/statements.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 90, 109) | Agents can prepare manual statement drafts for exact human approval; settlement matching, record pursuit, correcting postings and payout closure are absent. |
-| AGENT-003 | Resolve guest issues through accepted field work | push-further | missing |  | No implementing flow in the audited tree. |
-| AGENT-004 | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
-| AGENT-005 | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
-| AGENT-006 | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/model.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 109, 55) | Current agents are strictly draft-only with human revision approval. Expanded tool grants, budgets, durable cases and external-action reconciliation do not exist. |
-| BOUNDARY-001 | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
-| OPEN-001 | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |
+| `PROPERTY-001` | A usable vacation-rental property register | target | partial | `src/cabin/people.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (line 17) | Only names, owner contact and a fixed commission are implemented; property content, time zones and versioned management agreements are absent. |
+| `AUTH-001` | Current native authority on every private door | target | done | `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 17, 67) |  |
+| `AUTH-002` | PMS roles and property-specific permissions | target | missing |  | No implementing flow in the audited tree. |
+| `CONTROL-001` | Exact human approval and immutable publication | target | done | `src/cabin/model.ts`; `src/cabin/storage.ts`; `src/cabin/calendars.ts`; `src/cabin/turnovers.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (lines 31, 55, 67, 90) |  |
+| `CONTROL-002` | Revocable draft-only bearer access | target | done | `src/cabin/credentials.ts`; `src/cabin/http.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 109) |  |
+| `SYNC-001` | Reviewed calendar files remain honest snapshots | target | done | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 31, 55) |  |
+| `SYNC-002` | Airbnb two-way channel management | target | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (line 31) | Only manually supplied Airbnb calendar files exist. No approved two-way transport, rates or acknowledgement handling is implemented. |
+| `SYNC-003` | Vrbo two-way channel management | target | missing |  | No implementing flow in the audited tree. |
+| `SYNC-004` | Booking.com two-way channel management | target | partial | `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (line 31) | Manual Booking.com calendar snapshots exist; connectivity, rate plans, collection-method tracking and live acknowledgements do not. |
+| `SYNC-005` | Listing content and distribution | target | missing |  | No implementing flow in the audited tree. |
+| `SYNC-006` | Inventory holds, measured closure latency and double-booking prevention | target | missing |  | No implementing flow in the audited tree. |
+| `SYNC-007` | Inspectable sync failures and safe recovery | target | missing |  | No implementing flow in the audited tree. |
+| `SYNC-008` | Inquiries, booking requests, special offers and alterations | target | missing |  | No implementing flow in the audited tree. |
+| `SYNC-009` | Automatic iCal sync for channels without an API | target | partial | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (lines 31, 55) | RFC 5545 parsing, UID reconciliation, end-exclusive dates and malformed-file refusal exist for manually uploaded files; URL connections, scheduled polling, export feeds, inventory holds and stale-state alerts are missing. |
+| `SYNC-010` | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
+| `RES-001` | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 31) | A snapshot booking list and clash display ship; a live grid and integrated payment/readiness views do not. |
+| `RES-002` | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
+| `RES-003` | Owner stays and maintenance blocks | target | missing |  | No implementing flow in the audited tree. |
+| `RES-004` | Stay rules, fees and cancellation policies | target | missing |  | No implementing flow in the audited tree. |
+| `RES-005` | Linked rooms and whole-property inventory | target | missing |  | No implementing flow in the audited tree. |
+| `RES-006` | Quotes and conversion to a reserved stay | target | missing |  | No implementing flow in the audited tree. |
+| `PRICE-001` | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
+| `PRICE-002` | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
+| `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
+| `WEB-001` | Branded direct-booking website | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-002` | Embeddable booking engine | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-003` | Signed rental agreements | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-004` | Guest identity verification | target | missing |  | No implementing flow in the audited tree. |
+| `WEB-005` | Promotions, upsells and gap-night offers | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-001` | Processor-backed USD checkout and manual payments | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-002` | Scheduled collection and payment follow-up | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-004` | Protection partners and chargeback casework | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-005` | Booking.com virtual credit cards | target | missing |  | No implementing flow in the audited tree. |
+| `PAY-006` | Booking.com property-collect guest cards | target | missing |  | No implementing flow in the audited tree. |
+| `GUEST-001` | Guest profiles and repeat-stay context | target | missing |  | No implementing flow in the audited tree. |
+| `MESSAGE-001` | Unified channel, SMS, email and WhatsApp inbox | target | missing |  | No implementing flow in the audited tree. |
+| `MESSAGE-002` | Team routing and response accountability | target | missing |  | No implementing flow in the audited tree. |
+| `MESSAGE-003` | Lifecycle messaging and post-stay follow-up | target | missing |  | No implementing flow in the audited tree. |
+| `MESSAGE-004` | Source-grounded AI replies with controlled sending | target | missing |  | No implementing flow in the audited tree. |
+| `GUEST-002` | Guest check-in and stay portal | target | missing |  | No implementing flow in the audited tree. |
+| `GUEST-003` | Reviews and consented repeat-guest marketing | target | missing |  | No implementing flow in the audited tree. |
+| `GUEST-004` | Automated host reviews of Airbnb guests | target | missing |  | No implementing flow in the audited tree. |
+| `OPS-001` | Reservation-triggered turnover dispatch | target | partial | `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (line 67) | Manual drafts reference an approved booking and cleaner; automatic triggers, acceptance, reassignment, capacity/travel-time routing and escalation are absent. |
+| `EVIDENCE-001` | Private immutable cleaner completion evidence | target | done | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 67) |  |
+| `OPS-002` | Cleaner mobile work with reliable uploads | target | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `public/cabin.css`; `tests/cabin.test.mjs` (line 67) | Online checklist/caption and one private photo exist; native/offline capture, multiple required photos and acceptance are missing. |
+| `OPS-003` | Readiness is verified before arrival | target | partial | `src/cabin/turnovers.ts`; `src/cabin/ui/turnovers.ts`; `tests/cabin.test.mjs` (line 67) | Cleaner photo completion is visible; cross-team readiness, supply/restock items, inspections and arrival gates are absent. |
+| `OPS-004` | Maintenance, inspections and work-order expenses | target | missing |  | No implementing flow in the audited tree. |
+| `OPS-005` | Stay-bound smart-lock automation | target | missing |  | No implementing flow in the audited tree. |
+| `OPS-006` | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
+| `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
+| `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 31, 67) | Bookings per property and channel and each cleaner’s assigned turnovers are listed separately; no day board, actual checkout times, guest names or arrival times, door-code state, request outcomes or portfolio readiness summary exist. |
+| `FIN-001` | Reservation-linked USD trust subledgers | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-002` | Payout reconciliation per reservation | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/people.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (line 90) | Fixed property commission and manually supplied signed lines exist; agreement models and derived allocation rules are absent. |
+| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/ui/statements.ts`; `tests/cabin.test.mjs` (line 90) | Manual AUD statement arithmetic, exact approval, frozen details and formula-safe CSV ship. USD, reconciliation, PDF, scheduled generation/delivery and owner access are missing. |
+| `FIN-005` | Rental-owner portal and personal stays | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-007` | QuickBooks Online accounting synchronization | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-008` | US occupancy, lodging and sales-tax obligations | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
+| `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
+| `REPORT-002` | Saved reports and scheduled sharing | target | missing |  | No implementing flow in the audited tree. |
+| `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` (lines 31, 109) | Session commands and draft-only bearer API exist; booking/finance APIs, event webhooks, scoped app grants and Zapier do not. |
+| `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/index.ts`; `src/cabin/movein/csv.ts`; `src/cabin/movein/targets.ts`; `docs/move-in.md`; `tests/cabin.test.mjs` (line 124); `tests/archive.test.mjs` (line 27) | Basic inert preview, apply, journal, guarded undo and erasure round-trip are tested. All documented collision, resume and dependency cases are not independently exercised. |
+| `MIGRATE-002` | Migration from Guesty | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-003` | Migration from Hostaway | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-004` | Migration from OwnerRez | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-005` | Migration from Lodgify | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-006` | Switching from Hospitable and Breezeway operations | target | missing |  | No implementing flow in the audited tree. |
+| `MIGRATE-007` | CSV history, cutover rehearsal and accountable go-live | target | missing |  | No implementing flow in the audited tree. |
+| `MOBILE-001` | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
+| `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
+| `DATA-001` | Complete portable product records and safe restore | target | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs` (line 27) | Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |
+| `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs` (line 27) | Property cascade/source retirement and later-journal refusal are exercised. Member erasure refuses used/invited grants; broad guest/operator erasure, retention holds and completion receipts need work. |
+| `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | partial | `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/archive.test.mjs` (line 27) | Today’s properties, calendar bookings, turnovers, photos and statements live in the installation’s own D1 storage; guest, message and payout records do not exist yet, and no test records outbound requests to show nothing else leaves. |
+| `AUDIT-001` | Permanent attributable business and automation history | target | partial | `src/cabin/storage.ts`; `src/cabin/credentials.ts`; `src/cabin/movein/index.ts`; `migrations/core/0015_cabin.sql`; `tests/cabin.test.mjs` (line 31); `tests/archive.test.mjs` (line 27) | Domain/credential events, independent approvals and import journals exist; comprehensive provider/read history, anonymization guarantees and search/export are incomplete. The state read shows only the latest 100 events. |
+| `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
+| `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
+| `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |
+| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/http.ts`; `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (lines 67, 109) | Bearer-prepared turnover drafts and human completion evidence are foundations only; no recovery agent, automatic dispatch, relocation, compensation, locks or financial closure exists. |
+| `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/statements.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 90, 109) | Agents can prepare manual statement drafts for exact human approval; settlement matching, record pursuit, correcting postings and payout closure are absent. |
+| `AGENT-003` | Resolve guest issues through accepted field work | push-further | missing |  | No implementing flow in the audited tree. |
+| `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
+| `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
+| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/model.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 109, 55) | Current agents are strictly draft-only with human revision approval. Expanded tool grants, budgets, durable cases and external-action reconciliation do not exist. |
+| `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
+| `OPEN-001` | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |
