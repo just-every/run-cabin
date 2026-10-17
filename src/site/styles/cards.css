@@ -48,7 +48,7 @@
 .channels-art { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 684px; }
 .calendar { width: 100%; padding: 24px 15px 15px; }
 .calendar .card-title { padding: 0 0 12px 8px; }
-.cal-grid { display: grid; grid-template-columns: 100px repeat(8, minmax(0, 1fr)); grid-template-rows: 52px repeat(3, 61px); border: 1px solid #edeef1; border-radius: 4px; }
+.cal-grid { display: grid; grid-template-columns: 112px repeat(8, minmax(0, 1fr)); grid-template-rows: 52px repeat(3, 61px); border: 1px solid #edeef1; border-radius: 4px; }
 .cal-corner { grid-row: 1; grid-column: 1; border-right: 1px solid #edeef1; }
 .cal-day { grid-row: 1; display: grid; align-content: center; justify-items: center; gap: 3px; font-size: 13px; line-height: 1; color: #5c6670; border-left: 1px solid #edeef1; border-bottom: 1px solid #edeef1; }
 .cal-day b { font-weight: 400; font-size: 13.5px; color: #4a5560; }
@@ -58,8 +58,15 @@
 .cal-channel .channel-booking { font-size: 15.5px; }
 .cal-row { border-bottom: 1px solid #edeef1; background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), #edeef1 calc(12.5% - 1px) 12.5%); }
 .cal-grid > :nth-last-child(-n+3) { border-bottom: 0; }
-.cal-bar { align-self: center; z-index: 1; display: flex; align-items: center; height: 43px; margin: 0 1px; padding: 0 16px; border-radius: 6px; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+.cal-bar { container-type: inline-size; align-self: center; z-index: 1; display: flex; align-items: center; height: 43px; margin: 0 1px; padding: 0 16px; border-radius: 6px; font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; }
+.cal-bar-text { display: flex; align-items: center; }
 .cal-bar i { margin: 0 .45em; color: inherit; opacity: .7; }
+/* A bar whose padding box is narrower than "M. Ortiz · 3 nights" (133 px at 15 px) stacks guest over nights, at any screen width. */
+@container (max-width: 134px) {
+  .cal-bar-text { flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.15; }
+  .cal-bar-text i { display: none; }
+  .cal-bar-text span ~ span { font-size: .92em; font-weight: 400; opacity: .8; }
+}
 .bar-airbnb { background: var(--coral-bar); color: #2d1517; }
 .bar-booking { background: var(--booking-bar); color: #0d2546; }
 .bar-blocked { justify-content: center; color: #5e6670; font-weight: 400; background: repeating-linear-gradient(-45deg, #eceef1 0 2px, #f6f7f9 2px 9px); }
@@ -209,12 +216,11 @@
 /* ---------- Narrow screens: cards keep their content and wrap where they must ---------- */
 @media (max-width: 1099px) {
   .checkout, .rates { margin: 0; }
-  .cal-grid { grid-template-columns: 110px repeat(8, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .card-title { font-size: 17px; }
   .card-title.big, .rates-head .card-title, .turnover .card-title, .timeline .card-title { font-size: 19px; }
-  /* The week keeps all eight days: guest and nights stack in each bar, and anything longer ends in an ellipsis. */
+  /* The week keeps all eight days; the bars stack guest over nights (the container rule above). */
   .calendar { padding: 18px 10px 10px; }
   .cal-grid { grid-template-columns: 84px repeat(8, minmax(0, 1fr)); grid-template-rows: 46px repeat(3, 54px); }
   .cal-day { gap: 4px; font-size: 11px; }
@@ -222,11 +228,7 @@
   .cal-channel { padding-left: 6px; font-size: 14px; }
   .cal-channel .channel-vrbo { font-size: 16px; }
   .cal-channel .channel-booking { font-size: 12px; letter-spacing: -.03em; }
-  .cal-bar { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; height: 42px; padding: 0 7px; font-size: 12px; line-height: 1.15; }
-  .cal-bar span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-  .cal-bar span + span { font-size: 11px; font-weight: 400; opacity: .8; }
-  .cal-bar i { display: none; }
-  .bar-blocked { align-items: center; }
+  .cal-bar { height: 42px; padding: 0 7px; font-size: 12px; }
   .chip { font-size: 13px; white-space: normal; padding: 8px 14px 8px 8px; }
   .thread-head { padding: 18px 18px 14px; gap: 12px; }
   .initials-lg { width: 46px; height: 46px; font-size: 16px; }

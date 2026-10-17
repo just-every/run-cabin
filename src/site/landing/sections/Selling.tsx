@@ -5,7 +5,7 @@ export function DirectBookings() {
   return <Feature id="direct" eyebrow="Direct bookings" title={<>Your own<br />booking site.</>}
     label="Checkout for Saltbox on the Bay, Nov 7 to 10, 3 nights, 4 guests: $215 times 3 nights $645.00, cleaning fee $120.00, Maine lodging tax at 9% $68.85, total $833.85. Rental agreement signed, ID verified, a $500 damage deposit held but not charged, and a Pay $833.85 button powered by Stripe"
     art={<div className="card checkout">
-      <p className="checkout-head"><b>Saltbox on the Bay</b><i>·</i>Nov 7–10<i>·</i>3 nights<i>·</i>4 guests</p>
+      <p className="checkout-head"><b>Saltbox on the Bay</b><i>·</i>Nov&nbsp;7–10<i>·</i>3 nights<i>·</i>4 guests</p>
       <dl className="lines">
         <div><dt>$215 × 3 nights</dt><dd>$645.00</dd></div>
         <div><dt>Cleaning fee</dt><dd>$120.00</dd></div>
@@ -38,7 +38,7 @@ export function Pricing() {
         <li><Icon name="paw" />Pet fee $75</li>
         <li><Icon name="calendar" />Weekend +15%</li>
       </ul>
-      <p className="note note-amber"><Status tone="warn" size="sm" /><span>Oct 26<i>·</i>1-night gap opened to fill<i>·</i>$149</span></p>
+      <p className="note note-amber"><Status tone="warn" size="sm" /><span>Oct&nbsp;26<i>·</i>1-night gap opened to fill<i>·</i>$149</span></p>
     </div>}>
     Connect PriceLabs or Wheelhouse, set minimum nights, gap rules and fees, and every channel gets the same price.
   </Feature>

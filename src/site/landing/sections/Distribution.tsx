@@ -14,16 +14,16 @@ export function Channels() {
           {DAYS.map(([day, date]) => <span key={date} className="cal-day">{day}<b>{date}</b></span>)}
           <span className="cal-channel" style={{ gridRow: 2 }}><Channel name="Airbnb" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 2 }} />
-          <span className="cal-bar bar-airbnb" style={{ gridColumn: '3 / span 4', gridRow: 2 }}><span>M. Ortiz</span><i>·</i><span>3 nights</span></span>
+          <span className="cal-bar bar-airbnb" style={{ gridColumn: '3 / span 4', gridRow: 2 }}><span className="cal-bar-text"><span>M. Ortiz</span><i>·</i><span>3 nights</span></span></span>
           <span className="cal-channel" style={{ gridRow: 3 }}><Channel name="Vrbo" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 3 }} />
-          <span className="cal-bar bar-blocked" style={{ gridColumn: '3 / span 7', gridRow: 3 }}><span>Blocked</span></span>
+          <span className="cal-bar bar-blocked" style={{ gridColumn: '3 / span 7', gridRow: 3 }}><span className="cal-bar-text"><span>Blocked</span></span></span>
           <span className="cal-channel" style={{ gridRow: 4 }}><Channel name="Booking.com" /></span>
           <span className="cal-row" style={{ gridColumn: '2 / span 8', gridRow: 4 }} />
-          <span className="cal-bar bar-booking" style={{ gridColumn: '7 / span 3', gridRow: 4 }}><span>J. Chen</span><i>·</i><span>2 nights</span></span>
+          <span className="cal-bar bar-booking" style={{ gridColumn: '7 / span 3', gridRow: 4 }}><span className="cal-bar-text"><span>J. Chen</span><i>·</i><span>2 nights</span></span></span>
         </div>
       </div>
-      <p className="chip chip-red"><Status tone="bad" size="sm" /><span>Vrbo request Oct 19–21 declined<i>·</i>overlaps Airbnb</span></p>
+      <p className="chip chip-red"><Status tone="bad" size="sm" /><span>Vrbo request Oct&nbsp;19–21 declined<i>·</i>overlaps Airbnb</span></p>
     </div>}>
     Cabin connects to Airbnb, Vrbo and Booking.com both ways. Book a night anywhere and it closes everywhere.
   </Feature>
@@ -36,19 +36,19 @@ export function GuestInbox() {
     art={<div className="card thread">
       <div className="thread-head">
         <Initials size="lg">MO</Initials>
-        <div><p className="thread-name">Megan Ortiz</p><p className="thread-stay"><Channel name="Airbnb" /><i>·</i>Lake Loft<i>·</i>Oct 17–20</p></div>
+        <div><p className="thread-name">Megan Ortiz</p><p className="thread-stay"><Channel name="Airbnb" /><i>·</i>Lake Loft<i>·</i>Oct&nbsp;17–20</p></div>
         <Icon name="dots" className="thread-more" />
       </div>
       <div className="thread-body">
         <p className="bubble">Any chance we can check in early?</p>
-        <p className="bubble-time">Fri 6:12 pm</p>
+        <p className="bubble-time">Fri&nbsp;6:12&nbsp;pm</p>
         <div className="draft">
           <p className="draft-label"><Icon name="sparkle" />Draft</p>
-          <p className="draft-text">Hi Megan! Cleaning wraps at 1 pm, so you are welcome from 2 pm.</p>
+          <p className="draft-text">Hi Megan! Cleaning wraps at 1&nbsp;pm, so you are welcome from 2&nbsp;pm.</p>
           <p className="draft-actions"><span className="button-send">Send</span><span className="button-edit">Edit</span></p>
         </div>
       </div>
-      <p className="thread-foot"><Icon name="clock" /><span>Check-in details<i>·</i>Sat 10:00 am<i>·</i>scheduled</span></p>
+      <p className="thread-foot"><Icon name="clock" /><span>Check-in details<i>·</i>Sat&nbsp;10:00&nbsp;am<i>·</i>scheduled</span></p>
     </div>}>
     Airbnb, Vrbo, Booking.com, text and email in one thread per guest. Scheduled messages go out on time, and drafted replies wait for your nod.
   </Feature>

@@ -27,8 +27,8 @@
 .hero-tags { position: absolute; inset: 0; pointer-events: none; }
 .tag { position: absolute; display: flex; align-items: center; gap: 1cqw; padding: .86cqw 1.4cqw .86cqw 1.12cqw; border-radius: .85cqw; background: rgba(255, 255, 255, .97); box-shadow: 0 .15cqw .4cqw rgba(13, 43, 36, .08), 0 1.2cqw 2.6cqw -1.2cqw rgba(13, 43, 36, .38); color: var(--ink); white-space: nowrap; }
 .tag .status { width: 2.15cqw; height: 2.15cqw; }
-.tag-text { display: grid; gap: .12cqw; font-size: .9cqw; line-height: 1.25; color: #3c4650; }
-.tag-text strong { font-size: .99cqw; font-weight: 600; color: #0b1f1b; }
+.tag-text { display: grid; gap: .12cqw; font-size: max(11px, .9cqw); line-height: 1.25; color: #3c4650; }
+.tag-text strong { font-size: max(12px, .99cqw); font-weight: 600; color: #0b1f1b; }
 .tag-ready { left: 81.9cqw; top: 12.9cqw; }
 .tag-arriving { left: 52.4cqw; top: 24.9cqw; }
 .tag-code { left: 79.3cqw; top: 28.4cqw; }
