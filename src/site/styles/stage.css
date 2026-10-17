@@ -1,0 +1,75 @@
+/* The stages between the painted bands: one content column, the heading type, the side-by-side
+   layout, floating chips and the sticky stage rail. Sizes are the desk's 1536 plates at 1440 wide
+   (x 0.9375) in units of --u, which scales the drawings with the screen from 1180 to 1536 so each
+   stage keeps the plate's proportions; tablets and phones set their own. */
+
+.landing { --u: clamp(.8194px, calc(100vw / 1440), 1.0667px); --side: clamp(16px, 8.3333vw, 128px); --display: #03221e; }
+.s-wrap { width: min(100% - 2 * var(--side), 1280px); margin-inline: auto; }
+.stage { position: relative; scroll-margin-top: calc(var(--u) * 64); }
+
+/* Heading block: the eyebrow, the heading in the hero's face, weight, tracking (-.025em as the hero renders) and ink,
+   and one paragraph. Each stage sets its heading's size to the desk's width for it. */
+.stage-eyebrow { font: 700 calc(var(--u) * 14.5)/1.3 var(--font-body); letter-spacing: .24em; text-transform: uppercase; color: var(--eyebrow); }
+.stage-eyebrow i { margin: 0 .55em; }
+.stage h2 { font: 800 calc(var(--u) * 73)/.98 var(--font-head); letter-spacing: -.025em; word-spacing: .03em; color: var(--display); text-wrap: balance; }
+.stage-lede { color: var(--body); letter-spacing: -.006em; text-wrap: pretty; }
+.stage h3 { font-family: var(--font-body); letter-spacing: -.015em; color: #0b1f1b; }
+
+/* Centred stages (Booked, Payout, Stay recovery): eyebrow, one-line heading and subhead over the drawing. */
+.stage-head { text-align: center; }
+.stage-head h2 { margin-top: calc(var(--u) * 18); }
+.stage-head .stage-lede { margin: calc(var(--u) * 14) auto 0; font-size: calc(var(--u) * 21.5); line-height: 1.35; text-wrap: balance; }
+
+/* Side-by-side stages: copy beside the drawing; `flip` draws the drawing first. */
+.side .side-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: calc(var(--u) * 56); }
+.side .stage-head { text-align: left; }
+.side .stage-head h2 { margin-top: calc(var(--u) * 26); line-height: .94; }
+.side .stage-head .stage-lede { margin: calc(var(--u) * 28) 0 0; max-width: calc(var(--u) * 560); font-size: calc(var(--u) * 28); line-height: 1.42; }
+.side.flip .stage-head { order: 2; }
+
+/* A white chip floating off a card's edge; --offset moves it right and keeps it inside the column. */
+.float-chip { display: flex; align-items: center; gap: calc(var(--u) * 20); width: max-content; max-width: calc(100% - var(--offset, 0px)); margin-left: var(--offset, 0px); padding: calc(var(--u) * 20) calc(var(--u) * 30) calc(var(--u) * 20) calc(var(--u) * 28); border-radius: calc(var(--u) * 14); background: #fff; box-shadow: var(--shadow-float); font-size: calc(var(--u) * 19); line-height: 1.3; color: #1c2a33; }
+.float-chip .status { width: calc(var(--u) * 38); height: calc(var(--u) * 38); }
+.float-chip .icon { width: calc(var(--u) * 34); height: calc(var(--u) * 34); }
+.float-chip b { font-weight: 600; color: #0b1f1b; }
+
+/* The stage rail: drawn at the top of Booked, sticky through the six stages; it scrolls sideways where it does not fit. */
+.stage-rail { position: sticky; top: calc(var(--u) * 12); z-index: 4; display: flex; justify-content: safe center; margin-top: calc(var(--u) * 36); pointer-events: none; }
+.stage-rail ol { position: relative; display: flex; align-items: center; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding: calc(var(--u) * 6); border-radius: 999px; pointer-events: auto; transition: background-color .2s ease, box-shadow .2s ease; }
+.stage-rail ol::-webkit-scrollbar { display: none; }
+.stage-rail li { display: flex; align-items: center; flex: none; }
+.stage-rail li + li::before { content: ''; width: calc(var(--u) * 22); height: 1px; background: #bfc5ca; }
+.stage-rail a { display: inline-flex; align-items: center; height: calc(var(--u) * 36); padding: 0 calc(var(--u) * 24); border: 1px solid #b7bec4; border-radius: 999px; background: #fff; font: 500 calc(var(--u) * 14.5)/1 var(--font-body); letter-spacing: -.005em; color: #33404a; text-decoration: none; white-space: nowrap; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.stage-rail a:hover { border-color: var(--pill); color: var(--ink); }
+.stage-rail a[aria-current] { border-color: var(--pill); background: var(--pill); color: #fff; font-weight: 600; }
+.stage-rail.is-stuck ol { background: rgba(251, 250, 247, .9); box-shadow: 0 1px 2px rgba(13, 43, 36, .06), 0 10px 26px -14px rgba(13, 43, 36, .35); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* Tablets: one column, drawings at their designed size under the copy. */
+@media (max-width: 1179px) {
+  .landing { --u: 1px; --side: clamp(16px, 5vw, 56px); }
+  .landing .stage h2 { font-size: clamp(44px, 6.6vw, 68px); }
+  .side .side-row { grid-template-columns: minmax(0, 1fr); row-gap: 48px; }
+  .side.flip .stage-head { order: 0; }
+  .side .stage-head .stage-lede { max-width: 640px; font-size: 22px; }
+  .stage-head .stage-lede { font-size: 20px; max-width: 720px; }
+}
+
+/* Phones (390 drawn): the rail scrolls sideways with the current stage in view; headings wrap. */
+@media (max-width: 760px) {
+  .stage-eyebrow { font-size: 12.5px; letter-spacing: .18em; }
+  .stage-eyebrow i { margin: 0 .35em; }
+  .landing .stage h2 { font-size: clamp(38px, 12.4vw, 50px); }
+  .stage-head h2, .side .stage-head h2 { margin-top: 14px; line-height: .98; }
+  .stage-head, .side .stage-head { text-align: left; }
+  .stage-head .stage-lede, .side .stage-head .stage-lede { margin: 16px 0 0; font-size: 18px; line-height: 1.45; }
+  .side .side-row { row-gap: 32px; }
+  .stage-rail { top: 8px; justify-content: flex-start; margin-top: 18px; }
+  .stage-rail ol { padding: 5px 16px; border-radius: 0; }
+  .stage-rail.is-stuck ol { border-radius: 0; }
+  .stage-rail li + li::before { width: 14px; }
+  .stage-rail a { height: 34px; padding: 0 18px; font-size: 14px; }
+  .float-chip { gap: 14px; padding: 13px 18px 13px 16px; border-radius: 12px; font-size: 15.5px; }
+  .float-chip .status { width: 30px; height: 30px; }
+  .float-chip .icon { width: 28px; height: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .stage-rail ol, .stage-rail a { transition: none; } }

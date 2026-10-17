@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Homepage.** The run site's homepage follows one stay end to end, on the page structure the owner approved on 17 October 2026: Megan Ortiz's Lake Loft stay from the booking that closes every channel, through her messages, the turnover, a cleaner who cancels the morning she arrives, the payout on the owner's statement and her next stay booked direct, then moving in from another system. Every drawing is HTML; the claims it makes are in `docs/CLAIMS.md`.
+
 ## 0.1.0 (18 Oct 2026)
 
 Cabin's first release: vacation-rental operations for US hosts and property managers, a free, open source replacement for the day-to-day work of Guesty, Hostaway or OwnerRez. It runs on your own computer or in your own Cloudflare account, keeps every booking, guest and payout in your own database, is MIT licensed and charges nothing.

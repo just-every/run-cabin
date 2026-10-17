@@ -1,0 +1,53 @@
+/* Stay recovery: the full-bleed pine band with its soft top glow and the recovery case's log. */
+
+.recovery { padding: calc(var(--u) * 75) 0 calc(var(--u) * 79); background: radial-gradient(56% 42% at 50% 0, rgba(72, 168, 112, .55), transparent 72%), linear-gradient(#0e4b34, #0a3b2a); color: #fff; }
+.recovery .stage-eyebrow { color: #f4b740; }
+.recovery h2 { font-size: calc(var(--u) * 70); color: #fff; text-shadow: 0 2px 22px rgba(0, 20, 12, .3); }
+.recovery .stage-head .stage-lede { margin-top: calc(var(--u) * 16); color: #e2efe7; }
+
+.recovery-log { margin-top: calc(var(--u) * 32); padding: calc(var(--u) * 30) calc(var(--u) * 28) calc(var(--u) * 24); }
+.recovery-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: calc(var(--u) * 12); padding: 0 calc(var(--u) * 8) 0 calc(var(--u) * 8); }
+.recovery-head h3 { font-size: calc(var(--u) * 31); font-weight: 700; letter-spacing: -.02em; }
+.recovery-head h3 i { margin: 0 .25em; color: #0b1f1b; }
+.resolved { padding: calc(var(--u) * 8) calc(var(--u) * 18); border-radius: calc(var(--u) * 8); background: #d8efdd; font-size: calc(var(--u) * 17.5); font-weight: 700; color: #0f5132; }
+.recovery-log ol { margin-top: calc(var(--u) * 20); }
+.recovery-log li { display: grid; grid-template-columns: calc(var(--u) * 140) calc(var(--u) * 86) minmax(0, 1fr) auto; align-items: center; min-height: calc(var(--u) * 56); padding: 0 calc(var(--u) * 18) 0 calc(var(--u) * 24); border-bottom: 1px solid #edf0ee; }
+.recovery-log li:last-child { border-bottom: 0; }
+.step-bad { border-radius: calc(var(--u) * 8); background: #fde9e9; }
+.step-done { border-radius: calc(var(--u) * 8); background: #eaf7ee; }
+.step-time { font-size: calc(var(--u) * 19.5); color: #4b5560; white-space: nowrap; }
+.step-node { position: relative; align-self: stretch; display: grid; place-items: center; }
+.step-node::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #dfe4e1; transform: translateX(-50%); }
+li:first-child > .step-node::before { top: 50%; }
+li:last-child > .step-node::before { bottom: 50%; }
+.step-node::after { content: ''; position: relative; width: calc(var(--u) * 18); height: calc(var(--u) * 18); border-radius: 50%; background: #1fa33e; }
+.step-bad .step-node::after { background: #e8333a; }
+.step-warn .step-node::after { background: #f5a623; }
+.step-text { font-size: calc(var(--u) * 20.5); line-height: 1.35; color: #111c24; }
+.step-text i { margin: 0 .3em; color: #111c24; }
+.step-area { padding: calc(var(--u) * 4) calc(var(--u) * 14); border-radius: calc(var(--u) * 6); background: #eef1f4; font: 400 calc(var(--u) * 14.5)/1.4 var(--font-mono); color: #4b5560; }
+.recovery-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: calc(var(--u) * 18); padding: 0 calc(var(--u) * 8); font-size: calc(var(--u) * 18.5); color: #1c2a33; }
+.recovery-foot p + p { color: #2e4a6b; }
+
+@media (max-width: 1179px) {
+  .recovery { padding: 80px 0 84px; }
+  .recovery-log { margin-top: 36px; }
+}
+@media (max-width: 760px) {
+  .recovery { padding: 56px 0 60px; }
+  .recovery-log { margin-top: 28px; padding: 18px 10px 16px; }
+  .recovery-head { padding: 0 6px; }
+  .recovery-head h3 { font-size: 21px; }
+  .resolved { padding: 6px 12px; font-size: 14px; }
+  .recovery-log ol { margin-top: 14px; }
+  .recovery-log li { grid-template-columns: 64px 26px minmax(0, 1fr); grid-template-areas: 'time node text' 'time node area'; align-items: start; row-gap: 6px; padding: 12px 8px 12px 10px; }
+  .step-time { grid-area: time; padding-top: 1px; font-size: 13.5px; }
+  .step-node { grid-area: node; align-self: stretch; place-items: start center; padding-top: 4px; }
+  .step-node::before { top: -12px; bottom: -12px; }
+  li:first-child > .step-node::before { top: 16px; }
+  li:last-child > .step-node::before { bottom: auto; height: 28px; }
+  .step-node::after { width: 13px; height: 13px; }
+  .step-text { grid-area: text; font-size: 15px; }
+  .step-area { grid-area: area; justify-self: start; padding: 2px 10px; font-size: 12px; }
+  .recovery-foot { margin-top: 14px; padding: 0 6px; font-size: 14.5px; }
+}

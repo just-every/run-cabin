@@ -1,12 +1,12 @@
-import { Actions } from '../../shell/Actions'
-import { SiteFooter } from '../../shell/SiteFooter'
-import { Painting } from '../parts'
+import { Actions } from '../shell/Actions'
+import { SiteFooter } from '../shell/SiteFooter'
+import { BLEED, Painting } from './parts'
 
 /** The closing promise over the lake at dusk, two chairs on the dock and the lantern lit; the footer under it. */
 export function Closing() {
   return <>
     <section className="closing" aria-labelledby="closing-title">
-      <Painting className="closing-art" name="closing" widths={[768, 1152, 1536]} sizes="100vw" />
+      <Painting className="closing-art" name="closing" widths={BLEED} sizes="100vw" />
       <div className="site-wrap closing-copy">
         <h2 id="closing-title">Every home, ready.</h2>
         <p className="closing-sub">Open source vacation rental software for hosts and managers.</p>

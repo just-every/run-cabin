@@ -5,7 +5,7 @@ import { DocsMenu, DocsSidebar } from './DocsNav'
 import { docsNeighbours, getDocsPage } from './pages'
 import { TitleDots } from './TitleDots'
 import '../styles/site.css'
-import '../styles/cards.css'
+import '../styles/card.css'
 import '../styles/docs.css'
 
 /** One docs page: the section sidebar, the article rendered from Markdown at build time, "On this page", and previous and next cards. */

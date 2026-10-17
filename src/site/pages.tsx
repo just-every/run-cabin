@@ -11,6 +11,7 @@ import { DocsArticle } from './docs/DocsArticle'
 import { DocsIndex } from './docs/DocsIndex'
 import { docsHead, docsPages } from './docs/pages'
 import { Landing } from './landing/Landing'
+import { STAGE_SCRIPT } from './landing/stages/StageRail'
 import run from './run.json'
 
 // Code cards get their Copy button only when script runs; without it the command is still there to select.
@@ -53,7 +54,7 @@ export function sitePages({ styles, contract }: SiteContext): SiteBuild {
   const head = (slug?: string) => { const { title, description } = docsHead(slug); return [title, description] as const }
   return {
     pages: [
-      { path: '/', html: document('Cabin — Ready before they arrive', identity.tagline, <Landing />) },
+      { path: '/', html: document('Cabin — Ready before they arrive', identity.tagline, <Landing />, STAGE_SCRIPT) },
       { path: '/run', html: runPageHtml(siteIdentity, data, contract) },
       ...(contract ? [{ path: '/contract', html: contractPageHtml(siteIdentity, data, contract) }] : []),
       { path: '/docs', html: document(...head(), <DocsIndex />) },

@@ -1,0 +1,44 @@
+/* The drawn product's shared pieces, for the homepage and the docs: the white card, the separator
+   dot, round status discs, line icons, channel dots and initials. Third parties appear as plain
+   text and a coloured dot, never as their logos. */
+
+.card { background: var(--surface); border-radius: var(--radius-card); border: 1px solid rgba(13, 43, 36, .06); box-shadow: var(--shadow-card); color: #1c2a33; text-align: left; }
+/* A line may break after a separator dot, so times and dates bound with non-breaking spaces wrap as whole units. */
+.card i, .float-chip i { margin: 0 .36em; color: #8d959e; }
+.card i::after, .float-chip i::after { content: "\200b"; }
+.muted { color: var(--soft); }
+.nowrap { white-space: nowrap; }
+
+/* Round status discs: solid fills with white glyphs. */
+.status { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; }
+.status svg { width: 62%; height: 62%; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.status-sm { width: 24px; height: 24px; }
+.status-ok { background: #2f9466; }
+.status-pine { background: var(--pine); }
+.status-warn, .status-clean, .status-amber { background: var(--amber); }
+.status-bad { background: var(--red); }
+.status-lock { background: #6d67f2; }
+.status-lock svg { stroke-width: 2.2; }
+.status-arrive { background: #ef6a6e; }
+.tick { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.tick-disc { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--green-tint); color: var(--green-ink); }
+.tick-disc.solid { background: #23a066; color: #fff; }
+
+/* Line icons; the padlock is filled violet with a white keyhole. */
+.icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.icon.violet { color: #6b47d6; }
+.icon.violet .fill { fill: currentColor; }
+.icon .hole { fill: #fff; stroke: none; }
+.icon .hole-line { stroke: #fff; stroke-width: 1.6; }
+
+/* Channel dots. */
+.dot { display: inline-block; flex: none; width: .62em; height: .62em; margin-right: .55em; border-radius: 50%; vertical-align: .05em; }
+.dot-airbnb { background: #f26d68; }
+.dot-vrbo { background: #1f6fe5; }
+.dot-booking { background: #10306f; }
+.dot-direct { background: var(--pine); }
+
+/* Initials. */
+.initials { display: inline-grid; place-items: center; flex: none; border-radius: 50%; font-family: var(--font-body); line-height: 1; letter-spacing: -.01em; }
+.initials-soft { background: #e4ebe7; color: #133a2e; font-weight: 500; }
+.initials-pine { background: var(--pine); color: #fff; font-weight: 600; }

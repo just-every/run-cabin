@@ -1,0 +1,51 @@
+/* Next stay: the direct checkout for Megan's July return, with the level chip of the nights it
+   closed on the channels floating off its top-left corner. */
+
+.next { padding: calc(var(--u) * 116) 0 calc(var(--u) * 91); }
+.next .side-row { grid-template-columns: minmax(0, 1fr) calc(var(--u) * 488); column-gap: calc(var(--u) * 92); }
+.next h2 { font-size: calc(var(--u) * 80); }
+.next-art { position: relative; }
+.next-closed { position: absolute; z-index: 1; left: calc(var(--u) * -86); top: calc(var(--u) * -56); max-width: none; margin: 0; padding-top: calc(var(--u) * 14); padding-bottom: calc(var(--u) * 14); font-size: calc(var(--u) * 17); }
+.next-closed .status { width: calc(var(--u) * 46); height: calc(var(--u) * 46); }
+
+.checkout { padding: calc(var(--u) * 36) calc(var(--u) * 32) calc(var(--u) * 24); }
+.checkout-channel { display: flex; align-items: center; padding-top: calc(var(--u) * 6); font-size: calc(var(--u) * 16.5); font-weight: 500; color: #0b1f1b; }
+.checkout-channel .dot { width: calc(var(--u) * 17); height: calc(var(--u) * 17); margin-right: calc(var(--u) * 16); }
+.checkout h3 { margin-top: calc(var(--u) * 12); font-size: calc(var(--u) * 34); font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+.checkout-dates { margin-top: calc(var(--u) * 8); font-size: calc(var(--u) * 17.5); line-height: 1.4; color: var(--soft); }
+.checkout-welcome { width: max-content; max-width: 100%; margin-top: calc(var(--u) * 14); padding: calc(var(--u) * 7) calc(var(--u) * 15); border-radius: 999px; background: #dff2e5; font-size: calc(var(--u) * 16); font-weight: 500; color: #0f4d31; }
+.checkout-lines { display: grid; gap: calc(var(--u) * 14); margin-top: calc(var(--u) * 26); font-size: calc(var(--u) * 19.5); color: #33404a; }
+.checkout-lines div, .checkout-total { display: flex; justify-content: space-between; gap: 16px; }
+.checkout-lines dd { white-space: nowrap; }
+.checkout-total { margin-top: calc(var(--u) * 20); padding-top: calc(var(--u) * 20); border-top: 1px solid var(--line-strong); font-size: calc(var(--u) * 24); color: #0b1f1b; }
+.checkout-total b { font-weight: 700; }
+.checkout-checks { display: grid; gap: calc(var(--u) * 15); margin-top: calc(var(--u) * 22); }
+.checkout-checks li { display: flex; align-items: center; gap: calc(var(--u) * 18); font-size: calc(var(--u) * 18.5); color: #33404a; }
+.checkout-checks .status { width: calc(var(--u) * 30); height: calc(var(--u) * 30); }
+.checkout-pay { display: grid; place-items: center; min-height: calc(var(--u) * 58); margin-top: calc(var(--u) * 28); border-radius: calc(var(--u) * 8); background: #17533b; font-size: calc(var(--u) * 21); font-weight: 500; color: #fff; }
+.checkout-stripe { margin-top: calc(var(--u) * 16); text-align: center; font-size: calc(var(--u) * 15); color: var(--soft); }
+
+@media (max-width: 1179px) {
+  .next { padding: 88px 0 80px; }
+  .next .side-row { grid-template-columns: minmax(0, 1fr); }
+  .next-art { max-width: 520px; padding-top: 0; }
+  .next-closed { position: static; width: max-content; max-width: 100%; margin: 0 0 14px; }
+}
+@media (max-width: 760px) {
+  .next { padding: 64px 0 56px; }
+  .next-closed { font-size: 14.5px; }
+  .next-closed .status { width: 32px; height: 32px; }
+  .checkout { padding: 22px 18px 18px; }
+  .checkout-channel { font-size: 14.5px; }
+  .checkout-channel .dot { width: 13px; height: 13px; margin-right: 10px; }
+  .checkout h3 { font-size: 26px; }
+  .checkout-dates { font-size: 14.5px; }
+  .checkout-welcome { font-size: 14px; }
+  .checkout-lines { gap: 10px; margin-top: 18px; font-size: 15.5px; }
+  .checkout-total { margin-top: 14px; padding-top: 14px; font-size: 19px; }
+  .checkout-checks { gap: 12px; margin-top: 16px; }
+  .checkout-checks li { align-items: flex-start; gap: 12px; font-size: 15px; }
+  .checkout-checks .status { width: 24px; height: 24px; }
+  .checkout-pay { min-height: 50px; margin-top: 20px; font-size: 17px; }
+  .checkout-stripe { margin-top: 12px; font-size: 13px; }
+}

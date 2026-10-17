@@ -1,7 +1,7 @@
 import { Status } from './parts'
 
-// Saturday, Oct 17 across the host's homes, as Cabin shows it: each white tag sits on its home in the painting.
-// The same stays, cleaners and codes appear in the sections below (Lake Loft's Airbnb stay, Luis at Desert Casita).
+// Saturday, Oct 24 across the host's homes, as Cabin shows it: each white tag sits on its home in the painting.
+// The same stays, cleaners and codes run through the stages below (Megan's Airbnb stay at Lake Loft, Luis at Desert Casita).
 const TAGS = [
   { id: 'ready', tone: 'ok', title: 'Ready ✓', lines: ['Pine Ridge Cabin'] },
   { id: 'arriving', tone: 'arrive', title: 'Guest arriving 4\u00a0pm', lines: ['Airbnb · Lake Loft'] },

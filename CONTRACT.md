@@ -609,7 +609,7 @@ Base native sessions, command lifecycle and import-kit custody remain the founda
 
 ## Homepage claims
 
-Every capability claim and demo action on the approved homepage maps to the clauses that promise it, in br’s claims truth table of 17 October 2026, rows 1–58 in page order. Clause mappings retain the more specific existing requirements and include every clause named by that truth table. The existing row 1–57 status assessments are preserved, including their explicitly narrower implementation scopes; the full target status and remaining gap of each clause are in [Status](#status). The new demo row takes SITE-002’s `partial` status, since a seeded demo implementation exists but its complete hosted acceptance is not established.
+Every capability claim and demo action on the homepage maps to the clauses that promise it, in br's claims truth table (`docs/CLAIMS.md`) of 18 October 2026, rows 1–50 in page order: the owner-approved page structure that follows one stay through its six stages (design desk page-s1, 17 October 2026). Rows 1–11 (the unchanged hero) keep their earlier mapping and status.
 
 | # | Claim | Clause(s) | Status |
 | --- | --- | --- | --- |
@@ -624,53 +624,45 @@ Every capability claim and demo action on the approved homepage maps to the clau
 | 9 | Door code 4417 active | OPS-005, OPS-008 | partial |
 | 10 | Cleaning · Luis · Desert Casita | OPS-008, AUTH-001 | partial |
 | 11 | Vrbo request declined · overlaps Airbnb | SYNC-008, SYNC-006, SYNC-003 | partial |
-| 12 | "connects to Airbnb, Vrbo and Booking.com both ways" | SYNC-002, SYNC-003, SYNC-004 | partial |
-| 13 | "Book a night anywhere and it closes everywhere" / "No double bookings" | SYNC-006 | partial |
-| 14 | Calendar card: three channels, bars, blocked row | RES-001, RES-003, SYNC-006 | partial |
-| 15 | "Airbnb, Vrbo, Booking.com, text and email in one thread per guest" | MESSAGE-001, GUEST-001 | partial |
-| 16 | "Scheduled messages go out on time" | MESSAGE-003 | implemented (email scope; see clause Status) |
-| 17 | "drafted replies wait for your nod" | MESSAGE-004 | implemented (email scope; see clause Status) |
-| 18 | "Your own booking site" / "Guests book you directly" | WEB-001, WEB-002 | implemented (direct-booking scope; see clause Status) |
-| 19 | "pay with Stripe" | PAY-001, WEB-001 | implemented (direct-booking scope; see clause Status) |
-| 20 | "rental agreement" | WEB-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
-| 21 | "ID check" | WEB-004, WEB-001 | implemented (direct-booking scope; see clause Status) |
-| 22 | "damage deposit happen at checkout" | PAY-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
-| 23 | Lodging tax line (ME 9%) | FIN-008, RES-004 | implemented (direct-booking scope; see clause Status) |
-| 24 | "Connect PriceLabs or Wheelhouse" | PRICE-001 | missing |
-| 25 | "set minimum nights, gap rules and fees" | RES-004, WEB-005 | implemented (direct-booking scope; see clause Status) |
-| 26 | "every channel gets the same price" | PRICE-003, PRICE-001, PRICE-002, SYNC-002, SYNC-003, SYNC-004 | missing |
-| 27 | "All five homes ready for Saturday" | OPS-008, OPS-003 | partial |
-| 28 | "Every reservation creates its turnover" | OPS-001 | partial |
-| 29 | "and its door code" | OPS-005 | partial |
-| 30 | "Cleaners get the checklist on their phone" | OPS-002, EVIDENCE-001 | partial |
-| 31 | "photos come back when the home is ready" | OPS-002, EVIDENCE-001, OPS-003 | partial |
-| 32 | Checklist items ticked on the card | EVIDENCE-001 | done |
-| 33 | "Patio light out · task added for Dale" | OPS-004, OPS-002 | partial |
-| 34 | "Cabin rebooks the turnover" | AGENT-001, OPS-001 | implemented (stay-recovery scope; see clause Status) |
-| 35 | "resets the door code" | AGENT-001, OPS-005 | partial |
-| 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006, AGENT-003 | implemented (stay-recovery scope; see clause Status) |
-| 37 | "confirms the home is ready" | AGENT-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
-| 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | partial |
-| 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
-| 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
-| 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
-| 42 | "the books sync to QuickBooks" | FIN-007 | partial (QuickBooks CSV/IIF export only; Pantry live posting proven) |
-| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (reviewed paid expenses; wider clause gaps below) |
+| 12 | "Booked once. Closed everywhere." / "Seconds later those nights close on Vrbo, Booking.com and your own site" | SYNC-006, SYNC-002, SYNC-003, SYNC-004 | partial |
+| 13 | Lake Loft calendar: channel rows, stay bar and Closed bars, end-exclusive checkout | RES-001, SYNC-001, SYNC-006 | partial |
+| 14 | "Rates from PriceLabs" with each night's rate | PRICE-001 | missing |
+| 15 | Sync log: per-channel results, a rate-limited push and its retry | SYNC-007, SYNC-002, SYNC-003, SYNC-004 | partial |
+| 16 | "Airbnb · reservation HMQ4K2Z9 received" | SYNC-002, RES-002 | partial |
+| 17 | "Airbnb, Vrbo, Booking.com, text and email arrive in one thread per guest" | MESSAGE-001, GUEST-001 | partial |
+| 18 | "Scheduled messages go out on time" (directions and Wi-Fi sent; check-in steps scheduled) | MESSAGE-003 | implemented (email scope; see clause Status) |
+| 19 | "and Cabin drafts the rest" / Draft with Send and Edit | MESSAGE-004 | implemented (email scope; see clause Status) |
+| 20 | "Door code start moved to 2:00 pm" | OPS-005, MESSAGE-004 | partial |
+| 21 | "Every checkout opens a turnover: the cleaner, the checklist, the photos and a fresh door code for the next guest" | OPS-001, OPS-005 | partial |
+| 22 | The cleaner's phone: job window, ready time, ticked checklist, "Photos 12 / 12" | OPS-002, EVIDENCE-001 | partial |
+| 23 | "Desert Casita · front door": the cleaner's and next guest's codes | OPS-005 | partial |
+| 24 | "Patio light out · task added for Dale" | OPS-004, OPS-002 | partial |
+| 25 | "Cabin finds a new cleaner" / "Asked 3 nearby cleaners · Ana Diaz accepted" | AGENT-001, OPS-001 | partial |
+| 26 | "resets the door codes" | AGENT-001, OPS-005 | partial |
+| 27 | "settles it with the guest before she arrives" / "Offered 10% off her next stay" | AGENT-001, AGENT-003, AGENT-006, WEB-005 | partial |
+| 28 | "Checklist 18 / 18 · photos 14 / 14" / "Lake Loft ready" / "Resolved 3:32 pm" | AGENT-001, EVIDENCE-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
+| 29 | "Cost to owner $0.00" | AGENT-001, FIN-001 | partial |
+| 30 | "All five homes ready for Saturday" | OPS-008, OPS-003 | partial |
+| 31 | "Airbnb's payout matches Megan's stay to the cent" | FIN-002 | partial (live Stripe USD payout prerequisite) |
+| 32 | The owner's October statement and its arithmetic | FIN-003, FIN-004 | implemented (reviewed paid expenses; wider clause gaps below) |
+| 33 | "QuickBooks · synced Oct 31" | FIN-007 | partial (QuickBooks CSV/IIF export only; Pantry live posting proven) |
+| 34 | "Owner portal · Karen viewed Nov 1" | FIN-005, AUDIT-001 | partial |
+| 35 | "Lodging tax 9% · $172.44 · filed Nov 1" | FIN-008 | partial |
+| 36 | "Your own booking site takes the payment" / "Pay … Powered by Stripe" | WEB-001, PAY-001 | implemented (direct-booking scope; see clause Status) |
+| 37 | "the rental agreement" | WEB-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 38 | "the ID check" | WEB-004, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 39 | "the damage deposit" / "held, not charged" | PAY-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
+| 40 | Checkout lines: nights, cleaning fee, lodging tax 9%, total | RES-004, FIN-008 | implemented (direct-booking scope; see clause Status) |
+| 41 | "Returning guest 10%" / "Welcome back, Megan" | GUEST-001, WEB-005 | missing |
+| 42 | "Jul 10–14 · closed on Airbnb, Vrbo, Booking.com" | SYNC-006, SYNC-002, SYNC-003, SYNC-004 | partial |
+| 43 | "No channel fee" | WEB-001, PAY-001 | implemented (direct-booking scope; see clause Status) |
 | 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
-| 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
-| 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | implemented (CSV move-in scope; see clause Status) |
-| 47 | "Channels reconnect to the same listings" | MIGRATE-007, MIGRATE-002, MIGRATE-003, SYNC-002, SYNC-003, SYNC-004 | implemented (iCal move-in scope; see clause Status) |
-| 48 | "Run Cabin on your own computer or server" (five commands) | RUNTIME-001, HTTP-001 | partial |
-| 49 | "keep every booking, guest and payout" / "Your guests, your data" | DATA-003, DATA-001, GUEST-001, FIN-002 | partial |
-| 50 | "Export everything, any time" | DATA-001 | partial |
-| 51 | Damage deposits: "Held on the card, released after checkout" | PAY-003 | implemented (direct-booking scope; see clause Status) |
-| 52 | Lodging tax: "Collected and filed by state and county" | FIN-008 | partial |
-| 53 | Owner portal: "Owners see stays and statements any time" | FIN-005 | implemented (scope and remaining clause gaps below) |
-| 54 | Maintenance: "Broken things become tasks with photos" | OPS-004 | partial |
-| 55 | Review replies: "Thank-yous and replies sent on schedule" | GUEST-003, MESSAGE-003, GUEST-004 | missing |
-| 56 | Activity log: "Every change, message and payout, recorded" | AUDIT-001 | partial |
-| 57 | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | OPEN-001 | partial |
-| 58 | "Try the demo" | SITE-002 | partial |
+| 45 | "with listings, reservations, guests and owner balances" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | implemented (CSV move-in scope; see clause Status) |
+| 46 | "Your channel listings and reviews stay where they are" / listings reconnected | MIGRATE-007, SYNC-002, SYNC-003, SYNC-004 | partial |
+| 47 | `rer install` / `rer setup` | RUNTIME-001, HTTP-001 | partial |
+| 48 | "Not yet: Expedia, hotel room types and built-in dynamic pricing." | BOUNDARY-001 | not a claim |
+| 49 | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | OPEN-001 | partial |
+| 50 | "Try the demo" | SITE-002 | partial |
 
 ## Status
 

@@ -1,0 +1,56 @@
+/* Before arrival: Megan's thread with the scheduled message, her question and Cabin's draft, and
+   the two chips it set off under the card. */
+
+.arrival { padding: calc(var(--u) * 110) 0 calc(var(--u) * 88); }
+.arrival .side-row { grid-template-columns: minmax(0, 1fr) calc(var(--u) * 620); column-gap: calc(var(--u) * 48); }
+.arrival h2 { font-size: calc(var(--u) * 92); }
+
+.thread-head { display: flex; align-items: center; gap: calc(var(--u) * 26); padding: calc(var(--u) * 26) calc(var(--u) * 26) calc(var(--u) * 22); border-bottom: 1px solid var(--line); }
+.thread-head .initials { width: calc(var(--u) * 70); height: calc(var(--u) * 70); font-size: calc(var(--u) * 26); }
+.thread-name { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: calc(var(--u) * 22); font-size: calc(var(--u) * 26); font-weight: 600; letter-spacing: -.02em; line-height: 1.25; color: #0b1f1b; }
+.thread-channel { font-size: calc(var(--u) * 20); font-weight: 400; letter-spacing: 0; color: #1c2a33; }
+.thread-stay { margin-top: calc(var(--u) * 4); font-size: calc(var(--u) * 19.5); line-height: 1.3; color: var(--soft); }
+.thread-body { padding: calc(var(--u) * 22) calc(var(--u) * 22) calc(var(--u) * 20); }
+.thread-auto { display: flex; align-items: center; gap: calc(var(--u) * 16); padding: calc(var(--u) * 14) calc(var(--u) * 16); border-radius: calc(var(--u) * 12); background: #f2f5f3; font-size: calc(var(--u) * 17.5); line-height: 1.3; color: #0b1f1b; }
+.thread-auto .status { width: calc(var(--u) * 34); height: calc(var(--u) * 34); }
+.thread-time { margin: calc(var(--u) * 28) 0 0 calc(var(--u) * 6); font-size: calc(var(--u) * 15.5); color: var(--soft); }
+.bubble { width: max-content; max-width: 100%; margin-top: calc(var(--u) * 10); padding: calc(var(--u) * 17) calc(var(--u) * 24); border-radius: calc(var(--u) * 18) calc(var(--u) * 18) calc(var(--u) * 18) calc(var(--u) * 4); background: #edf0f2; font-size: calc(var(--u) * 20); line-height: 1.35; color: #111c24; }
+.draft { margin-top: calc(var(--u) * 26); padding: calc(var(--u) * 20) calc(var(--u) * 18) calc(var(--u) * 18); border: 1px solid #e7e9ec; border-radius: calc(var(--u) * 14); }
+.draft-label { display: flex; align-items: center; gap: calc(var(--u) * 16); padding-left: calc(var(--u) * 4); font-size: calc(var(--u) * 20); font-weight: 600; color: #14573c; }
+.draft-label .icon { width: calc(var(--u) * 26); height: calc(var(--u) * 26); stroke-width: 1.9; }
+.draft-text { margin-top: calc(var(--u) * 14); padding: calc(var(--u) * 15) calc(var(--u) * 18); border: 1px solid #e3e6ea; border-radius: calc(var(--u) * 8); font-size: calc(var(--u) * 19); line-height: 1.6; color: #1f2b33; }
+.draft-actions { display: flex; align-items: center; gap: calc(var(--u) * 32); margin-top: calc(var(--u) * 14); }
+.draft-send { padding: calc(var(--u) * 13) calc(var(--u) * 36); border-radius: calc(var(--u) * 8); background: var(--pill); color: #fff; font-size: calc(var(--u) * 19.5); font-weight: 500; }
+.draft-edit { font-size: calc(var(--u) * 19.5); font-weight: 500; color: #14573c; }
+
+.arrival-code { --offset: calc(var(--u) * 55); margin-top: calc(var(--u) * 15); }
+.arrival-steps { --offset: calc(var(--u) * 140); margin-top: calc(var(--u) * 5); }
+@media (min-width: 1180px) { .arrival .float-chip { font-size: calc(var(--u) * 18); } }
+
+@media (max-width: 1179px) {
+  .arrival { padding: 88px 0 80px; }
+  .arrival .side-row { grid-template-columns: minmax(0, 1fr); }
+  .arrival-art { max-width: 680px; }
+}
+@media (max-width: 760px) {
+  .arrival { padding: 64px 0 56px; }
+  .thread-head { gap: 14px; padding: 16px 14px 14px; }
+  .thread-head .initials { width: 48px; height: 48px; font-size: 18px; }
+  .thread-name { column-gap: 14px; font-size: 19px; }
+  .thread-channel { font-size: 15px; }
+  .thread-stay { font-size: 14.5px; }
+  .thread-body { padding: 14px 12px 14px; }
+  .thread-auto { align-items: flex-start; gap: 12px; padding: 12px; font-size: 14.5px; }
+  .thread-auto .status { width: 26px; height: 26px; }
+  .thread-time { margin-top: 18px; font-size: 13px; }
+  .bubble { padding: 12px 16px; font-size: 15.5px; }
+  .draft { margin-top: 18px; padding: 14px 12px 12px; }
+  .draft-label { gap: 10px; font-size: 16px; }
+  .draft-label .icon { width: 22px; height: 22px; }
+  .draft-text { padding: 12px 13px; font-size: 15px; line-height: 1.5; }
+  .draft-actions { gap: 24px; margin-top: 12px; }
+  .draft-send { padding: 10px 26px; font-size: 15.5px; }
+  .draft-edit { font-size: 15.5px; }
+  .arrival-code { --offset: 14px; margin-top: 14px; }
+  .arrival-steps { --offset: 34px; margin-top: 8px; }
+}

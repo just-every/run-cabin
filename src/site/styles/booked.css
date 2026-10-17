@@ -1,0 +1,82 @@
+/* Booked: the Lake Loft week across the channels and the sync log under its right edge.
+   Each day is two grid tracks, so a stay's bar runs from the middle of its check-in day to
+   the middle of its checkout day. Below 960 the week becomes the Sat 24 – Tue 27 strip. */
+
+.booked { padding-top: calc(var(--u) * 42); }
+.booked h2 { font-size: calc(var(--u) * 73); }
+.booked-art { margin-top: calc(var(--u) * 34); }
+
+.lake-calendar { padding: calc(var(--u) * 22) calc(var(--u) * 16) calc(var(--u) * 40); }
+.cal-head { display: grid; grid-template-columns: 1fr auto; align-items: end; padding: 0 calc(var(--u) * 8) calc(var(--u) * 6); }
+.cal-title { font: 700 calc(var(--u) * 28)/1.15 var(--font-body); letter-spacing: -.02em; color: #0b1f1b; }
+.cal-range { grid-row: 2; font: 400 calc(var(--u) * 17)/1.5 var(--font-mono); letter-spacing: -.02em; color: var(--soft); }
+.cal-source { grid-row: 2; font-size: calc(var(--u) * 14.5); color: var(--faint); }
+.cal-range .narrow { display: none; }
+
+.cal-grid { --line: #ebe9e4; display: grid; grid-template-columns: minmax(0, 1.09fr) repeat(14, minmax(0, .5fr)); grid-template-rows: calc(var(--u) * 68) repeat(4, calc(var(--u) * 64)); border: 1px solid var(--line); border-bottom: 0; border-radius: 3px; }
+.cal-corner { grid-row: 1; grid-column: 1; border-bottom: 1px solid var(--line); }
+.cal-day { grid-row: 1; display: grid; align-content: center; justify-items: center; gap: calc(var(--u) * 6); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); line-height: 1; }
+.cal-day b { font-size: calc(var(--u) * 15.5); font-weight: 500; color: #16232b; }
+.cal-day span { font-size: calc(var(--u) * 14); color: var(--soft); }
+.cal-channel { grid-column: 1; display: flex; align-items: center; padding-left: calc(var(--u) * 14); border-bottom: 1px solid var(--line); font-size: calc(var(--u) * 17); font-weight: 600; letter-spacing: -.01em; color: #0b1f1b; white-space: nowrap; }
+.cal-channel .dot { width: calc(var(--u) * 14); height: calc(var(--u) * 14); margin-right: calc(var(--u) * 14); }
+.cal-cell { border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.cal-bar { z-index: 1; align-self: center; display: flex; align-items: center; justify-content: center; height: calc(var(--u) * 40); margin: 0 calc(var(--u) * -6); clip-path: polygon(calc(var(--u) * 10) 0, calc(100% - var(--u) * 10) 0, 100% 50%, calc(100% - var(--u) * 10) 100%, calc(var(--u) * 10) 100%, 0 50%); font-size: calc(var(--u) * 16.5); white-space: nowrap; }
+.bar-stay { background: #f26d68; color: #fff; font-weight: 500; }
+.bar-stay i { margin: 0 .4em; color: rgba(255, 255, 255, .85); }
+.bar-closed { background: repeating-linear-gradient(-45deg, #e6e7e9 0 1.5px, #f1f2f3 1.5px 7px); color: #4b5560; }
+
+.sync-log { position: relative; z-index: 1; width: 53.8%; margin: calc(var(--u) * -41) 0 0 auto; padding: calc(var(--u) * 20) calc(var(--u) * 18) calc(var(--u) * 16); }
+.sync-log h3 { padding-left: calc(var(--u) * 4); font-size: calc(var(--u) * 23); font-weight: 700; line-height: 1.2; }
+.sync-log ol { display: grid; gap: calc(var(--u) * 2); margin-top: calc(var(--u) * 12); }
+.sync-log li { display: grid; grid-template-columns: calc(var(--u) * 26) calc(var(--u) * 100) calc(var(--u) * 142) minmax(0, 1fr); align-items: center; min-height: calc(var(--u) * 30); padding: 0 calc(var(--u) * 6); border-radius: 6px; font: 400 calc(var(--u) * 15.5)/1.3 var(--font-mono); letter-spacing: -.01em; color: #1f2a33; }
+.sync-log li > i { display: none; }
+.log-dot { width: calc(var(--u) * 13); height: calc(var(--u) * 13); border-radius: 50%; background: #1f9a55; }
+.log-bad { background: #fde8e8; }
+.log-bad .log-dot { background: #e2423f; }
+.log-done { background: #e6f6ea; }
+.sync-foot { margin-top: calc(var(--u) * 12); padding: calc(var(--u) * 12) calc(var(--u) * 4) 0; border-top: 1px solid var(--line-strong); text-align: right; font-size: calc(var(--u) * 15.5); color: var(--soft); }
+.sync-foot i { margin: 0 .3em; }
+
+@media (max-width: 1179px) {
+  .cal-grid { grid-template-columns: minmax(0, 1.7fr) repeat(14, minmax(0, .5fr)); }
+  .sync-log { width: 72%; }
+}
+
+/* The Sat 24 – Tue 27 strip: Thursday, Friday and Wednesday fold to nothing. */
+@media (max-width: 959px) {
+  .cal-grid { grid-template-columns: minmax(0, 1.3fr) 0 0 0 0 repeat(8, minmax(0, .5fr)) 0 0; }
+  .cal-grid .off-strip { display: none; }
+  .cal-range .wide { display: none; }
+  .cal-range .narrow { display: inline; }
+  .cal-head { grid-template-columns: 1fr auto; }
+  .cal-source { grid-row: 1; grid-column: 2; align-self: center; }
+  .bar-stay .wide { display: none; }
+  .sync-log { width: 100%; margin: 28px 0 0; }
+}
+@media (max-width: 760px) {
+  .booked { padding-top: 26px; }
+  .booked-art { margin-top: 28px; }
+  .lake-calendar { padding: 14px 0 0; overflow: hidden; }
+  .cal-head { padding: 0 14px 10px; }
+  .cal-title { font-size: 22px; }
+  .cal-range { font: 400 14.5px/1.4 var(--font-body); }
+  .cal-source { font-size: 12px; }
+  .cal-grid { grid-template-columns: minmax(0, 2.1fr) 0 0 0 0 repeat(8, minmax(0, .5fr)) 0 0; grid-template-rows: 50px repeat(4, 50px); border-width: 1px 0 0; border-radius: 0; }
+  .cal-day { gap: 5px; }
+  .cal-day b { font-size: 13px; }
+  .cal-day span { font-size: 12px; }
+  .cal-channel { padding-left: 10px; font-size: 13px; }
+  .cal-channel .dot { width: 10px; height: 10px; margin-right: 8px; }
+  .cal-bar { height: 30px; margin: 0 -3px; font-size: 12.5px; }
+  .sync-log { margin-top: 24px; padding: 18px 12px 14px; }
+  .sync-log h3 { font-size: 20px; }
+  .sync-log ol { gap: 6px; margin-top: 14px; }
+  .sync-log li { grid-template-columns: 22px auto auto minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 2px; padding: 8px 8px; font-size: 13.5px; }
+  .sync-log li > i { display: inline; grid-column: 3; margin: 0 .4em; color: #8d959e; }
+  .log-dot { width: 11px; height: 11px; }
+  .log-time { grid-column: 2; }
+  .log-channel { grid-column: 4; }
+  .log-text { grid-column: 2 / -1; grid-row: 2; font: 400 14.5px/1.35 var(--font-body); letter-spacing: 0; }
+  .sync-foot { text-align: left; font-size: 14px; }
+}

@@ -5,7 +5,7 @@ import { Arrow } from '../shell/Actions'
 import { docsLead, docsSections } from './pages'
 import { TitleDots } from './TitleDots'
 import '../styles/site.css'
-import '../styles/cards.css'
+import '../styles/card.css'
 import '../styles/docs.css'
 
 /** The docs home: every section as a row of white cards, each page's title over its one-line summary. */

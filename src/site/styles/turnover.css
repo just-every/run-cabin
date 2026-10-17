@@ -1,0 +1,73 @@
+/* Turnover day: Luis's phone with Desert Casita's job, the front-door card overlapping its edge
+   and the patio-light chip under it, beside the copy. Below 1024 the cards stack under the phone. */
+
+.turnover { padding: calc(var(--u) * 58) 0 calc(var(--u) * 62); }
+.turnover .side-row { grid-template-columns: calc(var(--u) * 520) minmax(0, 1fr); column-gap: calc(var(--u) * 44); align-items: end; }
+.turnover .stage-head { padding-bottom: calc(var(--u) * 50); }
+.turnover h2 { font-size: calc(var(--u) * 86); }
+@media (min-width: 1180px) { .turnover .stage-head .stage-lede { max-width: calc(var(--u) * 630); } }
+.turnover-art { position: relative; }
+
+.handset { position: relative; width: calc(var(--u) * 478); padding: calc(var(--u) * 13); border-radius: calc(var(--u) * 66); background: #121517; box-shadow: inset 0 0 0 calc(var(--u) * 2) #3a3f43, 0 calc(var(--u) * 30) calc(var(--u) * 60) calc(var(--u) * -30) rgba(13, 43, 36, .45); }
+.handset::before { content: ''; position: absolute; left: 50%; top: calc(var(--u) * 26); width: calc(var(--u) * 140); height: calc(var(--u) * 36); border-radius: 99px; background: #121517; transform: translateX(-50%); }
+.handset-screen { padding: calc(var(--u) * 80) calc(var(--u) * 20) calc(var(--u) * 70); border-radius: calc(var(--u) * 54); background: #fff; }
+.handset-day { padding-left: calc(var(--u) * 6); font-size: calc(var(--u) * 27); font-weight: 700; letter-spacing: -.02em; color: #0b1f1b; }
+.handset i { margin: 0 .36em; color: #8d959e; }
+.handset-day i { margin: 0 .3em; color: #0b1f1b; }
+.handset-who { display: flex; align-items: center; gap: calc(var(--u) * 18); margin-top: calc(var(--u) * 16); padding-left: calc(var(--u) * 6); font-size: calc(var(--u) * 20); font-weight: 500; color: #0b1f1b; }
+.handset-who .initials { width: calc(var(--u) * 46); height: calc(var(--u) * 46); font-size: calc(var(--u) * 17); }
+.job { margin-top: calc(var(--u) * 22); padding: calc(var(--u) * 22) calc(var(--u) * 12) calc(var(--u) * 16); border-radius: calc(var(--u) * 16); }
+.job-title { padding: 0 calc(var(--u) * 8); font-size: calc(var(--u) * 20); color: #0b1f1b; }
+.job-title b { font-weight: 700; }
+.job-ready { display: inline-flex; align-items: center; gap: calc(var(--u) * 12); margin: calc(var(--u) * 14) calc(var(--u) * 8) 0; padding: calc(var(--u) * 7) calc(var(--u) * 16) calc(var(--u) * 7) calc(var(--u) * 10); border-radius: 999px; background: #def2e5; font-size: calc(var(--u) * 17); font-weight: 500; color: #0f4d31; }
+.job-ready .status, .job-list .status { width: calc(var(--u) * 26); height: calc(var(--u) * 26); }
+.job-list { display: grid; gap: calc(var(--u) * 13); margin-top: calc(var(--u) * 16); padding: 0 calc(var(--u) * 10); }
+.job-list li { display: flex; align-items: center; gap: calc(var(--u) * 18); font-size: calc(var(--u) * 18); color: #33404a; }
+.job-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--u) * 10); margin-top: calc(var(--u) * 20); }
+.job-photos img { display: block; width: 100%; height: auto; aspect-ratio: 276 / 358; object-fit: cover; border-radius: calc(var(--u) * 8); }
+.job-next { display: flex; align-items: center; gap: calc(var(--u) * 20); margin-top: calc(var(--u) * 18); padding: calc(var(--u) * 26) calc(var(--u) * 24); border-radius: calc(var(--u) * 14); background: #eef0f2; font-size: calc(var(--u) * 19); color: #4b5560; }
+.job-next b { font-weight: 600; color: #3a4650; }
+.job-next .icon { width: calc(var(--u) * 28); height: calc(var(--u) * 28); color: #3a4650; }
+
+.door { position: absolute; left: calc(var(--u) * 396); top: calc(var(--u) * 99); display: flex; align-items: flex-start; gap: calc(var(--u) * 28); width: calc(var(--u) * 510); padding: calc(var(--u) * 26) calc(var(--u) * 16) calc(var(--u) * 22) calc(var(--u) * 30); }
+.door .icon { width: calc(var(--u) * 42); height: calc(var(--u) * 42); margin-top: calc(var(--u) * 6); }
+.door > div { flex: 1; min-width: 0; }
+.door-title { font-size: calc(var(--u) * 21.5); font-weight: 700; letter-spacing: -.015em; color: #0b1f1b; }
+.door-title i { color: #0b1f1b; }
+.door-line { margin-top: calc(var(--u) * 12); font-size: calc(var(--u) * 16); line-height: 1.35; color: #33404a; }
+.door-line + .door-line { margin-top: calc(var(--u) * 14); padding-top: calc(var(--u) * 14); border-top: 1px solid var(--line); }
+.patio { position: absolute; left: calc(var(--u) * 504); top: calc(var(--u) * 296); max-width: none; margin: 0; font-size: calc(var(--u) * 17.5); }
+
+@media (max-width: 1179px) {
+  .turnover { padding: 88px 0 72px; }
+  .turnover .side-row { grid-template-columns: minmax(0, 1fr); }
+  .turnover .stage-head { padding-bottom: 0; }
+}
+@media (max-width: 1023px) {
+  .door, .patio { position: static; }
+  .door { width: auto; max-width: 560px; margin-top: 24px; }
+  .patio { max-width: 100%; margin-top: 12px; }
+}
+@media (max-width: 760px) {
+  .turnover { padding: 64px 0 56px; }
+  .handset { width: min(100%, 340px); padding: 10px; border-radius: 48px; }
+  .handset::before { top: 20px; width: 100px; height: 28px; }
+  .handset-screen { padding: 62px 12px 40px; border-radius: 39px; }
+  .handset-day { font-size: 21px; }
+  .handset-who { gap: 12px; margin-top: 12px; font-size: 16px; }
+  .handset-who .initials { width: 36px; height: 36px; font-size: 14px; }
+  .job { margin-top: 16px; padding: 16px 8px 12px; }
+  .job-title { padding: 0 6px; font-size: 15.5px; }
+  .job-ready { gap: 8px; margin: 10px 6px 0; padding: 5px 12px 5px 7px; font-size: 14px; }
+  .job-ready .status, .job-list .status { width: 22px; height: 22px; }
+  .job-list { gap: 10px; margin-top: 12px; padding: 0 6px; }
+  .job-list li { gap: 12px; font-size: 14.5px; }
+  .job-photos { gap: 6px; margin-top: 14px; }
+  .job-next { gap: 12px; margin-top: 14px; padding: 18px 16px; font-size: 14.5px; }
+  .job-next .icon { width: 22px; height: 22px; }
+  .door { gap: 16px; margin-top: 20px; padding: 18px 16px 16px 18px; }
+  .door .icon { width: 32px; height: 32px; margin-top: 0; }
+  .door-title { font-size: 17px; }
+  .door-line { font-size: 14.5px; }
+  .patio { font-size: 15px; }
+}
