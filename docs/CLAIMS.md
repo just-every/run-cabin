@@ -1,6 +1,6 @@
 # Cabin homepage claims → code (run-site gate table)
 
-Branch `br/style` on just-every/run-cabin, 17 Oct 2026; rows 1, 8, 11, 12, 13 and 14 updated on `main` by the calendar and channels area, 17 Oct 2026. Direct booking rows 18–23, 25, 51 and 52 updated 17 October 2026; rows 3, 4, 7, 9, 27, 28, 29, 31, 33 and 54 by the turnovers and access area, 17 Oct 2026; rows 2, 15, 16 and 17 by the guest inbox area, 17 Oct 2026. Every capability the homepage states, in page order, with the code that backs it today, **partial** (a narrower version exists, named), or **contract** (contract, not yet in code), with the target-contract clause that carries it. The copy is the design desk's (owner-accepted, 16 Oct 2026) and is not watered down; this table is what the run-site gate reads before any deploy.
+Branch `br/style` on just-every/run-cabin, 17 Oct 2026; rows 1, 8, 11, 12, 13 and 14 updated on `main` by the calendar and channels area, 17 Oct 2026. Direct booking rows 18–23, 25, 51 and 52 updated 17 October 2026; rows 3, 4, 7, 9, 27, 28, 29, 31, 33 and 54 by the turnovers and access area, 17 Oct 2026; rows 2, 15, 16 and 17 by the guest inbox area, 17 Oct 2026. Stay recovery rows 34–38 updated 17 October 2026. Every capability the homepage states, in page order, with the code that backs it today, **partial** (a narrower version exists, named), or **contract** (contract, not yet in code), with the target-contract clause that carries it. The copy is the design desk's (owner-accepted, 16 Oct 2026) and is not watered down; this table is what the run-site gate reads before any deploy.
 
 Note on "the contract": `CONTRACT.md` on `main` (17082d6, "Target contract: US vacation-rental PMS and channel manager") **is** the new contract this brief describes: a US PMS with channel manager replacing Guesty, Hostaway, OwnerRez and Lodgify. Its own audit table scores today's code against each clause; the statuses below agree with it. Under the owner's 17 Oct rule (platform/SEED-HOMEPAGE-PROCESS.md, principle 12) a core-feature claim may be backed by a contract clause and is a build priority to ship within about a week.
 
@@ -41,11 +41,11 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 31 | Turnovers | "photos come back when the home is ready" | code | The cleaner marks the home ready from their phone with the home's required number of photos, up to 12, shrunk in the browser (`src/cabin/turnovers.ts`, `src/cabin/photos.ts`, `public/cabin.js`, migration `0017_photos.sql`); the owner sees them on Readiness and Turnovers, e.g. "Photos 4 / 4". `tests/turnovers.test.mjs` (line 15). |
 | 32 | Turnovers | Checklist items ticked on the card | code | Every approved item must be ticked to complete: `src/cabin/turnovers.ts`. |
 | 33 | Turnovers | "Patio light out · task added for Dale" | code | From a turnover the cleaner reports a broken thing with photos; it becomes a maintenance task linked to the turnover and home, assigned to the home's maintenance person and emailed to them, and an open blocking task shows the home as not ready (`src/cabin/maintenance.ts`, `src/cabin/ui/maintenance.ts`, `src/cabin/ui/turnovers.ts`). OPS-004. `tests/turnovers.test.mjs` (line 15). |
-| 34 | Stay recovery | "Cabin rebooks the turnover" | contract | AGENT-001. |
-| 35 | Stay recovery | "resets the door code" | contract | AGENT-001, OPS-005. |
-| 36 | Stay recovery | "offers the credit you approved" (within your $100 limit) | contract | AGENT-003, AGENT-006. |
-| 37 | Stay recovery | "confirms the home is ready" | partial | Photo-evidenced completion (row 7). AGENT-001, OPS-003. |
-| 38 | Stay recovery | "Owner balance updated −$75.00" | contract | FIN-001. |
+| 34 | Stay recovery | "Cabin rebooks the turnover" | code | Stay recovery proposes an available active backup from the home’s allowed list, binds exact approval or the owner’s automatic limits, reassigns the turnover and emails the new cleaner; the cleaner accepts in the case. `src/cabin/recovery/commands.ts`, `actions.ts`; `tests/recovery.test.mjs`. AGENT-001. Automatic rescheduling and relocation remain open. |
+| 35 | Stay recovery | "resets the door code" | partial | Approved recovery rotates the guest code, revokes the old code, preserves the secret stay link and updates only scheduled messages whose contents changed (`src/cabin/recovery/actions.ts`, `src/cabin/inbox/schedule.ts`; `tests/recovery.test.mjs`). The host confirms setting the new code on the keypad; live lock verification still needs the owner’s smart-lock account (OPS-005). On RER Managed, provider calls are not available yet. |
+| 36 | Stay recovery | "offers the credit you approved" (within your $100 limit) | code | Owner-only per-home credit and extra-cleaning limits apply across cases for the same stay. A $75 credit under a $100 limit can apply automatically; a $150 proposal waits for the owner. The exact guest offer and frozen owner adjustment are bound to approval and can be compensated (`src/cabin/recovery/limits.ts`, `commands.ts`, `finance.ts`; `tests/recovery.test.mjs`). This records a credit; it does not process a payment refund. AGENT-003, AGENT-006. |
+| 37 | Stay recovery | "confirms the home is ready" | code | The recovery case closes after replacement cleaner acceptance, completed checklist and required photos, host-confirmed keypad or connected-lock access, no blocking maintenance, frozen balance adjustment and accepted guest readiness email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). Failed delivery keeps it open. AGENT-001, OPS-003. |
+| 38 | Stay recovery | "Owner balance updated −$75.00" | partial | Approved credits and extra cleaning charges post immediately to a separate frozen, stay-linked owner adjustment statement, emailed to the owner and shown in their portal; undo posts an exact reversal (`src/cabin/recovery/finance.ts`, `src/cabin/statements.ts`, `tests/recovery.test.mjs`). Operational owner balance only: the complete trust subledger and disbursements in FIN-001 remain open. |
 | 39 | Owner statements | "Airbnb, Vrbo and Stripe payouts match to their stays" | partial | Airbnb/Vrbo CSV reports match iCal stays; Stripe test payout reader matches direct payment intents with imported fees. Live USD Stripe matching awaits a paid automatic USD payout; network-edge USD path tested. Partner payout APIs later. `src/cabin/finance/`; FIN-002. |
 | 40 | Owner statements | "Owners get a statement" | code | Frozen approval emails the home owner a portal link; delivery acceptance and explicit resend recorded. `src/cabin/finance/delivery.ts`; FIN-004. |
 | 41 | Owner statements | "and a portal" | code | Separate email-link sign-in and HttpOnly session; home ownership and frozen recipient checked on downloads. `src/cabin/owners/`; FIN-005. |
@@ -71,12 +71,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 44 |
-| partial | 5, 15, 37, 39, 52, 56 | 6 |
-| contract | 24, 26, 34, 35, 36, 38, 55 | 7 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 47 |
+| partial | 5, 15, 35, 38, 39, 52, 56 | 7 |
+| contract | 24, 26, 55 | 3 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 44 code, 6 partial, 7 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 47 code, 7 partial, 3 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 

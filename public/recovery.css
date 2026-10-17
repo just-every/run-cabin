@@ -1,0 +1,13 @@
+.cabin .recovery h4{font-size:15px;margin:16px 0 8px}
+.cabin .recovery .recovery-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.cabin .recovery-proposal{margin:18px 0;padding:16px;border:1px solid color-mix(in srgb,var(--rer-border) 35%,transparent);border-radius:12px}
+.cabin .recovery-proposal h4:first-child{margin-top:0}
+.cabin .recovery-guest{padding:14px;background:color-mix(in srgb,var(--rer-accent) 6%,var(--rer-surface));border-radius:8px}
+.cabin .recovery-propose,.cabin .recovery-history,.cabin .recovery-access{margin:18px 0}
+.cabin .recovery-propose form{margin-top:14px}
+.cabin .recovery-history ol{padding-left:22px}
+.cabin .recovery-history li{margin:12px 0}
+.cabin .recovery-history li p{margin:4px 0}
+.cabin .recovery .check{min-height:44px;padding:6px 0}
+.cabin .recovery .check input{width:20px;height:20px;flex:0 0 20px}
+@media(max-width:700px){.cabin .recovery .facts{grid-template-columns:1fr;gap:3px}.cabin .recovery .facts dd{margin-bottom:8px}.cabin .recovery-proposal{padding:14px}.cabin .recovery .actions{display:grid}.cabin .recovery .actions form{width:100%}}

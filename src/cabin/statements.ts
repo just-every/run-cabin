@@ -27,7 +27,7 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  if(name==='statement.approve'){
   manager(c.actor);const row=c.data.statements.find(s=>s.id===text(p.id,'statement ID'));need(row,'Statement not found',404)
   need(property(c,row.propertyId).revision===row.propertyRevision,'Property or fee terms changed. Prepare the statement again.',409)
-  need(!c.data.statements.some(s=>s.id!==row.id&&s.propertyId===row.propertyId&&s.month===row.month&&s.status==='approved'),'This property month already has an approved statement',409)
+  need(!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.status==='approved'),'This property month already has an approved statement',409)
   if(row.source==='imported'){
    const payouts=c.data.payouts.filter(r=>r.propertyId===row.propertyId&&r.date.startsWith(row.month)&&!r.statementId)
    need(await sha(JSON.stringify(payouts))===row.sourceBaseline,'Imported payouts changed. Prepare and review a new statement.',409)
@@ -48,6 +48,10 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
 /** Prevent spreadsheet formulas even when prefixed by whitespace or controls. */
 export function csvCell(value:unknown){const s=String(value??'');return '"'+(typeof value==='number'?s:/^[\s\u0000-\u001f]*[=+@-]/.test(s)?"'"+s:s).replaceAll('"','""')+'"'}
 export function approvedStatementCsv(s:Statement){
+ if(s.source==='recovery'){
+  const rows:unknown[][]=[['Cabin recovery adjustment'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Recovery case',s.recoveryId],['Revision',s.revision],...(s.reversalOf?[['Reversal of statement',s.reversalOf]]:[]),['Description','Owner balance adjustment (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Owner balance adjustment total (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational owner balance adjustment only. No payment, refund processing or trust accounting.']]
+  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
+ }
  const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Management commission',`${(s.commissionBps/100).toFixed(2)}%`],['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational statement only. No payment processing or trust accounting.']]
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
 }

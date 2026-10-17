@@ -616,10 +616,10 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 31 | "photos come back when the home is ready" | OPS-002, EVIDENCE-001, OPS-003 | partial |
 | 32 | Checklist items ticked on the card | EVIDENCE-001 | done |
 | 33 | "Patio light out · task added for Dale" | OPS-004, OPS-002 | partial |
-| 34 | "Cabin rebooks the turnover" | AGENT-001, OPS-001 | partial |
+| 34 | "Cabin rebooks the turnover" | AGENT-001, OPS-001 | implemented (stay-recovery scope; see clause Status) |
 | 35 | "resets the door code" | AGENT-001, OPS-005 | partial |
-| 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006 | partial |
-| 37 | "confirms the home is ready" | AGENT-001, OPS-003 | partial |
+| 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006 | implemented (stay-recovery scope; see clause Status) |
+| 37 | "confirms the home is ready" | AGENT-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
 | 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | partial |
 | 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
 | 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
@@ -657,10 +657,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 0 | 0 | 0 | 0 |
-| Target and push further | 6 | 50 | 32 | 88 |
-| All | 6 | 50 | 32 | 88 |
+| Target and push further | 6 | 52 | 30 | 88 |
+| All | 6 | 52 | 30 | 88 |
 
-**88 clauses: 6 done, 50 partial, 32 missing.**
+**88 clauses: 6 done, 52 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -716,7 +716,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `OPS-006` | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/turnovers.test.mjs` (line 15); `tests/cabin.test.mjs` (lines 31, 67) | A readiness view for any chosen day shows each home's next arrival (guest, channel, time), the turnover before it with cleaner and window, the door code state (scheduled, active, expired, revoked) and photos, with a summary such as "All 5 homes ready for Saturday" naming any not ready. The actual check-out time is recorded when the cleaner finds the guests gone or staff enter it; check-out from lock events or a guest portal, provider-confirmed code state and a departures list are absent. |
-| `FIN-001` | Reservation-linked USD trust subledgers | target | missing |  | No implementing flow in the audited tree. |
+| `FIN-001` | Reservation-linked USD trust subledgers | target | partial | `src/cabin/recovery/finance.ts`; `src/cabin/statements.ts`; `tests/recovery.test.mjs` | Recovery credits and extra cleaning costs create approved frozen stay-linked owner adjustment statements with exact reversing entries and owner delivery. Operational owner balance only: no complete trust/cash/deposit/tax subledgers, fund transfers or reconciliation. |
 | `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD CSV payouts match stays with imported fees. Stripe test automatic USD payouts match direct payment intents; live USD matching awaits a paid automatic USD payout (supplied test account settles AUD). Partner APIs, FX, bank receipts and full exception closure remain later. |
 | `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `tests/finance.test.mjs` | Imported gross less channel fees less fixed home commission gives owner payout with integer half-up arithmetic. Versioned agreements and wider expense allocation remain absent. |
 | `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly imported USD statements freeze source lines, recipient and commission; approval emails a portal link with acceptance status. CSV and owner access ship. Scheduled generation, PDF, distribution rails and later-period adjustments remain absent. |
@@ -744,11 +744,11 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
 | `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
 | `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |
-| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/http.ts`; `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (lines 67, 109) | Bearer-prepared turnover drafts and human completion evidence are foundations only; no recovery agent, relocation, compensation or financial closure exists; automatic turnover dispatch and stay-bound door codes (OPS-001, OPS-005) are in place for it. |
+| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/recovery/`; `src/cabin/ui/recovery.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs`; `docs/stay-recovery.md` | Cleaner/host reports and the guest stay page open durable recovery cases. Proposals select an available allowed backup, exact approvals or owner limits authorize reassignment, code rotation and credit, then accepted cleaning, photos, confirmed keypad/access, guest email and owner adjustment gate closure. No automatic rescheduling, relocation, collision cases, recurrence checks or live smart-lock account proof. |
 | `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/statements.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 90, 109) | Agents can prepare manual statement drafts for exact human approval; settlement matching, record pursuit, correcting postings and payout closure are absent. |
-| `AGENT-003` | Resolve guest issues through accepted field work | push-further | missing |  | No implementing flow in the audited tree. |
+| `AGENT-003` | Resolve guest issues through accepted field work | push-further | partial | `src/cabin/recovery/commands.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs` | Reported guest problems can dispatch approved replacement cleaning, track acceptance and required photos and send readiness confirmation. No automatic inbox classification, safety triage to a named person, maintenance troubleshooting or guest recurrence confirmation. |
 | `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
-| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/model.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 109, 55) | Current agents are strictly draft-only with human revision approval. Expanded tool grants, budgets, durable cases and external-action reconciliation do not exist. |
+| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/recovery/cases.ts`; `src/cabin/recovery/limits.ts`; `src/cabin/recovery/actions.ts`; `tests/recovery.test.mjs` | Owner policies scope backup cleaners and per-stay compensation/cleaning ceilings; approvals bind current recipients, home, stay, cleaner, code and limits. Durable histories, denied/stale approvals, pending mail and exact compensating undo exist. AI supplies optional wording only from the install’s own encrypted key. No general tool grants, pause/revoke interface or uncertain external-write reconciliation. |
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
 | `OPEN-001` | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |

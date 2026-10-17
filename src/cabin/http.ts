@@ -1,3 +1,4 @@
+import { recoveryWording } from './recovery/wording'
 import { quickBooksCommand } from './finance/quickbooks'
 import { booksCommand, exportBooks } from './finance/books'
 import { portalState } from './owners/access'
@@ -25,13 +26,13 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox','/app/recovery','/app/recovery/setup'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
- const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
@@ -42,6 +43,10 @@ function savedMessage(name:string|null,who:Actor){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean){
+ if(name==='recovery.ai.test')return result.message
+ if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
+ if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
+ if(name==='recovery.close')return 'Readiness checked. The case closes when the guest confirmation is accepted.'
  if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
@@ -95,7 +100,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
    else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }
- }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
+ }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('cleanerIds'))input.cleanerIds=form.getAll('cleanerIds').filter(Boolean);if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
  else return fail('Use JSON, a form, or a photo upload',415)
  if('commissionPercent' in input){const amount=String(input.commissionPercent);need(/^\d+(?:\.\d{1,2})?$/.test(amount),'Enter a commission percentage with at most two decimal places');input.commissionBps=Math.round(Number(amount)*100);delete input.commissionPercent}
  for(const key of ['commissionBps','managementFeeCents'])if(key in input&&input[key]!=='')input[key]=Number(input[key]);else if(input[key]==='')delete input[key]
