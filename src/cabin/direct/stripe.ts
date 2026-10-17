@@ -14,6 +14,13 @@ export interface StripeEnv {
  MAIL_PROVIDER?: string
 }
 
+/** The Stripe API version every Cabin request is written and tested against, whatever the account's default.
+ * This version removed payment_method_types; Cabin names its one method, card, with allowed_payment_method_types:
+ * a card can be saved for the damage hold, held with manual capture, and reports when that hold expires.
+ * https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions */
+export const STRIPE_VERSION = '2026-09-30.endive'
+export const CARD_ONLY = { 'allowed_payment_method_types[0]': 'card' }
+
 export const MANAGED_STRIPE_LINE = 'Stripe payments, security deposits and identity verification are not available yet on RER Managed hosting because there is no outbound Stripe connection or provider relay.'
 
 // Keep the same detection as channels.managedInstall without importing calendar storage.
@@ -23,7 +30,10 @@ function managedInstall(env: StripeEnv) {
  try { return !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(env.RER_MANAGEMENT_ORIGIN).hostname) } catch { return true }
 }
 
-export async function stripeCredentials(env:StripeEnv){
+/** Stripe and key problems are the host's to fix: errors carry host:true so guest pages word them for the guest instead. */
+const hostSide=async<T>(work:()=>Promise<T>):Promise<T>=>{try{return await work()}catch(error){throw Object.assign(error as Error,{host:true})}}
+export const stripeCredentials=(env:StripeEnv)=>hostSide(()=>credentials(env))
+async function credentials(env:StripeEnv){
  const saved=await savedKey(env,env.DIRECT_STRIPE_MODE)
  const selected=env.DIRECT_STRIPE_MODE??saved?.mode
  const key=(env.DIRECT_STRIPE_KEY??saved?.key??(selected==='live'?env.STRIPE_SECRET_KEY:selected==='test'?env.STRIPE_TEST_SECRET_KEY:(env.STRIPE_TEST_SECRET_KEY||env.STRIPE_SECRET_KEY))??'').trim()
@@ -34,12 +44,13 @@ export async function stripeCredentials(env:StripeEnv){
  return {key,mode}
 }
 /** Provider calls use the selected installation key; Managed hosting fails before egress. */
-export async function stripe(env: StripeEnv, path: string, method = 'GET', fields?: Record<string, string>, idempotencyKey?: string): Promise<any> {
+export const stripe = (env: StripeEnv, path: string, method = 'GET', fields?: Record<string, string>, idempotencyKey?: string): Promise<any> => hostSide(() => call(env, path, method, fields, idempotencyKey))
+async function call(env: StripeEnv, path: string, method: string, fields?: Record<string, string>, idempotencyKey?: string): Promise<any> {
  need(!managedInstall(env), MANAGED_STRIPE_LINE, 409)
- const {key,mode}=await stripeCredentials(env)
+ const {key,mode}=await credentials(env)
  need(/^\/[a-z_]+(?:\/[A-Za-z0-9_]+)*$/.test(path), 'Invalid Stripe API path')
  const url = new URL(`https://api.stripe.com/v1${path}`), verb = method.toUpperCase()
- const headers: Record<string, string> = { Authorization: `Bearer ${key}`, Accept: 'application/json' }
+ const headers: Record<string, string> = { Authorization: `Bearer ${key}`, Accept: 'application/json', 'Stripe-Version': STRIPE_VERSION }
  const form = new URLSearchParams(fields)
  if (verb === 'GET') url.search = form.toString()
  else headers['Content-Type'] = 'application/x-www-form-urlencoded'
@@ -64,7 +75,7 @@ export async function stripe(env: StripeEnv, path: string, method = 'GET', field
    idempotency_key_in_use: 'Stripe is already processing this request. Refresh the stay to check its result.',
   }
   const status = response.status === 401 || response.status === 403 ? 503 : response.status >= 500 ? 502 : response.status
-  return fail(messages[code] || (status === 503 ? 'Stripe rejected the credentials or account permissions. Check the connected key in Direct bookings.' : `Stripe rejected the request (HTTP ${response.status}). Check your Stripe dashboard for details.`), status)
+  return fail(messages[code] || (status === 503 ? 'Stripe rejected the credentials or account permissions. Check the connected key in Direct bookings.' : `Stripe rejected the request (HTTP ${response.status}). Its reason is in your Stripe Dashboard under Developers → Logs.`), status)
  }
  need(result && typeof result === 'object' && !Array.isArray(result), 'Stripe returned an invalid response.', 502)
  need(typeof result.livemode!=='boolean'||result.livemode===(mode==='live'),'Stripe returned an object from a different payment mode.',502)
@@ -84,15 +95,15 @@ function stayUrl(origin: string, token: string) {
 const requestKey = (env: StripeEnv, operation: string, id: string) => `cabin:${env.RER_INSTALLATION_ID || 'self'}:${operation}:${id}`
 const amount = (value: number) => String(integer(value, 'Amount in cents', 1, 99_999_999))
 
-export async function createCheckout(env: StripeEnv, input: { id: string; token: string; origin: string; email: string; amountCents: number; description: string; lines: Array<{ name: string; amountCents: number }> }) {
+export async function createCheckout(env: StripeEnv, input: { id: string; attempt?: string; token: string; origin: string; email: string; amountCents: number; description: string; lines: Array<{ name: string; amountCents: number }> }) {
  amount(input.amountCents)
  need(input.lines.length > 0 && input.lines.length <= 100, 'Checkout requires between 1 and 100 priced lines')
  need(input.lines.every(line => typeof line.name === 'string' && line.name.trim().length > 0 && Number.isSafeInteger(line.amountCents) && line.amountCents >= 0), 'Every checkout line needs a name and a non-negative amount in cents')
  need(input.lines.reduce((total, line) => total + line.amountCents, 0) === input.amountCents, 'Checkout lines must equal the booking total')
  const back = stayUrl(input.origin, input.token)
  const fields: Record<string, string> = {
-  mode: 'payment', customer_creation: 'always', customer_email: input.email,
-  'payment_method_types[0]': 'card', 'payment_intent_data[setup_future_usage]': 'off_session',
+  mode: 'payment', customer_creation: 'always', customer_email: input.email, ...CARD_ONLY,
+  'payment_intent_data[setup_future_usage]': 'off_session',
   'metadata[stayId]': input.id, 'payment_intent_data[metadata][stayId]': input.id,
   'payment_intent_data[description]': input.description,
   client_reference_id: input.id, success_url: `${back}?paid=1`, cancel_url: back,
@@ -104,7 +115,7 @@ export async function createCheckout(env: StripeEnv, input: { id: string; token:
   fields[`line_items[${index}][price_data][product_data][name]`] = line.name
   fields[`line_items[${index}][quantity]`] = '1'
  })
- return stripe(env, '/checkout/sessions', 'POST', fields, requestKey(env, 'checkout', input.id))
+ return stripe(env, '/checkout/sessions', 'POST', fields, requestKey(env, 'checkout', input.attempt ?? input.id))
 }
 
 export async function readCheckout(env: StripeEnv, id: string) {
@@ -114,7 +125,7 @@ export async function readCheckout(env: StripeEnv, id: string) {
 export async function createDeposit(env: StripeEnv, input: { id: string; customer: string; paymentMethod: string; amountCents: number; attempt?:string }) {
  return stripe(env, '/payment_intents', 'POST', {
   amount: amount(input.amountCents), currency: 'usd', customer: input.customer, payment_method: input.paymentMethod,
-  capture_method: 'manual', off_session: 'true', confirm: 'true', 'payment_method_types[0]': 'card',
+  capture_method: 'manual', off_session: 'true', confirm: 'true', ...CARD_ONLY,
   'metadata[stayId]': input.id, 'metadata[purpose]': 'security_deposit', 'expand[0]': 'latest_charge',
  }, requestKey(env, 'deposit', input.attempt??input.id))
 }
@@ -146,7 +157,7 @@ export async function readIdentity(env: StripeEnv, id: string) {
 export async function createDepositCheckout(env:StripeEnv,input:{id:string;attempt:string;token:string;origin:string;customer:string;amountCents:number}){
  const back=stayUrl(input.origin,input.token)
  return stripe(env,'/checkout/sessions','POST',{
-  mode:'payment',customer:input.customer,'payment_method_types[0]':'card',
+  mode:'payment',customer:input.customer,...CARD_ONLY,
   'payment_intent_data[capture_method]':'manual','payment_intent_data[setup_future_usage]':'off_session',
   'metadata[stayId]':input.id,'metadata[purpose]':'security_deposit',
   'payment_intent_data[metadata][stayId]':input.id,'payment_intent_data[metadata][purpose]':'security_deposit',

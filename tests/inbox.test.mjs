@@ -150,3 +150,43 @@ test('a stay’s check-in message with its door code goes out on time, the guest
     assert.deepEqual([theirs.messages.length, theirs.scheduled.length], [0, 0])
   } finally { await h.close() }
 })
+
+test('a returning guest’s question is answered for their upcoming stay, and a new check-out time re-sends the corrected door-code hours', async () => {
+  const h = await harness({})
+  try {
+    // The home's own date: its first stay checked out at midnight there today, so it is over whatever the hour.
+    const local = n => new Date(Date.parse(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()) + 'T12:00:00Z') + n * 86_400_000).toISOString().slice(0, 10)
+    const mail = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('megan@guest.example'))
+    const settings = async () => (await h.state()).inbox.find(r => r.id === 'inbox') ?? { revision: '' }
+    const home = await h.cmd('property.save', { name: 'Saltbox on the Bay', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 2000 })
+    const hours = async out => h.cmd('home.settings', { propertyId: home.id, revision: (await h.state()).homeSettings.find(r => r.propertyId === home.id)?.revision ?? '', address: ADDRESS, timeZone: 'America/New_York', checkInTime: '16:00', checkOutTime: out, checklist: ['Beds made'], photosRequired: 1 })
+    await hours('00:00')
+    await h.cmd('inbox.address', { address: INBOX, revision: '' })
+    await h.cmd('inbox.schedule', { checkinEnabled: true, checkinHours: 48, checkoutEnabled: false, checkoutHours: 14, reviewEnabled: false, reviewHours: 4, revision: (await settings()).revision })
+    const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-3), end: local(0) })
+    const next = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(1), end: local(3) })
+    assert.notEqual(past.bookingId, next.bookingId)
+    const [first] = (await mail()).filter(m => m.subject.startsWith('Check-in details'))
+    assert.ok(first, 'check-in details for the upcoming stay went out')
+
+    const raw = mime({ from: 'Megan Hale <megan@guest.example>', subject: 'Saturday', id: 'megan-1@guest.example', text: 'Hi, what is the door code for our check-in?' })
+    await h.mf.dispatchFetch(`${h.origin}/cdn-cgi/local/email?from=${encodeURIComponent('megan@guest.example')}&to=${encodeURIComponent(INBOX)}`, { method: 'POST', body: raw })
+    let s = await h.state()
+    const asked = s.messages.find(m => m.headerId === '<megan-1@guest.example>'), draft = s.messages.find(m => m.replyTo === asked.id)
+    const code = s.codes.find(r => r.bookingId === next.bookingId && r.holder === 'guest')
+    assert.equal(asked.bookingId, next.bookingId, 'the stay that already checked out is not the one she is asking about')
+    assert.ok(draft.text.includes(code.code), draft.text)
+
+    // The home now checks out at 3 am: the guest's code ends earlier, and the check-in details she already has are corrected.
+    await hours('03:00')
+    s = await h.state()
+    const moved = s.codes.find(r => r.bookingId === next.bookingId && r.holder === 'guest')
+    assert.notEqual(moved.validUntil, code.validUntil)
+    const sent = (await mail()).filter(m => m.subject.includes('Check-in details'))
+    assert.equal(sent.length, 2)
+    assert.match(sent[1].subject, /^Updated: /)
+    assert.ok(sent[1].text.includes(moved.code) && sent[1].text.includes('3 am'), sent[1].text)
+    await hours('03:00')
+    assert.equal((await mail()).filter(m => m.subject.includes('Check-in details')).length, 2, 'sent once per change')
+  } finally { await h.close() }
+})

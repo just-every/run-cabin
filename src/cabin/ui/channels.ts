@@ -7,10 +7,16 @@ import { MANAGED_LINE } from '../channels'
 const OTAS = ['airbnb', 'vrbo', 'booking.com'] as const
 export const when = (iso?: string | null, timeZone = 'America/New_York') => iso ? `<time datetime="${h(iso)}">${h(new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone, timeZoneName: 'short' }))}</time>` : 'never'
 const STATUS: Record<string, string> = { ok: 'Synced', pending: 'Waiting for first sync', stale: 'Sync failing' }
+// Each channel's own calendar-sync steps, for finding its export link and pasting Cabin's.
+const SYNC_HELP: Record<string, string> = {
+  airbnb: 'https://www.airbnb.com/help/article/99',
+  vrbo: 'https://help.vrbo.com/articles/Export-your-reservation-calendar',
+  'booking.com': 'https://partner.booking.com/en-us/help/rates-availability/extranet-calendar/syncing-your-bookingcom-calendar-third-party-calendars',
+}
 function inbound(s: any, p: any, ch: string) {
   const zone = s.homeSettings.find((r: any) => r.propertyId === p.id)?.timeZone || 'America/New_York'
   const row = s.connections.find((r: any) => r.propertyId === p.id && r.channel === ch)
-  if (!row) return s.managed ? `<p class="muted">${h(channelName(ch))}: not connected.</p>` : form('channel.connect', 'calendar', hidden('propertyId', p.id) + hidden('channel', ch) + `<label>${h(channelName(ch))} calendar link<input name="url" type="url" inputmode="url" placeholder="https://…ics" required></label><p class="muted">Copy the export (iCal) link from ${h(channelName(ch))}’s calendar sync settings.</p><label>Sync every<select name="intervalMinutes"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>`, `Connect ${channelName(ch)}`, 'class="connect"')
+  if (!row) return s.managed ? `<p class="muted">${h(channelName(ch))}: not connected.</p>` : form('channel.connect', 'calendar', hidden('propertyId', p.id) + hidden('channel', ch) + `<label>${h(channelName(ch))} calendar link<input name="url" type="url" inputmode="url" placeholder="https://…ics" required></label><p class="muted">Copy the export (iCal) link from ${h(channelName(ch))}’s calendar sync settings${SYNC_HELP[ch] ? ` (<a href="${SYNC_HELP[ch]}" target="_blank" rel="noreferrer">${h(channelName(ch))}’s steps</a>)` : ''}.</p><label>Sync every<select name="intervalMinutes"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></label>`, `Connect ${channelName(ch)}`, 'class="connect"')
   const host = (() => { try { return new URL(row.url).host } catch { return 'link' } })()
   return `<div class="link-row${row.status === 'stale' ? ' failing' : ''}"><div class="record-title"><h4>${h(channelName(ch))} <span class="muted">· ${h(host)}</span></h4>${badge(STATUS[row.status] ?? row.status)}</div>
 <p class="muted">Last synced ${when(row.lastSuccessAt, zone)} · last change ${when(row.lastChangeAt, zone)} · next ${when(row.nextPollAt, zone)} · every ${row.intervalMinutes} min · ${row.events} event${row.events === 1 ? '' : 's'}</p>
@@ -22,7 +28,8 @@ function outbound(s: any, p: any) {
   const feed = s.exports.find((e: any) => e.propertyId === p.id)
   if (!feed) return `<p>Publish this home’s export links, then paste each into its channel so nights held anywhere close there.</p>${form('export.publish', 'calendar', hidden('propertyId', p.id), 'Create export links')}`
   const urls = ([...OTAS, 'all'] as const).map(ch => `<label>${ch === 'all' ? 'Any other calendar' : `Paste into ${h(channelName(ch))}`}<input type="text" readonly value="${h(s.origin + exportPath(feed, EXPORT_SLUGS[ch]))}"></label>`).join('')
-  return `${urls}<p class="muted">Each channel’s link lists every night held elsewhere and never its own stays. Created ${when(feed.createdAt, zone)}.</p>${form('export.publish', 'calendar', hidden('propertyId', p.id), 'Replace links (old links stop working)', 'class="quiet"')}`
+  const here = s.local ? '<p class="notice">These links point at this computer, so Airbnb, Vrbo and Booking.com cannot read them. Put Cabin online to get links the channels can reach; on this computer they are for checking what each channel would see.</p>' : ''
+  return `${here}${urls}<p class="muted">Each channel’s link lists every night held elsewhere and never its own stays. Created ${when(feed.createdAt, zone)}.</p>${form('export.publish', 'calendar', hidden('propertyId', p.id), 'Replace links (old links stop working)', 'class="quiet"')}`
 }
 export function channels(s: any) {
   if (!s.properties.length) return ''

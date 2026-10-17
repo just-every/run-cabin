@@ -13,7 +13,7 @@ const STATE = { ready: ['Ready ✓', 'good'], 'not-ready': ['Not ready', 'bad'],
 export function readiness(s: any, from?: string | null) {
   const zone = s.properties[0] ? homeSettings(s, s.properties[0].id).timeZone : 'America/New_York', today = localDay(Date.now(), zone)
   const day = from && /^\d{4}-\d{2}-\d{2}$/.test(from) ? from : today, r = portfolio(s, day), label = dayName(day, today)
-  const title = !r.total ? 'No homes yet' : r.ready === r.total ? `All ${r.total === 1 ? 'one home' : `${r.total} homes`} ready for ${label}` : `${r.ready} of ${r.total} homes ready for ${label}`
+  const title = !r.total ? 'No homes yet' : r.ready === r.total ? (r.total === 1 ? `Your home is ready for ${label}` : `All ${r.total} homes ready for ${label}`) : `${r.ready} of ${r.total} homes ready for ${label}`
   const notReady = r.homes.filter(x => x.state !== 'ready').map(x => x.property.name)
   const days = Array.from({ length: 8 }, (_, i) => addDay(today, i)).map(d => `<a href="/app/readiness?from=${d}" ${d === day ? 'aria-current="page"' : ''}>${h(dayName(d, today))}</a>`).join('')
   const cards = r.homes.map(x => {

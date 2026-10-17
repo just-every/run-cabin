@@ -1,7 +1,7 @@
 import type { Bindings } from '../../auth.server'
 import { need,text,newId,type Actor } from '../model'
 import { managedInstall } from '../channels'
-import { stripe,stripeCredentials,MANAGED_STRIPE_LINE } from './stripe'
+import { stripe,stripeCredentials,MANAGED_STRIPE_LINE,CARD_ONLY } from './stripe'
 import { providerSettings,saveProvider,sealKey,type StripeMode } from './provider-store'
 import { DIRECT_SYSTEM } from './store'
 export async function providerState(env:Bindings){
@@ -40,7 +40,7 @@ export async function providerCommand(env:Bindings,actor:Actor,name:string,p:Rec
   const saved=await providerSettings(env.DB)
   if(saved?.check?.status==='pending')return {url:saved.check.url}
   const id=newId(),session=await stripe({...env,DIRECT_STRIPE_MODE:'test'},'/checkout/sessions','POST',{
-   mode:'payment','payment_method_types[0]':'card','metadata[purpose]':'cabin_connection_check',
+   mode:'payment',...CARD_ONLY,'metadata[purpose]':'cabin_connection_check',
    'line_items[0][price_data][currency]':'usd','line_items[0][price_data][unit_amount]':'100',
    'line_items[0][price_data][product_data][name]':'Cabin connection check — test money only','line_items[0][quantity]':'1',
    success_url:env.AUTH_ORIGIN+(env.AUTH_LOCAL==='true'?'/book/stripe-check':'/app/direct?stripeCheck=returned'),cancel_url:env.AUTH_ORIGIN+'/app/direct',

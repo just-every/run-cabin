@@ -34,11 +34,12 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
-function actionMessage(name:string,result:any){
+function actionMessage(name:string,result:any,local:boolean){
  if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
  if(name==='import.provider.undo')return 'Move-in undone. Imported listings, stays, guests, balances and calendar links were removed.'
+ if(name==='books.export.prepare')return 'QuickBooks files ready. Download the CSV or IIF file below and import it into QuickBooks.'
  if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
  if(name==='statement.approve')return 'Statement approved and frozen. Owner email delivery status is shown below.'
@@ -60,7 +61,7 @@ function actionMessage(name:string,result:any){
  if(name==='message.retry')return 'Sending again.'
  if(name==='member.invite')return 'Sign-in invitation sent. Ask your teammate to check their email.'
  if(name.startsWith('direct.stripe.')&&result.message)return result.message
- if(name==='inbox.address')return result.address?`Guest email now arrives at ${result.address}.`:'Inbox address removed.'
+ if(name==='inbox.address')return result.address?(local?`Saved ${result.address}. This local Cabin cannot receive internet mail: use Try a guest email here, and guest email arrives at this address once Cabin is hosted and Email Routing sends it to Cabin’s Worker.`:`Saved. Guest email sent to ${result.address} arrives here once Email Routing sends that address to Cabin’s Worker.`):'Inbox address removed.'
  if(name==='inbox.schedule')return 'Scheduled messages saved. Every upcoming stay follows them.'
  if(name==='inbox.ai.save')return 'AI key saved. New guest messages get an AI draft.'
  if(name==='inbox.ai.remove')return 'AI key removed. Drafts come from templates.'
@@ -131,7 +132,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
-   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result),result,thread})
+   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true'),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})

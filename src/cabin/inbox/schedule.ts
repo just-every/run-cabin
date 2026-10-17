@@ -10,13 +10,19 @@ import { inboxSettings, RULES } from './settings'
 // at the new time; a cancelled stay, or a message turned off, cancels them. Each message
 // has a deadline (check-in, check-out, a week after check-out) after which it
 // is no longer worth sending; a stay booked inside a message's window gets it
-// at once. Sending is deliver.ts, on every command and on the five-minute Cron.
+// at once. Check-in instructions state the guest's door code and the hours it
+// works: if that code or its hours change after they went out (a new check-out
+// time, say), the corrected instructions go out again, marked Updated, until
+// check-out. Sending is deliver.ts, on every command and on the five-minute Cron.
 const HOUR = 3_600_000
 const isStay = (b: Booking) => (b.kind ?? 'stay') === 'stay'
 export function times(c: Pick<Context, 'data'>, b: Booking) {
  const s = homeSettings(c, b.propertyId)
  return { checkin: instant(`${b.start.slice(0, 10)}T${s.checkInTime}`, s.timeZone), checkout: instant(`${b.end.slice(0, 10)}T${s.checkOutTime}`, s.timeZone) }
 }
+/** The guest door code a check-in message states, as sent: which code and the hours it works. */
+const codeWindow = (c: Pick<Context, 'data'>, b: Booking) => { const r = c.data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued'); return r ? `${r.id}|${r.validFrom}|${r.validUntil}` : '' }
+const settled = (row: Scheduled) => row.status !== 'scheduled' && row.status !== 'cancelled' && row.status !== 'sending'
 function cancel(row: Scheduled, reason: string) { if (row.status === 'scheduled') Object.assign(row, { status: 'cancelled', reason, revision: newId() }) }
 export function scheduleMessages(c: Context) {
  const settings = inboxSettings(c), now = Date.parse(c.now)
@@ -29,12 +35,17 @@ export function scheduleMessages(c: Context) {
    const set = settings.schedule[rule], row = rows.find(r => r.rule === rule)
    if (!set.enabled) { if (row) cancel(row, 'Turned off in inbox settings'); continue }
    const due = rule === 'review' ? t.checkout + set.hours * HOUR : (rule === 'checkin' ? t.checkin : t.checkout) - set.hours * HOUR
-   const deadline = rule === 'checkin' ? t.checkin : rule === 'checkout' ? t.checkout : t.checkout + 7 * 24 * HOUR
+   // Corrected check-in instructions stay worth sending until check-out: the code they state works until then.
+   const deadline = rule === 'checkin' ? (row?.updated ? t.checkout : t.checkin) : rule === 'checkout' ? t.checkout : t.checkout + 7 * 24 * HOUR
    const dueAt = new Date(due).toISOString(), until = new Date(deadline).toISOString(), anchor = new Date(rule === 'checkin' ? t.checkin : t.checkout).toISOString()
-   if (!row) { if (now < deadline) c.data.scheduled.push({ id: newId(), revision: newId(), propertyId: b.propertyId, bookingId: b.id, rule, dueAt, deadline: until, anchor, status: 'scheduled', reason: null, messageId: null, createdAt: c.now, sentAt: null }); continue }
-   if (row.status !== 'scheduled' && row.status !== 'cancelled' && row.status !== 'sending' && row.anchor && row.anchor !== anchor && now < deadline) { Object.assign(row, { dueAt, deadline: until, anchor, status: 'scheduled', reason: 'The stay moved: the new details go out', messageId: null, createdAt: c.now, sentAt: null, revision: newId() }); continue }
+   const code = rule === 'checkin' ? codeWindow(c, b) : undefined
+   if (!row) { if (now < deadline) c.data.scheduled.push({ id: newId(), revision: newId(), propertyId: b.propertyId, bookingId: b.id, rule, dueAt, deadline: until, anchor, code, status: 'scheduled', reason: null, messageId: null, createdAt: c.now, sentAt: null }); continue }
+   const delivered = row.status === 'sent' || row.status === 'suppressed'
+   if (settled(row) && row.anchor && row.anchor !== anchor && now < deadline) { Object.assign(row, { dueAt, deadline: until, anchor, code, status: 'scheduled', reason: 'The stay moved: the new details go out', updated: true, messageId: null, createdAt: c.now, sentAt: null, revision: newId() }); continue }
+   if (delivered && code && row.code !== undefined && row.code !== code && now < t.checkout) { Object.assign(row, { dueAt, deadline: new Date(t.checkout).toISOString(), anchor, code, status: 'scheduled', reason: 'The door code or its hours changed: the corrected details go out', updated: true, messageId: null, createdAt: c.now, sentAt: null, revision: newId() }); continue }
+   if (code !== undefined && row.code !== code && (row.code === undefined || (!delivered && row.status !== 'sending'))) row.code = code
    const reopen = row.status === 'cancelled' && now < deadline
-   if ((row.status === 'scheduled' || reopen) && (row.dueAt !== dueAt || row.deadline !== until || reopen)) Object.assign(row, { dueAt, deadline: until, anchor, status: 'scheduled', reason: null, revision: newId() })
+   if ((row.status === 'scheduled' || reopen) && (row.dueAt !== dueAt || row.deadline !== until || reopen)) Object.assign(row, { dueAt, deadline: until, anchor, status: 'scheduled', reason: reopen ? null : row.reason, updated: reopen ? undefined : row.updated, revision: newId() })
   }
  }
 }

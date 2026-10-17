@@ -29,7 +29,8 @@ Open **Inbox → Scheduled messages** to turn each one on or off, set its timing
 
 Times come from the stay's dates and the home's check-in and check-out times in the home's own time zone (**Turnovers → Turnover settings by home**). Use `{guest}`, `{home}`, `{checkin}`, `{checkout}`, `{address}`, `{code}` and `{stay_link}` in a message; they are filled in when it is sent, so a moved stay or a new door code is always current.
 
-- **A moved stay** moves its messages. One that already went out (check-in details for the old dates, say) goes out again with the new details at the new time.
+- **A moved stay** moves its messages. One that already went out (check-in details for the old dates, say) goes out again with the new details at the new time, its subject starting **Updated:**.
+- **A changed door code or code hours** (a new check-out time for the home, say) sends the check-in details again with the corrected code and hours, marked **Updated:**, until the stay checks out.
 - **A cancelled stay** cancels its messages that have not gone out.
 - **A stay booked late** (inside a message's window) gets that message at once. A message whose moment has passed (check-in instructions after check-in, a review request more than a week after check-out) is skipped and says so.
 
@@ -50,14 +51,14 @@ Anthropic bills separately for text read and written in tokens, small pieces of 
 
 AI drafts use the saved stay details and conversation, show their supporting facts and flag questions requiring you. If Anthropic fails, Cabin shows the failure and leaves an empty reply for you to write. On RER Managed hosting AI drafts are unavailable.
 
-Edit and **Send to guest**, or **Discard draft**. Cabin records who approved the exact text and sends it once on the guest's channel; email replies remain threaded. A newer guest message replaces an unsent draft. **Write a message yourself** composes a reply; failed sends explain why and offer **Send again**.
+Edit and **Send to guest**, or **Discard draft**. Cabin records who approved the exact text and sends it once on the guest's channel; email replies remain threaded. A newer guest message replaces an unsent draft. **Write a message yourself** composes a reply with a subject you choose (email only; it defaults to the guest's last subject or “About your stay”); failed sends explain why and offer **Send again**.
 
 ## Texts and channel messages
 
 **Texts are not connected until you bring your own Twilio account.** Twilio is a paid phone and text provider. For US ten-digit numbers, carriers require business and message-use registration, called **A2P 10DLC**. Cabin does not register you or purchase a number.
 
 1. Get a paid [Twilio account](https://console.twilio.com/) and texting number. Complete [Twilio's registration guide](https://www.twilio.com/docs/messaging/compliance/a2p-10dlc/quickstart) and wait for approval; number, registration and message fees apply.
-2. In your Cabin Worker's Cloudflare **Settings → Variables and Secrets**, add encrypted `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (from Twilio) and `TWILIO_FROM` (the approved number including +1). Save and deploy. Local values go in private `.dev.vars`; restart `rer dev`.
+2. Copy the **Account SID** and **Auth Token** from the Twilio Console and your approved number including +1, as `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM`. Locally, open `.dev.vars` in your Cabin folder (the folder you run `rer dev` in, for example `run-cabin/.dev.vars`; `open -e .dev.vars` opens it on a Mac), add one line for each, such as `TWILIO_FROM=+12075550123`, save, and restart with `rer dev --stop` then `rer dev`. On your own Cloudflare deployment, add the same three lines to `.env.cabin` and run `rer deploy --set-secret NAME --env-file .env.cabin` once for each name from the Cabin folder you deployed from, adding the `--environment` you deployed with (the page names your Worker and prints the exact command). This changes only that secret, without rebuilding, and later deploys from `.env.cabin` keep it. Use rer rather than the Cloudflare dashboard.
 3. In the number's Twilio Messaging settings, set **A message comes in** to **Webhook**, **POST**, using the full `/inbound/sms` URL shown on Cabin's page. It must be a public HTTPS deployment; localhost cannot receive replies.
 4. Add your phone to a test stay, text the Twilio number and reload Inbox. The text should join that guest's thread. Send a reply and check your phone. Saved credentials alone do not prove carrier approval or delivery. Cabin checks Twilio's request signature.
 
