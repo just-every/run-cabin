@@ -56,3 +56,10 @@ document.querySelector('[data-add-line]')?.addEventListener('click', () => {
   row.querySelectorAll('input').forEach(input => input.value = '')
   list.append(row); row.querySelector('input').focus()
 })
+
+// A month can include several reviewed costs paid from owner funds.
+document.querySelector('[data-add-expense]')?.addEventListener('click', () => {
+  const list = document.querySelector('[data-expense-lines]')
+  if (list.querySelectorAll('[name=expenseDescription]').length >= 100) return
+  for (const label of [...list.children].slice(0, 2)) { const row = label.cloneNode(true); row.querySelector('input').value = ''; list.append(row) }
+})

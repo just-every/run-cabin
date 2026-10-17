@@ -9,11 +9,15 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
    const payouts=c.data.payouts.filter(r=>r.propertyId===prop.id&&r.date.startsWith(month)&&!r.statementId)
    need(payouts.length>0,'Import payouts for this home and month first')
    need(payouts.every(r=>r.match==='matched'&&r.bookingId),'Match every imported payout in this home and month before preparing a statement',409)
+   need(p.expenses===undefined||Array.isArray(p.expenses)&&p.expenses.length<=100,'Provide up to 100 paid owner expenses')
+   const expenses:StatementLine[]=((p.expenses??[]) as any[]).map(e=>({description:text(e?.description,'expense description',300),amountCents:-integer(e?.amountCents,'expense cents',1,100_000_000),category:'expense'}))
+   const expenseCents=-expenses.reduce((n,e)=>n+e.amountCents,0)
    const lines:StatementLine[]=payouts.flatMap(r=>[{description:`${r.source} ${r.reference} · gross`,amountCents:r.grossCents,payoutId:r.id,bookingId:r.bookingId!,category:'gross' as const},...(r.feeCents?[{description:`${r.source} ${r.reference} · imported channel fee`,amountCents:-r.feeCents,payoutId:r.id,bookingId:r.bookingId!,category:'channelFee' as const}]:[])])
+   lines.push(...expenses)
    const grossCents=payouts.reduce((n,r)=>n+r.grossCents,0),channelFeeCents=payouts.reduce((n,r)=>n+r.feeCents,0),settlementCents=payouts.reduce((n,r)=>n+r.netCents,0)
    need(grossCents>=0&&grossCents-channelFeeCents===settlementCents,'Imported payouts do not reconcile to gross less channel fees',409)
    const managementFeeCents=Number((BigInt(grossCents)*BigInt(prop.commissionBps)+5000n)/10000n)
-   const row:Statement={id:newId(),revision:newId(),propertyId:prop.id,propertyRevision:prop.revision,propertyName:prop.name,ownerName:prop.ownerName,ownerEmail:prop.ownerEmail,month,lines,source:'imported',payoutIds:payouts.map(r=>r.id),sourceBaseline:await sha(JSON.stringify(payouts)),channelFeeCents,settlementCents,commissionBps:prop.commissionBps,grossCents,managementFeeCents,netCents:settlementCents-managementFeeCents,status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
+   const row:Statement={id:newId(),revision:newId(),propertyId:prop.id,propertyRevision:prop.revision,propertyName:prop.name,ownerName:prop.ownerName,ownerEmail:prop.ownerEmail,month,lines,source:'imported',payoutIds:payouts.map(r=>r.id),sourceBaseline:await sha(JSON.stringify(payouts)),channelFeeCents,settlementCents,expenseCents,commissionBps:prop.commissionBps,grossCents,managementFeeCents,netCents:settlementCents-managementFeeCents-expenseCents,status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
    c.data.statements.push(row);c.entityId=row.id;return row
   }
   need(Array.isArray(p.lines)&&p.lines.length>0&&p.lines.length<=100,'Provide 1 to 100 statement lines')
@@ -52,7 +56,7 @@ export function approvedStatementCsv(s:Statement){
   const rows:unknown[][]=[['Cabin recovery adjustment'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Recovery case',s.recoveryId],['Revision',s.revision],...(s.reversalOf?[['Reversal of statement',s.reversalOf]]:[]),['Description','Owner balance adjustment (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Owner balance adjustment total (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational owner balance adjustment only. No payment, refund processing or trust accounting.']]
   return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
  }
- const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Management commission',`${(s.commissionBps/100).toFixed(2)}%`],['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational statement only. No payment processing or trust accounting.']]
+ const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission',`${(s.commissionBps/100).toFixed(2)}%`],['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['Operational statement only. No payment processing or trust accounting.']]
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
 }
 export async function statementCsv(db:D1Database,actor:Actor,id:string){

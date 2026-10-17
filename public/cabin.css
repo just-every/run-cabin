@@ -34,4 +34,4 @@
 .cabin .arrival details summary{cursor:pointer;font-size:14px;color:var(--rer-muted)}
 @media(max-width:700px){.cabin .cal-app{min-width:calc(104px + 14 * 44px)}.cabin .cal-line{grid-template-columns:104px repeat(14,minmax(44px,1fr))}.cabin .cal-line .lab{padding:0 8px;font-size:13px}.cabin .bar{font-size:12px;padding:0 6px}.cabin .cal-panel{padding:16px 12px}.cabin .home-links .links{grid-template-columns:1fr;gap:12px}.cabin .pair{grid-template-columns:1fr}}
 
-.cabin .finance-totals{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:700px){.cabin .finance-totals{grid-template-columns:1fr}}
+.cabin .finance-totals{grid-template-columns:repeat(5,minmax(0,1fr))}@media(max-width:700px){.cabin .finance-totals{grid-template-columns:1fr}}
