@@ -34,10 +34,12 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
    need(payouts.every(r=>r.match==='matched'),'Match every imported payout before approval',409)
    for(const payout of payouts)payout.statementId=row.id
   }
-  const operator=await c.db.prepare('SELECT display_name FROM oa_operators WHERE id=?').bind(c.actor.id).first<{display_name:string}>()
-  need(operator,'Approving operator not found',409)
+  const member=c.data.members.find(m=>m.id===c.actor.memberId&&m.email.toLowerCase()===c.actor.email.toLowerCase())
+  const operator=member?null:await c.db.prepare('SELECT display_name FROM oa_operators WHERE id=?').bind(c.actor.id).first<{display_name:string}>()
+  const actorName=member?.name||operator?.display_name
+  need(actorName,'Approving operator name not found',409)
   const approval=approve(c,'statement',row,p.revision)
-  approval.actorName=c.data.members.find(m=>m.email.toLowerCase()===c.actor.email.toLowerCase())?.name||operator.display_name
+  approval.actorName=actorName
   c.data.deliveries.push({id:newId(),revision:newId(),propertyId:row.propertyId,statementId:row.id,email:row.ownerEmail,status:'pending',at:c.now,detail:null})
   c.entityId=row.id;return row
  }
