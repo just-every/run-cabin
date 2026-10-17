@@ -88,7 +88,28 @@ function fitLabels() {
       used.add(line.textContent)
     }
     if (code) code.hidden = box.scrollHeight > box.clientHeight + 0.5
+    // A declined request's reason that runs past its nights: its dashed box widens to hold it.
+    if (bar.classList.contains('spill')) {
+      const right = Math.max(...lines.map(([line]) => { const r = document.createRange(); r.selectNodeContents(line); return r.getBoundingClientRect().right }))
+      bar.style.setProperty('--lw', `${Math.ceil(right - bar.getBoundingClientRect().left + 8)}px`)
+    }
   }
+}
+// A home's name in a calendar row breaks only between words: a word too wide for
+// the label column sets the name smaller, down to 11px, and past that ends in an
+// ellipsis with the whole name on hover.
+function fitHomes() {
+  for (const name of document.querySelectorAll('.tl-label h3')) {
+    name.style.fontSize = ''; name.classList.remove('cut'); name.removeAttribute('title')
+    let size = parseFloat(getComputedStyle(name).fontSize)
+    while (name.scrollWidth > name.clientWidth + 0.5 && size > 11) name.style.fontSize = `${size -= 0.5}px`
+    if (name.scrollWidth > name.clientWidth + 0.5) { name.classList.add('cut'); name.title = name.textContent }
+  }
+}
+if (document.querySelector('.tl-label h3')) {
+  let pending = 0
+  const again = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(fitHomes) }
+  fitHomes(); document.fonts?.ready.then(again); addEventListener('resize', again)
 }
 if (document.querySelector('.tl-track [data-fit]')) {
   let pending = 0

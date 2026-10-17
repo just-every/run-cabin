@@ -1,7 +1,7 @@
 // Each home's stays from about three weeks ago to four weeks ahead, the same for
 // a given day, and the channel calendar files (.ics) that carry them.
 import type { Channel } from '../model'
-import { guests, homes, type DemoHome } from './portfolio'
+import { guests, homes, moreGuests, type DemoHome } from './portfolio'
 
 export const DAY = 86_400_000
 /** A stay as the business took it: from an Airbnb or Booking.com calendar file
@@ -31,12 +31,20 @@ export function plan(today: number): Stay[] {
       const pick = next(), channel: Channel = home.bookingCom && pick < 0.3 ? 'booking.com' : pick > 0.84 ? 'vrbo' : pick > 0.74 ? 'direct' : 'airbnb'
       const party = 2 + Math.floor(next() * 5), guest = guests[(index * 5 + n * 3) % guests.length]
       const uid = channelUid(channel, next), source = channel === 'airbnb' || channel === 'booking.com' ? 'feed' : 'request'
-      stays.push({ home, channel, uid, start, end: start + nights, summary: FEED_SUMMARY[channel] ?? guest, guest, party, source })
+      stays.push({ home, channel, uid, start, end: start + nights, summary: '', guest, party, source })
       cursor = start + nights; n++
     }
   })
+  // Each guest is booked once. Nearest today first, a stay keeps its usual name
+  // unless an earlier stay took it, and then takes the next unused one.
+  const taken = new Set<string>(), spare = [...guests, ...moreGuests]
+  for (const s of [...stays].sort((a, b) => Math.abs(a.start - today) - Math.abs(b.start - today) || homes.indexOf(a.home) - homes.indexOf(b.home) || a.start - b.start)) {
+    if (taken.has(s.guest)) s.guest = spare.find(name => !taken.has(name)) ?? fail(`The demo has more stays than guest names (${spare.length})`)
+    taken.add(s.guest); s.summary = FEED_SUMMARY[s.channel] ?? s.guest
+  }
   return stays
 }
+function fail(message: string): never { throw new Error(message) }
 
 /** The free nights in a home's calendar after `from`, long enough for a stay of `nights`. */
 export function opening(stays: Stay[], home: DemoHome, from: number, nights: number) {

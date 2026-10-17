@@ -25,9 +25,10 @@ export function firstAndInitial(name: string) {
 }
 /** A name's forms: in full, then whole first words with an ellipsis, then initials. */
 export const nameForms = (name: string, last = [initials(name)]) => [...new Set([name, ...prefixes(name), ...last])]
-/** A detail line's forms: whole " · " parts first, then whole words, then nothing at all. */
+/** A detail line's forms: whole " · " parts first (no ellipsis: what shows is whole, and the
+ * rest is in the title and details), then whole words, then nothing at all. */
 export function lineForms(text: string, short: string[] = []) {
-  const parts = text.split(' · '), whole = parts.slice(0, -1).map((_, i) => parts.slice(0, parts.length - 1 - i).join(' · ') + '…')
+  const parts = text.split(' · '), whole = parts.slice(0, -1).map((_, i) => parts.slice(0, parts.length - 1 - i).join(' · '))
   return [...new Set([text, ...whole, ...short, ...prefixes(parts[0]), ''])]
 }
 export const fitted = (tag: string, forms: string[], cls = '') => `<${tag}${cls ? ` class="${cls}"` : ''} data-fit="${h(JSON.stringify(forms))}">${h(forms[0])}</${tag}>`

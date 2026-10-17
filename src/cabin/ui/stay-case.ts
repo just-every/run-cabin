@@ -62,13 +62,21 @@ function proposal(s: any, r: any, guest: string) {
   <div class="credit-line${within ? '' : ' bad'}"><span class="credit-mark" aria-hidden="true">$</span><div><strong>${h(p.creditCents ? `${money(p.creditCents)} credit` : 'No credit')}${h(extra)}</strong><small>${h(`${limit} · ${guest}’s stay`)}</small></div></div>
   ${within ? '' : '<p class="muted">Above the saved limits: only the owner can approve.</p>'}<div class="actions case-actions">${approveButton}${form('recovery.reject', 'calendar', ref, 'Reject', 'class="quiet"')}<a class="button quiet" href="/app/recovery#recovery-${h(r.id)}">Edit</a></div></section>`
 }
+// The owner's balance for the latest statement period, as the statements state it
+// (the month's statement plus any approved recovery adjustments that month), with
+// this case's guest credit beside it: its own signed change, never the balance.
 function balance(s: any, r: any, today: string) {
   const p = r.proposal, posted = r.statementId && s.statements.find((x: any) => x.id === r.statementId)
-  const home = s.properties.find((x: any) => x.id === r.propertyId), latest = s.statements.filter((x: any) => x.propertyId === r.propertyId && x.source !== 'recovery').sort((a: any, b: any) => b.month.localeCompare(a.month))[0]
+  const home = s.properties.find((x: any) => x.id === r.propertyId), mine = s.statements.filter((x: any) => x.propertyId === r.propertyId)
+  const latest = mine.filter((x: any) => x.source !== 'recovery').sort((a: any, b: any) => b.month.localeCompare(a.month))[0]
+  const owed = latest && latest.netCents + mine.filter((x: any) => x.source === 'recovery' && x.status === 'approved' && x.month === latest.month).reduce((n: number, x: any) => n + x.netCents, 0)
   const cents = posted ? posted.netCents : p && r.status === 'proposed' ? -(p.creditCents + p.extraCleaningCents) : 0
-  const chip = cents === 0 ? ['chip-good', 'Unchanged'] : posted ? ['chip-wait', 'Posted'] : ['chip-wait', 'If approved']
-  const note = cents === 0 ? (posted ? 'No impact from this change.' : 'Nothing is posted until a plan with a credit is approved.') : posted ? `${statementMonth(posted.month)} recovery adjustment, approved and frozen · <a href="/app/statements#statement-${h(posted.id)}">Adjustment</a>` : `Posted as its own frozen ${statementMonth(today.slice(0, 7))} adjustment when you approve.`
-  return `<section class="balance"><h3>${h(statementMonth(today.slice(0, 7)))} owner balance</h3><div class="money-line"><strong class="money${cents < 0 ? ' neg' : ''}">${h(cents ? money(cents).replace('-', '−') : money(0))}</strong><span class="chip ${chip[0]}"><span class="dot"></span>${chip[1]}</span></div><p class="muted">${h(home?.ownerName ?? '')} · ${note}</p>${latest ? `<p class="muted">Last statement: ${h(statementMonth(latest.month))} payout ${h(money(latest.netCents))} · ${latest.status === 'approved' ? 'approved' : 'in review'}</p>` : ''}</section>`
+  const month = posted ? posted.month : today.slice(0, 7), what = (posted ? posted.lines[1]?.amountCents : p?.extraCleaningCents) ? 'Guest credit and extra cleaning' : 'Guest credit'
+  const effect = cents === 0 ? ['chip-good', 'Unchanged'] : ['chip-wait', `${money(cents).replace('-', '−')}${latest && latest.month === month ? '' : ` in ${statementMonth(month).slice(0, 3)}`}`]
+  const note = cents === 0 ? (posted ? 'No impact from this change.' : 'Nothing is posted until a plan with a credit is approved.') : posted ? `${what} ${money(cents).replace('-', '−')} · posted as its own ${statementMonth(posted.month)} recovery adjustment, approved and frozen · <a href="/app/statements#statement-${h(posted.id)}">Adjustment</a>` : `${what} ${money(cents).replace('-', '−')} · if approved, posted as its own frozen ${statementMonth(month)} adjustment.`
+  const figure = latest ? `<strong class="money">${h(money(owed))}</strong>` : '<strong class="money none">No statement yet</strong>'
+  const source = latest ? `${statementMonth(latest.month)} statement, ${latest.status === 'approved' ? 'approved' : 'in review'} · <a href="/app/statements#statement-${h(latest.id)}">Statement</a>` : 'Cabin shows a balance once this home has an owner statement.'
+  return `<section class="balance"><h3>Owner balance${latest ? ` · ${h(statementMonth(latest.month))}` : ''}</h3><div class="money-line">${figure}<span class="chip ${effect[0]}"><span class="dot"></span>${h(effect[1])}</span></div><p class="muted">${h(home?.ownerName ?? '')} · ${source}</p><p class="muted">${note}</p></section>`
 }
 export function casePanel(s: any, cases: any[], today: string, readyCount: string, after: string) {
   const r = cases[0], b = s.bookings.find((x: any) => x.id === r.bookingId), t = s.turnovers.find((x: any) => x.id === r.turnoverId)

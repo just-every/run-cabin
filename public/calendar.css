@@ -49,7 +49,8 @@
 .cabin .tl-row{border-top:1px solid var(--line)}
 .cabin .tl-label{position:sticky;left:0;z-index:6;display:flex;align-items:center;gap:10px;padding:18px 10px;background:var(--rer-surface);border-right:1px solid var(--line-2);min-width:0}
 .cabin .tl-label>div{min-width:0}
-.cabin .tl-label h3{font-size:14px;line-height:1.3;margin:0 0 2px;overflow-wrap:anywhere}
+.cabin .tl-label h3{font-size:14px;line-height:1.3;margin:0 0 2px;overflow-wrap:normal;word-break:normal}
+.cabin .tl-label h3.cut{overflow:hidden;text-overflow:ellipsis}
 .cabin .tl-label p{font-size:12.5px;color:var(--muted);margin:0}
 .cabin .rate{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:7px;background:var(--wash);border:1px solid var(--line-2);font-size:12px;color:var(--ink-2)}
 .cabin .thumb{flex:none;width:52px;height:52px;border-radius:11px;object-fit:cover;background:var(--pine-tint)}
@@ -119,10 +120,12 @@
  .cabin .tl.d28 .clean .t b,.cabin .tl.d28 .clean .t small{display:block;white-space:nowrap;overflow:hidden;font-size:11px;line-height:1.15;letter-spacing:-.01em}
  .cabin .tl.d28 .clean .t small{font-weight:500;opacity:1;color:var(--muted)}.cabin .tl.d28 .clean.st-none .t small{color:inherit}
 }
-/* A declined request whose reason runs past its nights: the dashed box keeps to the nights. */
+/* A declined request whose reason runs past its nights: the dashed box widens to
+   hold the reason (--lw, public/cabin.js) and the requested nights keep a deeper tint. */
 @media(min-width:701px){
  .rer-themed .cabin .tl .bar.declined.spill{background:none;border:0;overflow:visible;padding-left:8px}
- .cabin .tl .bar.declined.spill::before{content:"";position:absolute;top:0;bottom:0;left:0;width:calc(100% * var(--nw) / var(--w));background:#fffafa;border:1.5px dashed var(--red);border-radius:8px;z-index:-1}
+ .cabin .tl .bar.declined.spill::before{content:"";position:absolute;top:0;bottom:0;left:0;width:min(100%,max(calc(100% * var(--nw) / var(--w)),var(--lw,0px)));background:#fffafa;border:1.5px dashed var(--red);border-radius:8px;z-index:-1}
+ .cabin .tl .bar.declined.spill::after{content:"";position:absolute;top:1.5px;bottom:1.5px;left:1.5px;width:calc(100% * var(--nw) / var(--w) - 3px);background:#fdecec;border-radius:7px 0 0 7px;z-index:-1}
 }
 
 /* A bar's details */
@@ -182,11 +185,11 @@
 .cabin .ask .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rer-themed .cabin .ask .actions form{display:block}
 .rer-themed .cabin .ask .actions button,.cabin .ask .actions .button{width:100%;min-height:36px;font-size:13px}
-.cabin .money-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cabin .money-line .chip{margin:0}
+.cabin .money-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 8px}
+.cabin .money-line .chip{margin:0;gap:5px;padding:3px 8px 3px 7px;white-space:nowrap}
 .cabin .money{font:800 27px/1.1 var(--rer-font-heading);letter-spacing:-.02em;color:var(--pine)}
 .cabin .balance p{margin:8px 0 0}
-.cabin .money.neg{color:var(--ink)}
+.cabin .money.none{font-size:17px;color:var(--muted)}
 .cabin .credit>.muted{margin:-4px 0 12px;font-size:13px}
 .cabin .credit-line{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(120deg,#fff,#f7f9fa)}
 .cabin .credit-mark{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--amber-tint);color:var(--amber-ink);font-weight:800;flex:none}
