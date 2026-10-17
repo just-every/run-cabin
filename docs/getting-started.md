@@ -2,20 +2,13 @@ Cabin runs on your own computer or server. You need Git, and macOS, Linux or Win
 
 ## Start Cabin
 
-Run two lines. The first installs the `rer` launcher; the second clones Cabin and starts it:
-
-```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-cabin
-```
-
-The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second.
-
-Already have Node 22 or later? One line does both:
+Run one line to install the `rer` launcher, clone Cabin and start it:
 
 ```sh
 npx -y @runeditrun/rer dev just-every/run-cabin
 ```
+
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it changes no shell settings, so if it prints an `export PATH=…` line, run that line to use `rer` again later. To set Cabin up without starting it, use `setup` in place of `dev`.
 
 The first launch installs dependencies, sets up the local database and prepares a local owner. It can take several minutes. Run the same command again if it is interrupted.
 
@@ -38,11 +31,11 @@ rer dev
 
 ## A lasting installation
 
-For an installation that sends real email from your own mailbox, start from a fresh clone and run setup before the first launch, entering your email when asked:
+For an installation that sends real email from your own mailbox, run setup in place of the one line, entering your email when asked, then start it:
 
 ```sh
-rer install
-rer setup
+npx -y @runeditrun/rer setup just-every/run-cabin
+cd run-cabin
 rer dev
 ```
 

@@ -6,18 +6,17 @@ The run site is at **https://run-cabin.com**, with its docs at `/docs` and its R
 
 ## Start from a fresh clone
 
-Install Git, then run two lines. The first installs the launcher; the second clones Cabin and starts it:
+Install Git, then run one line to install the launcher, clone Cabin and start it:
 
 ```sh
-curl -fsSL https://runeditrun.com/install.sh | sh
-rer dev just-every/run-cabin
+npx -y @runeditrun/rer dev just-every/run-cabin
 ```
 
-The first line installs `rer` for you alone, with its own Node if you have none. It changes no shell settings: if it prints an `export PATH=…` line, run that line before the second. Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-cabin` does both lines in one.
+No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it changes no shell settings, so if it prints an `export PATH=…` line, run that line to use `rer` again later. To set Cabin up without starting it, use `setup` in place of `dev`.
 
 To start it again later, run `cd run-cabin && rer dev`. RER selects pinned Node 22.20.0 and pnpm 10.12.4, installs dependencies, migrates local D1 and prepares a local owner. First launch can take several minutes. Open the private **RER_OPEN** link from the terminal, confirm the owner on **Finish setup**, and open `/app`. Keep that link private. **RER_READY** is the ordinary app address. Run the same command again if interrupted. Stop with `rer dev --stop` or Ctrl-C.
 
-For a lasting installation with your own mailbox, before the first launch in a fresh clone use `rer install`, `rer setup` (enter your email when prompted), then `rer dev`. Development mail is silently suppressed. Use the local personas below to try manager and cleaner roles. Hosted installations use email invitations. No provider account or purchased domain is needed locally.
+For a lasting installation with your own mailbox, in place of the one line use `npx -y @runeditrun/rer setup just-every/run-cabin` (enter your email when prompted), then `rer dev` in the `run-cabin` folder. Development mail is silently suppressed. Use the local personas below to try manager and cleaner roles. Hosted installations use email invitations. No provider account or purchased domain is needed locally.
 
 ## Do the first jobs
 
