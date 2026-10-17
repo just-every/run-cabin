@@ -32,6 +32,9 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
   async fetch(request, env, execution) {
     const asset = await staticAssetResponse(request, env)
     if (asset) return asset
+    // Sign-in settings open inside the workspace (/app/signin); Base still saves them.
+    const { pathname } = new URL(request.url)
+    if (pathname === '/auth/settings/identity' && request.method === 'GET' && /text\/html/.test(request.headers.get('accept') ?? '')) return new Response(null, { status: 303, headers: { location: '/app/signin' } })
     const auth = await authResponse(request, env)
     if (auth) return auth
     const cabin = await cabinResponse(request, env)

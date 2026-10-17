@@ -55,36 +55,37 @@
 /* Shell: the rail beside the page */
 .cabin .shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:100vh;background:linear-gradient(to right,var(--rer-surface) 0 219px,var(--line) 219px 220px,transparent 220px)}
 .cabin .rail{position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;background:var(--rer-surface);border-right:1px solid var(--line);padding:18px 14px 14px}
-.cabin .rail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 4px 18px}
+.cabin .rail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 4px 14px}
 .cabin .logo{text-decoration:none;color:var(--pine)}
 .rer-themed .cabin .rer-brand{margin:0;gap:10px;font:750 24px/1 var(--rer-font-body);letter-spacing:-.035em;color:var(--pine);white-space:nowrap}
 .rer-themed .cabin .rer-brand::before{width:42px;height:42px}
 .cabin .rail-toggle{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .rer-themed .cabin .rail-menu{display:none}
 .cabin .rail-body{display:flex;flex-direction:column;flex:1;min-height:0}
-.cabin .switcher{position:relative;margin:0 2px 16px}
+.cabin .switcher{position:relative;margin:0 2px 12px}
 .cabin .switcher summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:12px;font-weight:500;color:var(--ink-2);cursor:pointer;background:var(--rer-surface)}
 .cabin .switcher summary::-webkit-details-marker{display:none}
 .cabin .switcher summary::after{content:"";margin-left:auto;width:7px;height:7px;border:solid var(--muted);border-width:0 1.6px 1.6px 0;transform:rotate(45deg) translateY(-2px)}
 .cabin .switcher summary span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cabin .switcher-list{position:absolute;z-index:10;left:0;right:0;top:calc(100% + 6px);max-height:60vh;overflow:auto;padding:6px;background:var(--rer-surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-pop)}
 .cabin .switcher-list a{display:block;padding:8px 10px;border-radius:8px;color:var(--ink-2);text-decoration:none;font-size:13.5px}.cabin .switcher-list a:hover{background:var(--wash)}
-.cabin .rail nav{display:grid;gap:10px;align-content:start}
-.cabin .nav-group{display:grid;gap:2px}.cabin .nav-group+.nav-group{border-top:1px solid var(--line-2);padding-top:10px}
-.cabin .rail nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 12px;border-radius:10px;color:var(--ink-2);text-decoration:none;font-weight:500;font-size:14.5px}
+.cabin .rail nav{display:grid;gap:8px;align-content:start}
+.cabin .nav-group{display:grid;gap:2px}.cabin .nav-group+.nav-group{border-top:1px solid var(--line-2);padding-top:8px}
+.cabin .rail nav a{display:flex;align-items:center;gap:12px;min-height:38px;padding:0 12px;border-radius:10px;color:var(--ink-2);text-decoration:none;font-weight:500;font-size:14.5px}
 .cabin .rail nav a:hover{background:var(--wash);color:var(--ink)}
 .cabin .rail nav a[aria-current]{background:linear-gradient(115deg,var(--pine-2),var(--pine));color:#fff;box-shadow:0 4px 12px -6px rgba(15,61,46,.6)}
 .cabin .rail nav a span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cabin .count{min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--amber);color:#3b2504;font:700 12px/22px var(--rer-font-body);text-align:center}
-.cabin .me{margin-top:auto;padding:14px 4px 2px;border-top:1px solid var(--line-2);display:grid;grid-template-columns:36px minmax(0,1fr);gap:4px 10px}
+.cabin .me{margin-top:auto;padding:12px 4px 0;border-top:1px solid var(--line-2);display:grid;grid-template-columns:36px minmax(0,1fr);gap:4px 10px}
 .cabin .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--pine-tint);color:var(--pine);font:700 13px/1 var(--rer-font-heading)}
 .cabin .me-text{min-width:0;display:grid;line-height:1.35}
 .cabin .me-text strong{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cabin .me-text .role{font-size:12px;color:var(--muted);text-transform:capitalize}
 .cabin .sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:2px}.cabin .sync i{width:8px;height:8px;border-radius:50%;background:#aab3bb;flex:none}
 .cabin .sync.good i{background:var(--green)}.cabin .sync.bad{color:var(--red-ink)}.cabin .sync.bad i{background:var(--red)}.cabin .sync.wait i{background:var(--amber)}
-.cabin .me-links{grid-column:1/-1;display:grid;gap:2px;margin-top:8px}
-.rer-themed .cabin .me-links a,.rer-themed .cabin .me-links button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-height:32px;padding:0 8px;border:0;border-radius:8px;background:none;color:var(--muted);font:500 12.5px/1 var(--rer-font-body);text-decoration:none;cursor:pointer}
+.cabin .me-links{grid-column:1/-1;display:grid;gap:0;margin-top:6px}
+.rer-themed .cabin .me-links a,.rer-themed .cabin .me-links button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-height:30px;padding:0 8px;border:0;border-radius:8px;background:none;color:var(--muted);font:500 12.5px/1 var(--rer-font-body);text-decoration:none;cursor:pointer}
+.cabin .me-links span{white-space:nowrap}
 .cabin .me-links a:hover,.cabin .me-links button:hover{background:var(--wash);color:var(--ink)}.cabin .me-links .icon{width:16px;height:16px}
 .cabin .work{min-width:0;display:flex;flex-direction:column}
 .rer-themed .cabin main{flex:1;width:100%;max-width:1240px;margin:0;padding:24px 24px 40px;background:transparent;box-shadow:none;border-radius:0;overflow-wrap:break-word}
@@ -135,7 +136,10 @@
 .cabin textarea[name=calendar],.cabin textarea[name=csv],.cabin textarea[name=source]{font:13px/1.5 var(--rer-font-mono)}
 .rer-themed .cabin input:not([type=checkbox]):not([type=hidden]):not([type=radio]):hover,.cabin select:hover,.cabin textarea:hover{border-color:#b6c0c8}
 .rer-themed .cabin input:not([type=checkbox]):not([type=hidden]):not([type=radio]):focus,.cabin select:focus,.cabin textarea:focus{outline:none;border-color:var(--pine);box-shadow:0 0 0 3px rgba(15,61,46,.16)}
-.cabin input[type=file]{font:13px var(--rer-font-body);color:var(--muted)}
+.rer-themed .cabin input[type=file]{display:block;width:100%;min-height:44px;margin-top:6px;padding:5px;border:1px solid var(--field);border-radius:10px;background:var(--rer-surface);font:13.5px var(--rer-font-body);color:var(--muted);cursor:pointer}
+.rer-themed .cabin input[type=file]:focus-visible{outline:none;border-color:var(--pine);box-shadow:0 0 0 3px var(--pine-ring,rgba(15,61,46,.14))}
+.rer-themed .cabin input[type=file]::file-selector-button{min-height:32px;margin-right:12px;padding:0 14px;border:1px solid var(--field);border-radius:8px;background:var(--wash);color:var(--pine);font:600 13.5px/1 var(--rer-font-body);cursor:pointer}
+.rer-themed .cabin input[type=file]:hover::file-selector-button{border-color:#aab4bd;background:#fff}
 .cabin input[readonly]{font:12.5px/1.4 var(--rer-font-mono);background:var(--wash)}
 .rer-themed .cabin input[type=checkbox]{width:18px;height:18px;margin:1px 0 0;accent-color:var(--pine)}
 .rer-themed .cabin label.check,.cabin .check{display:flex;align-items:flex-start;gap:10px;font-weight:500}
@@ -149,6 +153,8 @@
 .cabin .button .icon{width:18px;height:18px}
 .rer-themed .cabin button.quiet,.rer-themed .cabin form.quiet button,.rer-themed .cabin .add-line{background:var(--rer-surface);color:var(--pine);border-color:var(--field)}
 .rer-themed .cabin button.quiet:hover,.rer-themed .cabin form.quiet button:hover,.rer-themed .cabin .add-line:hover{background:var(--wash);border-color:#aab4bd}
+.rer-themed .cabin form.danger button{background:var(--rer-surface);color:var(--red-ink);border-color:#eab0b0}
+.rer-themed .cabin form.danger button:hover{background:#fff5f5;border-color:var(--red)}
 .cabin button:disabled{opacity:.55;cursor:default}
 .cabin .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.rer-themed .cabin .actions form{margin:0}
 .cabin details>summary{cursor:pointer;min-height:30px;color:var(--pine);font-weight:600;font-size:13.5px}
@@ -167,6 +173,7 @@
  .cabin .rail-body{display:none;padding:14px 0 6px}
  .cabin .rail:has(.rail-toggle:checked) .rail-body{display:flex}
  .cabin .rail:has(.rail-toggle:checked){overflow-y:auto}
+ .cabin .rail nav a{min-height:44px}
 }
 @media(max-width:700px){
  .rer-themed .cabin main{padding:20px 16px 32px}
@@ -176,3 +183,5 @@
  .cabin .totals,.cabin .finance-totals{grid-template-columns:1fr 1fr}
  .cabin .pair,.cabin .statement-line{grid-template-columns:1fr}
 }
+.cabin .statement-month{margin:0;padding:12px 0;border-top:1px solid var(--line-2)}.cabin .statement-month>summary{font-size:14px}.cabin .statement-month[open]>summary{margin-bottom:12px}
+.cabin .panel.narrow{max-width:640px}

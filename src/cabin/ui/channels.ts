@@ -23,7 +23,7 @@ function inbound(s: any, p: any, ch: string) {
   return `<div class="link-row${row.status === 'stale' ? ' failing' : ''}"><div class="record-title"><h4>${h(channelName(ch))} <span class="muted">· ${h(host)}</span></h4>${badge(STATUS[row.status] ?? row.status)}</div>
 <p class="muted">Last synced ${when(row.lastSuccessAt, zone)} · last change ${when(row.lastChangeAt, zone)} · next ${when(row.nextPollAt, zone)} · every ${row.intervalMinutes} min · ${row.events} event${row.events === 1 ? '' : 's'}</p>
 ${row.error ? `<p class="link-error" role="alert"><strong>Last attempt ${when(row.lastAttemptAt, zone)} failed.</strong> ${h(String(row.error).replace(/([^.!?])$/, '$1.'))} Cabin keeps the nights it last read until a good sync.</p>` : ''}
-${s.managed ? '' : `<div class="actions">${form('channel.sync', 'channels', hidden('id', row.id), 'Sync now')}${form('channel.disconnect', 'channels', hidden('id', row.id), 'Disconnect', 'class="quiet"')}</div>`}</div>`
+${s.managed ? '' : `<div class="actions">${form('channel.sync', 'channels', hidden('id', row.id), 'Sync now')}${form('channel.disconnect', 'channels', hidden('id', row.id), 'Disconnect', 'class="danger"')}</div>`}</div>`
 }
 function outbound(s: any, p: any) {
   const zone = s.homeSettings.find((r: any) => r.propertyId === p.id)?.timeZone || 'America/New_York'
@@ -31,7 +31,7 @@ function outbound(s: any, p: any) {
   if (!feed) return `<p>Publish this home’s export links, then paste each into its channel so nights held anywhere close there.</p>${form('export.publish', 'channels', hidden('propertyId', p.id), 'Create export links')}`
   const urls = ([...OTAS, 'all'] as const).map(ch => `<label>${ch === 'all' ? 'Any other calendar' : `Paste into ${h(channelName(ch))}`}<input type="text" readonly value="${h(s.origin + exportPath(feed, EXPORT_SLUGS[ch]))}"></label>`).join('')
   const here = s.local ? '<p class="notice">These links point at this computer, so Airbnb, Vrbo and Booking.com cannot read them. Put Cabin online to get links the channels can reach; on this computer they are for checking what each channel would see.</p>' : ''
-  return `${here}${urls}<p class="muted">Each channel’s link lists every night held elsewhere and never its own stays. Created ${when(feed.createdAt, zone)}.</p>${form('export.publish', 'channels', hidden('propertyId', p.id), 'Replace links (old links stop working)', 'class="quiet"')}`
+  return `${here}${urls}<p class="muted">Each channel’s link lists every night held elsewhere and never its own stays. Created ${when(feed.createdAt, zone)}.</p>${form('export.publish', 'channels', hidden('propertyId', p.id), 'Replace links (old links stop working)', 'class="danger"')}`
 }
 function homes(s: any) {
   return s.properties.map((p: any) => {

@@ -14,3 +14,9 @@
 .guest .button{background:var(--pine);color:#fff;border-color:var(--pine)}.guest .button:hover{background:var(--pine-2)}
 .guest li{padding:3px 0}.guest p,.guest a{overflow-wrap:anywhere}
 @media(max-width:700px){.guest-grid{grid-template-columns:1fr}.cabin.guest header{padding:16px 16px 0}.rer-themed .cabin.guest main{padding:18px 16px 32px}}
+/* The guest's stay page (src/cabin/guest.ts): door code, times and a problem report. */
+.rer-themed .cabin.guest main.stay-page{max-width:640px}
+.cabin .stay-sheet h1{margin:2px 0 4px;font-size:30px;letter-spacing:-.035em}
+.cabin .stay-sheet .code-card{margin:18px 0;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(120deg,#fff,var(--wash))}
+.cabin .stay-sheet .code-card .code{margin:4px 0 10px;font:800 40px/1 var(--rer-font-heading);letter-spacing:.08em;color:var(--pine)}
+.cabin .stay-page>.panel+.panel{margin-top:16px}

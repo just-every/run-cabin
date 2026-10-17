@@ -63,3 +63,32 @@ document.querySelector('[data-add-expense]')?.addEventListener('click', () => {
   if (list.querySelectorAll('[name=expenseDescription]').length >= 100) return
   for (const label of [...list.children].slice(0, 2)) { const row = label.cloneNode(true); row.querySelector('input').value = ''; list.append(row) }
 })
+
+// Calendar labels: each bar and chip label lists its forms longest first
+// (data-fit, src/cabin/ui/fit.ts); show the longest that fits without cutting
+// a word. Phone layouts show every label whole, as cards.
+function fitLabels() {
+  const whole = matchMedia('(max-width: 700px)').matches
+  const fits = (line, box) => line.scrollWidth <= line.clientWidth + 0.5 && box.scrollHeight <= box.clientHeight + 0.5
+  for (const box of document.querySelectorAll('.tl-track .t')) {
+    const lines = [...box.querySelectorAll('[data-fit]')].map(line => [line, JSON.parse(line.dataset.fit)]), code = box.querySelector('.code')
+    if (whole) { for (const [line, forms] of lines) line.textContent = forms[0]; if (code) code.hidden = false; continue }
+    // The name first, then each detail line in what room is left; the door code last.
+    box.parentElement.classList.remove('no-mark'); if (code) code.hidden = true
+    for (const [line] of lines) line.textContent = ''
+    const used = new Set(), bar = box.parentElement
+    for (const [i, [line, forms]] of lines.entries()) {
+      const pick = () => forms.find(form => { line.textContent = form; return !(form && used.has(form)) && fits(line, box) }) ?? forms[forms.length - 1]
+      line.textContent = pick()
+      // The guest's name matters more than the channel's mark beside it.
+      if (i === 0 && line.textContent !== forms[0] && bar.querySelector(':scope > .glyph')) { bar.classList.add('no-mark'); line.textContent = pick() }
+      used.add(line.textContent)
+    }
+    if (code) code.hidden = box.scrollHeight > box.clientHeight + 0.5
+  }
+}
+if (document.querySelector('.tl-track [data-fit]')) {
+  let pending = 0
+  const again = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(fitLabels) }
+  fitLabels(); document.fonts?.ready.then(again); addEventListener('resize', again)
+}

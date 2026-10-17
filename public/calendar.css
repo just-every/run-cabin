@@ -1,6 +1,8 @@
-/* The calendar (src/cabin/ui/calendar.ts, calendar-grid.ts, recovery.ts): a
-   timeline of homes by day with channel-coloured stay bars, turnover chips on
-   the checkout day, the amber Today line, and the stay recovery panel beside it.
+/* The calendar (src/cabin/ui/calendar.ts, calendar-grid.ts, calendar-items.ts,
+   stay-panel.ts): a timeline of homes by day with channel-coloured stay bars, a
+   lane of turnover chips under the checkout days, dashed declined requests, the
+   amber Today line, and the stay recovery panel beside it. Bar and chip labels
+   are fitted to whole words by cabin.js; each bar opens its details popover.
    Grid placement comes from classes (the CSP refuses inline styles): d7/d14/d28
    set the day count, s-N and w-N the start column and span, ln-N the lane, x-N
    the Today column. Below 700px each home lists its items as cards. */
@@ -23,7 +25,7 @@
 .cabin .tl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .cabin .tl-scroll:focus-visible{outline-offset:-2px}
 .cabin .tl{--label:170px;min-width:calc(var(--label) + var(--n) * 40px)}
-.cabin .tl.d28{--label:170px;min-width:calc(var(--label) + 28 * 24px)}
+.cabin .tl.d28{--label:150px;min-width:calc(var(--label) + 28 * 24px)}
 .cabin .d7{--n:7}.cabin .d14{--n:14}.cabin .d28{--n:28}
 .cabin .tl-grid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
 .cabin .tl-grid>*{grid-column:var(--s)/span var(--w);min-width:0}
@@ -37,7 +39,7 @@
 .cabin .tl-head .tl-label{display:flex;align-items:flex-end;padding:0 14px 10px;font-size:12px;font-weight:600;color:var(--muted)}
 .cabin .day{position:relative;display:grid;justify-items:center;align-content:start;gap:3px;padding:12px 0 24px;font-size:11px;line-height:1;color:var(--muted);border-left:1px solid var(--line-2)}
 .cabin .day b{font-size:13px;font-weight:600;color:var(--ink)}.cabin .day abbr{text-decoration:none}
-.cabin .tl.d28 .tl-label{gap:8px;padding-left:12px}.cabin .tl.d28 .tl-label .thumb{width:50px;height:78px;border-radius:9px}
+.cabin .tl.d28 .tl-label{gap:8px;padding-left:10px}.cabin .tl.d28 .tl-label .thumb{width:42px;height:56px;border-radius:9px}.cabin .tl.d28 .tl-label h3{font-size:13.5px}
 .cabin .day.weekend{background:#fafbfc}
 .cabin .day.today{color:var(--ink);font-weight:700}.cabin .day.today b{font-weight:800}
 .cabin .day em{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);z-index:5;padding:3px 7px;border-radius:7px;background:var(--amber);color:#2e1c03;font:700 11px/1 var(--rer-font-body);font-style:normal;white-space:nowrap;box-shadow:0 2px 6px rgba(244,166,58,.35)}
@@ -50,53 +52,78 @@
 .cabin .rate{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:7px;background:var(--wash);border:1px solid var(--line-2);font-size:12px;color:var(--ink-2)}
 .cabin .thumb{flex:none;width:52px;height:52px;border-radius:11px;object-fit:cover;background:var(--pine-tint)}
 .cabin .thumb.none{display:grid;place-items:center;color:var(--pine)}
-.cabin .tl-track{position:relative;align-content:start;grid-auto-rows:minmax(60px,auto);row-gap:8px;padding:32px 0;background-image:repeating-linear-gradient(to right,var(--line-2) 0 1px,transparent 1px calc(100% / var(--n)))}
+.cabin .tl-track{position:relative;align-content:center;grid-auto-rows:auto;row-gap:6px;padding:16px 0;min-height:104px;background-image:repeating-linear-gradient(to right,var(--line-2) 0 1px,transparent 1px calc(100% / var(--n)))}
 .cabin .now{position:absolute;top:0;bottom:-1px;left:calc((var(--k) - .5) * 100% / var(--n));width:2px;margin-left:-1px;background:var(--amber);z-index:1;pointer-events:none}
 .cabin .tl-free{grid-column:1/-1;align-self:center;margin:0 14px;color:var(--muted);font-size:12.5px}
 
-/* Bars, turnovers and open nights */
-.cabin .bar,.cabin .clean,.cabin .vacant{z-index:2;display:flex;align-items:center;gap:8px;min-width:0;margin:0 2px;padding:6px 10px;border-radius:8px;border:1px solid transparent;overflow:hidden;text-decoration:none;container-type:inline-size;color:var(--ink)}
-.cabin .bar{padding:6px 9px;gap:7px}
-.cabin .t{display:grid;min-width:0;line-height:1.3}
-.cabin .t b,.cabin .t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cabin .t b{font-size:13px;font-weight:650}
-.cabin .t small{font-size:12px;opacity:.85}
-.cabin .t .when{display:none}
-.cabin .t .code{display:flex;align-items:center;gap:5px;margin-top:3px;font-weight:600;opacity:1}.cabin .t .code .icon{width:13px;height:13px;stroke-width:2}
-.cabin .bar.ch-airbnb,.cabin .key.ch-airbnb{background:var(--airbnb-bar);color:var(--airbnb-ink);border-color:#ffc9d4}
-.cabin .bar.ch-vrbo,.cabin .key.ch-vrbo{background:var(--vrbo-bar);color:var(--vrbo-ink);border-color:#bed4f7}
-.cabin .bar.ch-booking,.cabin .key.ch-booking{background:var(--booking-bar);color:var(--booking-ink);border-color:var(--booking-bar)}
-.cabin .bar.ch-direct,.cabin .key.ch-direct{background:var(--direct-bar);color:var(--direct-ink);border-color:#bfe6d2}
-.cabin .bar.block,.cabin .key.block{background:var(--block-bar);color:var(--block-ink);border-color:#dde1e6}
-.cabin .bar.clash{box-shadow:inset 0 0 0 2px var(--red)}.cabin .bar.clash em{font-style:normal;color:var(--red-ink)}
-.cabin .bar.cut-start{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
-.cabin .bar.cut-end{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+/* Bars, turnovers and open nights. A bar is a button that opens its details. */
+.rer-themed .cabin .tl .bar,.cabin .vacant{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-start;gap:6px;width:auto;height:56px;min-height:0;min-width:0;margin:0 1px;padding:5px 3px 5px 7px;border-radius:8px;border:1px solid transparent;overflow:hidden;text-align:left;text-decoration:none;font:inherit;color:var(--ink);background:var(--wash);box-shadow:none;cursor:pointer;container-type:inline-size}
+.rer-themed .cabin .tl .bar:hover{filter:brightness(.97)}
+.rer-themed .cabin .tl .bar:focus-visible{outline:2px solid var(--pine);outline-offset:1px;z-index:4}
+.cabin .tl .t{display:block;flex:1;min-width:0;max-height:100%;overflow:hidden;line-height:1.22;padding-right:4px}
+.cabin .tl .t b{display:block;max-height:2.44em;overflow:hidden;white-space:normal;overflow-wrap:normal;word-break:keep-all;font-size:12.5px;font-weight:650;letter-spacing:-.005em}
+.cabin .tl .t small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11.5px;opacity:.85}
+.cabin .tl .t small:empty,.cabin .tl .t b:empty{display:none}
+.cabin .tl .t em{font-style:normal;font-size:11px;font-weight:700;color:var(--red-ink)}
+.cabin .t .when,.cabin .tl .t .when{display:none}
+.cabin .t .code{display:flex;align-items:center;gap:4px;font-weight:600;opacity:1}.cabin .t .code .icon{width:12px;height:12px;stroke-width:2}
+.rer-themed .cabin .bar.ch-airbnb,.cabin .key.ch-airbnb{background:var(--airbnb-bar);color:var(--airbnb-ink);border-color:#ffc9d4}
+.rer-themed .cabin .bar.ch-vrbo,.cabin .key.ch-vrbo{background:var(--vrbo-bar);color:var(--vrbo-ink);border-color:#bed4f7}
+.rer-themed .cabin .bar.ch-booking,.cabin .key.ch-booking{background:var(--booking-bar);color:var(--booking-ink);border-color:var(--booking-bar)}
+.rer-themed .cabin .bar.ch-direct,.cabin .key.ch-direct{background:var(--direct-bar);color:var(--direct-ink);border-color:#bfe6d2}
+.rer-themed .cabin .bar.block:not([class*=ch-]),.cabin .key.block{background:var(--block-bar);color:var(--block-ink);border-color:#dde1e6}
+.rer-themed .cabin .bar.block[class*=ch-]{background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(255,255,255,.14) 7px 9px)}
+.rer-themed .cabin .bar.clash{box-shadow:inset 0 0 0 2px var(--red)}
+.rer-themed .cabin .bar.cut-start{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.rer-themed .cabin .bar.cut-end{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
 .cabin .glyph{flex:none}
+.cabin .tl .g-airbnb{width:20px;height:22px;fill:var(--airbnb)}
 .cabin .g-airbnb{width:26px;height:28px;fill:var(--airbnb)}
-.cabin .g-vrbo{font:italic 800 21px/1 Georgia,'Times New Roman',serif;letter-spacing:-.04em;color:var(--vrbo)}
-.cabin .g-booking{display:grid;place-items:center;width:32px;height:36px;border-radius:6px;background:var(--booking);color:#fff;font:800 20px/1 var(--rer-font-body);box-shadow:0 0 0 1px rgba(255,255,255,.35)}.cabin .g-booking i{font-style:normal;color:#ffb700}
-.cabin .g-direct{width:22px;height:22px;fill:var(--pine)}
-.cabin .g-block{width:20px;height:20px;fill:#5d6873}
-.cabin .bar.declined{background:#fffafa;border:1.5px dashed var(--red);color:var(--red-ink)}
-.cabin .bar.declined>.icon{color:var(--red);width:18px;height:18px}
-.cabin .bar.declined b{font-size:12.5px;color:#c0262b}.cabin .bar.declined small{color:var(--ink-2);opacity:1}
-.cabin .clean{background:linear-gradient(120deg,#fff,#f5f7f9);border-color:var(--line);box-shadow:0 2px 5px #1b304208;color:var(--ink-2);padding:6px 8px;gap:6px}
-.cabin .clean .icon{width:18px;height:18px;color:#56616c}
-.cabin .clean.done .icon{width:20px;height:20px;padding:3px;border-radius:50%;background:var(--green);color:#fff;stroke-width:2.6}
-.cabin .clean.none{border-color:#f3c7c7;background:#fff8f8}.cabin .clean.none .icon{color:var(--red)}
+.cabin .g-vrbo{font:italic 800 19px/1 Georgia,'Times New Roman',serif;letter-spacing:-.04em;color:var(--vrbo)}
+.cabin .g-booking{display:grid;place-items:center;width:28px;height:32px;border-radius:6px;background:var(--booking);color:#fff;font:800 18px/1 var(--rer-font-body);box-shadow:0 0 0 1px rgba(255,255,255,.35)}.cabin .g-booking i{font-style:normal;color:#ffb700}
+.cabin .g-direct{width:20px;height:20px;fill:var(--pine)}
+.cabin .g-block{width:18px;height:18px;fill:#5d6873}
+.rer-themed .cabin .tl .bar.declined{height:46px;background:#fffafa;border:1.5px dashed var(--red);color:var(--red-ink)}
+.cabin .bar.declined>.icon{flex:none;color:var(--red);width:16px;height:16px}
+.cabin .tl .bar.declined b{font-size:12px;color:#c0262b;white-space:nowrap}.cabin .tl .bar.declined small{color:var(--ink-2);opacity:1}
+.cabin .clean{position:relative;z-index:3;display:flex;align-items:center;gap:5px;min-width:0;height:26px;margin:0 1px;padding:0 2px;container-type:inline-size;border-radius:7px;border:1px solid var(--line);background:linear-gradient(120deg,#fff,#f5f7f9);box-shadow:0 1px 4px #1b30420a;color:var(--ink-2);text-decoration:none;overflow:hidden}
+.cabin .clean>:first-child{margin-left:4px}.cabin .clean .t{flex:1;min-width:0;padding-right:4px}
+.cabin .clean .t b{display:block;white-space:nowrap;overflow:hidden;font-size:11.5px;font-weight:600;max-height:none}
+.cabin .clean .dot,.cabin .key .dot{flex:none;width:7px;height:7px;border-radius:50%;background:#5f7a6d}
+.cabin .clean.st-draft .dot{background:var(--amber)}
+.cabin .clean.st-none{border-color:#f3c7c7;background:#fff8f8;color:var(--red-ink)}.cabin .clean.st-none .dot{background:var(--red)}
+.cabin .clean>.icon{flex:none;width:14px;height:14px;padding:2px;border-radius:50%;background:var(--green);color:#fff;stroke-width:3}
+.cabin .clean.same,.cabin .key.k-same{border-color:#f0b35a;background:#fff7ea}
+.cabin .same-mark{display:inline-flex;flex:none;color:#b46a00}.cabin .same-mark .icon,.cabin .key.k-same .icon{width:13px;height:13px;stroke-width:2.2;color:#b46a00}
 .cabin .clean:hover{border-color:#b9c3cb}
-.cabin .clean .t b{font-size:12.5px;font-weight:600}.cabin .clean .t small{font-size:11.5px}
-.cabin .vacant{justify-content:center;text-align:center;border:1px dashed #d8dee3;background:transparent;color:var(--ink-2)}
-.cabin .vacant .t small{font-size:11.5px;color:var(--muted);opacity:1}
-@container (max-width:85px){.cabin .bar>.glyph,.cabin .bar>.icon{display:none}}
-@container (max-width:104px){.cabin .t .code{display:none}}
-@container (max-width:30px){.cabin .bar .t,.cabin .clean .t,.cabin .vacant .t{display:none}.cabin .bar,.cabin .clean{justify-content:center;padding:6px 2px}}
+.cabin .clean .when{display:none}
+.cabin .vacant{justify-content:center;text-align:center;border:1px dashed #d8dee3;background:transparent;color:var(--ink-2);cursor:default}
+.cabin .vacant .t small{color:var(--muted);opacity:1}
+@container (max-width:80px){.rer-themed .cabin .tl .bar>.glyph,.rer-themed .cabin .tl .bar>.icon{display:none}}
+@container (max-width:110px){.cabin .tl .t .code{display:none}}
+@container (max-width:40px){.cabin .tl .bar .t{margin-left:-5px;padding-right:0;text-align:center}}
+@container (max-width:44px){.cabin .clean .dot,.cabin .clean .same-mark,.cabin .clean>.icon{display:none}.cabin .clean .t{padding:0;text-align:center}}
+
+/* A bar's details */
+.cabin .stay-pop{width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;margin:auto;padding:18px 20px 16px;border:1px solid var(--line);border-radius:14px;background:var(--rer-surface);color:var(--ink);box-shadow:0 20px 60px #0f2a3a33}
+.cabin .stay-pop::backdrop{background:#0f1c2426}
+.cabin .stay-pop header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.cabin .stay-pop h3{margin:0 0 3px;font-size:18px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.cabin .stay-pop header p{margin:0;font-size:13px;color:var(--muted)}
+.rer-themed .cabin .stay-pop header button{flex:none;min-height:34px;width:34px;padding:0;border-radius:9px}
+.cabin .stay-pop header .icon{width:16px;height:16px}
+.cabin .pop-facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:7px 14px;margin:0 0 12px;font-size:13.5px}
+.cabin .pop-facts dt{color:var(--muted)}.cabin .pop-facts dd{margin:0;overflow-wrap:anywhere}
+.cabin .pop-note{margin:0 0 12px;font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.cabin .pop-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin:0;font-size:13.5px;font-weight:600}
 
 /* Legend */
 .cabin .tl-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0;padding:14px 16px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2)}
 .cabin .tl-legend .key{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 6px;border:1px solid transparent;border-radius:8px;font-weight:600}
 .cabin .tl-legend .glyph{transform:scale(.8)}
-.cabin .tl-legend .key.declined{background:#fffafa;border:1.5px dashed var(--red);color:#c0262b;padding-left:9px}
+.cabin .tl-legend .key.declined{background:#fffafa;border:1.5px dashed var(--red);color:#c0262b}.cabin .tl-legend .key.declined .icon{width:14px;height:14px;color:var(--red)}
+.cabin .tl-legend .key.k-turn{border-color:var(--line);background:#fff;color:var(--ink-2)}
+.rer-themed .cabin .tl .bar.no-mark>.glyph{display:none}
 .cabin .tl-legend .note{flex-basis:100%;color:var(--muted)}
 
 /* Stay recovery */
@@ -104,6 +131,7 @@
 .cabin .recovery header{display:flex;align-items:center;gap:10px;margin-bottom:22px}
 .cabin .recovery header h2{margin:0;font-size:19px;font-weight:650;letter-spacing:-.02em}
 .cabin .recovery header .icon{width:24px;height:24px;color:var(--pine)}
+.cabin .recovery header .ready-count{margin-left:auto;padding:3px 9px;border-radius:999px;background:var(--wash);border:1px solid var(--line-2);font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .cabin .recovery .spark{fill:var(--amber);stroke:none}
 .cabin .stay-home{display:flex;align-items:center;gap:14px;margin-bottom:10px}
 .cabin .stay-home .thumb{width:66px;height:66px;border-radius:13px}
@@ -151,12 +179,15 @@
  .cabin .tl-head{display:none}
  .cabin .tl-row{display:block;padding:14px 0}
  .cabin .tl-label{position:static;border:0;padding:0 14px 10px}
- .cabin .tl-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 14px;background:none}
- .cabin .tl .tl-track>*{grid-column:auto;grid-row:auto;margin:0;min-height:58px}
- .cabin .tl .tl-track>.declined,.cabin .tl .tl-free{grid-column:1/-1}
+ .cabin .tl-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 14px;min-height:0;background:none}
+ .rer-themed .cabin .tl .tl-track>*{grid-column:auto;grid-row:auto;margin:0;height:auto;min-height:58px;padding:8px 10px}
+ .cabin .tl .tl-track>.clean{align-items:flex-start;flex-wrap:wrap;align-content:center}
+ .cabin .tl .tl-track>.clean .when{display:block;flex-basis:100%;font-size:11.5px;color:var(--muted)}
+ .cabin .tl .t b{max-height:none}
+ .rer-themed .cabin .tl .tl-track>.declined,.rer-themed .cabin .tl .tl-free{grid-column:1/-1}
  .cabin .tl .tl-track>.vacant{display:none}
  .cabin .tl-track .t .when{display:block}
- .cabin .tl-track .t b,.cabin .tl-track .t small{white-space:normal}
+ .cabin .tl .tl-track .t b,.cabin .tl .tl-track .t small{white-space:normal}
  .cabin .now{display:none}
  .cabin .bar.cut-start,.cabin .bar.cut-end{border-radius:10px}
  .cabin .recovery{padding:18px 16px}
@@ -166,4 +197,5 @@
 .cabin .s-1{--s:1}.cabin .s-2{--s:2}.cabin .s-3{--s:3}.cabin .s-4{--s:4}.cabin .s-5{--s:5}.cabin .s-6{--s:6}.cabin .s-7{--s:7}.cabin .s-8{--s:8}.cabin .s-9{--s:9}.cabin .s-10{--s:10}.cabin .s-11{--s:11}.cabin .s-12{--s:12}.cabin .s-13{--s:13}.cabin .s-14{--s:14}.cabin .s-15{--s:15}.cabin .s-16{--s:16}.cabin .s-17{--s:17}.cabin .s-18{--s:18}.cabin .s-19{--s:19}.cabin .s-20{--s:20}.cabin .s-21{--s:21}.cabin .s-22{--s:22}.cabin .s-23{--s:23}.cabin .s-24{--s:24}.cabin .s-25{--s:25}.cabin .s-26{--s:26}.cabin .s-27{--s:27}.cabin .s-28{--s:28}
 .cabin .w-1{--w:1}.cabin .w-2{--w:2}.cabin .w-3{--w:3}.cabin .w-4{--w:4}.cabin .w-5{--w:5}.cabin .w-6{--w:6}.cabin .w-7{--w:7}.cabin .w-8{--w:8}.cabin .w-9{--w:9}.cabin .w-10{--w:10}.cabin .w-11{--w:11}.cabin .w-12{--w:12}.cabin .w-13{--w:13}.cabin .w-14{--w:14}.cabin .w-15{--w:15}.cabin .w-16{--w:16}.cabin .w-17{--w:17}.cabin .w-18{--w:18}.cabin .w-19{--w:19}.cabin .w-20{--w:20}.cabin .w-21{--w:21}.cabin .w-22{--w:22}.cabin .w-23{--w:23}.cabin .w-24{--w:24}.cabin .w-25{--w:25}.cabin .w-26{--w:26}.cabin .w-27{--w:27}.cabin .w-28{--w:28}
 .cabin .x-1{--k:1}.cabin .x-2{--k:2}.cabin .x-3{--k:3}.cabin .x-4{--k:4}.cabin .x-5{--k:5}.cabin .x-6{--k:6}.cabin .x-7{--k:7}.cabin .x-8{--k:8}.cabin .x-9{--k:9}.cabin .x-10{--k:10}.cabin .x-11{--k:11}.cabin .x-12{--k:12}.cabin .x-13{--k:13}.cabin .x-14{--k:14}.cabin .x-15{--k:15}.cabin .x-16{--k:16}.cabin .x-17{--k:17}.cabin .x-18{--k:18}.cabin .x-19{--k:19}.cabin .x-20{--k:20}.cabin .x-21{--k:21}.cabin .x-22{--k:22}.cabin .x-23{--k:23}.cabin .x-24{--k:24}.cabin .x-25{--k:25}.cabin .x-26{--k:26}.cabin .x-27{--k:27}.cabin .x-28{--k:28}
-.cabin .ln-1{grid-row:1}.cabin .ln-2{grid-row:2}.cabin .ln-3{grid-row:3}.cabin .ln-4{grid-row:4}.cabin .ln-5{grid-row:5}.cabin .ln-6{grid-row:6}
+.cabin .ln-1{grid-row:1}.cabin .ln-2{grid-row:2}.cabin .ln-3{grid-row:3}.cabin .ln-4{grid-row:4}.cabin .ln-5{grid-row:5}.cabin .ln-6{grid-row:6}.cabin .ln-7{grid-row:7}.cabin .ln-8{grid-row:8}.cabin .ln-9{grid-row:9}.cabin .ln-10{grid-row:10}
+.cabin .t [hidden]{display:none}

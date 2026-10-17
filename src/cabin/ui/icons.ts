@@ -25,6 +25,8 @@ export const ICONS: Record<string, string> = {
   lock: line('<rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/>'),
   check: line('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
   alert: line('<path d="M12 3.5 2.5 20h19Z"/><path d="M12 10v4.5m0 2.8v.2"/>'),
+  close: line('<path d="M6 6l12 12M18 6 6 18"/>'),
+  turn: line('<path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5"/>'),
   menu: line('<path d="M4 7h16M4 12h16M4 17h16"/>'),
   signout: line('<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>'),
   spark: '<svg class="icon spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c.6 4.6 2.9 6.9 7.5 7.5-4.6.6-6.9 2.9-7.5 7.5-.6-4.6-2.9-6.9-7.5-7.5 4.6-.6 6.9-2.9 7.5-7.5Z"/></svg>',

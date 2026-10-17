@@ -57,8 +57,8 @@ export function stayPanel(s: any, today: string, until: string, homes: any[]) {
   const open = `<li class="pending"><span class="mark" aria-hidden="true"></span><time>Now</time><div><strong>${x.state === 'unknown' ? 'Not known yet' : 'Not ready'}</strong><small>${h(x.reasons.join('. '))}.</small></div></li>`
   const asks = waiting(s, p.id), others = asks.length ? [] : waiting(s, null).filter(w => w.act)
   const statement = s.statements.filter((r: any) => r.propertyId === p.id).sort((a: any, b: any) => b.month.localeCompare(a.month))[0]
-  return `<aside class="panel recovery" aria-label="Stay recovery"><header>${icon('spark')}<h2>Stay recovery</h2></header>
-  <div class="stay-home">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3><p>${h(place || `${homes.length - shaky.length} of ${homes.length} homes ready`)}</p></div></div>
+  return `<aside class="panel recovery" aria-label="Stay recovery"><header>${icon('spark')}<h2>Stay recovery</h2>${homes.length > 1 ? `<span class="ready-count">${homes.length - shaky.length} of ${homes.length} ready</span>` : ''}</header>
+  <div class="stay-home">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}</div></div>
   ${a ? `<p class="next">Next arrival <strong>${h(stayLabel(a).split(' · ')[0])}</strong> · ${h(channelName(a.channel))} · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, p.id).checkInTime}`))}</p>` : ''}
   <section><h3>${h(subject)} – ${h(x.reasons[0] ?? 'not ready')}</h3><ol class="steps">${done}${open}</ol>${t ? `<p class="more"><a href="/app/turnovers#turnover-${h(t.id)}">Open this turnover</a></p>` : ''}</section>
   ${asks.length || others.length ? `<section><h3>${asks.length ? 'Waiting for your approval' : 'Also waiting for you'}</h3>${(asks.length ? asks : others).slice(0, 2).map(card).join('')}</section>` : ''}
