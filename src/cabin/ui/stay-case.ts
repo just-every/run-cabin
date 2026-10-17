@@ -3,7 +3,7 @@ import { homeSettings } from '../homes'
 import { channelName } from '../inventory'
 import { when, between } from '../clock'
 import { withinLimits } from '../recovery/limits'
-import { statementMonth } from '../finance/presentation'
+import { statementMonth, statementStatus } from '../finance/presentation'
 import { guestOf, town, homeThumb } from './calendar-grid'
 import { type Step, panelDay, stepList } from './stay-steps'
 import { icon } from './icons'
@@ -75,7 +75,7 @@ function balance(s: any, r: any, today: string) {
   const effect = cents === 0 ? ['chip-good', 'Unchanged'] : ['chip-wait', `${money(cents).replace('-', '−')}${latest && latest.month === month ? '' : ` in ${statementMonth(month).slice(0, 3)}`}`]
   const note = cents === 0 ? (posted ? 'No impact from this change.' : 'Nothing is posted until a plan with a credit is approved.') : posted ? `${what} ${money(cents).replace('-', '−')} · posted as its own ${statementMonth(posted.month)} recovery adjustment, approved and frozen · <a href="/app/statements#statement-${h(posted.id)}">Adjustment</a>` : `${what} ${money(cents).replace('-', '−')} · if approved, posted as its own frozen ${statementMonth(month)} adjustment.`
   const figure = latest ? `<strong class="money">${h(money(owed))}</strong>` : '<strong class="money none">No statement yet</strong>'
-  const source = latest ? `${statementMonth(latest.month)} statement, ${latest.status === 'approved' ? 'approved' : 'in review'} · <a href="/app/statements#statement-${h(latest.id)}">Statement</a>` : 'Cabin shows a balance once this home has an owner statement.'
+  const source = latest ? `${statementStatus(latest.status)} ${statementMonth(latest.month)} statement · <a href="/app/statements#statement-${h(latest.id)}">Statement</a>` : 'Cabin shows a balance once this home has an owner statement.'
   return `<section class="balance"><h3>Owner balance${latest ? ` · ${h(statementMonth(latest.month))}` : ''}</h3><div class="money-line">${figure}<span class="chip ${effect[0]}"><span class="dot"></span>${h(effect[1])}</span></div><p class="muted">${h(home?.ownerName ?? '')} · ${source}</p><p class="muted">${note}</p></section>`
 }
 export function casePanel(s: any, cases: any[], today: string, readyCount: string, after: string) {

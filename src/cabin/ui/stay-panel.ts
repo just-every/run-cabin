@@ -3,7 +3,7 @@ import { homeReadiness } from '../readiness'
 import { homeSettings } from '../homes'
 import { channelName } from '../inventory'
 import { when, between } from '../clock'
-import { statementMonth } from '../finance/presentation'
+import { statementMonth, statementStatus } from '../finance/presentation'
 import { guestOf, town, homeThumb } from './calendar-grid'
 import { type Step, panelDay as day, stepList } from './stay-steps'
 import { casePanel, liveCases } from './stay-case'
@@ -64,6 +64,6 @@ export function stayPanel(s: any, today: string, until: string, homes: any[]) {
   ${a ? `<p class="next">Next arrival <strong>${h(guestOf(a))}</strong> · ${h(channelName(a.channel))} · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, p.id).checkInTime}`))}</p>` : ''}
   <section><h3>${h(subject)} – ${h(x.reasons[0] ?? 'not ready')}</h3>${stepList(s, p.id, today, steps(s, x), open)}${t ? `<p class="more"><a href="/app/turnovers#turnover-${h(t.id)}">Open this turnover</a></p>` : ''}</section>
   ${asks.length || others.length ? `<section><h3>${asks.length ? 'Waiting for your approval' : 'Also waiting for you'}</h3>${(asks.length ? asks : others).slice(0, 2).map(card).join('')}</section>` : ''}
-  ${statement ? `<section class="balance"><h3>${h(statementMonth(statement.month))} owner payout</h3><div class="money-line"><strong class="money">${h(money(statement.netCents))}</strong><span class="chip ${statement.status === 'approved' ? 'chip-good' : 'chip-wait'}"><span class="dot"></span>${statement.status === 'approved' ? 'Approved' : 'In review'}</span></div><p class="muted">${h(statement.ownerName)} · management ${(statement.commissionBps / 100).toFixed(2)}% · <a href="/app/statements#statement-${h(statement.id)}">Statement</a></p></section>` : ''}
+  ${statement ? `<section class="balance"><h3>${h(statementMonth(statement.month))} owner payout</h3><div class="money-line"><strong class="money">${h(money(statement.netCents))}</strong><span class="chip ${statement.status === 'approved' ? 'chip-good' : 'chip-wait'}"><span class="dot"></span>${h(statementStatus(statement.status))}</span></div><p class="muted">${h(statement.ownerName)} · management ${(statement.commissionBps / 100).toFixed(2)}% · <a href="/app/statements#statement-${h(statement.id)}">Statement</a></p></section>` : ''}
   </aside>`
 }
