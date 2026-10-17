@@ -189,7 +189,7 @@
  .cabin .tl-track .t .when{display:block}
  .cabin .tl .tl-track .t b,.cabin .tl .tl-track .t small{white-space:normal}
  .cabin .now{display:none}
- .cabin .bar.cut-start,.cabin .bar.cut-end{border-radius:10px}
+ .rer-themed .cabin .tl .bar.cut-start,.rer-themed .cabin .tl .bar.cut-end{border-radius:8px;margin:0}
  .cabin .recovery{padding:18px 16px}
  .cabin .steps li{grid-template-columns:24px 48px minmax(0,1fr)}
 }
