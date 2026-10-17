@@ -13,7 +13,7 @@ function inbound(s: any, p: any, ch: string) {
   const host = (() => { try { return new URL(row.url).host } catch { return 'link' } })()
   return `<div class="link-row${row.status === 'stale' ? ' failing' : ''}"><div class="record-title"><h4>${h(channelName(ch))} <span class="muted">· ${h(host)}</span></h4>${badge(STATUS[row.status] ?? row.status)}</div>
 <p class="muted">Last synced ${when(row.lastSuccessAt)} · last change ${when(row.lastChangeAt)} · next ${when(row.nextPollAt)} · every ${row.intervalMinutes} min · ${row.events} event${row.events === 1 ? '' : 's'}</p>
-${row.error ? `<p class="link-error" role="alert"><strong>Last attempt ${when(row.lastAttemptAt)} failed.</strong> ${h(row.error)} Cabin keeps the nights it last read until a good sync.</p>` : ''}
+${row.error ? `<p class="link-error" role="alert"><strong>Last attempt ${when(row.lastAttemptAt)} failed.</strong> ${h(String(row.error).replace(/([^.!?])$/, '$1.'))} Cabin keeps the nights it last read until a good sync.</p>` : ''}
 ${s.managed ? '' : `<div class="actions">${form('channel.sync', 'calendar', hidden('id', row.id), 'Sync now')}${form('channel.disconnect', 'calendar', hidden('id', row.id), 'Disconnect', 'class="quiet"')}</div>`}</div>`
 }
 function outbound(s: any, p: any) {
