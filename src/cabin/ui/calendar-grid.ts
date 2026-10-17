@@ -1,58 +1,78 @@
-import { h } from './shared'
-import { CHANNELS, addDays, channelName, nights, overlaps, span } from '../inventory'
-// Homes by days: each home has one row per channel. A channel's own stays are
-// coloured bars; nights held anywhere else show as Closed on that channel, the
-// way Cabin's export link closes them there. Placement uses the gs-/gw- column
-// classes in cabin.css because the page's CSP refuses inline styles.
-export const DAYS = 14
-const slug = (ch: string) => ch === 'booking.com' ? 'booking' : ch
+import { h, money } from './shared'
+import { addDays, overlaps } from '../inventory'
+import { homeSettings } from '../homes'
+import { GLYPHS, icon } from './icons'
+import { type Item, declinedBar, openNights, short, stayBar, turnoverChip } from './calendar-items'
+export { stayLabel, knownGuest, guestOf } from './calendar-items'
+// The timeline: one row per home, days across. Each home's row stacks its
+// stays and blocks first, then any declined requests, then a lane of turnover
+// chips under the checkout days, so a same-day turnover never squeezes between
+// two bars. Items that would overlap move to another lane of their kind.
+// Placement uses classes (cabin's CSP refuses inline styles): s-N and w-N set
+// the grid column, ln-N the lane, x-N today.
+export const DAYS = 28
+export const SPANS: [number, string][] = [[7, 'Week'], [14, '2 weeks'], [28, 'Month']]
+/** The next two weeks: what Reservations lists as arrivals. */
+export const ARRIVAL_DAYS = 14
+/** Days a turnover chip spans at each view, so its cleaner and window can show. */
+const CHIP: Record<number, number> = { 7: 2, 14: 3, 28: 4 }
+/** How many days a declined request's label may take, its own nights included. */
+const SPILL: Record<number, number> = { 14: 4, 28: 7 }
 const dayIndex = (from: string, day: string) => Math.round((Date.parse(day) - Date.parse(from)) / 86_400_000)
 export const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)) && new Date(v + 'T00:00:00Z').toISOString().slice(0, 10) === v
 export function time12(t?: string | null) { if (!t) return ''; const [hh, mm] = t.split(':').map(Number); return `${hh % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${hh < 12 ? 'am' : 'pm'}` }
-export const stayLabel = (b: any) => b.guestName || (b.summary && !/^reserved$/i.test(b.summary) ? b.summary : 'Reserved')
 /** Every pair of confirmed stays on one home whose nights overlap: a channel sold a night before it heard. */
 export function collisions(bookings: any[]) {
   const stays = bookings.filter(b => b.status === 'confirmed' && (b.kind ?? 'stay') === 'stay'), found: [any, any][] = []
   for (let i = 0; i < stays.length; i++) for (let j = i + 1; j < stays.length; j++) if (stays[i].propertyId === stays[j].propertyId && overlaps(stays[i], stays[j])) found.push([stays[i], stays[j]])
   return found
 }
-function place(from: string, b: { start: string; end: string }) {
-  const n = nights(b), a = Math.max(0, dayIndex(from, n.first)), z = Math.min(DAYS, dayIndex(from, n.checkout))
-  return z > a ? { a, z, cls: `gs-${a + 2} gw-${z - a}${dayIndex(from, n.first) < 0 ? ' cut-start' : ''}${dayIndex(from, n.checkout) > DAYS ? ' cut-end' : ''}` } : null
-}
-function bar(from: string, b: any, clash: Set<string>) {
-  const at = place(from, b); if (!at) return ''
-  const count = dayIndex(nights(b).first, nights(b).checkout), block = (b.kind ?? 'stay') === 'block'
-  const label = block ? (b.channel === 'direct' ? b.summary || 'Blocked' : 'Blocked') : `${stayLabel(b)}${b.arrivalTime ? ` · ${time12(b.arrivalTime)}` : ''}${at.z - at.a > 2 ? ` · ${count} night${count === 1 ? '' : 's'}` : ''}`
-  const title = `${channelName(b.channel)} · ${block ? 'blocked' : stayLabel(b)} · ${span(b)}${b.arrivalTime ? ` · arriving ${time12(b.arrivalTime)}` : ''}${clash.has(b.id) ? ' · overlaps another stay' : ''}`
-  return `<span class="bar ${block ? 'bar-blocked' : `bar-${slug(b.channel)}`}${clash.has(b.id) ? ' bar-collision' : ''} ${at.cls}" title="${h(title)}">${clash.has(b.id) ? '<b>Collision</b> ' : ''}${h(label)}</span>`
-}
-/** Nights in the window held by other channels and not by this one, merged into runs. */
-function closed(from: string, own: any[], others: any[]) {
-  const runs: string[] = []; let start = -1
-  const heldElsewhere = (i: number) => { const d = { start: addDays(from, i), end: addDays(from, i + 1) }; return others.some(b => overlaps(b, d)) && !own.some(b => overlaps(b, d)) }
-  for (let i = 0; i <= DAYS; i++) {
-    const on = i < DAYS && heldElsewhere(i)
-    if (on && start < 0) start = i
-    if (!on && start >= 0) { runs.push(`<span class="bar bar-closed gs-${start + 2} gw-${i - start}" title="Closed here: booked or blocked on another channel">${i - start > 1 ? 'Closed' : ''}</span>`); start = -1 }
+/** "Asheville, NC" from "12 Elm St, Asheville, NC 28801". */
+export const town = (s: any, propertyId: string) => { const parts = homeSettings(s, propertyId).address.split(',').map((x: string) => x.trim()).filter(Boolean); return parts.length >= 2 ? `${parts.at(-2)}, ${parts.at(-1)!.replace(/\s+\d{5}(-\d{4})?$/, '')}` : '' }
+/** The home's latest ready photo, from its cleaner's last completed turnover. */
+export const thumb = (s: any, propertyId: string) => s.turnovers.filter((t: any) => t.propertyId === propertyId && t.status === 'completed' && t.completion).sort((a: any, b: any) => b.completion.completedAt.localeCompare(a.completion.completedAt))[0]?.completion.photoId ?? null
+export const homeThumb = (s: any, p: any) => { const id = thumb(s, p.id); return id ? `<img class="thumb" src="/api/cabin/photos/${h(id)}" alt="" loading="lazy">` : `<span class="thumb none" aria-hidden="true">${icon('home')}</span>` }
+
+const where = (a: number, z: number) => `s-${a + 1} w-${z - a}`
+/** Puts each item in the first lane from `first` where it overlaps nothing; returns the next free lane. */
+function lanes(items: Item[], first: number) {
+  const taken: [number, number][][] = []
+  for (const item of items) {
+    let lane = taken.findIndex(row => row.every(([a, z]) => item.z <= a || item.a >= z))
+    if (lane < 0) { lane = taken.length; taken.push([]) }
+    taken[lane].push([item.a, item.z]); item.lane = first + lane
   }
-  return runs.join('')
+  return first + taken.length
 }
-const cells = (from: string, today: string) => Array.from({ length: DAYS }, (_, i) => { const d = addDays(from, i), w = new Date(d + 'T00:00:00Z').getUTCDay(); return `<i class="cell gs-${i + 2}${w === 0 || w === 6 ? ' weekend' : ''}${d === today ? ' today' : ''}"></i>` }).join('')
-export function grid(s: any, from: string, today: string) {
-  const end = addDays(from, DAYS), live = s.bookings.filter((b: any) => b.status === 'confirmed' && overlaps(b, { start: from, end }))
+export interface GridView { from: string; today: string; days: number; homes: any[]; link: (q: Record<string, string | number | null>) => string }
+export function grid(s: any, v: GridView) {
+  const { from, today, days } = v, end = addDays(from, days), arrivalsUntil = addDays(today, ARRIVAL_DAYS)
   const clash = new Set(collisions(s.bookings).flat().map(b => b.id))
-  const head = `<div class="cal-line cal-head"><span class="lab">Home</span>${Array.from({ length: DAYS }, (_, i) => { const d = new Date(addDays(from, i) + 'T00:00:00Z'); return `<span class="day gs-${i + 2}${addDays(from, i) === today ? ' today' : ''}">${d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}<b>${d.getUTCDate()}</b></span>` }).join('')}</div>`
-  const homes = s.properties.map((p: any) => {
-    const mine = live.filter((b: any) => b.propertyId === p.id)
-    const rows = CHANNELS.map(ch => {
-      const own = mine.filter((b: any) => b.channel === ch), others = mine.filter((b: any) => b.channel !== ch)
-      return `<div class="cal-line"><span class="lab ch ch-${slug(ch)}">${h(channelName(ch))}</span>${cells(from, today)}${closed(from, own, others)}${own.map((b: any) => bar(from, b, clash)).join('')}</div>`
-    }).join('')
-    return `<div class="cal-group"><div class="cal-line cal-home"><span class="lab"><strong>${h(p.name)}</strong></span></div>${rows}</div>`
+  const dates = Array.from({ length: days }, (_, i) => addDays(from, i)), t = dayIndex(from, today)
+  const months: [string, number, number][] = []
+  dates.forEach((d, i) => { const m = new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }); if (months.at(-1)?.[0] === m) months.at(-1)![2]++; else months.push([m, i, 1]) })
+  const monthBar = `<div class="tl-months"><a class="step" href="${v.link({ from: addDays(from, -7) })}" aria-label="Earlier">${icon('back')}</a><div class="tl-grid d${days}">${months.map(([m, i, n]) => `<span class="month ${where(i, i + n)}">${h(n < 3 ? m.split(' ')[0] : m)}</span>`).join('')}</div><a class="step" href="${v.link({ from: addDays(from, 7) })}" aria-label="Later">${icon('chevron')}</a></div>`
+  const head = `<div class="tl-head"><span class="tl-label">${v.homes.length === s.properties.length ? `All ${s.properties.length} home${s.properties.length === 1 ? '' : 's'}` : h(v.homes[0]?.name ?? '')}</span><div class="tl-grid d${days}">${dates.map((d, i) => { const w = new Date(d + 'T00:00:00Z'); return `<span class="day ${where(i, i + 1)}${d === today ? ' today' : ''}${[0, 6].includes(w.getUTCDay()) ? ' weekend' : ''}"><abbr title="${h(w.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }))}">${h(w.toLocaleDateString('en-US', { weekday: days > 14 ? 'narrow' : 'short', timeZone: 'UTC' }))}</abbr><b>${w.getUTCDate()}</b>${d === today ? '<em>Today</em>' : ''}</span>` }).join('')}</div></div>`
+  const pops: string[] = []
+  const rows = v.homes.map((p: any) => {
+    const stays = s.bookings.filter((b: any) => b.propertyId === p.id && b.status === 'confirmed' && overlaps(b, { start: from, end })).sort((a: any, b: any) => a.start.localeCompare(b.start))
+    const bars = stays.map((b: any) => stayBar(s, v, b, clash, arrivalsUntil)).filter(Boolean) as Item[]
+    const jobs = s.turnovers.filter((x: any) => x.propertyId === p.id && x.status !== 'cancelled' && !(x.status === 'draft' && s.turnovers.some((y: any) => y.bookingId === x.bookingId && y.status !== 'draft' && y.status !== 'cancelled'))).sort((a: any, b: any) => (a.windowStart ?? a.dueDate).localeCompare(b.windowStart ?? b.dueDate))
+    const chips = jobs.map((x: any) => turnoverChip(s, v, x, CHIP[days] ?? 2)).filter(Boolean) as Item[]
+    // A chip gives way to the next one rather than stacking, down to two days.
+    chips.forEach((c, i) => { const next = chips[i + 1]; if (next && next.a < c.z) c.z = Math.max(next.a, Math.min(c.z, c.a + 2)) })
+    const declined = s.requests.filter((r: any) => r.propertyId === p.id && r.status === 'declined' && overlaps(r, { start: from, end })).map((r: any) => declinedBar(s, v, r)).filter(Boolean) as Item[]
+    const direct = s.direct?.homes?.find((d: any) => d.propertyId === p.id)
+    const vacant = openNights(v, bars, direct?.enabled ? direct.nightlyCents : null)
+    const count = lanes(chips, lanes(declined, lanes([...bars, ...vacant], 1))) - 1, place = town(s, p.id)
+    // A short declined request's reason runs on past its last night while its lane is free.
+    for (const d of declined) { const next = Math.min(days, ...declined.filter(o => o !== d && o.lane === d.lane && o.a >= d.z).map(o => o.a)); d.spill = Math.max(0, Math.min(next - d.z, (SPILL[days] ?? 0) - (d.z - d.a))) }
+    for (const x of [...bars, ...declined]) if (x.pop) pops.push(x.pop)
+    const label = `<div class="tl-label">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}${direct ? `<span class="rate" title="${direct.enabled ? 'Direct booking nightly rate' : 'Direct nightly rate (booking page not published)'}">${h(money(direct.nightlyCents).replace(/\.00$/, ''))}/night</span>` : ''}</div></div>`
+    const now = t >= 0 && t < days ? `<i class="now x-${t + 1}" aria-hidden="true"></i>` : ''
+    const items = [...bars, ...vacant, ...declined, ...chips].sort((x, y) => (x.lane! - y.lane!) || x.a - y.a)
+    return `<div class="tl-row">${label}<div class="tl-grid tl-track d${days} lanes-${count}">${now}${items.map(x => x.html(`${where(x.a, x.z + (x.spill ?? 0))}${x.spill ? ` spill nw-${x.z - x.a}` : ''} ln-${x.lane}`)).join('') || '<p class="tl-free">No stays in these dates</p>'}</div></div>`
   }).join('')
-  const month = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
-  const nav = `<div class="cal-nav"><p><strong>${h(month(from))} – ${h(month(addDays(from, DAYS - 1)))}</strong></p><p><a class="button" href="/app/calendar?from=${addDays(from, -7)}">Earlier</a> <a class="button" href="/app/calendar">Today</a> <a class="button" href="/app/calendar?from=${addDays(from, 7)}">Later</a></p></div>`
-  const legend = `<p class="cal-legend"><span class="key bar-airbnb">Airbnb</span><span class="key bar-vrbo">Vrbo</span><span class="key bar-booking">Booking.com</span><span class="key bar-direct">Direct</span><span class="key bar-blocked">Blocked</span><span class="key bar-closed">Closed by another channel</span></p>`
-  return `${nav}<div class="cal-scroll" role="region" aria-label="Calendar of every home by channel, ${h(month(from))} to ${h(month(addDays(from, DAYS - 1)))}" tabindex="0"><div class="cal-app">${head}${homes}</div></div>${legend}`
+  const legend = `<p class="tl-legend"><span class="key ch-airbnb">${GLYPHS.airbnb}Airbnb</span><span class="key ch-vrbo">${GLYPHS.vrbo}Vrbo</span><span class="key ch-booking">${GLYPHS['booking.com']}Booking.com</span><span class="key ch-direct">${GLYPHS.direct}Direct</span><span class="key block">${GLYPHS.block}Blocked</span><span class="key declined">${icon('alert')}Request declined</span><span class="key k-turn"><i class="dot"></i>Turnover</span><span class="key k-same">${icon('turn')}Same-day turnover</span><span class="note">Airbnb’s calendar names every stay “Reserved” and Booking.com’s closes nights without a guest, so their bars show a guest only once you add one under Reservations. A night held on any channel closes on every other channel through Cabin’s calendar links. Select a bar for its details.</span></p>`
+  return `<section class="panel tl-card" aria-label="Calendar of every home, ${h(short(from))} to ${h(short(addDays(from, days - 1)))}"><div class="tl-scroll" role="region" aria-label="Homes by day" tabindex="0"><div class="tl d${days}">${monthBar}${head}${rows}</div></div>${legend}${pops.join('')}</section>`
 }

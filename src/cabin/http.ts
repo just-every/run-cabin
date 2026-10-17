@@ -1,4 +1,5 @@
 import { recoveryWording } from './recovery/wording'
+import { authResponse } from '../auth.server'
 import { quickBooksCommand } from './finance/quickbooks'
 import { booksCommand, exportBooks } from './finance/books'
 import { portalState } from './owners/access'
@@ -27,7 +28,7 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox','/app/recovery','/app/recovery/setup'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
@@ -48,6 +49,9 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
  if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
  if(name==='recovery.close')return 'Readiness checked. The case closes when the guest confirmation is accepted.'
+ if(name==='recovery.approve')return 'Approved and applied. The replacement cleaner is assigned and emailed, the guest has a new door code and the update, and the owner adjustment is frozen.'
+ if(name==='recovery.reject')return 'Proposal rejected. Nothing was applied; the case is open for a new plan.'
+ if(name==='recovery.plan'||name==='recovery.propose')return result.status==='escalated'?'No backup cleaner is free in this window. The case needs the owner.':result.status==='active'?'Applied within the owner’s limits.':'Plan drafted. Review the replacement, credit and guest message, then approve or reject.'
  if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
@@ -115,6 +119,12 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
  if(typeof input.lines==='string'){try{input.lines=JSON.parse(input.lines)}catch{fail('Statement lines must be a JSON array')}}
  return input
 }
+/** The owner's sign-in settings, read through Base's own JSON answer for this session. */
+async function signInSettings(request:Request,env:Bindings){
+ const headers=new Headers(request.headers);headers.set('accept','application/json')
+ const r=await authResponse(new Request(new URL('/auth/settings/identity',request.url),{headers}),env)
+ return r?.ok?await r.json() as {idpSignIn?:boolean}:null
+}
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
  if(path==='/owners'||path.startsWith('/owners/'))return ownersResponse(request,original)
@@ -135,7 +145,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
-   if(pages.has(path)){const state=await snapshot(env,who);return renderApp(state,path,{from:url.searchParams.get('from'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
+   if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}

@@ -1,5 +1,6 @@
-import { h, heading, panel, form, hidden, select, area, approve, empty, propertyName, memberName, manager, owner, money, dateRange } from './shared'
+import { h, heading, panel, form, hidden, select, area, approve, empty, propertyName, memberName, manager, owner, money, dateRange, day } from './shared'
 import { atHome, chip, choose, codeLine, lockNote } from './ops'
+import { guestOf } from './calendar-grid'
 
 const triggers: [string, string][] = [['cleaner_cancelled', 'Cleaner cancelled'], ['not_ready', 'Home not ready'], ['late_checkout', 'Late checkout'], ['guest_problem', 'Guest problem']]
 const policyOf = (s: any, propertyId: string) => s.recoveryPolicies.find((p: any) => p.propertyId === propertyId)
@@ -14,8 +15,8 @@ function openForm(s: any) {
   const bookings = s.bookings.filter((b: any) => b.status === 'confirmed' && b.kind !== 'block')
   if (staff ? !bookings.length : !jobs.length) return empty(staff ? 'Add a confirmed stay before opening a recovery case.' : 'Your assigned turnovers appear here when you have a problem to report.')
   const choices: [string, string][] = staff
-    ? bookings.map((b: any) => [b.id, `${propertyName(s, b.propertyId)} · ${b.guestName ?? b.summary} · ${b.start} → ${b.end}`])
-    : jobs.map((t: any) => [t.id, `${propertyName(s, t.propertyId)} · ${t.windowStart ?? t.dueDate}`])
+    ? bookings.map((b: any) => [b.id, `${propertyName(s, b.propertyId)} · ${guestOf(b)} · ${day(b.start)} → ${day(b.end)}`])
+    : jobs.map((t: any) => [t.id, `${propertyName(s, t.propertyId)} · ${day(t.windowStart ?? t.dueDate)}`])
   return form('recovery.open', 'recovery', select(staff ? 'bookingId' : 'turnoverId', staff ? 'Stay' : 'Your turnover', choices) + select('trigger', 'What happened?', triggers) + area('reason', 'What needs to be put right?', '', 'maxlength="2000"'), staff ? 'Open recovery case' : 'Report stay problem')
 }
 
@@ -53,14 +54,14 @@ function actions(s: any, r: any) {
   const policy = policyOf(s, r.propertyId)
   const aboveLimit = r.proposal && (!policy || r.proposal.creditCents > policy.creditLimitCents || r.proposal.extraCleaningCents > policy.cleaningLimitCents)
   const review = r.status === 'proposed' ? `${aboveLimit ? '<p class="muted">This proposal exceeds the home’s limits and needs owner approval.</p>' : ''}<div class="actions">${!aboveLimit || owner(s) ? approve('recovery.approve', 'recovery', r, 'Approve this proposal') : ''}${form('recovery.reject', 'recovery', reference(r), 'Reject proposal', 'class="quiet"')}${!s.managed && s.inbox?.[0]?.ai ? form('recovery.wording', 'recovery', reference(r), 'Draft AI opening', 'class="quiet"') : ''}</div>` : ''
-  const undo = owner(s) && ['active', 'ready', 'closed'].includes(r.status) ? `<details class="report"><summary>Undo this recovery</summary>${form('recovery.undo', 'recovery', reference(r) + area('reason', 'Reason for undo', '', 'maxlength="2000"'), 'Undo recovery', 'class="quiet"')}</details>` : ''
+  const undo = owner(s) && ['active', 'ready', 'closed'].includes(r.status) ? `<details class="report"><summary>Undo this recovery</summary>${form('recovery.undo', 'recovery', reference(r) + area('reason', 'Reason for undo', '', 'maxlength="2000"'), 'Undo recovery', 'class="danger"')}</details>` : ''
   const close = r.status === 'active' ? `<p class="muted">Closing checks the cleaner’s acceptance, completed turnover photos and replacement door access.</p>${approve('recovery.close', 'recovery', r, 'Check readiness and close')}` : ''
   return `${['open', 'escalated'].includes(r.status) ? approve('recovery.plan', 'recovery', r, 'Find replacement and draft plan') : ''}${['open', 'proposed', 'escalated'].includes(r.status) ? proposalForm(s, r) : ''}${review}${close}${undo}`
 }
 
 function card(s: any, r: any) {
   const booking = s.bookings.find((b: any) => b.id === r.bookingId)
-  return `<article class="record recovery-case" id="recovery-${h(r.id)}"><div class="record-title"><h3>${h(propertyName(s, r.propertyId))}${booking ? ` · ${h(booking.guestName ?? booking.summary)}` : ''}</h3>${chip(r.status, tone(r.status))}</div><p class="muted">${booking ? dateRange(booking) + ' · ' : ''}Opened ${h(atHome(s, r.propertyId, r.createdAt))}</p><p><strong>${h(triggers.find(([key]) => key === r.trigger)?.[1] ?? r.trigger)}</strong></p><p class="recovery-text">${h(r.reason)}</p>${proposal(s, r)}${access(s, r)}${actions(s, r)}${manager(s) && r.creditMessageId ? `<p>Guest credit update: ${h(s.messages.find((m:any)=>m.id===r.creditMessageId)?.status ?? 'pending')} · <a href="/app/inbox">Open guest Inbox</a></p><p><a href="/app/statements#statement-${h(r.statementId)}">Open frozen owner adjustment</a></p>` : ''}${r.balanceCents !== undefined && manager(s) ? `<p>Recorded balance: ${h(money(r.balanceCents))}</p>` : ''}${r.confirmationMessageId ? `<p>Guest confirmation: ${h(s.messages.find((m:any)=>m.id===r.confirmationMessageId)?.status ?? 'pending')}</p>` : ''}${r.closedAt ? `<p class="muted">Closed ${h(atHome(s, r.propertyId, r.closedAt))}.</p>` : ''}${history(s, r)}</article>`
+  return `<article class="record recovery-case" id="recovery-${h(r.id)}"><div class="record-title"><h3>${h(propertyName(s, r.propertyId))}${booking ? ` · ${h(guestOf(booking))}` : ''}</h3>${chip(r.status, tone(r.status))}</div><p class="muted">${booking ? dateRange(booking) + ' · ' : ''}Opened ${h(atHome(s, r.propertyId, r.createdAt))}</p><p><strong>${h(triggers.find(([key]) => key === r.trigger)?.[1] ?? r.trigger)}</strong></p><p class="recovery-text">${h(r.reason)}</p>${proposal(s, r)}${access(s, r)}${actions(s, r)}${manager(s) && r.creditMessageId ? `<p>Guest credit update: ${h(s.messages.find((m:any)=>m.id===r.creditMessageId)?.status ?? 'pending')} · <a href="/app/inbox">Open guest Inbox</a></p><p><a href="/app/statements#statement-${h(r.statementId)}">Open frozen owner adjustment</a></p>` : ''}${r.balanceCents !== undefined && manager(s) ? `<p>Recorded balance: ${h(money(r.balanceCents))}</p>` : ''}${r.confirmationMessageId ? `<p>Guest confirmation: ${h(s.messages.find((m:any)=>m.id===r.confirmationMessageId)?.status ?? 'pending')}</p>` : ''}${r.closedAt ? `<p class="muted">Closed ${h(atHome(s, r.propertyId, r.closedAt))}.</p>` : ''}${history(s, r)}</article>`
 }
 
 function settings(s: any, property: any) {

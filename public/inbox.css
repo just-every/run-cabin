@@ -1,28 +1,27 @@
 /* Guest inbox: thread list beside the open thread; at phone width they are separate screens. */
 .cabin .inbox{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start;margin-bottom:24px}
-.cabin .threads{background:var(--rer-surface);border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);border-radius:var(--rer-radius);overflow:hidden;max-height:78vh;overflow-y:auto}
-.cabin .thread-row{display:grid;gap:2px;padding:14px 16px;border-top:1px solid color-mix(in srgb,var(--rer-border) 22%,transparent);text-decoration:none;color:var(--rer-text)}
-.cabin .thread-row:first-child{border-top:0}.cabin .thread-row:hover{background:color-mix(in srgb,var(--rer-accent) 5%,var(--rer-surface))}
-.cabin .thread-row.current{background:color-mix(in srgb,var(--rer-accent) 10%,var(--rer-surface));box-shadow:inset 3px 0 0 var(--rer-accent)}
+.cabin .threads{background:var(--rer-surface);border:1px solid var(--line);border-radius:var(--card);box-shadow:var(--shadow);overflow:hidden;max-height:78vh;overflow-y:auto}
+.cabin .thread-row{display:grid;gap:2px;padding:14px 16px;border-top:1px solid var(--line-2);text-decoration:none;color:var(--rer-text)}
+.cabin .thread-row:first-child{border-top:0}.cabin .thread-row:hover{background:var(--wash)}
+.cabin .thread-row.current{background:var(--pine-tint);box-shadow:inset 3px 0 0 var(--pine)}
 .cabin .thread-row .who{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .cabin .thread-row .excerpt{font-size:13px;color:var(--rer-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cabin .draft-dot{font-size:11px;font-weight:600;white-space:nowrap;padding:2px 8px;border-radius:10px;background:#fff4d6;color:#6b4b00}
-.cabin .conversation{background:var(--rer-surface);border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);border-radius:var(--rer-radius);padding:24px;min-width:0}
+.cabin .draft-dot{font-size:11px;font-weight:600;white-space:nowrap;padding:2px 8px;border-radius:10px;background:var(--amber-tint);color:var(--amber-ink)}
+.cabin .conversation{background:var(--rer-surface);border:1px solid var(--line);border-radius:var(--card);box-shadow:var(--shadow);padding:24px;min-width:0}
 .cabin .conversation .back{display:none}
-.cabin .thread-head{border-bottom:1px solid color-mix(in srgb,var(--rer-border) 22%,transparent);padding-bottom:14px;margin-bottom:18px}.cabin .thread-head h2{margin:0 0 4px}.cabin .thread-head p{margin:0 0 6px}
-.cabin .stays{display:flex;flex-wrap:wrap;gap:8px}.cabin .stay-chip{font-size:13px;padding:4px 10px;border-radius:14px;background:color-mix(in srgb,var(--rer-border) 12%,var(--rer-surface))}.cabin .stay-chip.gone{text-decoration:line-through;color:var(--rer-muted)}
+.cabin .thread-head{border-bottom:1px solid var(--line-2);padding-bottom:14px;margin-bottom:18px}.cabin .thread-head h2{margin:0 0 4px}.cabin .thread-head p{margin:0 0 6px}
+.cabin .stays{display:flex;flex-wrap:wrap;gap:8px}.cabin .stay-chip{font-size:13px;padding:4px 10px;border-radius:14px;background:#eef1f4}.cabin .stay-chip.gone{text-decoration:line-through;color:var(--rer-muted)}
 .cabin .messages{display:flex;flex-direction:column;gap:14px;margin-bottom:18px}
-.cabin .msg{max-width:min(620px,88%);padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--rer-border) 25%,transparent)}
-.cabin .msg.in{align-self:flex-start;background:var(--rer-page);border-bottom-left-radius:4px}
-.cabin .msg.out{align-self:flex-end;background:color-mix(in srgb,var(--rer-accent) 9%,var(--rer-surface));border-bottom-right-radius:4px}
+.cabin .msg{max-width:min(620px,88%);padding:14px 16px;border-radius:14px;border:1px solid var(--line)}
+.cabin .msg.in{align-self:flex-start;background:var(--wash);border-bottom-left-radius:4px}
+.cabin .msg.out{align-self:flex-end;background:var(--pine-tint);border-bottom-right-radius:4px}
 .cabin .msg .text{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:8px}.cabin .msg .subject{font-weight:600;margin-bottom:6px}
-.cabin .msg .meta{font-size:12px;color:var(--rer-muted);margin:0}.cabin .msg .state{font-size:13px;margin:2px 0 0}.cabin .msg .state.ok{color:#164e33}.cabin .msg .state.bad{color:#7c2424}
-.cabin .msg.draft{max-width:none;align-self:stretch;background:#fffaf0;border:1px dashed #d8b45a;margin-bottom:18px}.cabin .msg.draft .meta{font-size:13px;font-weight:600;color:#6b4b00}
-.cabin .msg.draft .note{font-size:14px;color:#6b4b00}.cabin .msg.draft textarea{font:15px/1.55 var(--rer-font-body,system-ui);background:#fff}
+.cabin .msg .meta{font-size:12px;color:var(--rer-muted);margin:0}.cabin .msg .state{font-size:13px;margin:2px 0 0}.cabin .msg .state.ok{color:var(--green-ink)}.cabin .msg .state.bad{color:var(--red-ink)}
+.cabin .msg.draft{max-width:none;align-self:stretch;background:#fffbf3;border:1px dashed var(--amber);margin-bottom:18px}.cabin .msg.draft .meta{font-size:13px;font-weight:600;color:var(--amber-ink)}
+.cabin .msg.draft .note{font-size:14px;color:var(--amber-ink)}.cabin .msg.draft textarea{font:15px/1.55 var(--rer-font-body,system-ui);background:#fff}
 .cabin .msg form.inline{margin-top:8px}
-.cabin .chip-wait{background:#fff4d6;color:#6b4b00}.cabin .chip-wait .dot{background:#d19a12}
 .cabin .compose{margin:4px 0 18px}.cabin .compose summary{cursor:pointer;color:var(--rer-muted);min-height:32px}
-.cabin .scheduled{border-top:1px solid color-mix(in srgb,var(--rer-border) 22%,transparent);padding-top:16px}.cabin .scheduled h3{font-size:16px}
-.cabin .scheduled ul{list-style:none;padding:0;margin:0}.cabin .scheduled li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid color-mix(in srgb,var(--rer-border) 15%,transparent)}.cabin .scheduled li:first-child{border-top:0}.cabin .scheduled li .chip{margin:0}.cabin .scheduled li .muted{flex-basis:100%}
-.cabin .rule{border:1px solid color-mix(in srgb,var(--rer-border) 30%,transparent);border-radius:10px;padding:14px 16px;margin:0 0 14px}.cabin .rule legend{font-weight:600;padding:0 6px}
+.cabin .scheduled{border-top:1px solid var(--line-2);padding-top:16px}.cabin .scheduled h3{font-size:16px}
+.cabin .scheduled ul{list-style:none;padding:0;margin:0}.cabin .scheduled li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 0;border-top:1px solid var(--line-2)}.cabin .scheduled li:first-child{border-top:0}.cabin .scheduled li .chip{margin:0}.cabin .scheduled li .muted{flex-basis:100%}
+.cabin .rule{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px}.cabin .rule legend{font-weight:600;padding:0 6px}
 @media(max-width:760px){.cabin .inbox{grid-template-columns:1fr;gap:0}.cabin .threads{max-height:none}.cabin .inbox.has-thread .threads,.cabin .inbox:not(.has-thread) .conversation{display:none}.cabin .conversation{padding:18px 16px}.cabin .conversation .back{display:block;margin-bottom:10px}.cabin .msg{max-width:94%}}

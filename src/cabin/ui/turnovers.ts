@@ -1,13 +1,15 @@
-import { h, heading, panel, form, select, area, hidden, approve, empty, propertyName, memberName, manager } from './shared'
+import { h, heading, panel, form, select, area, hidden, approve, empty, propertyName, memberName, manager, day } from './shared'
 import { turnoverChip, codeLine, lockNote, windowText, address, photos, noticeLine, choose, photoInput, zoneName, atHome, checkedOut } from './ops'
 import { homeSettings } from '../homes'
 import { ZONES, time12 } from '../clock'
-import { stayLabel } from './calendar-grid'
+import { knownGuest } from './calendar-grid'
+import { channelName } from '../inventory'
 import { checkoutInstant, checkoutTime, finishedLate } from '../turnover-window'
 import { when } from '../clock'
 import { turnoverLockSetup } from './turnover-lock-setup'
 // Managers see every stay's turnover as Cabin dispatched it, with its window,
 // cleaner, door codes and email; cleaners see their own jobs on their phone.
+const jobs = (html: string) => html ? `<div class="jobs">${html}</div>` : ''
 const order = (a: any, b: any) => (a.windowStart ?? a.dueDate).localeCompare(b.windowStart ?? b.dueDate)
 const cleaners = (s: any) => s.members.filter((m: any) => m.role === 'cleaner' && m.active).map((m: any) => [m.id, m.name] as [string, string])
 const codeOf = (s: any, t: any, holder: string) => {
@@ -33,18 +35,19 @@ export function readyMessage(s: any, id: string | null) {
 }
 function after(s: any, t: any) {
   const stay = stayOf(s, t.bookingId), next = stayOf(s, t.nextBookingId)
-  return `${stay ? `After ${h(stayLabel(stay))} checks out` : 'After check-out'} · ${next ? `next arrival ${h(stayLabel(next))}${t.windowEnd ? ` at ${h(time12(t.windowEnd.slice(11, 16)))}` : ''}` : 'no next arrival booked'}`
+  // Airbnb's calendar names no guest: say whose stay it is, never "Reserved" as a name.
+  return `${stay ? `After ${h(knownGuest(stay) ?? `the ${channelName(stay.channel)} stay`)} checks out` : 'After check-out'} · ${next ? `next arrival ${h(knownGuest(next) ?? `(${channelName(next.channel)})`)}${t.windowEnd ? ` at ${h(time12(t.windowEnd.slice(11, 16)))}` : ''}` : 'no next arrival booked'}`
 }
 function managerJob(s: any, t: any) {
   const guest = codeOf(s, t, 'guest'), mine = codeOf(s, t, 'cleaner'), open = t.status === 'unassigned' || t.status === 'approved', wait = checkoutWait(s, t)
-  const assign = open && cleaners(s).length ? form('turnover.assign', 'turnovers', hidden('id', t.id) + hidden('revision', t.revision) + choose('cleanerId', t.cleanerId ? 'Reassign to' : 'Assign to', cleaners(s).filter(([id]: [string, string]) => id !== t.cleanerId), null, 'Choose a cleaner…', 'required'), t.cleanerId ? 'Reassign and email' : 'Assign and email', 'class="inline"') : ''
+  const assign = open && cleaners(s).length ? form('turnover.assign', 'turnovers', hidden('id', t.id) + hidden('revision', t.revision) + choose('cleanerId', t.cleanerId ? 'Reassign to' : 'Assign to', cleaners(s).filter(([id]: [string, string]) => id !== t.cleanerId), null, 'Choose a cleaner…', 'required'), t.cleanerId ? 'Reassign and email' : 'Assign and email', t.cleanerId ? 'class="inline quiet"' : 'class="inline"') : ''
   const tasks = s.tasks.filter((k: any) => k.turnoverId === t.id).map((k: any) => `<li>${h(k.title)} · ${h(k.status === 'open' ? `open${k.blocking ? ', blocks arrival' : ''}` : 'closed')}</li>`).join('')
   return `<article class="record job" id="turnover-${h(t.id)}"><div class="record-title"><h3>${h(propertyName(s, t.propertyId))}</h3>${turnoverChip(t)}</div>
   <p class="when"><strong>${h(windowText(t))}</strong> <span class="muted">${h(zoneName(homeSettings(s, t.propertyId).timeZone))}</span></p><p class="muted">${after(s, t)}${t.source === 'manual' ? ' · prepared by hand' : ''}</p>
   ${t.status === 'cancelled' ? `<p class="muted">${h(t.cancelReason ?? '')}</p>` : `<p>${t.cleanerId ? `Cleaner: <strong>${h(memberName(s, t.cleanerId))}</strong>` : '<strong>No cleaner assigned.</strong> Assign one, or set a default cleaner for this home below.'}</p>${noticeLine(s, t.id, t.cleanerId)}`}
   ${open || t.status === 'completed' ? `<div class="doors">${guest ? codeLine(s, guest, 'Guest code') : ''}${mine ? codeLine(s, mine, 'Cleaner code') : ''}</div>${guest?.link && guest.status === 'issued' ? `<p class="muted">Guest stay page with the code: <a href="/stay/${h(guest.link)}">${h(s.origin)}/stay/${h(guest.link.slice(0, 8))}…</a></p>` : ''}${lockNote(s, guest)}` : ''}
   ${reopened(s, t)}${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : open ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), 'Record check-out now', 'class="quiet"') : ''}
-  ${assign}
+  ${assign && t.cleanerId ? `<details class="reassign"><summary>Reassign to another cleaner</summary>${assign}</details>` : assign}
   ${t.status === 'completed' ? `<p>Marked ready ${h(atHome(s, t.propertyId, t.completion?.completedAt))}${late(s, t) ? ` · <strong>${h(late(s, t))}</strong>` : ''} · photos ${t.completion?.photos?.length ?? 1} / ${t.photosRequired ?? 1}${t.completion?.caption ? ` · “${h(t.completion.caption)}”` : ''}</p>${photos(t.completion?.photos ?? [{ id: t.completion?.photoId }], 'Turnover photo')}` : ''}
   ${t.status === 'draft' && manager(s) ? `<p>Assigned to ${h(memberName(s, t.cleanerId))} · ${h(t.checklist.length)} checklist items</p>` + approve('turnover.approve', 'turnovers', t, 'Approve and assign turnover') : ''}
   ${tasks ? `<p class="muted">Maintenance from this turnover:</p><ul>${tasks}</ul>` : ''}
@@ -73,16 +76,20 @@ function settingsForm(s: any, p: any) {
 export function turnovers(s: any) {
   if (!manager(s)) {
     const mine = s.turnovers.filter((t: any) => t.status === 'approved').sort(order), done = s.turnovers.filter((t: any) => t.status === 'completed').sort(order).reverse().slice(0, 10)
-    return heading('Your turnovers', 'Jobs assigned to you', 'Each job shows the window, the address and your own door code. Tick every item, add your photos and mark the home ready.') + panel('To do', mine.map((t: any) => cleanerJob(s, t)).join('') || empty('No turnovers assigned to you right now. New ones are emailed to you.')) + (done.length ? panel('Done', done.map((t: any) => cleanerJob(s, t)).join('')) : '')
+    return heading('Your turnovers', 'Jobs assigned to you', 'Each job shows the window, the address and your own door code. Tick every item, add your photos and mark the home ready.') + panel('To do', jobs(mine.map((t: any) => cleanerJob(s, t)).join('')) || empty('No turnovers assigned to you right now. New ones are emailed to you.')) + (done.length ? panel('Done', jobs(done.map((t: any) => cleanerJob(s, t)).join(''))) : '')
   }
+  // The next week's jobs as cards; later ones wait, folded, so the page stays a page.
+  const soon = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
   const open = s.turnovers.filter((t: any) => t.status === 'unassigned' || t.status === 'approved').sort(order), drafts = s.turnovers.filter((t: any) => t.status === 'draft')
-  const done = s.turnovers.filter((t: any) => t.status === 'completed').sort(order).reverse().slice(0, 12), cancelled = s.turnovers.filter((t: any) => t.status === 'cancelled').sort(order).reverse().slice(0, 12)
-  const manual = s.bookings.length && cleaners(s).length ? form('turnover.prepare', 'turnovers', select('bookingId', 'Departing booking', s.bookings.filter((b: any) => b.status === 'confirmed').map((b: any) => [b.id, `${propertyName(s, b.propertyId)} · ${b.summary} · checkout ${b.end}`])) + select('cleanerId', 'Cleaner', cleaners(s)) + area('checklist', 'Checklist (one item per line)', 'Change linen\nClean kitchen\nCheck keys'), 'Prepare turnover') : empty('Add a stay and an active cleaner to prepare a turnover by hand.')
+  const next = open.filter((t: any) => (t.windowStart ?? t.dueDate).slice(0, 10) <= soon), later = open.filter((t: any) => !next.includes(t))
+  const done = s.turnovers.filter((t: any) => t.status === 'completed').sort(order).reverse().slice(0, 6), cancelled = s.turnovers.filter((t: any) => t.status === 'cancelled').sort(order).reverse().slice(0, 12)
+  const manual = s.bookings.length && cleaners(s).length ? form('turnover.prepare', 'turnovers', select('bookingId', 'Departing booking', s.bookings.filter((b: any) => b.status === 'confirmed').map((b: any) => [b.id, `${propertyName(s, b.propertyId)} · ${b.summary} · checkout ${day(b.end)}`])) + select('cleanerId', 'Cleaner', cleaners(s)) + area('checklist', 'Checklist (one item per line)', 'Change linen\nClean kitchen\nCheck keys'), 'Prepare turnover') : empty('Add a stay and an active cleaner to prepare a turnover by hand.')
   return heading('Turnovers', 'Every stay turns itself over', 'Each reservation, from any channel or booked direct, makes its turnover between check-out and the next check-in, with a door code for the guest and one for the cleaner. The home’s cleaner is emailed the window, address and code; a moved or cancelled stay moves or cancels them.')
-    + panel('Coming up', open.map((t: any) => managerJob(s, t)).join('') || empty('No turnovers coming up. Each new stay adds one here.'))
-    + (drafts.length ? panel('Waiting for your approval', drafts.map((t: any) => managerJob(s, t)).join('')) : '')
+    + panel('Coming up this week', jobs(next.map((t: any) => managerJob(s, t)).join('')) || empty('No turnovers in the next seven days. Each new stay adds one here.'))
+    + (later.length ? `<details class="panel"><summary><strong>Later (${later.length})</strong></summary>${jobs(later.map((t: any) => managerJob(s, t)).join(''))}</details>` : '')
+    + (drafts.length ? panel('Waiting for your approval', jobs(drafts.map((t: any) => managerJob(s, t)).join(''))) : '')
     + panel('Turnover settings by home', s.properties.length ? `<p class="muted">Set each home’s address, times and default cleaner. Checklist and photo changes also reach every unfinished job; completed jobs keep their evidence.</p>${s.properties.map((p: any) => settingsForm(s, p)).join('')}` : empty('Add a home under Properties & people first.'))
-    + panel('Ready', done.map((t: any) => managerJob(s, t)).join('') || empty('Turnovers marked ready with their photos appear here.'))
-    + (cancelled.length ? `<details class="panel"><summary><strong>Cancelled and replaced (${cancelled.length})</strong></summary>${cancelled.map((t: any) => managerJob(s, t)).join('')}</details>` : '')
+    + panel('Recently ready', jobs(done.map((t: any) => managerJob(s, t)).join('')) || empty('Turnovers marked ready with their photos appear here.'))
+    + (cancelled.length ? `<details class="panel"><summary><strong>Cancelled and replaced (${cancelled.length})</strong></summary>${jobs(cancelled.map((t: any) => managerJob(s, t)).join(''))}</details>` : '')
     + `<details class="panel"><summary><strong>Prepare a turnover by hand</strong></summary><p class="muted">For a stay Cabin did not dispatch, or an agent’s suggestion: a person approves it, and it replaces that stay’s open turnover.</p>${manual}</details>`
 }

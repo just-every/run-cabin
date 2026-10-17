@@ -170,7 +170,10 @@ test('a night booked on any channel closes on every other channel through schedu
     assert.equal(link.status, 'stale'); assert.ok(link.error); assert.ok(link.lastAttemptAt > link.lastSuccessAt)
     assert.ok((await out('vrbo')).includes(`${ymd(24)}-${ymd(27)}`))
     const page = await h.send(`/app/calendar?from=${day(8)}`, undefined, h.owner)
-    assert.equal(page.status, 200); assert.ok(page.text.includes('bar-airbnb') && page.text.includes('bar-direct') && page.text.includes('bar-closed'))
+    assert.equal(page.status, 200)
+    // One row per home: each stay's bar names the channels its nights close on.
+    assert.match(page.text, /class="bar block[^"]*" title="Airbnb · blocked · [^"]*closed on Vrbo, Booking\.com and Direct"/)
+    assert.match(page.text, /class="bar ch-direct[^"]*" title="Direct · Ana Ruiz · [^"]*closed on Airbnb, Vrbo and Booking\.com"/)
     await h.cmd('export.publish', { propertyId: p.id })
     assert.equal((await h.send(`/ical/${links.token}/vrbo.ics`, undefined, '')).status, 404)
   } finally { await h.close() }
