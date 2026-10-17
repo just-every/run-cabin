@@ -67,7 +67,7 @@
 
 /* Base's Run page (/run) and not-found page, in the same look: heavy display
    type, white step cards on the warm paper, pine numerals, the terminal card. */
-body:has(> main > .intro) h1, body:has(> main > .hero) h1 { font-weight: 800; letter-spacing: -.025em; }
+body:has(> main > .intro) h1, body:has(> main > .hero) h1 { font-weight: 800; letter-spacing: -.025em; word-spacing: .03em; }
 body:has(> main > .intro) .step { border-radius: 22px; border-color: var(--line); background: var(--surface); box-shadow: var(--shadow-card); }
 body:has(> main > .intro) .num { background: var(--pine); color: #fff; font-weight: 800; }
 body:has(> main > .intro) .step h2 { font-weight: 750; letter-spacing: -.015em; }
