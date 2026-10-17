@@ -2,9 +2,13 @@
 
 `rer demo` runs a throwaway copy of Cabin signed in as the owner of **Blue Ridge
 Getaways**, a sample rental business in western North Carolina: twelve homes
-with their owners and commission terms, a manager, four cleaners (and one whose
-access has ended), Airbnb and Booking.com calendars imported and approved, stays
-from three weeks back to four weeks ahead, turnovers finished with checklist
+with their owners, addresses and commission terms, a manager, four cleaners (and
+one whose access has ended), Airbnb and Booking.com calendars imported and approved
+as those channels write them (Airbnb names every stay "Reserved", Booking.com sends
+"CLOSED - Not available"), Vrbo and direct stays taken as requests with the guest's
+name, guest names the manager added to most upcoming Airbnb stays, a Vrbo request
+Cabin declined because it overlaps an Airbnb stay, guests' questions with drafted
+replies, stays from three weeks back to four weeks ahead, turnovers finished with checklist
 photos, assigned for this week and waiting for approval, owner statements
 approved and in review, and three calendar reviews waiting for a person (new
 stays, a Booking.com stay that clashes with an Airbnb one, and a cancellation).
