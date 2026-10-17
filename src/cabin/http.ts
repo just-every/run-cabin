@@ -3,6 +3,8 @@ import { command,snapshot,turnoverPhoto } from './domain'
 import { statementCsv } from './statements'
 import { importCommand } from './movein'
 import { principal,credentialCommand } from './credentials'
+import { channelCommand } from './channels'
+import { icalExportResponse } from './ical-export'
 import { fail,need,type Actor } from './model'
 import { renderApp } from './ui'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
@@ -13,7 +15,16 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
+ if(name.startsWith('channel.'))return channelCommand(env,who,name,input)
  return command(env.DB,who,name,input)
+}
+function actionMessage(name:string,result:any){
+ if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
+ if(name==='turnover.complete')return 'Turnover completed with checklist and photo evidence.'
+ if(name==='reservation.request')return result.status==='declined'?`Request declined: ${result.reason}.`:result.kind==='block'?'Nights blocked on every channel.':'Request accepted. These nights now close on every channel.'
+ if(name==='channel.connect'||name==='channel.sync')return result.connection.status==='ok'?`Synced: ${result.changes} change${result.changes===1?'':'s'}.`:`Sync failed: ${result.connection.error}`
+ if(name==='export.publish')return 'Export links ready. Paste each one into its channel; older links stop working.'
+ return 'Saved.'
 }
 async function bodyBytes(request:Request){
  const limit=500_000;need(Number(request.headers.get('content-length')??0)<=limit,'Request is too large',413)
@@ -45,6 +56,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
 }
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
+ if(path.startsWith('/ical/'))return icalExportResponse(request,runtimeBindings(original))
  if(!path.startsWith('/api/cabin/')&&path!=='/app'&&!path.startsWith('/app/'))return null
  const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),back=pages.has(url.searchParams.get('returnTo')??'')?url.searchParams.get('returnTo')!:'/app';let who:Actor|undefined
  try{
@@ -55,7 +67,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   if(request.method==='POST'&&!isAgent)need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   who=await principal(request,env,isAgent)
   if(request.method==='GET'){
-   if(pages.has(path))return renderApp(await snapshot(env,who),path)
+   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from')})
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const csv=path.match(/^\/api\/cabin\/statements\/([\w-]+)\.csv$/)
    if(csv)return new Response(await statementCsv(env.DB,who,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
@@ -63,7 +75,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(photo||direct){const saved=await turnoverPhoto(env.DB,who,(photo??direct)![1],!!direct);return new Response(saved.bytes,{headers:{...headers,'content-type':saved.mimeType,'content-disposition':'inline','content-security-policy':"default-src 'none'; sandbox"}})}
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
-   return renderApp(await snapshot(env,who),back,{message:name.endsWith('.prepare')?'Draft prepared. Review this revision before approval.':name==='turnover.complete'?'Turnover completed with checklist and photo evidence.':'Saved.',result})
+   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result),result})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})

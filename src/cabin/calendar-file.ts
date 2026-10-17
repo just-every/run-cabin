@@ -13,9 +13,17 @@ function instant(value: string, dateOnly: boolean) {
  return result
 }
 const unescape = (value: string) => value.replace(/\\([nN,;\\])/g, (_, char: string) => char === 'n' || char === 'N' ? '\n' : char)
-/** RFC 5545 unfolds continuation lines; all-day DTEND stays end-exclusive. */
-export function parseCalendar(value: unknown, existing: Booking[] = []): CalendarEvent[] {
- need(typeof value === 'string' && new TextEncoder().encode(value).length <= 200_000, 'Calendar file must be at most 200 KB')
+// Channels mark closed nights "Airbnb (Not available)", "Blocked" or Booking.com's
+// "CLOSED - Not available"; a stay may name its guest, as in "Reserved - Ana Ruiz".
+const BLOCK = /not available|unavailable|blocked|closed/i, GUEST = /^(?:reserved|booked|reservation)\s*[-–:·]\s*(.{1,120})$/i
+export function classify(summary: string): Pick<CalendarEvent, 'kind' | 'guestName'> {
+ if (BLOCK.test(summary)) return { kind: 'block' }
+ const guest = summary.match(GUEST)?.[1].trim()
+ return guest ? { kind: 'stay', guestName: guest } : { kind: 'stay' }
+}
+/** RFC 5545 unfolds continuation lines; all-day DTEND stays end-exclusive. Live feeds allow more than a pasted file. */
+export function parseCalendar(value: unknown, existing: Booking[] = [], limits = { bytes: 200_000, events: 300 }): CalendarEvent[] {
+ need(typeof value === 'string' && new TextEncoder().encode(value).length <= limits.bytes, `Calendar file must be at most ${limits.bytes / 1000} KB`)
  const lines = value.replace(/^\uFEFF/, '').replace(/\r\n[ \t]|\n[ \t]/g, '').split(/\r?\n/)
  need(lines[0]?.trim() === 'BEGIN:VCALENDAR' && lines.some(line => line.trim() === 'END:VCALENDAR'), 'Upload a VCALENDAR .ics file')
  const events = new Map<string, CalendarEvent>(); let fields: Map<string, { params: string; value: string }> | null = null
@@ -33,10 +41,11 @@ export function parseCalendar(value: unknown, existing: Booking[] = []): Calenda
    if (from && to) need(allDay === (to.params.includes('VALUE=DATE') || /^\d{8}$/.test(to.value)), 'Calendar start and end must use matching date types')
    const start = from ? instant(from.value, allDay) : prior!.start, end = to ? instant(to.value, allDay) : prior!.end
    need(start < end && Date.parse(start) < Date.parse(end), 'Calendar end must follow its start')
-   const event: CalendarEvent = { uid,start,end,summary: unescape(fields.get('SUMMARY')?.value ?? prior?.summary ?? 'Reserved').slice(0,300),cancelled }
+   const summary = unescape(fields.get('SUMMARY')?.value ?? prior?.summary ?? 'Reserved').slice(0,300)
+   const event: CalendarEvent = { uid,start,end,summary,cancelled,...classify(summary) }
    const duplicate = events.get(uid)
    need(!duplicate || JSON.stringify(duplicate) === JSON.stringify(event), 'Duplicate UID has conflicting event details')
-   events.set(uid,event); fields = null; need(events.size <= 300, 'Import at most 300 calendar events at a time'); continue
+   events.set(uid,event); fields = null; need(events.size <= limits.events, `Import at most ${limits.events} calendar events at a time`); continue
   }
   if (!fields || !line) continue
   const colon = line.indexOf(':'); need(colon > 0, 'Invalid calendar field')
