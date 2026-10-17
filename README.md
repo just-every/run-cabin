@@ -82,4 +82,4 @@ pnpm run typecheck
 rer verify
 ```
 
-GitHub Verify shards source, types, domain, restore, run site and production runtime checks. Package mode pins `@runeditrun/rer@0.2.43`. Foundation: Base `ada9f574d8a7247edc3a1180b593ad182b1fbb37`. [Source reuse](docs/source-notes.md), [operations](RUN-LOCALLY.md), [agent instructions](AGENTS.md).
+GitHub Verify shards source, types, domain, restore, run site and production runtime checks. Package mode pins `@runeditrun/rer@0.2.47`. Foundation: Base `ada9f574d8a7247edc3a1180b593ad182b1fbb37`. [Source reuse](docs/source-notes.md), [operations](RUN-LOCALLY.md), [agent instructions](AGENTS.md).
