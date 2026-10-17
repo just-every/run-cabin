@@ -14,7 +14,7 @@ export function codeLine(s: any, code: any, label: string) {
 }
 /** Lock status for whoever is looking: setup advice is the manager's, a cleaner only learns whether to expect the code at the door. */
 export const lockNote = (s: any, code: any) => code ? `<p class="muted lock-line">${h(manager(s) ? lockLine({ managed: s.managed, lockAccount: s.lockAccount }, code) : code.lock.state === 'set' ? 'The smart lock has this code.' : 'Your manager sets this code on the door’s keypad. If it does not open the door, contact your manager.')}</p>` : ''
-export const windowText = (t: any) => t.windowStart ? between(t.windowStart, t.windowEnd) : `Due ${t.dueDate}`
+export const windowText = (t: any) => t.windowStart ? between(t.windowStart, t.windowEnd) : `Due ${new Date(t.dueDate + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })}`
 export const zoneName = (zone: string) => ZONES.find(([z]) => z === zone)?.[1] ?? zone
 export const address = (s: any, propertyId: string) => { const a = homeSettings(s, propertyId).address; return a ? `<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(a)}" rel="noreferrer" target="_blank">${h(a)}</a>` : '<span class="muted">No address entered yet</span>' }
 export function photos(list: any[] = [], alt: string) {

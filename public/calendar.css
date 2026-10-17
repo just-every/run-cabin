@@ -1,0 +1,168 @@
+/* The calendar (src/cabin/ui/calendar.ts, calendar-grid.ts, recovery.ts): a
+   timeline of homes by day with channel-coloured stay bars, turnover chips on
+   the checkout day, the amber Today line, and the stay recovery panel beside it.
+   Grid placement comes from classes (the CSP refuses inline styles): d7/d14/d28
+   set the day count, s-N and w-N the start column and span, ln-N the lane, x-N
+   the Today column. Below 700px each home lists its items as cards. */
+.rer-themed .cabin main.page-calendar{max-width:none}
+.cabin .cal-top{display:flex;align-items:center;justify-content:space-between;gap:14px 20px;flex-wrap:wrap;margin:0 0 18px}
+.cabin .cal-top .page-heading{margin:0}
+.cabin .cal-top h1{font-size:28px}
+.cabin .cal-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cabin .segmented{display:flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:12px;background:var(--wash)}
+.cabin .segmented a{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:9px;color:var(--ink-2);text-decoration:none;font-weight:500;font-size:13.5px}
+.cabin .segmented a:hover{background:var(--rer-surface)}
+.cabin .segmented a[aria-current]{background:var(--pine);color:#fff;font-weight:600}
+.cabin .cal-tools .button.primary{min-height:44px;padding:0 18px;border-radius:12px}
+.cabin .cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 344px;gap:20px;align-items:start}
+.cabin .cal-note{margin:4px 2px 0;max-width:90ch}
+
+/* Timeline */
+.cabin .tl-card{padding:0;overflow:hidden;margin:0}
+.cabin .tl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cabin .tl-scroll:focus-visible{outline-offset:-2px}
+.cabin .tl{--label:178px;min-width:calc(var(--label) + var(--n) * 40px)}
+.cabin .tl.d28{--label:158px;min-width:calc(var(--label) + 28 * 21px)}
+.cabin .d7{--n:7}.cabin .d14{--n:14}.cabin .d28{--n:28}
+.cabin .tl-grid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+.cabin .tl-grid>*{grid-column:var(--s)/span var(--w);min-width:0}
+.cabin .tl-months,.cabin .tl-head,.cabin .tl-row{display:grid;grid-template-columns:var(--label) minmax(0,1fr)}
+.cabin .tl-months{position:relative;min-height:50px;align-items:center;border-bottom:1px solid var(--line)}
+.cabin .tl-months .tl-grid{align-self:stretch;margin-right:48px}
+.cabin .tl-months .month{display:flex;align-items:center;padding-left:12px;border-left:1px solid var(--line-2);font:700 14.5px/1 var(--rer-font-heading);letter-spacing:-.01em;white-space:nowrap;overflow:hidden}
+.cabin .step{display:grid;place-items:center;width:36px;height:36px;margin-left:10px;border-radius:10px;color:var(--ink-2)}
+.cabin .step:hover{background:var(--wash)}
+.cabin .tl-months .step:last-child{position:absolute;right:8px;top:7px}
+.cabin .tl-head .tl-label{display:flex;align-items:flex-end;padding:0 14px 10px;font-size:12px;font-weight:600;color:var(--muted)}
+.cabin .day{position:relative;display:grid;justify-items:center;align-content:start;gap:3px;padding:9px 0 14px;font-size:11px;line-height:1;color:var(--muted);border-left:1px solid var(--line-2)}
+.cabin .day b{font-size:13px;font-weight:600;color:var(--ink)}.cabin .day abbr{text-decoration:none}
+.cabin .tl.d28 .tl-label{gap:8px;padding-left:12px}.cabin .tl.d28 .tl-label .thumb{width:40px;height:40px;border-radius:9px}
+.cabin .day.weekend{background:#fafbfc}
+.cabin .day.today{color:var(--ink);font-weight:700}.cabin .day.today b{font-weight:800}
+.cabin .day em{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);z-index:5;padding:3px 7px;border-radius:7px;background:var(--amber);color:#2e1c03;font:700 11px/1 var(--rer-font-body);font-style:normal;white-space:nowrap;box-shadow:0 2px 6px rgba(244,166,58,.35)}
+.cabin .day:first-child em{left:3px;transform:none}
+.cabin .tl-row{border-top:1px solid var(--line)}
+.cabin .tl-label{position:sticky;left:0;z-index:6;display:flex;align-items:flex-start;gap:10px;padding:12px 10px 12px 14px;background:var(--rer-surface);border-right:1px solid var(--line-2);min-width:0}
+.cabin .tl-label>div{min-width:0}
+.cabin .tl-label h3{font-size:14px;line-height:1.3;margin:0 0 2px;overflow-wrap:anywhere}
+.cabin .tl-label p{font-size:12.5px;color:var(--muted);margin:0}
+.cabin .rate{display:inline-block;margin-top:6px;padding:2px 7px;border-radius:7px;background:var(--wash);border:1px solid var(--line-2);font-size:12px;color:var(--ink-2)}
+.cabin .thumb{flex:none;width:52px;height:52px;border-radius:11px;object-fit:cover;background:var(--pine-tint)}
+.cabin .thumb.none{display:grid;place-items:center;color:var(--pine)}
+.cabin .tl-track{position:relative;align-content:start;grid-auto-rows:minmax(54px,auto);row-gap:6px;padding:12px 0;background-image:repeating-linear-gradient(to right,var(--line-2) 0 1px,transparent 1px calc(100% / var(--n)))}
+.cabin .now{position:absolute;top:0;bottom:-1px;left:calc((var(--k) - .5) * 100% / var(--n));width:2px;margin-left:-1px;background:var(--amber);z-index:1;pointer-events:none}
+.cabin .tl-free{grid-column:1/-1;align-self:center;margin:0 14px;color:var(--muted);font-size:12.5px}
+
+/* Bars, turnovers and open nights */
+.cabin .bar,.cabin .clean,.cabin .vacant{z-index:2;display:flex;align-items:center;gap:8px;min-width:0;margin:0 2px;padding:6px 10px;border-radius:10px;border:1px solid transparent;overflow:hidden;text-decoration:none;container-type:inline-size;color:var(--ink)}
+.cabin .bar{padding:6px 9px;gap:7px}
+.cabin .t{display:grid;min-width:0;line-height:1.3}
+.cabin .t b,.cabin .t small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cabin .t b{font-size:13px;font-weight:650}
+.cabin .t small{font-size:12px;opacity:.85}
+.cabin .t .when{display:none}
+.cabin .t .code{display:flex;align-items:center;gap:5px;margin-top:3px;font-weight:600;opacity:1}.cabin .t .code .icon{width:13px;height:13px;stroke-width:2}
+.cabin .bar.ch-airbnb,.cabin .key.ch-airbnb{background:var(--airbnb-bar);color:var(--airbnb-ink);border-color:#ffc9d4}
+.cabin .bar.ch-vrbo,.cabin .key.ch-vrbo{background:var(--vrbo-bar);color:var(--vrbo-ink);border-color:#bed4f7}
+.cabin .bar.ch-booking,.cabin .key.ch-booking{background:var(--booking-bar);color:var(--booking-ink);border-color:var(--booking-bar)}
+.cabin .bar.ch-direct,.cabin .key.ch-direct{background:var(--direct-bar);color:var(--direct-ink);border-color:#bfe6d2}
+.cabin .bar.block,.cabin .key.block{background:var(--block-bar);color:var(--block-ink);border-color:#dde1e6}
+.cabin .bar.clash{box-shadow:inset 0 0 0 2px var(--red)}.cabin .bar.clash em{font-style:normal;color:var(--red-ink)}
+.cabin .bar.cut-start{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0}
+.cabin .bar.cut-end{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0}
+.cabin .glyph{flex:none}
+.cabin .g-airbnb{width:20px;height:20px;fill:var(--airbnb)}
+.cabin .g-vrbo{font:italic 800 15px/1 Georgia,'Times New Roman',serif;letter-spacing:-.04em;color:var(--vrbo)}
+.cabin .g-booking{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--booking);color:#fff;font:800 13px/1 var(--rer-font-body);box-shadow:0 0 0 1px rgba(255,255,255,.35)}.cabin .g-booking i{font-style:normal;color:#ffb700}
+.cabin .g-direct{width:22px;height:22px;fill:var(--pine)}
+.cabin .g-block{width:20px;height:20px;fill:#5d6873}
+.cabin .bar.declined{background:#fffafa;border:1.5px dashed var(--red);color:var(--red-ink)}
+.cabin .bar.declined>.icon{color:var(--red);width:18px;height:18px}
+.cabin .bar.declined b{font-size:12.5px;color:#c0262b}.cabin .bar.declined small{color:var(--ink-2);opacity:1}
+.cabin .clean{background:var(--rer-surface);border-color:var(--line);color:var(--ink-2);padding:6px 8px;gap:6px}
+.cabin .clean .icon{width:18px;height:18px;color:#56616c}
+.cabin .clean.done .icon{width:20px;height:20px;padding:3px;border-radius:50%;background:var(--green);color:#fff;stroke-width:2.6}
+.cabin .clean.none{border-color:#f3c7c7;background:#fff8f8}.cabin .clean.none .icon{color:var(--red)}
+.cabin .clean:hover{border-color:#b9c3cb}
+.cabin .clean .t b{font-size:12.5px;font-weight:600}.cabin .clean .t small{font-size:11.5px}
+.cabin .vacant{justify-content:center;text-align:center;border:1px dashed #d8dee3;background:transparent;color:var(--ink-2)}
+.cabin .vacant .t small{font-size:11.5px;color:var(--muted);opacity:1}
+@container (max-width:118px){.cabin .bar>.glyph,.cabin .bar>.icon{display:none}}
+@container (max-width:72px){.cabin .t .code{display:none}}
+@container (max-width:30px){.cabin .bar .t,.cabin .clean .t,.cabin .vacant .t{display:none}.cabin .bar,.cabin .clean{justify-content:center;padding:6px 2px}}
+
+/* Legend */
+.cabin .tl-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0;padding:14px 16px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2)}
+.cabin .tl-legend .key{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 6px;border:1px solid transparent;border-radius:8px;font-weight:600}
+.cabin .tl-legend .glyph{transform:scale(.8)}
+.cabin .tl-legend .key.declined{background:#fffafa;border:1.5px dashed var(--red);color:#c0262b;padding-left:9px}
+.cabin .tl-legend .note{flex-basis:100%;color:var(--muted)}
+
+/* Stay recovery */
+.cabin .recovery{position:sticky;top:20px;padding:20px 22px;margin:0}
+.cabin .recovery header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.cabin .recovery header h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.cabin .recovery header .icon{width:24px;height:24px;color:var(--pine)}
+.cabin .recovery .spark{fill:var(--amber);stroke:none}
+.cabin .stay-home{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.cabin .stay-home .thumb{width:66px;height:66px;border-radius:13px}
+.cabin .stay-home h3{font-size:17px;margin:0 0 3px}
+.cabin .stay-home p{margin:0;color:var(--muted);font-size:13px}
+.cabin .recovery .next{font-size:13px;color:var(--ink-2);margin:0}
+.cabin .recovery section{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
+.cabin .recovery section h3{font-size:14.5px;margin:0 0 12px}
+.cabin .steps{position:relative;list-style:none;margin:0;padding:0}
+.cabin .steps::before{content:"";position:absolute;left:11px;top:14px;bottom:22px;width:2px;background:var(--line-2)}
+.cabin .steps li{position:relative;display:grid;grid-template-columns:24px 50px minmax(0,1fr);gap:8px;margin:0;padding-bottom:12px}
+.cabin .steps .mark{display:grid;place-items:center;width:22px;height:22px;margin-top:1px;border-radius:50%;background:var(--green);color:#fff}
+.cabin .steps .mark .icon{width:13px;height:13px;stroke-width:2.8}
+.cabin .steps .muted .mark{background:#9aa5af}.cabin .steps .bad .mark{background:var(--red)}
+.cabin .steps .pending .mark{background:var(--amber);box-shadow:0 0 0 4px var(--amber-tint)}
+.cabin .steps time{font-size:12px;color:var(--muted);padding-top:3px;white-space:nowrap}
+.cabin .steps strong{display:block;font-size:13.5px;font-weight:650;line-height:1.35}
+.cabin .steps small{display:block;font-size:12px;color:var(--muted);line-height:1.45;overflow-wrap:anywhere}
+.cabin .steps .pending strong{color:var(--amber-ink)}
+.cabin .recovery .more{margin:0;font-size:13px}
+.cabin .ask{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--wash);margin:0 0 10px}
+.cabin .ask-text{display:flex;gap:10px;margin-bottom:10px}
+.cabin .ask-text .icon{width:22px;height:22px;color:var(--amber);flex:none}
+.cabin .ask.bad .ask-text .icon{color:var(--red)}
+.cabin .ask strong{display:block;font-size:13.5px;line-height:1.35}
+.cabin .ask p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.cabin .ask .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rer-themed .cabin .ask .actions form{display:block}
+.rer-themed .cabin .ask .actions button,.cabin .ask .actions .button{width:100%;min-height:36px;font-size:13px}
+.cabin .money-line{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cabin .money-line .chip{margin:0}
+.cabin .money{font:800 27px/1.1 var(--rer-font-heading);letter-spacing:-.02em;color:var(--pine)}
+.cabin .balance p{margin:8px 0 0}
+
+@media(max-width:1240px){.cabin .cal-layout{grid-template-columns:1fr}.cabin .recovery{position:static;max-width:720px}}
+@media(max-width:700px){
+ .cabin .cal-top h1{font-size:22px}
+ .cabin .cal-tools{width:100%}.cabin .segmented{flex:1}.cabin .segmented a{flex:1;justify-content:center;padding:0 8px}
+ .cabin .cal-tools .button.primary{flex:1 1 100%}
+ .cabin .tl-scroll{overflow:visible}
+ .cabin .tl,.cabin .tl.d28{min-width:0}
+ .cabin .tl-months{display:flex;justify-content:space-between;padding:0 8px;min-height:48px}
+ .cabin .tl-months .tl-grid{display:none}
+ .cabin .tl-months .step:last-child{position:static}
+ .cabin .tl-head{display:none}
+ .cabin .tl-row{display:block;padding:14px 0}
+ .cabin .tl-label{position:static;border:0;padding:0 14px 10px}
+ .cabin .tl-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 14px;background:none}
+ .cabin .tl .tl-track>*{grid-column:auto;grid-row:auto;margin:0;min-height:58px}
+ .cabin .tl .tl-track>.declined,.cabin .tl .tl-free{grid-column:1/-1}
+ .cabin .tl .tl-track>.vacant{display:none}
+ .cabin .tl-track .t .when{display:block}
+ .cabin .tl-track .t b,.cabin .tl-track .t small{white-space:normal}
+ .cabin .now{display:none}
+ .cabin .bar.cut-start,.cabin .bar.cut-end{border-radius:10px}
+ .cabin .recovery{padding:18px 16px}
+ .cabin .steps li{grid-template-columns:24px 48px minmax(0,1fr)}
+}
+/* Generated placement classes. */
+.cabin .s-1{--s:1}.cabin .s-2{--s:2}.cabin .s-3{--s:3}.cabin .s-4{--s:4}.cabin .s-5{--s:5}.cabin .s-6{--s:6}.cabin .s-7{--s:7}.cabin .s-8{--s:8}.cabin .s-9{--s:9}.cabin .s-10{--s:10}.cabin .s-11{--s:11}.cabin .s-12{--s:12}.cabin .s-13{--s:13}.cabin .s-14{--s:14}.cabin .s-15{--s:15}.cabin .s-16{--s:16}.cabin .s-17{--s:17}.cabin .s-18{--s:18}.cabin .s-19{--s:19}.cabin .s-20{--s:20}.cabin .s-21{--s:21}.cabin .s-22{--s:22}.cabin .s-23{--s:23}.cabin .s-24{--s:24}.cabin .s-25{--s:25}.cabin .s-26{--s:26}.cabin .s-27{--s:27}.cabin .s-28{--s:28}
+.cabin .w-1{--w:1}.cabin .w-2{--w:2}.cabin .w-3{--w:3}.cabin .w-4{--w:4}.cabin .w-5{--w:5}.cabin .w-6{--w:6}.cabin .w-7{--w:7}.cabin .w-8{--w:8}.cabin .w-9{--w:9}.cabin .w-10{--w:10}.cabin .w-11{--w:11}.cabin .w-12{--w:12}.cabin .w-13{--w:13}.cabin .w-14{--w:14}.cabin .w-15{--w:15}.cabin .w-16{--w:16}.cabin .w-17{--w:17}.cabin .w-18{--w:18}.cabin .w-19{--w:19}.cabin .w-20{--w:20}.cabin .w-21{--w:21}.cabin .w-22{--w:22}.cabin .w-23{--w:23}.cabin .w-24{--w:24}.cabin .w-25{--w:25}.cabin .w-26{--w:26}.cabin .w-27{--w:27}.cabin .w-28{--w:28}
+.cabin .x-1{--k:1}.cabin .x-2{--k:2}.cabin .x-3{--k:3}.cabin .x-4{--k:4}.cabin .x-5{--k:5}.cabin .x-6{--k:6}.cabin .x-7{--k:7}.cabin .x-8{--k:8}.cabin .x-9{--k:9}.cabin .x-10{--k:10}.cabin .x-11{--k:11}.cabin .x-12{--k:12}.cabin .x-13{--k:13}.cabin .x-14{--k:14}.cabin .x-15{--k:15}.cabin .x-16{--k:16}.cabin .x-17{--k:17}.cabin .x-18{--k:18}.cabin .x-19{--k:19}.cabin .x-20{--k:20}.cabin .x-21{--k:21}.cabin .x-22{--k:22}.cabin .x-23{--k:23}.cabin .x-24{--k:24}.cabin .x-25{--k:25}.cabin .x-26{--k:26}.cabin .x-27{--k:27}.cabin .x-28{--k:28}
+.cabin .ln-1{grid-row:1}.cabin .ln-2{grid-row:2}.cabin .ln-3{grid-row:3}.cabin .ln-4{grid-row:4}.cabin .ln-5{grid-row:5}.cabin .ln-6{grid-row:6}
