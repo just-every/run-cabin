@@ -1,5 +1,3 @@
-# Direct bookings
-
 Open **Direct bookings** in the installed Cabin workspace. Configure each home's public address, nightly rate, cleaning and extra-guest fees, occupancy, minimum/maximum nights and minimum gap. A gap of zero is allowed next to an existing reservation; other gaps must meet the configured minimum. Publish the home to make `/book/<address>` available. `/book` lists the published homes. Calendar availability includes channel stays, blocks and pending direct checkouts. No guest names appear on public availability pages.
 
 Set `STRIPE_TEST_SECRET_KEY` privately on the installation. Deploy declares it as an optional secret; without it, Cabin explains that Stripe must be configured. This edition accepts Stripe **test mode only**, not real charges. Self-hosted installations call Stripe directly. On RER Managed, payments, deposits and Identity say “not available yet” until a provider relay exists; no provider request is attempted.
