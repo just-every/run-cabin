@@ -1,1 +1,15 @@
-.guest main{max-width:1120px;margin:0 auto}.guest header{display:flex;gap:1rem}.guest h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1}.guest .intro{max-width:70ch;font-size:1.15rem;white-space:pre-wrap}.guest-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}.guest .panel{min-width:0}.guest .agreement{white-space:pre-wrap;max-height:24rem;overflow:auto;border:1px solid var(--border,#d8ddd7);padding:1rem;margin-bottom:1.5rem}.guest .price{display:block;margin:1.5rem 0}.price>div{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding:.7rem 0;border-bottom:1px solid #d8ddd7}.price dd{margin:0;flex-shrink:0;font-variant-numeric:tabular-nums}.price .total{font-weight:700;font-size:1.15rem}.guest .check{display:flex;align-items:start;gap:.6rem;line-height:1.5}.guest .check input{width:auto;flex:0 0 auto;margin-top:.3rem}.guest .button{display:inline-block;background:#285445;color:white;padding:.8rem 1rem;border-radius:.3rem;text-decoration:none}.guest li{padding:.4rem 0}.guest p,.guest a{overflow-wrap:anywhere}@media(max-width:700px){.guest-grid{grid-template-columns:1fr}.guest header{align-items:start;flex-direction:column}.guest main{padding:1rem}.guest .panel{padding:1rem}}
+/* The guest's direct booking pages (src/cabin/direct/public-ui.ts) in the app's look. */
+.cabin.guest header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;max-width:1120px;margin:0 auto;padding:20px 28px 0;color:var(--muted);font-size:13.5px}
+.cabin.guest header .brand{display:inline-flex;align-items:center;gap:10px;font:800 21px/1 var(--rer-font-heading);letter-spacing:-.03em;color:var(--pine);text-decoration:none}
+.cabin.guest header .brand::before{content:"";width:36px;height:36px;background:url('/brand/badge.svg') center/contain no-repeat}
+.rer-themed .cabin.guest main{max-width:1120px;margin:0 auto;padding:24px 28px 40px}
+.cabin.guest footer{max-width:1120px;margin:0 auto}
+.guest h1{font-size:clamp(30px,5vw,48px);line-height:1.08}
+.guest .intro{max-width:70ch;font-size:16px;white-space:pre-wrap;color:var(--ink-2)}
+.guest-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.guest .agreement{white-space:pre-wrap;max-height:24rem;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--wash);padding:14px 16px;margin-bottom:18px}
+.guest .price{display:block;margin:18px 0}
+.price>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line-2)}
+.price dd{margin:0;flex-shrink:0;font-variant-numeric:tabular-nums}.price .total{font-weight:700;font-size:17px}
+.guest li{padding:3px 0}.guest p,.guest a{overflow-wrap:anywhere}
+@media(max-width:700px){.guest-grid{grid-template-columns:1fr}.cabin.guest header{padding:16px 16px 0}.rer-themed .cabin.guest main{padding:18px 16px 32px}}
