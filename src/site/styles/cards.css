@@ -111,16 +111,25 @@
 .powered { margin-top: 13px; text-align: center; font-size: 13.5px; color: var(--soft); }
 
 /* ---------- Pricing: the rate card ---------- */
-.rates { width: 100%; max-width: 562px; padding: 26px 28px 24px; margin-left: 40px; }
+/* The card's 40 px offset gives way first when its column is narrower than card plus offset, so the card keeps its width. */
+.rates { container-type: inline-size; width: 100%; max-width: 562px; padding: 26px 28px 24px; margin-left: clamp(0px, 100% - 562px, 40px); }
 .rates-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .rates-head .card-title { font-size: 26px; }
 .rate-days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 18px; padding-bottom: 16px; border-bottom: 1px solid #e9ebee; }
 .rate-days li { display: grid; justify-items: center; gap: 6px; padding: 16px 0 14px; border-radius: 10px; background: #f4f5f9; font-size: 15.5px; color: #5a6578; }
 .rate-days li b { margin-top: 6px; font-size: 20.5px; font-weight: 700; color: #0b1f1b; letter-spacing: -.01em; }
 .rate-days li.peak { background: #dcf3e2; color: #1c5b4d; }
-.rules { display: grid; grid-template-columns: auto auto auto; justify-content: space-between; gap: 10px; margin-top: 16px; }
-.rules li { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 16px; border-radius: 8px; border: 1px solid #edeef2; background: #f6f7fa; font-size: 15px; color: #4c566a; white-space: nowrap; }
+.rules { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 16px; }
+.rules li { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #edeef2; background: #f6f7fa; font-size: 15px; color: #4c566a; white-space: nowrap; }
 .rules .icon { width: 19px; height: 19px; stroke: #4c566a; }
+/* The three rule chips stay inside the card's padding: one row at full size from a 496 px content box, one smaller
+   row down to 452 px, then they wrap from the left. */
+@container (max-width: 495.98px) {
+  .rules li { padding: 0 10px; font-size: 13.5px; }
+}
+@container (max-width: 451.98px) {
+  .rules { justify-content: flex-start; }
+}
 .note { display: flex; align-items: center; gap: 0; margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-size: 16.5px; }
 .note .status { margin-right: 18px; }
 .note-amber { background: #fef1db; color: #6e4a2c; }
@@ -247,8 +256,7 @@
   .rate-days { gap: 5px; }
   .rate-days li { padding: 11px 0 10px; font-size: 13px; }
   .rate-days li b { font-size: 16px; }
-  .rules { display: flex; flex-wrap: wrap; gap: 8px; }
-  .rules li { padding: 0 10px; font-size: 13.5px; height: 38px; }
+  .rules li { height: 38px; }
   .note { font-size: 14.5px; padding: 10px 12px; }
   .note .status { margin-right: 12px; }
   .turnover { padding: 18px 16px 4px; }
