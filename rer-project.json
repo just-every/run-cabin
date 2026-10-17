@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "projectId": "just-every/run-cabin",
+  "name": "Cabin",
+  "sourceRepository": "https://github.com/just-every/run-cabin",
+  "license": "MIT"
+}
