@@ -3,7 +3,7 @@
     {
       "title": "Start here",
       "pages": [
-        { "slug": "getting-started", "title": "Getting started", "file": "getting-started.md", "summary": "Start Cabin on your own computer in two lines, confirm yourself as the owner and open the app." },
+        { "slug": "getting-started", "title": "Getting started", "file": "getting-started.md", "summary": "Start Cabin on your own computer in one line, confirm yourself as the owner and open the app." },
         { "slug": "homes-and-people", "title": "Homes and people", "file": "homes-and-people.md", "summary": "Add each home with its owner and commission, then give managers and cleaners their own access." }
       ]
     },
