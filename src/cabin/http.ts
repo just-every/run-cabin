@@ -21,15 +21,17 @@ import { directCommand } from './direct/admin'
 import { stay } from './direct/store'
 import { signedAgreement } from './direct/public-ui'
 import { manager } from './model'
+import { inboxCommand } from './inbox/commands'
+import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
- const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 function actionMessage(name:string,result:any){
@@ -47,6 +49,17 @@ function actionMessage(name:string,result:any){
  if(name==='task.close')return 'Task closed.'
  if(name==='reservation.request')return result.status==='declined'?`Request declined: ${result.reason}.`:result.kind==='block'?'Nights blocked on every channel.':'Request accepted. These nights now close on every channel.'
  if(name==='channel.connect'||name==='channel.sync')return result.connection.status==='ok'?`Synced: ${result.changes} change${result.changes===1?'':'s'}.`:`Sync failed: ${result.connection.error}`
+ if(name==='reservation.move')return 'Stay moved. Its turnover, door codes and scheduled messages moved with it.'
+ if(name==='message.send')return 'Approved exactly as written. The thread shows when it went out, or why it could not.'
+ if(name==='message.compose')return 'Sending. The thread shows when it went out, or why it could not.'
+ if(name==='message.discard')return 'Draft discarded. Nothing was sent.'
+ if(name==='message.retry')return 'Sending again.'
+ if(name==='inbox.address')return result.address?`Guest email now arrives at ${result.address}.`:'Inbox address removed.'
+ if(name==='inbox.schedule')return 'Scheduled messages saved. Every upcoming stay follows them.'
+ if(name==='inbox.ai.save')return 'AI key saved. New guest messages get an AI draft.'
+ if(name==='inbox.ai.remove')return 'AI key removed. Drafts come from templates.'
+ if(name==='inbox.ai.test')return result.message
+ if(name==='inbox.try')return 'Received: it is in the sender’s thread with a drafted reply.'
  if(name==='export.publish')return 'Export links ready. Paste each one into its channel; older links stop working.'
  return 'Saved.'
 }
@@ -85,8 +98,9 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
  if(path==='/book'||path.startsWith('/book/'))return bookingResponse(request,runtimeBindings(original))
  if(path.startsWith('/ical/'))return icalExportResponse(request,runtimeBindings(original))
  if(path.startsWith('/stay/'))return guestStayResponse(request,runtimeBindings(original))
+ if(path==='/inbound/sms')return smsResponse(request,runtimeBindings(original))
  if(!path.startsWith('/api/cabin/')&&path!=='/app'&&!path.startsWith('/app/'))return null
- const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),back=pages.has(url.searchParams.get('returnTo')??'')?url.searchParams.get('returnTo')!:'/app';let who:Actor|undefined
+ const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),[returnPath,returnQuery='']=(url.searchParams.get('returnTo')??'').split('?'),back=pages.has(returnPath)?returnPath:'/app',thread=new URLSearchParams(returnQuery).get('thread')??url.searchParams.get('thread');let who:Actor|undefined
  try{
   need(url.origin===env.AUTH_ORIGIN&&(!request.headers.has('host')||request.headers.get('host')===url.host),'Wrong application origin',403)
   need(request.method==='GET'||request.method==='POST','Method not allowed',405)
@@ -98,7 +112,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
-   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from')})
+   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from'),thread})
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
@@ -108,7 +122,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(photo||direct){const saved=await turnoverPhoto(env.DB,who,(photo??direct)![1],!!direct);return new Response(saved.bytes,{headers:{...headers,'content-type':saved.mimeType,'content-disposition':'inline','content-security-policy':"default-src 'none'; sandbox"}})}
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
-   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result),result})
+   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})
@@ -116,7 +130,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   return json({error:'Not found'},404)
  }catch(error){
   const status=Number((error as any)?.status)||500,message=(error as any)?.status?(error as Error).message:'Could not complete this request. Refresh and try again.'
-  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{error:message})}catch{/* Revocation cannot fall back to a stale page. */}}
+  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
   if(pages.has(path)&&status===401)return new Response(null,{status:303,headers:{...headers,location:'/signin?returnTo='+encodeURIComponent(path)}})
   return json({error:message},status)
  }

@@ -28,7 +28,7 @@ export async function refresh(env:Bindings,id:string) {
  if(ready&&s.phase==='paid')s=await mutate(env.DB,DIRECT_SYSTEM,'direct.confirmed',async c=>{
   const row=await stay(env.DB,id);need(row.phase==='paid'||row.phase==='confirmed','This stay is no longer awaiting confirmation',409)
   row.phase='confirmed';delete row.error;const booking=c.data.bookings.find(b=>b.id===row.bookingId);need(booking&&booking.status==='confirmed','The booking hold is missing. Contact the host.',409)
-  Object.assign(booking,{kind:'stay',summary:row.guestName,guestName:row.guestName,revision:newId()});saveStay(c,row);return row
+  Object.assign(booking,{kind:'stay',summary:row.guestName,guestName:row.guestName,guestEmail:row.email,revision:newId()});saveStay(c,row);return row
  })
  return s
 }

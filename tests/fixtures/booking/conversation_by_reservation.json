@@ -1,0 +1,19 @@
+{
+  "meta": { "ruid": "fixture-ruid-1" },
+  "data": {
+    "conversation": {
+      "conversation_type": "reservation",
+      "access": "read_write",
+      "conversation_id": "f3a9c29d-480d-5f5b-a6c0-65451e335353",
+      "participants": [
+        { "metadata": { "type": "guest", "name": "Lena Park" }, "participant_id": "a6b3c2f8-1c4e-5d8a-9b7f-2e3d4c5b6a71" },
+        { "metadata": { "type": "property", "id": "8011855" }, "participant_id": "b7c4d3e9-2d5f-6e9b-8c8e-3f4e5d6c7b82" }
+      ],
+      "messages": [],
+      "conversation_reference": "3812391309"
+    },
+    "ok": "true"
+  },
+  "warnings": [],
+  "errors": []
+}

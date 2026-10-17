@@ -13,6 +13,7 @@ import { cabinResponse } from './cabin/http'
 import { directDue } from './cabin/direct/payments'
 import { syncDue } from './cabin/channels'
 import { settle } from './cabin/settle'
+import { emailHandler, pollChannels } from './cabin/inbox/inbound'
 import { seedDemo } from './demo'
 
 const api = new Hono<{ Bindings: Bindings }>()
@@ -44,8 +45,13 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
     return rejectedResponse(request, await dispatch(request, () => api.fetch(request, env, execution), async () => noTransform(await start.fetch(request))))
   },
   // Cron polls every connected channel calendar whose interval is due (SYNC-009),
-  // then sends turnover emails and pushes door codes the new stays made (OPS-001, OPS-005).
+  // then sends turnover emails, pushes door codes the new stays made (OPS-001, OPS-005)
+  // and sends the guest messages that have fallen due (MESSAGE-003).
   async scheduled(_controller, env, execution) {
-    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env))]).then(() => settle(runtimeBindings(env))))
+    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env)),pollChannels(runtimeBindings(env)).catch(error => console.error('Cabin channel messages', error.message))]).then(() => settle(runtimeBindings(env))))
+  },
+  // Cloudflare Email Routing delivers the inbox address here: guest email and replies (MESSAGE-001).
+  async email(message, env) {
+    await emailHandler(message, runtimeBindings(env))
   },
 } satisfies ExportedHandler<Bindings>, { seed: seedDemo })
