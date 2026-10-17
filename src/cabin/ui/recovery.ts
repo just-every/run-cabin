@@ -1,67 +1,78 @@
-import { h, money, memberName, propertyName, approve } from './shared'
-import { homeReadiness } from '../readiness'
-import { homeSettings } from '../homes'
-import { channelName } from '../inventory'
-import { wall, time12, when, between } from '../clock'
-import { statementMonth } from '../finance/presentation'
-import { stayLabel, town, homeThumb } from './calendar-grid'
-import { icon } from './icons'
-// Beside the calendar: the home whose next arrival is not ready yet, what
-// already happened to put it right (the turnover's history, door codes and
-// the cleaner's email, each with its time), what is still missing, the drafts
-// a person must approve, and the home's latest owner statement.
-const day = (d: string) => new Date(d.slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
-const NOTICE: Record<string, string> = { assigned: 'Job sent to', changed: 'New window sent to', removed: 'Taken off the job:', cancelled: 'Cancellation sent to', task: 'Task sent to' }
-interface Step { at: string; title: string; note: string; tone: 'done' | 'muted' | 'bad' }
-function stamp(s: any, propertyId: string, iso: string, today: string) {
-  const local = wall(Date.parse(iso), homeSettings(s, propertyId).timeZone)
-  return local.slice(0, 10) === today ? time12(local.slice(11, 16)) : new Date(local.slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+import { h, heading, panel, form, hidden, select, area, approve, empty, propertyName, memberName, manager, owner, money, dateRange } from './shared'
+import { atHome, chip, choose, codeLine, lockNote } from './ops'
+
+const triggers: [string, string][] = [['cleaner_cancelled', 'Cleaner cancelled'], ['not_ready', 'Home not ready'], ['late_checkout', 'Late checkout'], ['guest_problem', 'Guest problem']]
+const policyOf = (s: any, propertyId: string) => s.recoveryPolicies.find((p: any) => p.propertyId === propertyId)
+const reference = (r: any) => hidden('id', r.id) + hidden('revision', r.revision)
+const dollars = (cents: number) => (cents / 100).toFixed(2)
+const amount = (name: string, label: string, cents: number) => `<label>${h(label)}<input name="${h(name)}" type="number" inputmode="decimal" min="0" step="0.01" value="${h(dollars(cents))}" required></label>`
+const tone = (status: string) => ['ready', 'closed'].includes(status) ? 'good' : ['escalated', 'open'].includes(status) ? 'bad' : ['proposed', 'active'].includes(status) ? 'wait' : ''
+
+function openForm(s: any) {
+  const staff = manager(s)
+  const jobs = s.turnovers.filter((t: any) => t.cleanerId === s.actor.memberId && ['approved', 'completed'].includes(t.status))
+  const bookings = s.bookings.filter((b: any) => b.status === 'confirmed' && b.kind !== 'block')
+  if (staff ? !bookings.length : !jobs.length) return empty(staff ? 'Add a confirmed stay before opening a recovery case.' : 'Your assigned turnovers appear here when you have a problem to report.')
+  const choices: [string, string][] = staff
+    ? bookings.map((b: any) => [b.id, `${propertyName(s, b.propertyId)} · ${b.guestName ?? b.summary} · ${b.start} → ${b.end}`])
+    : jobs.map((t: any) => [t.id, `${propertyName(s, t.propertyId)} · ${t.windowStart ?? t.dueDate}`])
+  return form('recovery.open', 'recovery', select(staff ? 'bookingId' : 'turnoverId', staff ? 'Stay' : 'Your turnover', choices) + select('trigger', 'What happened?', triggers) + area('reason', 'What needs to be put right?', '', 'maxlength="2000"'), staff ? 'Open recovery case' : 'Report stay problem')
 }
-function steps(s: any, x: any): Step[] {
-  const t = x.turnover, list: Step[] = []
-  if (!t) return list
-  const who = (id: string | null) => id ? memberName(s, id) : 'nobody'
-  for (const old of s.turnovers.filter((r: any) => r.bookingId === t.bookingId && r.id !== t.id && r.status === 'cancelled')) list.push({ at: old.history?.at(-1)?.at ?? old.preparedAt, title: 'Earlier turnover cancelled', note: old.cancelReason ?? 'Cancelled', tone: 'muted' })
-  const made = `${t.checklist.length} checklist items · ${t.photosRequired ?? 1} photo${(t.photosRequired ?? 1) === 1 ? '' : 's'} to mark ready`
-  if (!t.history?.some((e: any) => e.action === 'created')) list.push({ at: t.preparedAt, title: t.source === 'auto' ? 'Turnover dispatched' : 'Turnover prepared by hand', note: made, tone: 'done' })
-  let previous: string | null = null
-  for (const e of t.history ?? []) {
-    if (e.action === 'created') { list.push({ at: e.at, title: 'Turnover dispatched', note: e.cleanerId ? `Cleaner: ${who(e.cleanerId)} · ${made}` : `No default cleaner · ${made}`, tone: e.cleanerId ? 'done' : 'bad' }); previous = e.cleanerId; continue }
-    const title = e.action === 'assigned' ? (previous && previous !== e.cleanerId ? `Reassigned to ${who(e.cleanerId)}` : `${who(e.cleanerId)} assigned`) : e.action === 'approved' ? 'Approved and assigned' : e.action === 'checked out' ? 'Guests checked out' : e.action === 'completed' ? 'Marked ready' : e.action === 'replaced' ? 'Replaced by an approved turnover' : e.action === 'cancelled' ? 'Turnover cancelled' : e.action.charAt(0).toUpperCase() + e.action.slice(1)
-    const note = e.action === 'approved' ? `Cleaner: ${who(e.cleanerId)}` : e.action === 'completed' ? (t.completion?.caption ?? '') : e.action === 'assigned' && previous && previous !== e.cleanerId ? `Was ${who(previous)}` : ''
-    list.push({ at: e.at, title, note, tone: 'done' }); previous = e.cleanerId
+
+function proposalForm(s: any, r: any) {
+  const policy = policyOf(s, r.propertyId)
+  const cleaners: [string, string][] = s.members.filter((m: any) => m.role === 'cleaner' && m.active && policy?.cleanerIds.includes(m.id)).map((m: any) => [m.id, m.name])
+  if (!cleaners.length) return `<p class="muted">The owner needs to choose an available recovery cleaner in this home's settings before a plan can be proposed.</p>`
+  return `<details class="recovery-propose"${r.status === 'open' ? ' open' : ''}><summary>${r.proposal ? 'Revise the proposal' : 'Prepare an action proposal'}</summary>${form('recovery.propose', 'recovery', reference(r) + choose('cleanerId', 'Replacement cleaner', cleaners, r.proposal?.cleanerId, 'Choose a recovery cleaner…', 'required') + `<div class="pair">${amount('creditDollars', 'Guest credit (USD)', r.proposal?.creditCents ?? 0)}${amount('extraCleaningDollars', 'Extra cleaning (USD)', r.proposal?.extraCleaningCents ?? 0)}</div>` + area('why', 'Explanation', r.proposal?.why ?? r.reason, 'maxlength="2000"') + '<p class="muted">Review the saved proposal and its exact guest wording before approving. Automatic recovery follows the owner’s policy.</p>', 'Prepare proposal')}</details>`
+}
+
+function proposal(s: any, r: any) {
+  const p = r.proposal
+  if (!p) return '<p class="muted">No action proposed yet.</p>'
+  if (!manager(s)) return `<p>Replacement cleaner: <strong>${h(memberName(s, p.cleanerId))}</strong></p><p class="recovery-text">${h(p.why)}</p>`
+  return `<section class="recovery-proposal" aria-label="Action proposal"><h4>Action proposal${r.status === 'proposed' ? ' · awaiting approval' : ''}</h4><dl class="facts"><dt>Replacement cleaner</dt><dd>${h(memberName(s, p.cleanerId))}</dd><dt>Guest credit</dt><dd>${h(money(p.creditCents))}</dd><dt>Extra cleaning</dt><dd>${h(money(p.extraCleaningCents))}</dd><dt>Total spend</dt><dd><strong>${h(money(p.creditCents + p.extraCleaningCents))}</strong></dd></dl><h4>Explanation</h4><p class="recovery-text">${h(p.why)}</p><h4>Exact guest message</h4><div class="recovery-text recovery-guest">${h(p.guestText)}</div></section>`
+}
+
+function history(s: any, r: any) {
+  const approvals = s.approvals.filter((a: any) => a.recordId === r.id)
+  const approved = approvals.length ? `<h4>Recorded approvals</h4><ul>${approvals.map((a: any) => `<li>${h(a.actorName ?? memberName(s, a.actorId))} · ${h(atHome(s, r.propertyId, a.at))}<br><span class="muted">${h(a.kind)} · revision ${h(a.revision)}</span></li>`).join('')}</ul>` : manager(s) ? '<p class="muted">No approval recorded yet.</p>' : ''
+  return `<details class="recovery-history"><summary>Progress and approvals</summary>${approved}${r.history.length ? `<ol>${r.history.map((e: any) => `<li><strong>${h(e.action)}</strong> · ${h(atHome(s, r.propertyId, e.at))}<br><span class="muted">${h(memberName(s, e.by))}</span>${e.why ? `<p class="recovery-text">${h(e.why)}</p>` : ''}</li>`).join('')}</ol>` : '<p class="muted">No progress recorded yet.</p>'}</details>`
+}
+
+function access(s: any, r: any) {
+  const code = s.codes.find((c: any) => c.id === r.codeId)
+  if (!code || !['active', 'ready'].includes(r.status)) return ''
+  return `<div class="recovery-access"><h4>Recovery door access</h4>${codeLine(s, code, 'New guest code')}${lockNote(s, code)}${manager(s) && code.lock.state === 'manual' && !r.manualAckAt ? form('recovery.access', 'recovery', reference(r) + '<p class="muted">Enter this guest code on the physical keypad for its displayed access window, then confirm it is set.</p>', 'I set the new code on the keypad') : r.manualAckAt ? `<p class="muted">Keypad code confirmed ${h(atHome(s, r.propertyId, r.manualAckAt))}.</p>` : ''}</div>`
+}
+
+function actions(s: any, r: any) {
+  if (!manager(s)) {
+    const mine = r.proposal?.cleanerId === s.actor.memberId
+    return `${mine && r.status === 'active' && !r.acceptedAt ? approve('recovery.accept', 'recovery', r, 'Accept replacement cleaning') : ''}${r.acceptedAt ? `<p class="muted">Replacement accepted ${h(atHome(s, r.propertyId, r.acceptedAt))}.</p>` : ''}<p><a href="/app/turnovers${mine ? '#turnover-' + encodeURIComponent(r.turnoverId) : ''}">Open Turnovers for the checklist, photos and Mark ready</a></p>`
   }
-  const arriving = t.nextBookingId ?? x.arrival?.id
-  for (const c of s.codes.filter((r: any) => r.turnoverId === t.id || (r.holder === 'guest' && r.bookingId === arriving))) list.push({ at: c.createdAt, title: c.status === 'revoked' ? `Door code ${c.code} revoked` : `Door code ${c.code} issued`, note: c.status === 'revoked' ? c.reason ?? '' : `${c.holder === 'guest' ? 'Guest' : `Cleaner ${c.memberId ? memberName(s, c.memberId) : ''}`.trim()} · works ${between(c.validFrom, c.validUntil)}`, tone: c.status === 'revoked' ? 'muted' : 'done' })
-  for (const n of s.notices.filter((r: any) => r.recordId === t.id)) list.push({ at: n.sentAt ?? n.createdAt, title: `${NOTICE[n.kind] ?? 'Emailed'} ${memberName(s, n.memberId)}`, note: n.status === 'sent' ? n.subject : n.status === 'suppressed' ? 'Email not sent: development mode sends no mail' : n.status === 'unavailable' ? 'Email not sent: no mail provider is set up' : n.detail ?? n.status, tone: n.status === 'sent' ? 'done' : n.status === 'failed' ? 'bad' : 'muted' })
-  return list.filter(r => r.at).sort((a, b) => a.at.localeCompare(b.at)).slice(-6)
+  const policy = policyOf(s, r.propertyId)
+  const aboveLimit = r.proposal && (!policy || r.proposal.creditCents > policy.creditLimitCents || r.proposal.extraCleaningCents > policy.cleaningLimitCents)
+  const review = r.status === 'proposed' ? `${aboveLimit ? '<p class="muted">This proposal exceeds the home’s limits and needs owner approval.</p>' : ''}<div class="actions">${!aboveLimit || owner(s) ? approve('recovery.approve', 'recovery', r, 'Approve this proposal') : ''}${form('recovery.reject', 'recovery', reference(r), 'Reject proposal', 'class="quiet"')}${!s.managed && s.inbox?.[0]?.ai ? form('recovery.wording', 'recovery', reference(r), 'Draft AI opening', 'class="quiet"') : ''}</div>` : ''
+  const undo = owner(s) && ['active', 'ready', 'closed'].includes(r.status) ? `<details class="report"><summary>Undo this recovery</summary>${form('recovery.undo', 'recovery', reference(r) + area('reason', 'Reason for undo', '', 'maxlength="2000"'), 'Undo recovery', 'class="quiet"')}</details>` : ''
+  const close = r.status === 'active' ? `<p class="muted">Closing checks the cleaner’s acceptance, completed turnover photos and replacement door access.</p>${approve('recovery.close', 'recovery', r, 'Check readiness and close')}` : ''
+  return `${['open', 'escalated'].includes(r.status) ? approve('recovery.plan', 'recovery', r, 'Find replacement and draft plan') : ''}${['open', 'proposed', 'escalated'].includes(r.status) ? proposalForm(s, r) : ''}${review}${close}${undo}`
 }
-function waiting(s: any, propertyId: string | null) {
-  const mine = (r: any) => !propertyId || r.propertyId === propertyId
-  const turnovers = s.turnovers.filter((t: any) => t.status === 'draft' && mine(t)).map((t: any) => ({ title: `Turnover for ${propertyName(s, t.propertyId)}`, note: `${memberName(s, t.cleanerId)} · checkout ${day(t.dueDate)} · ${t.checklist.length} checklist items`, act: approve('turnover.approve', 'calendar', t, 'Approve'), review: `/app/turnovers#turnover-${t.id}` }))
-  const files = s.calendarDrafts.filter((d: any) => d.status === 'draft' && mine(d)).map((d: any) => ({ title: `${channelName(d.channel)} calendar file · ${propertyName(s, d.propertyId)}`, note: `${d.changes.length} change${d.changes.length === 1 ? '' : 's'}${d.clashes.length ? ` · ${d.clashes.length} clash${d.clashes.length === 1 ? '' : 'es'} with another channel` : ' · no overlaps'}`, act: approve('calendar.approve', 'calendar', d, 'Approve'), review: `/app/channels#review-${d.id}`, bad: d.clashes.length > 0 }))
-  const statements = s.statements.filter((r: any) => r.status === 'draft' && mine(r)).map((r: any) => ({ title: `${statementMonth(r.month)} statement · ${r.propertyName}`, note: `Owner payout ${money(r.netCents)} · approving emails ${r.ownerName}`, act: '', review: `/app/statements#statement-${r.id}` }))
-  return [...files, ...turnovers, ...statements] as { title: string; note: string; act: string; review: string; bad?: boolean }[]
+
+function card(s: any, r: any) {
+  const booking = s.bookings.find((b: any) => b.id === r.bookingId)
+  return `<article class="record recovery-case" id="recovery-${h(r.id)}"><div class="record-title"><h3>${h(propertyName(s, r.propertyId))}${booking ? ` · ${h(booking.guestName ?? booking.summary)}` : ''}</h3>${chip(r.status, tone(r.status))}</div><p class="muted">${booking ? dateRange(booking) + ' · ' : ''}Opened ${h(atHome(s, r.propertyId, r.createdAt))}</p><p><strong>${h(triggers.find(([key]) => key === r.trigger)?.[1] ?? r.trigger)}</strong></p><p class="recovery-text">${h(r.reason)}</p>${proposal(s, r)}${access(s, r)}${actions(s, r)}${manager(s) && r.creditMessageId ? `<p>Guest credit update: ${h(s.messages.find((m:any)=>m.id===r.creditMessageId)?.status ?? 'pending')} · <a href="/app/inbox">Open guest Inbox</a></p><p><a href="/app/statements#statement-${h(r.statementId)}">Open frozen owner adjustment</a></p>` : ''}${r.balanceCents !== undefined && manager(s) ? `<p>Recorded balance: ${h(money(r.balanceCents))}</p>` : ''}${r.confirmationMessageId ? `<p>Guest confirmation: ${h(s.messages.find((m:any)=>m.id===r.confirmationMessageId)?.status ?? 'pending')}</p>` : ''}${r.closedAt ? `<p class="muted">Closed ${h(atHome(s, r.propertyId, r.closedAt))}.</p>` : ''}${history(s, r)}</article>`
 }
-const card = (w: { title: string; note: string; act: string; review: string; bad?: boolean }) => `<article class="ask${w.bad ? ' bad' : ''}"><div class="ask-text">${icon(w.bad ? 'alert' : 'agent')}<div><strong>${h(w.title)}</strong><p>${h(w.note)}</p></div></div><div class="actions">${w.act}<a class="button quiet" href="${h(w.review)}">Review</a></div></article>`
-export function recovery(s: any, today: string, until: string, homes: any[]) {
-  const all = homes.map((p: any) => homeReadiness(s, p, today)), shaky = all.filter(x => x.state !== 'ready' && (!x.arrival || x.arrival.start.slice(0, 10) < until)).sort((a, b) => (a.arrival?.start ?? '9999').localeCompare(b.arrival?.start ?? '9999'))
-  const x = shaky[0]
-  if (!x) {
-    const asks = waiting(s, homes.length === 1 ? homes[0].id : null)
-    return `<aside class="panel recovery" aria-label="Readiness"><header>${icon('readiness')}<h2>${all.length === 1 ? 'Your home is ready' : `All ${all.length} homes ready`}</h2></header><p class="muted">Every turnover before the next arrival is done with its photos and no blocking maintenance task is open.</p>${asks.length ? `<section><h3>Waiting for your approval</h3>${asks.slice(0, 3).map(card).join('')}</section>` : ''}<p><a href="/app/readiness">Open readiness</a></p></aside>`
-  }
-  const p = x.property, a = x.arrival, t = x.turnover, place = town(s, p.id)
-  const subject = t ? `${day(t.windowStart ?? t.dueDate)} turnover` : a ? `${day(a.start)} arrival` : 'Next stay'
-  const done = steps(s, x).map(r => `<li class="${r.tone}"><span class="mark" aria-hidden="true">${r.tone === 'bad' ? icon('alert') : icon('check')}</span><time>${h(stamp(s, p.id, r.at, today))}</time><div><strong>${h(r.title)}</strong>${r.note ? `<small>${h(r.note)}</small>` : ''}</div></li>`).join('')
-  const open = `<li class="pending"><span class="mark" aria-hidden="true"></span><time>Now</time><div><strong>${x.state === 'unknown' ? 'Not known yet' : 'Not ready'}</strong><small>${h(x.reasons.join('. '))}.</small></div></li>`
-  const asks = waiting(s, p.id), others = asks.length ? [] : waiting(s, null).filter(w => w.act)
-  const statement = s.statements.filter((r: any) => r.propertyId === p.id).sort((a: any, b: any) => b.month.localeCompare(a.month))[0]
-  return `<aside class="panel recovery" aria-label="Stay recovery"><header>${icon('spark')}<h2>Stay recovery</h2></header>
-  <div class="stay-home">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3><p>${h(place || `${homes.length - shaky.length} of ${homes.length} homes ready`)}</p></div></div>
-  ${a ? `<p class="next">Next arrival <strong>${h(stayLabel(a).split(' · ')[0])}</strong> · ${h(channelName(a.channel))} · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, p.id).checkInTime}`))}</p>` : ''}
-  <section><h3>${h(subject)} – ${h(x.reasons[0] ?? 'not ready')}</h3><ol class="steps">${done}${open}</ol>${t ? `<p class="more"><a href="/app/turnovers#turnover-${h(t.id)}">Open this turnover</a></p>` : ''}</section>
-  ${asks.length || others.length ? `<section><h3>${asks.length ? 'Waiting for your approval' : 'Also waiting for you'}</h3>${(asks.length ? asks : others).slice(0, 2).map(card).join('')}</section>` : ''}
-  ${statement ? `<section class="balance"><h3>${h(statementMonth(statement.month))} owner payout</h3><div class="money-line"><strong class="money">${h(money(statement.netCents))}</strong><span class="chip ${statement.status === 'approved' ? 'chip-good' : 'chip-wait'}"><span class="dot"></span>${statement.status === 'approved' ? 'Approved' : 'In review'}</span></div><p class="muted">${h(statement.ownerName)} · management ${(statement.commissionBps / 100).toFixed(2)}% · <a href="/app/statements#statement-${h(statement.id)}">Statement</a></p></section>` : ''}
-  </aside>`
+
+function settings(s: any, property: any) {
+  const p = policyOf(s, property.id)
+  if (!owner(s)) return `<article class="record"><h3>${h(property.name)}</h3>${p ? `<dl class="facts"><dt>Recovery cleaners</dt><dd>${h(p.cleanerIds.map((id: string) => memberName(s, id)).join(', ') || 'None selected')}</dd><dt>Automatic recovery</dt><dd>${p.auto ? 'Enabled within these limits' : 'Manager approval required'}</dd><dt>Guest credit limit</dt><dd>${h(money(p.creditLimitCents))}</dd><dt>Extra cleaning limit</dt><dd>${h(money(p.cleaningLimitCents))}</dd></dl>` : '<p class="muted">No recovery policy yet. The owner can set cleaners and spending limits here.</p>'}</article>`
+  const cleaners = s.members.filter((m: any) => m.active && m.role === 'cleaner')
+  const checks = cleaners.map((m: any) => `<label class="check"><input name="cleanerIds" type="checkbox" value="${h(m.id)}"${p?.cleanerIds.includes(m.id) ? ' checked' : ''}> ${h(m.name)}</label>`).join('')
+  return `<details class="home-settings"><summary><strong>${h(property.name)}</strong> · ${p ? p.auto ? 'automatic within limits' : 'manager approval required' : 'not configured'}</summary>${form('recovery.settings', 'recovery', hidden('propertyId', property.id) + hidden('revision', p?.revision ?? '') + hidden('cleanerIds', '') + `<fieldset><legend>Allowed recovery cleaners</legend>${checks || empty('Add an active cleaner under Properties & people first.')}</fieldset>` + `<label class="check"><input name="auto" type="checkbox" value="on"${p?.auto ? ' checked' : ''}> Allow automatic recovery within these limits</label><div class="pair">${amount('creditLimitDollars', 'Guest credit limit (USD)', p?.creditLimitCents ?? 0)}${amount('cleaningLimitDollars', 'Extra cleaning limit (USD)', p?.cleaningLimitCents ?? 0)}</div><p class="muted">Only the owner can change recovery cleaners, automatic approval and spending limits.</p>`, 'Save recovery settings')}</details>`
+}
+
+export function recovery(s: any) {
+  const ongoing = s.recoveries.filter((r: any) => !['closed', 'undone'].includes(r.status))
+  const finished = s.recoveries.filter((r: any) => ['closed', 'undone'].includes(r.status))
+  return `<div class="recovery">${heading('Stay recovery', 'Put a disrupted stay right', manager(s) ? 'Record the problem, review the replacement cleaner, guest credit and exact guest message, then follow recovery through readiness.' : 'Report a problem with your turnover and follow its recovery. Complete the cleaning checklist and photos in Turnovers.')}${panel(manager(s) ? 'Open a recovery case' : 'Report a stay problem', openForm(s))}${panel('In progress', ongoing.map((r: any) => card(s, r)).join('') || empty('No recovery cases in progress.'))}${finished.length ? `<details class="panel"><summary><strong>Closed and undone (${finished.length})</strong></summary>${finished.map((r: any) => card(s, r)).join('')}</details>` : ''}${manager(s) ? panel('Recovery settings by home', s.properties.map((p: any) => settings(s, p)).join('') || empty('Add a home under Properties & people first.')) + panel('Optional AI wording', '<p>Recovery works without an AI key. Cabin can prepare the recovery plan and guest message using its deterministic rules.</p>' + (s.managed ? '<p>AI wording is not available yet on RER Managed.</p>' : owner(s) ? '<p><a href="/app/recovery/setup">Set up or manage AI wording</a> using the existing guest inbox AI connection.</p>' : '<p class="muted">The owner can configure optional AI wording for this Cabin.</p>')) : ''}</div>`
 }

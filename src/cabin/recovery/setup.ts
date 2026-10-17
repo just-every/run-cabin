@@ -1,0 +1,9 @@
+import { h, heading, panel, form, hidden } from '../ui/shared'
+import { inboxSettings } from '../inbox/settings'
+import { AI_MODEL } from '../inbox/ai'
+
+export function recoverySetup(s: any) {
+ const config = inboxSettings(s)
+ return heading('Stay recovery', 'Optional AI wording', 'All recovery steps work without a key. AI can write a courteous opening; it cannot choose cleaners, amounts, access or readiness.') +
+ panel('This install’s own connection', s.managed ? '<p>AI wording is not available yet on RER Managed.</p>' : `<p>Use an Anthropic key from your own account. It is encrypted on this install and never shown again. The Inbox shares this connection.</p><p><a href="https://platform.claude.com/settings/keys" rel="noreferrer">Create an Anthropic API key</a> after enabling billing in your account. You can test the connection here before adding any homes or stays.</p>${config.ai ? `<p>Saved key ${h(config.ai.keyHint)} · ${h(config.ai.model)}</p>${form('recovery.ai.test', 'recovery/setup', '', 'Test connection')}${form('inbox.ai.remove', 'recovery/setup', hidden('revision', config.revision), 'Remove key')}` : '<p>No key saved. Deterministic recovery remains available.</p>'}${form('inbox.ai.save', 'recovery/setup', hidden('revision', config.revision) + `<label>Anthropic API key<input name="key" type="password" autocomplete="off" maxlength="400" ${config.ai ? 'placeholder="Leave blank to retain saved key"' : 'required'}></label><details><summary>Advanced settings</summary><label>Model ID<input name="model" value="${h(config.ai?.model ?? AI_MODEL)}" required></label><label>Workspace ID, if your key spans workspaces<input name="workspace" value="${h(config.ai?.workspace ?? '')}"></label></details>`, 'Save AI connection')}`) + '<p><a href="/app/recovery">Return to stay recovery</a></p>'
+}

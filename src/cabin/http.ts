@@ -1,3 +1,4 @@
+import { recoveryWording } from './recovery/wording'
 import { quickBooksCommand } from './finance/quickbooks'
 import { booksCommand, exportBooks } from './finance/books'
 import { portalState } from './owners/access'
@@ -16,6 +17,7 @@ import { settle } from './settle'
 import { guestStayResponse } from './guest'
 import { fail,need,type Actor } from './model'
 import { renderApp } from './ui'
+import { readyMessage } from './ui/turnovers'
 import { bookingResponse } from './direct/http'
 import { directCommand } from './direct/admin'
 import { stay } from './direct/store'
@@ -25,23 +27,27 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox','/app/reservations','/app/channels'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/import','/app/agent','/app/direct','/app/books','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importCommand(env.DB,who,name,input)
- const result=name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
-function savedMessage(name:string|null,who:Actor){
+function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  if(name==='task.raise')return who.role==='cleaner'?'Reported. It is saved on this job below, and your manager sees it under Maintenance.':'Maintenance task added. It is listed under Maintenance with its photos.'
- if(name==='turnover.complete')return 'Marked ready. The owner sees it on Readiness.'
+ if(name==='turnover.complete')return readyMessage(state,record)
  if(name==='task.close')return 'Task closed. The fix and its photos are kept on the task.'
  return undefined
 }
-function actionMessage(name:string,result:any,local:boolean){
+function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name==='recovery.ai.test')return result.message
+ if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
+ if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
+ if(name==='recovery.close')return 'Readiness checked. The case closes when the guest confirmation is accepted.'
  if(name==='import.provider.preview')return 'Preview ready. No listings, reservations or balances have been imported.'
  if(name==='import.provider.apply')return 'Imported. Review the source and Cabin totals before signing off.'
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
@@ -51,7 +57,7 @@ function actionMessage(name:string,result:any,local:boolean){
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
  if(name==='statement.approve')return 'Statement approved and frozen. Owner email delivery status is shown below.'
  if(name==='statement.deliver')return 'Owner email requested. Check delivery status below.'
- if(name==='turnover.complete')return `Marked ready with ${result.completion.photos.length} photo${result.completion.photos.length===1?'':'s'}. The owner sees it on Readiness.`
+ if(name==='turnover.complete')return readyMessage(state,result.id)
  if(name==='turnover.checkout')return 'Check-out recorded.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
  if(name==='turnover.approve')return 'Approved and assigned. The cleaner is emailed the window, address and door code.'
@@ -95,7 +101,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
    else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }
- }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
+ }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('cleanerIds'))input.cleanerIds=form.getAll('cleanerIds').filter(Boolean);if(form.has('expenseDescription')){input.expenseDescription=form.getAll('expenseDescription');input.expenseAmount=form.getAll('expenseAmount')}if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
  else return fail('Use JSON, a form, or a photo upload',415)
  if('commissionPercent' in input){const amount=String(input.commissionPercent);need(/^\d+(?:\.\d{1,2})?$/.test(amount),'Enter a commission percentage with at most two decimal places');input.commissionBps=Math.round(Number(amount)*100);delete input.commissionPercent}
  for(const key of ['commissionBps','managementFeeCents'])if(key in input&&input[key]!=='')input[key]=Number(input[key]);else if(input[key]==='')delete input[key]
@@ -105,6 +111,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
   const value=(input[key] as string).trim();if(value.startsWith('[')){try{input[key]=JSON.parse(value)}catch{fail(`Invalid ${key}`)}}else input[key]=value.split(/\r?\n/).map(v=>v.trim()).filter(Boolean)
  }
  if(Array.isArray(input.lineDescription)){const amounts=input.lineAmount;need(Array.isArray(amounts)&&amounts.length===input.lineDescription.length,'Enter an amount for every statement line');input.lines=input.lineDescription.map((description,i)=>{const amount=String(amounts[i]).trim();need(/^-?[0-9]+(?:\.[0-9]{1,2})?$/.test(amount),'Use a USD amount with at most two decimal places');const [whole,fraction='']=amount.replace('-','').split('.');const amountCents=(Number(whole)*100+Number(fraction.padEnd(2,'0')))*(amount.startsWith('-')?-1:1);need(Number.isSafeInteger(amountCents),'Amount is too large');return {description,amountCents}});delete input.lineDescription;delete input.lineAmount}
+ if(Array.isArray(input.expenseDescription)){const amounts=input.expenseAmount;need(Array.isArray(amounts)&&amounts.length===input.expenseDescription.length,'Enter an amount for every expense');input.expenses=input.expenseDescription.flatMap((description,i)=>{const amount=String(amounts[i]).trim();if(!String(description).trim()&&!amount)return [];need(/^[0-9]+(?:\.[0-9]{1,2})?$/.test(amount),'Use a positive USD expense with at most two decimal places');const [whole,fraction='']=amount.split('.');return [{description,amountCents:Number(whole)*100+Number(fraction.padEnd(2,'0'))}]});delete input.expenseDescription;delete input.expenseAmount}
  if(typeof input.lines==='string'){try{input.lines=JSON.parse(input.lines)}catch{fail('Statement lines must be a JSON array')}}
  return input
 }
@@ -128,7 +135,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
-   if(pages.has(path))return renderApp(await snapshot(env,who),path,{from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),thread,message:savedMessage(url.searchParams.get('done'),who)})
+   if(pages.has(path)){const state=await snapshot(env,who);return renderApp(state,path,{from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
@@ -139,7 +146,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
-   return renderApp(await snapshot(env,who),back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true'),result,thread})
+   const state=await snapshot(env,who);return renderApp(state,back,{message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    return json({result:await execute(request,env,who,body.name,body.input as Record<string,unknown>)})

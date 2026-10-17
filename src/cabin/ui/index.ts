@@ -1,3 +1,4 @@
+import { recoverySetup } from '../recovery/setup'
 import { books } from './books'
 import { themeFrame } from '../../base/theme-frame'
 import branding from '../../branding.json'
@@ -15,15 +16,16 @@ import { movein, agent } from './admin'
 import { inbox } from './inbox'
 import { threads } from '../inbox/threads'
 import { icon } from './icons'
+import { recovery } from './recovery'
 
 export interface Extras { message?: string; error?: string; result?: any; from?: string | null; thread?: string | null; days?: string | null; home?: string | null }
 // The workspace shell: the left rail (brand, home switcher, the pages this
 // role may open, the signed-in person and calendar sync), then the page.
 // Below 900px the rail folds into a top bar whose menu opens without script.
 function tabsFor(s: any): [string, string][][] {
-  if (!manager(s)) return [[['turnovers', 'Turnovers'], ['maintenance', 'Maintenance']]]
+  if (!manager(s)) return [[['turnovers', 'Turnovers'], ...(s.actor.role === 'cleaner' ? [['recovery', 'Stay recovery']] as [string, string][] : []), ['maintenance', 'Maintenance']]]
   return [
-    [['calendar', 'Calendar'], ['inbox', 'Inbox'], ['reservations', 'Reservations'], ['readiness', 'Readiness'], ['turnovers', 'Turnovers'], ['maintenance', 'Maintenance']],
+    [['calendar', 'Calendar'], ['inbox', 'Inbox'], ['reservations', 'Reservations'], ['readiness', 'Readiness'], ['turnovers', 'Turnovers'], ['recovery', 'Stay recovery'], ['maintenance', 'Maintenance']],
     [['direct', 'Direct bookings'], ['statements', 'Statements'], ['books', 'Books']],
     [['channels', 'Channels'], ['people', 'Properties & people'], ...(owner(s) ? [['import', 'Move in'], ['agent', 'Agent access']] as [string, string][] : [])],
   ]
@@ -55,7 +57,7 @@ export async function renderApp(state: any, path: string, extras: Extras = {}): 
   const tabs = tabsFor(state).flat()
   const allowed = tabs.some(([key]) => key === tab)
   const frame = await themeFrame({ href: '/rer-theme.css', productName: branding.name, accentColor: branding.primaryColor })
-  const pages: Record<string, () => string> = { inbox: () => inbox(state, extras.thread), books: () => books(state), direct: () => direct(state), calendar: () => calendar(state, extras), reservations: () => reservations(state), channels: () => channelPage(state), readiness: () => readiness(state, extras.from), turnovers: () => turnovers(state), maintenance: () => maintenance(state), statements: () => statements(state), people: () => people(state), import: () => movein(state, extras), agent: () => agent(state, extras) }
+  const pages: Record<string, () => string> = { recovery: () => path === '/app/recovery/setup' && manager(state) ? recoverySetup(state) : recovery(state), inbox: () => inbox(state, extras.thread), books: () => books(state), direct: () => direct(state), calendar: () => calendar(state, extras), reservations: () => reservations(state), channels: () => channelPage(state), readiness: () => readiness(state, extras.from), turnovers: () => turnovers(state), maintenance: () => maintenance(state), statements: () => statements(state), people: () => people(state), import: () => movein(state, extras), agent: () => agent(state, extras) }
   const content = !allowed ? '<div class="page-heading"><h1>Page unavailable</h1><p>Your role cannot access this page.</p></div><p><a class="button" href="/app">Open your workspace</a></p>' : pages[tab]()
-  return new Response(`<!doctype html><html lang="en"${frame.htmlClass}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${h(tabs.find(([key]) => key === tab)?.[1] ?? branding.name)} · ${h(branding.name)}</title>${frame.head}<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/cabin.css"><link rel="stylesheet" href="/calendar.css"><link rel="stylesheet" href="/ops.css"><link rel="stylesheet" href="/inbox.css"><link rel="stylesheet" href="/movein.css"><script src="/cabin.js" defer></script></head><body class="cabin" data-page="${h(path)}${extras.thread ? '?thread=' + encodeURIComponent(extras.thread) : ''}"><a class="skip" href="#main">Skip to content</a><div class="shell">${rail(state, tab, frame.brand)}<div class="work"><main id="main" class="page-${h(tab)}">${extras.error ? `<div class="notice error" role="alert">${h(extras.error)}</div>` : ''}${extras.message ? `<div class="notice" role="status">${h(extras.message)}</div>` : ''}${content}</main><footer>Cabin · Calendar links sync every 15 to 60 minutes; channel partner APIs come later.</footer></div></div></body></html>`, { status: allowed ? 200 : 403, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store', 'referrer-policy':'strict-origin', 'x-content-type-options':'nosniff', 'content-security-policy':`default-src 'self'; ${frame.policy}; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'` } })
+  return new Response(`<!doctype html><html lang="en"${frame.htmlClass}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${h(tabs.find(([key]) => key === tab)?.[1] ?? branding.name)} · ${h(branding.name)}</title>${frame.head}<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/cabin.css"><link rel="stylesheet" href="/calendar.css"><link rel="stylesheet" href="/ops.css"><link rel="stylesheet" href="/inbox.css"><link rel="stylesheet" href="/movein.css"><link rel="stylesheet" href="/recovery.css"><script src="/cabin.js" defer></script></head><body class="cabin" data-page="${h(path)}${extras.thread ? '?thread=' + encodeURIComponent(extras.thread) : ''}"><a class="skip" href="#main">Skip to content</a><div class="shell">${rail(state, tab, frame.brand)}<div class="work"><main id="main" class="page-${h(tab)}">${extras.error ? `<div class="notice error" role="alert">${h(extras.error)}</div>` : ''}${extras.message ? `<div class="notice" role="status">${h(extras.message)}</div>` : ''}${content}</main><footer>Cabin · Calendar links sync every 15 to 60 minutes; channel partner APIs come later.</footer></div></div></body></html>`, { status: allowed ? 200 : 403, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store', 'referrer-policy':'strict-origin', 'x-content-type-options':'nosniff', 'content-security-policy':`default-src 'self'; ${frame.policy}; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'` } })
 }

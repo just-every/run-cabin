@@ -1,7 +1,7 @@
 import { h, panel, empty, propertyName } from './shared'
 import { addDays, channelName, describe } from '../inventory'
 import { DAYS, SPANS, collisions, grid, isDay } from './calendar-grid'
-import { recovery } from './recovery'
+import { stayPanel } from './stay-panel'
 import { icon } from './icons'
 import type { Extras } from './index'
 // The host's main screen: every home's nights by channel, with the stay that
@@ -20,5 +20,5 @@ export function calendar(s: any, extras: Extras = {}) {
   const failing = s.connections.filter((r: any) => r.status === 'stale').map((r: any) => `<p>${h(propertyName(s, r.propertyId))} · ${h(channelName(r.channel))}: ${h(r.error)}</p>`)
   const stale = failing.length ? `<div class="notice error" role="alert"><strong>${failing.length} calendar link${failing.length === 1 ? '' : 's'} failing</strong>${failing.join('')}<p>Cabin keeps the nights each link last held. Fix the link under <a href="/app/channels">Channels</a>.</p></div>` : ''
   const alert = late.length ? `<div class="notice error" role="alert"><strong>${late.length} double booking${late.length === 1 ? '' : 's'} to resolve</strong>${late.join('')}<p>Both stays are kept. Cancel or move one on its channel.</p></div>` : ''
-  return top + alert + stale + `<div class="cal-layout">${grid(s, { from, today, days, homes, link })}${recovery(s, today, addDays(from, days), homes)}</div><p class="muted cal-note">Calendar links are polled every 15 to 60 minutes, so a channel can still sell a night before it hears; any such collision shows here at once. Cabin never accepts an overlapping request.</p>`
+  return top + alert + stale + `<div class="cal-layout">${grid(s, { from, today, days, homes, link })}${stayPanel(s, today, addDays(from, days), homes)}</div><p class="muted cal-note">Calendar links are polled every 15 to 60 minutes, so a channel can still sell a night before it hears; any such collision shows here at once. Cabin never accepts an overlapping request.</p>`
 }

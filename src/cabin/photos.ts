@@ -39,12 +39,18 @@ export function photoList(p: Record<string, unknown>, min: number, max = 12) {
  need(list.length >= min, min === 1 ? 'Add a photo' : `Add at least ${min} photos`); need(list.length <= max, `Add at most ${max} photos`)
  return list.map((v: any) => photoBytes(v?.photo, v?.mimeType))
 }
-/** Private bytes in cb_photos beside the record they evidence, in order. */
-export async function storePhotos(c: Context, recordId: string, photos: { bytes: Uint8Array; mimeType: string }[], caption: string, from = 0): Promise<StoredPhoto[]> {
- const stored: StoredPhoto[] = []
- for (const [i, photo] of photos.entries()) {
-  const id = newId(), digest = await sha(photo.bytes)
-  c.queries.push(query('INSERT INTO cb_photos(id,turnover_id,position,mime_type,bytes,sha256,caption,uploaded_by,uploaded_at) VALUES(?,?,?,?,?,?,?,?,?)', id, recordId, from + i, photo.mimeType, photo.bytes, digest, caption, c.actor.id, c.now))
+/** Private bytes in cb_photos beside the record they evidence, after the ones it already has.
+ * The same bytes already stored for the record, and not in `inUse`, are reused rather than
+ * stored again: a reopened job marked ready again, or a resent form, adds no copies. */
+export async function storePhotos(c: Context, recordId: string, photos: { bytes: Uint8Array; mimeType: string }[], caption: string, inUse: string[] = []): Promise<StoredPhoto[]> {
+ const kept = (await c.db.prepare('SELECT id,mime_type AS mimeType,sha256,position FROM cb_photos WHERE turnover_id=? ORDER BY position').bind(recordId).all<StoredPhoto & { position: number }>()).results
+ let next = kept.reduce((n, p) => Math.max(n, p.position + 1), 0)
+ const free = kept.filter(p => !inUse.includes(p.id)), stored: StoredPhoto[] = []
+ for (const photo of photos) {
+  const digest = await sha(photo.bytes), same = free.findIndex(p => p.sha256 === digest && p.mimeType === photo.mimeType)
+  if (same >= 0) { const [p] = free.splice(same, 1); stored.push({ id: p.id, mimeType: p.mimeType, sha256: p.sha256 }); continue }
+  const id = newId()
+  c.queries.push(query('INSERT INTO cb_photos(id,turnover_id,position,mime_type,bytes,sha256,caption,uploaded_by,uploaded_at) VALUES(?,?,?,?,?,?,?,?,?)', id, recordId, next++, photo.mimeType, photo.bytes, digest, caption, c.actor.id, c.now))
   stored.push({ id, mimeType: photo.mimeType, sha256: digest })
  }
  return stored

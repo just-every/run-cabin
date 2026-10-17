@@ -15,8 +15,7 @@ Each `AREA-NNN` identifier is stable. Every clause states a buyer behavior and a
 | | |
 | --- | --- |
 | Category | Vacation rental property management software (PMS) with channel manager |
-| Incumbents a buyer switches from | Guesty, Hostaway, OwnerRez, Lodgify |
-| Up-and-comers it must also beat | Hospitable, Breezeway |
+| Incumbents a buyer switches from | Guesty, Hostaway, OwnerRez, Lodgify, Hospitable, Breezeway |
 | First buyer | A US owner or manager of 3–40 vacation rentals operating in USD, selling stays on Airbnb, Vrbo, Booking.com and their own website, who must be able to run the complete booking-to-owner-close business in Cabin |
 
 ## Target clauses
@@ -517,7 +516,29 @@ The shared rer install/setup/dev/build/verify/export/import lifecycle remains us
 
 **Acceptance evidence:** Start a fresh source checkout with rer dev, sign in and complete a product job, stop/restart and recover durable state; interrupt each external job before/after provider acceptance and prove reconciliation prevents duplicate charges, sends or unlocks. Run the homepage’s five commands on a clean macOS and a clean Linux machine to a signed-in installation, then `rer deploy` the same source to an owner-controlled Cloudflare account and sign in there.
 
-### Push further: agents complete the stay’s job
+### Public hosted demo
+
+#### SITE-002 — Hosted vacation-rental demo.
+
+The homepage’s Try the demo opens a public hosted Cabin installation that a visitor can use without an account or local install: a clearly labelled sample US vacation-rental business with fictional properties, guests, channel stays, cleaner jobs with photos and owner statements in USD. Each visitor has an isolated sandbox; it expires and discards visitor changes on a published schedule, and the next session starts from fresh sample data. The demo holds no real guest data, never connects to a visitor’s production accounts and sends no real guest message, charge, payout or lock/provider action. Any contact details a visitor types are discarded with the sandbox and excluded from retained logs and backups. It is separate from owner installations, which still start empty.
+
+**Acceptance evidence:** From the homepage’s Try the demo at 1440 and 390 pixels, start a signed-out visitor session without installing or supplying contact details; find seeded US homes, guests, stays, cleaner photos and USD statements. Approve a seeded calendar review, complete a turnover and approve an owner statement through their normal product doors. Open a second visitor session and prove the first visitor’s changes are absent. Advance the host’s scheduled expiry in its test boundary, verify the old session can no longer read its data, and start again to find fresh sample data with the changes and typed contact details gone from storage, logs and backups. Record outbound effects during the journey and prove no real message, charge, payout or lock/provider action occurred; launch a fresh owner installation and find no sample records. Separately verify the public demo hostname and homepage link open the working hosted demo.
+
+### Honest boundaries and partner obligations
+
+#### BOUNDARY-001 — A separate complete vacation-rental product with named partners.
+
+Cabin owns the short-stay booking-to-owner-close job. It connects approved OTAs rather than operating a booking marketplace, uses Stripe/licensed banking partners for rails and custody, Avalara or qualified filing partners/accountants for remittance and filings, licensed protection partners for insurance, and real cleaners/inspectors for physical work. Telecom providers carry messages and bounded workers carry long-running work. Partnership approval, US tax/financial configuration, provider agreements and native-app distribution remain required engineering/delivery work with named owners, supported data and unresolved blockers visible; none removes a promised PMS workflow.
+
+**Acceptance evidence:** Use Connections/onboarding to inspect each required approval/configuration and its responsible party; attempt activation without approval, complete the documented partner setup and run a booking through externally acknowledged service, tax/payment outcomes and human readiness. Disconnected features remain visibly incomplete, never replaced by simulated success.
+
+#### OPEN-001 — Free and open source under the MIT licence.
+
+Cabin is free. The complete product this contract describes is published under the MIT licence and installs from its public source, and no feature, property count, user, channel or volume sits behind a payment, licence key or paid tier from the Cabin authors. Fees charged by the providers an owner connects (channel commissions, Stripe, lock bridges, pricing tools, filing partners) are those providers’ own, shown with their source before enabling under INTERFACE-001, and never collected by Cabin.
+
+**Acceptance evidence:** Verify the repository’s `LICENSE` is the MIT licence and the package declares MIT; install from the public source with no account or key from the Cabin authors and reach every product area with 40 properties and 25 staff without a payment, upgrade or licence prompt; enable a paid provider and verify its cost is shown as the provider’s before activation.
+
+## Push further: agents complete the stay’s job
 
 #### AGENT-001 — Recover a disrupted stay through verified readiness.
 
@@ -555,20 +576,6 @@ Expanded agents execute only separately granted property/action scopes, approved
 
 **Acceptance evidence:** In a recovery case approve a specific vendor/payment limit, change the recipient or booking, and reject the stale action; exceed a budget, inject guest instructions and revoke the agent during an uncertain provider response. Inspect the case after restart for no unauthorized effect and an explicit unresolved outcome. Set a $100 guest-credit limit for stay recovery; verify the agent offers a $75 credit within it without asking again and posts it to the owner balance through FIN-001, and that a $150 credit routes to a person unsent.
 
-### Honest boundaries and partner obligations
-
-#### BOUNDARY-001 — A separate complete vacation-rental product with named partners.
-
-Cabin owns the short-stay booking-to-owner-close job. It connects approved OTAs rather than operating a booking marketplace, uses Stripe/licensed banking partners for rails and custody, Avalara or qualified filing partners/accountants for remittance and filings, licensed protection partners for insurance, and real cleaners/inspectors for physical work. Telecom providers carry messages and bounded workers carry long-running work. Partnership approval, US tax/financial configuration, provider agreements and native-app distribution remain required engineering/delivery work with named owners, supported data and unresolved blockers visible; none removes a promised PMS workflow.
-
-**Acceptance evidence:** Use Connections/onboarding to inspect each required approval/configuration and its responsible party; attempt activation without approval, complete the documented partner setup and run a booking through externally acknowledged service, tax/payment outcomes and human readiness. Disconnected features remain visibly incomplete, never replaced by simulated success.
-
-#### OPEN-001 — Free and open source under the MIT licence.
-
-Cabin is free. The complete product this contract describes is published under the MIT licence and installs from its public source, and no feature, property count, user, channel or volume sits behind a payment, licence key or paid tier from the Cabin authors. Fees charged by the providers an owner connects (channel commissions, Stripe, lock bridges, pricing tools, filing partners) are those providers’ own, shown with their source before enabling under INTERFACE-001, and never collected by Cabin.
-
-**Acceptance evidence:** Verify the repository’s `LICENSE` is the MIT licence and the package declares MIT; install from the public source with no account or key from the Cabin authors and reach every product area with 40 properties and 25 staff without a payment, upgrade or licence prompt; enable a paid provider and verify its cost is shown as the provider’s before activation.
-
 ## Product separation and baseline interpretation
 
 Long-term residential leasing, rent collection and resident management belong to [Terrace](https://github.com/just-every/run-terrace); Cabin exchanges property/accounting references where needed. General small-business books belong to [Pantry](https://github.com/just-every/run-pantry) or QuickBooks Online; Cabin retains the complete reservation/trust subledger and owner close required above. General customer support belongs to [HappyToHelp](https://github.com/just-every/run-happytohelp); Cabin owns guest conversations and stay recovery with links/integrations for wider support. These are separate products. No unowned category is absorbed.
@@ -579,11 +586,11 @@ Base native sessions, command lifecycle and import-kit custody remain the founda
 
 ## Homepage claims
 
-Every capability claim on the approved homepage (`src/site/landing/`, checked against br’s claims truth table of 17 October 2026, rows 1–57 in page order) maps to the clauses that promise it. A claim’s status is `done` when every mapped clause is done, `missing` when every one is missing, and `partial` otherwise. The page’s “Try the demo” action (truth-table row 58) is a link to `/run`, not a capability claim.
+Every capability claim and demo action on the approved homepage maps to the clauses that promise it, in br’s claims truth table of 17 October 2026, rows 1–58 in page order. Clause mappings retain the more specific existing requirements and include every clause named by that truth table. The existing row 1–57 status assessments are preserved, including their explicitly narrower implementation scopes; the full target status and remaining gap of each clause are in [Status](#status). The new demo row takes SITE-002’s `partial` status, since a seeded demo implementation exists but its complete hosted acceptance is not established.
 
 | # | Claim | Clause(s) | Status |
 | --- | --- | --- | --- |
-| 1 | "syncs Airbnb, Vrbo and Booking.com" | SYNC-002, SYNC-003, SYNC-004 | partial |
+| 1 | "syncs Airbnb, Vrbo and Booking.com" | SYNC-002, SYNC-003, SYNC-004, SYNC-009 | partial |
 | 2 | "answers your guests" | MESSAGE-001, MESSAGE-004 | implemented (email scope; see clause Status) |
 | 3 | "sends the cleaner" | OPS-001 | partial |
 | 4 | "and the door code" | OPS-005 | partial |
@@ -596,7 +603,7 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 11 | Vrbo request declined · overlaps Airbnb | SYNC-008, SYNC-006, SYNC-003 | partial |
 | 12 | "connects to Airbnb, Vrbo and Booking.com both ways" | SYNC-002, SYNC-003, SYNC-004 | partial |
 | 13 | "Book a night anywhere and it closes everywhere" / "No double bookings" | SYNC-006 | partial |
-| 14 | Calendar card: three channels, bars, blocked row | RES-001, RES-003 | partial |
+| 14 | Calendar card: three channels, bars, blocked row | RES-001, RES-003, SYNC-006 | partial |
 | 15 | "Airbnb, Vrbo, Booking.com, text and email in one thread per guest" | MESSAGE-001, GUEST-001 | partial |
 | 16 | "Scheduled messages go out on time" | MESSAGE-003 | implemented (email scope; see clause Status) |
 | 17 | "drafted replies wait for your nod" | MESSAGE-004 | implemented (email scope; see clause Status) |
@@ -607,8 +614,8 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 22 | "damage deposit happen at checkout" | PAY-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
 | 23 | Lodging tax line (ME 9%) | FIN-008, RES-004 | implemented (direct-booking scope; see clause Status) |
 | 24 | "Connect PriceLabs or Wheelhouse" | PRICE-001 | missing |
-| 25 | "set minimum nights, gap rules and fees" | RES-004 | implemented (direct-booking scope; see clause Status) |
-| 26 | "every channel gets the same price" | PRICE-003, PRICE-001 | missing |
+| 25 | "set minimum nights, gap rules and fees" | RES-004, WEB-005 | implemented (direct-booking scope; see clause Status) |
+| 26 | "every channel gets the same price" | PRICE-003, PRICE-001, PRICE-002, SYNC-002, SYNC-003, SYNC-004 | missing |
 | 27 | "All five homes ready for Saturday" | OPS-008, OPS-003 | partial |
 | 28 | "Every reservation creates its turnover" | OPS-001 | partial |
 | 29 | "and its door code" | OPS-005 | partial |
@@ -616,22 +623,22 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 31 | "photos come back when the home is ready" | OPS-002, EVIDENCE-001, OPS-003 | partial |
 | 32 | Checklist items ticked on the card | EVIDENCE-001 | done |
 | 33 | "Patio light out · task added for Dale" | OPS-004, OPS-002 | partial |
-| 34 | "Cabin rebooks the turnover" | AGENT-001, OPS-001 | partial |
+| 34 | "Cabin rebooks the turnover" | AGENT-001, OPS-001 | implemented (stay-recovery scope; see clause Status) |
 | 35 | "resets the door code" | AGENT-001, OPS-005 | partial |
-| 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006 | partial |
-| 37 | "confirms the home is ready" | AGENT-001, OPS-003 | partial |
+| 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006, AGENT-003 | implemented (stay-recovery scope; see clause Status) |
+| 37 | "confirms the home is ready" | AGENT-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
 | 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | partial |
 | 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
 | 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
 | 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
-| 42 | "QuickBooks via export; Pantry sync live" | FIN-007 | implemented (scope and remaining clause gaps below) |
-| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (scope and remaining clause gaps below) |
+| 42 | "the books sync to QuickBooks" | FIN-007 | partial (QuickBooks CSV/IIF export only; Pantry live posting proven) |
+| 43 | Statement card arithmetic (gross, fees, management 20%, payout) | FIN-003, FIN-004 | implemented (reviewed paid expenses; wider clause gaps below) |
 | 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
 | 45 | "with your listings" | MIGRATE-001, MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
 | 46 | "reservations, guests and owner balances" | MIGRATE-002, MIGRATE-003, MIGRATE-004, MIGRATE-007 | implemented (CSV move-in scope; see clause Status) |
-| 47 | "Channels reconnect to the same listings" | MIGRATE-007, MIGRATE-002, MIGRATE-003 | implemented (iCal move-in scope; see clause Status) |
+| 47 | "Channels reconnect to the same listings" | MIGRATE-007, MIGRATE-002, MIGRATE-003, SYNC-002, SYNC-003, SYNC-004 | implemented (iCal move-in scope; see clause Status) |
 | 48 | "Run Cabin on your own computer or server" (five commands) | RUNTIME-001, HTTP-001 | partial |
-| 49 | "keep every booking, guest and payout" / "Your guests, your data" | DATA-003, DATA-001 | partial |
+| 49 | "keep every booking, guest and payout" / "Your guests, your data" | DATA-003, DATA-001, GUEST-001, FIN-002 | partial |
 | 50 | "Export everything, any time" | DATA-001 | partial |
 | 51 | Damage deposits: "Held on the card, released after checkout" | PAY-003 | implemented (direct-booking scope; see clause Status) |
 | 52 | Lodging tax: "Collected and filed by state and county" | FIN-008 | partial |
@@ -640,12 +647,15 @@ Every capability claim on the approved homepage (`src/site/landing/`, checked ag
 | 55 | Review replies: "Thank-yous and replies sent on schedule" | GUEST-003, MESSAGE-003, GUEST-004 | missing |
 | 56 | Activity log: "Every change, message and payout, recorded" | AUDIT-001 | partial |
 | 57 | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | OPEN-001 | partial |
+| 58 | "Try the demo" | SITE-002 | partial |
 
 ## Status
 
-Judged from the code and tests at commit `473fa9a23b724caa73699399febfd475f551edc8` (17 October 2026).
+Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
-17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, live Pantry posting with human approval, and QuickBooks CSV/IIF exports implemented. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
+17 October 2026, homepage-claims pass: SITE-002 is added as partial from the existing demo seed, effect boundary, deployment workflow and test. All 88 pre-existing clause statuses and the existing homepage row status assessments are preserved. The product target table and target/push-further section boundaries now match the public parser.
+
+17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, QuickBooks CSV/IIF export files, and Pantry journal proposals that a person approves and posts in Pantry (no test or live posting proven in this repository) implemented. Nothing syncs to QuickBooks. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
 
 
 Direct-booking implementation updated 17 October 2026. The narrow homepage rows and broader clauses are assessed separately below; Stripe is test mode, and tax filing/remittance integration remains open.
@@ -657,10 +667,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 0 | 0 | 0 | 0 |
-| Target and push further | 6 | 50 | 32 | 88 |
-| All | 6 | 50 | 32 | 88 |
+| Target and push further | 6 | 53 | 30 | 89 |
+| All | 6 | 53 | 30 | 89 |
 
-**88 clauses: 6 done, 50 partial, 32 missing.**
+**89 clauses: 6 done, 53 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -716,13 +726,13 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `OPS-006` | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/turnovers.test.mjs` (line 15); `tests/cabin.test.mjs` (lines 31, 67) | A readiness view for any chosen day shows each home's next arrival (guest, channel, time), the turnover before it with cleaner and window, the door code state (scheduled, active, expired, revoked) and photos, with a summary such as "All 5 homes ready for Saturday" naming any not ready. The actual check-out time is recorded when the cleaner finds the guests gone or staff enter it; check-out from lock events or a guest portal, provider-confirmed code state and a departures list are absent. |
-| `FIN-001` | Reservation-linked USD trust subledgers | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD CSV payouts match stays with imported fees. Stripe test automatic USD payouts match direct payment intents; live USD matching awaits a paid automatic USD payout (supplied test account settles AUD). Partner APIs, FX, bank receipts and full exception closure remain later. |
-| `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `tests/finance.test.mjs` | Imported gross less channel fees less fixed home commission gives owner payout with integer half-up arithmetic. Versioned agreements and wider expense allocation remain absent. |
-| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly imported USD statements freeze source lines, recipient and commission; approval emails a portal link with acceptance status. CSV and owner access ship. Scheduled generation, PDF, distribution rails and later-period adjustments remain absent. |
-| `FIN-005` | Rental-owner portal and personal stays | target | partial | `src/cabin/owners/`; `tests/finance.test.mjs` | Separate one-use email sign-in, owner session, scoped stays and approved statements; current ownership and frozen recipient guard downloads. Owner personal-stay requests, wider documents and performance reporting remain absent. |
+| `FIN-001` | Reservation-linked USD trust subledgers | target | partial | `src/cabin/recovery/finance.ts`; `src/cabin/statements.ts`; `tests/recovery.test.mjs` | Recovery credits and extra cleaning costs create approved frozen stay-linked owner adjustment statements with exact reversing entries and owner delivery. Operational owner balance only: no complete trust/cash/deposit/tax subledgers, fund transfers or reconciliation. |
+| `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD payout CSVs match stays with actual imported fees and unmatched review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible automatic USD payout (fleet test account settles AUD). Partner APIs, FX, bank receipt and full exception closure remain later. |
+| `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/books.ts`; `tests/finance.test.mjs` | Imported gross less actual channel fees, the home’s fixed commission and reviewed expenses already paid from owner funds gives the frozen payable, using integer cents. Pantry journals retain the allocation evidence. Versioned agreements, invoice/work-order approval, shared costs, reserves and multiple-owner splits remain absent. |
+| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly home/owner USD statements freeze matched payouts, recipient, commission and described paid expenses. Approval emails the owner portal link with provider acceptance and explicit resend status. CSV and scoped owner access ship. Scheduled generation, PDF, opening balances, reserves, distribution rails and complete later-period adjustments remain absent. |
+| `FIN-005` | Rental-owner portal and personal stays | target | partial | `src/cabin/owners/`; `tests/finance.test.mjs` | Separate one-use email sign-in and HttpOnly owner session show only current owned homes, stays and approved statements whose frozen recipient matches. Owner sessions cannot call operator APIs. Personal-stay requests, expense authorization, wider documents, performance reports and historical ownership grants remain absent. |
 | `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
-| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/ui/books.ts`; `docs/statements.md` | QuickBooks via CSV/IIF export; Pantry sync live through exact uploaded statement evidence, scoped proposals, human approval and confirmed journal IDs, proven against local Pantry. Document upload is a person’s step under the current Pantry API. QBO developer app, OAuth sync and QBO conflicts remain later. |
+| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-client.ts`; `src/cabin/finance/pantry-posting.ts`; `src/cabin/ui/books.ts`; `docs/statements.md`; `tests/finance.test.mjs` | QuickBooks Online journal CSV and Desktop IIF remain files a person downloads and imports; Cabin has no QuickBooks connection or QBO live sync. Pantry now posts approved owner journals live with scoped, revocable integration credentials, account choices and automatically attached booking/payout/fee/expense evidence. Saved intent, deterministic keys and exact journal lookup prevent duplicate replay; revoked credentials give a plain broken connection. Proven against fresh local and hosted Pantry. No person session or manual source upload is needed. QBO OAuth and QBO conflicts remain later. Provider calls on RER Managed are not available yet. |
 | `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Configured state/county lines collected separately with rent and fees; stay retains each jurisdiction/rate/amount and manual filing confirmation references. No automatic filing/remittance provider, exemption/refund adjustments or city levies yet. |
 | `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
@@ -744,11 +754,12 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
 | `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
 | `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |
-| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/http.ts`; `src/cabin/turnovers.ts`; `tests/cabin.test.mjs` (lines 67, 109) | Bearer-prepared turnover drafts and human completion evidence are foundations only; no recovery agent, relocation, compensation or financial closure exists; automatic turnover dispatch and stay-bound door codes (OPS-001, OPS-005) are in place for it. |
+| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/recovery/`; `src/cabin/ui/recovery.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs`; `docs/stay-recovery.md` | Cleaner/host reports and the guest stay page open durable recovery cases. Proposals select an available allowed backup, exact approvals or owner limits authorize reassignment, code rotation and credit, then accepted cleaning, photos, confirmed keypad/access, guest email and owner adjustment gate closure. No automatic rescheduling, relocation, collision cases, recurrence checks or live smart-lock account proof. |
 | `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/statements.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 90, 109) | Agents can prepare manual statement drafts for exact human approval; settlement matching, record pursuit, correcting postings and payout closure are absent. |
-| `AGENT-003` | Resolve guest issues through accepted field work | push-further | missing |  | No implementing flow in the audited tree. |
+| `AGENT-003` | Resolve guest issues through accepted field work | push-further | partial | `src/cabin/recovery/commands.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs` | Reported guest problems can dispatch approved replacement cleaning, track acceptance and required photos and send readiness confirmation. No automatic inbox classification, safety triage to a named person, maintenance troubleshooting or guest recurrence confirmation. |
 | `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
-| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/model.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 109, 55) | Current agents are strictly draft-only with human revision approval. Expanded tool grants, budgets, durable cases and external-action reconciliation do not exist. |
+| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/recovery/cases.ts`; `src/cabin/recovery/limits.ts`; `src/cabin/recovery/actions.ts`; `tests/recovery.test.mjs` | Owner policies scope backup cleaners and per-stay compensation/cleaning ceilings; approvals bind current recipients, home, stay, cleaner, code and limits. Durable histories, denied/stale approvals, pending mail and exact compensating undo exist. AI supplies optional wording only from the install’s own encrypted key. No general tool grants, pause/revoke interface or uncertain external-write reconciliation. |
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
 | `OPEN-001` | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |
+| `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |
