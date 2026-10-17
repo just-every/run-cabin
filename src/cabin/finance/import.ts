@@ -11,10 +11,11 @@ export function candidates(line:SourceLine,bookings:Booking[],propertyId?:string
 }
 export async function financeImport(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>){
  manager(actor);await assertLive(env.DB,actor)
- if(name==='payout.match')return mutate(env.DB,actor,name,c=>{
+ if(name==='payout.match')return mutate(env.DB,actor,name,async c=>{
   const row=c.data.payouts.find(r=>r.id===text(input.id,'payout line'));need(row,'Payout line not found',404);need(!row.statementId,'A frozen statement already contains this line',409)
   const b=c.data.bookings.find(b=>b.id===text(input.bookingId,'stay'));need(b,'Stay not found',404)
   need(candidates(row,[b],row.propertyId).length===1,'The stay must have the same channel and reservation reference or exact dates')
+  need(row.bookingId===b.id||!await c.db.prepare('SELECT 1 FROM cb_ledger_journals WHERE source_key=?').bind('payout:'+row.id).first(),'This payout has a posted trust journal. Preserve its match; reverse the journal and import a separately identified provider correction.',409)
   row.bookingId=b.id;row.propertyId=b.propertyId;row.match='matched';row.revision=newId();c.entityId=row.id;return row
  })
  need(name==='payout.import'||name==='payout.stripe','Unknown payout command',404)

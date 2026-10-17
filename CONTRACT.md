@@ -650,7 +650,7 @@ Every capability claim and demo action on the approved homepage maps to the clau
 | 35 | "resets the door code" | AGENT-001, OPS-005 | partial |
 | 36 | "offers the credit you approved" (within your $100 limit) | AGENT-001, AGENT-006, AGENT-003 | implemented (stay-recovery scope; see clause Status) |
 | 37 | "confirms the home is ready" | AGENT-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
-| 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | partial |
+| 38 | "Owner balance updated −$75.00" | FIN-001, AGENT-001 | implemented (reservation trust ledger; see clause Status) |
 | 39 | "Airbnb, Vrbo and Stripe payouts match to their stays" | FIN-002 | partial (live Stripe USD payout prerequisite) |
 | 40 | "Owners get a statement" | FIN-004 | implemented (scope and remaining clause gaps below) |
 | 41 | "and a portal" | FIN-005 | implemented (scope and remaining clause gaps below) |
@@ -676,6 +676,8 @@ Every capability claim and demo action on the approved homepage maps to the clau
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
+18 October 2026, FIN-001: reservation trust subledger with immutable balanced USD postings, owner/entity scope, source drill-down, CSV export, closed periods and linked corrections. Recovery credits and undo post to the same ledger; source-backed manual transactions cover deposits, earned stays, fees, taxes, refunds and owner expenses. See `docs/trust-ledger.md`.
+
 18 October 2026, release 0.1.0: published clauses CABIN-01 to CABIN-13 state what this release does, judged against `e45b78304c9dc439f76c4addb500d714c18a00b3` by an independent release gate run locally and hosted; target statuses are unchanged.
 
 17 October 2026, homepage-claims pass: SITE-002 is added as partial from the existing demo seed, effect boundary, deployment workflow and test. All 88 pre-existing clause statuses and the existing homepage row status assessments are preserved. The product target table and target/push-further section boundaries now match the public parser.
@@ -692,10 +694,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 6 | 53 | 30 | 89 |
-| All | 19 | 53 | 30 | 102 |
+| Target and push further | 7 | 52 | 30 | 89 |
+| All | 20 | 52 | 30 | 102 |
 
-**102 clauses: 19 done, 53 partial, 30 missing.**
+**102 clauses: 20 done, 52 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -764,7 +766,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `OPS-006` | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. |
 | `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/turnovers.test.mjs` (line 15); `tests/cabin.test.mjs` (lines 31, 67) | A readiness view for any chosen day shows each home's next arrival (guest, channel, time), the turnover before it with cleaner and window, the door code state (scheduled, active, expired, revoked) and photos, with a summary such as "All 5 homes ready for Saturday" naming any not ready. The actual check-out time is recorded when the cleaner finds the guests gone or staff enter it; check-out from lock events or a guest portal, provider-confirmed code state and a departures list are absent. |
-| `FIN-001` | Reservation-linked USD trust subledgers | target | partial | `src/cabin/recovery/finance.ts`; `src/cabin/statements.ts`; `tests/recovery.test.mjs` | Recovery credits and extra cleaning costs create approved frozen stay-linked owner adjustment statements with exact reversing entries and owner delivery. Operational owner balance only: no complete trust/cash/deposit/tax subledgers, fund transfers or reconciliation. |
+| `FIN-001` | Reservation-linked USD trust subledgers | target | done | `src/cabin/ledger/`; `src/cabin/ui/ledger.ts`; `migrations/core/0022_ledger.sql`; `tests/ledger.test.mjs`; `tests/recovery.test.mjs`; `docs/trust-ledger.md` | Balanced immutable USD journals separate receivables, advances, non-cash damage holds, owner funds, manager income, fees, expenses, taxes and cash by entity/home/owner/stay. Source revisions, effective/posting dates, period closure and exact linked reversals ship. Source-backed manual posting does not execute payments; bank reconciliation/distributions remain FIN-006. |
 | `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD payout CSVs match stays with actual imported fees and unmatched review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible automatic USD payout (fleet test account settles AUD). Partner APIs, FX, bank receipt and full exception closure remain later. |
 | `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/books.ts`; `tests/finance.test.mjs` | Imported gross less actual channel fees, the home’s fixed commission and reviewed expenses already paid from owner funds gives the frozen payable, using integer cents. Pantry journals retain the allocation evidence. Versioned agreements, invoice/work-order approval, shared costs, reserves and multiple-owner splits remain absent. |
 | `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly home/owner USD statements freeze matched payouts, recipient, commission and described paid expenses. Approval emails the owner portal link with provider acceptance and explicit resend status. CSV and scoped owner access ship. Scheduled generation, PDF, opening balances, reserves, distribution rails and complete later-period adjustments remain absent. |

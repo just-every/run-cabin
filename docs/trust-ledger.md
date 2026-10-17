@@ -1,0 +1,11 @@
+# Trust ledger
+
+Open **Trust ledger** as the installation owner or a manager. The owner first saves the legal entity for each home. Every journal belongs to one legal entity, home, owner reference and reservation; balances never offset an unrelated owner. Changing home ownership or the legal entity applies to future entries. Reversing an entry keeps its original ownership and entity.
+
+Record actual USD source transactions with the reservation, effective date, document reference and source revision. Supported transactions separate advance deposits, guest receivables, earned owner funds, taxes, management commission, owner expenses, channel/processor fees, refunds and distributions. Damage authorizations use separate non-cash asset and liability accounts: they never increase cash. A paid expense or fee clears its cost account against the same owner's funds. Recording a transaction does not move money or make a bank receipt real.
+
+Newly imported or newly matched Airbnb/Vrbo payout reports post their actual net receipt, gross and fees once after configuration. Older matches need reviewed manual opening entries; configuring the ledger does not silently attribute historical receipts to a later owner. These settlement journals recognize the owner's net entitlement; do not enter the same channel stay again as a manual earned stay. Direct payments and other channels use source-backed manual entries here. Recovery credits post the reduction of owner funds against guest credits payable, and extra cleaning against vendor payable. Neither is a payment until separately settled. Undo creates an exact linked reversal. The owner balance reflects those debits immediately.
+
+Each journal displays its source ID/revision, actor, effective date and posting time. Balances are grouped by reservation and owner; follow a reservation link to its journals or download all journal lines as CSV. Journal rows are immutable. Close a month after reconciliation; a later correction posts an exact reversal in an open period followed by a replacement entry with a new source reference or revision. Late channel reports retain their original date on the payout record and post in the current open period.
+
+This is a reservation trust subledger. Bank reconciliation, payment execution, ACH distributions and automated statement generation remain separate target clauses.

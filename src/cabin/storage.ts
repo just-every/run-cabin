@@ -1,5 +1,6 @@
 import { type Actor, type Context, type Data, type Query, kinds, query, guard, need, fail, newId } from './model'
 import { finishRecoveries } from './recovery/commands'
+import { syncLedger } from './ledger/automatic'
 import { dispatch } from './dispatch'
 import { scheduleMessages } from './inbox/schedule'
 /** The scheduled iCal sync acts as Cabin itself; principal() never issues this role. */
@@ -21,7 +22,7 @@ export async function load(db: D1Database): Promise<Data> {
   db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
   db.prepare('SELECT id,actor_id AS actorId,actor_role AS actorRole,action,entity_id AS entityId,at FROM cb_events ORDER BY rowid DESC LIMIT 100'),
  ])
- const data: Data = { recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
+ const data: Data = { ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  return data
 }
@@ -39,7 +40,7 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- dispatch(c); scheduleMessages(c); finishRecoveries(c)
+ dispatch(c); scheduleMessages(c); finishRecoveries(c); await syncLedger(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

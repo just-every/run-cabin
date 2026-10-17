@@ -45,7 +45,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 35 | Stay recovery | "resets the door code" | partial | Approved recovery rotates the guest code, revokes the old code, preserves the secret stay link and updates only scheduled messages whose contents changed (`src/cabin/recovery/actions.ts`, `src/cabin/inbox/schedule.ts`; `tests/recovery.test.mjs`). The host confirms setting the new code on the keypad; live lock verification still needs the owner’s smart-lock account (OPS-005). On RER Managed, provider calls are not available yet. |
 | 36 | Stay recovery | "offers the credit you approved" (within your $100 limit) | code | Owner-only per-home credit and extra-cleaning limits apply across cases for the same stay. A $75 credit under a $100 limit can apply automatically; a $150 proposal waits for the owner. The exact guest offer and frozen owner adjustment are bound to approval and can be compensated (`src/cabin/recovery/limits.ts`, `commands.ts`, `finance.ts`; `tests/recovery.test.mjs`). This records a credit; it does not process a payment refund. AGENT-003, AGENT-006. |
 | 37 | Stay recovery | "confirms the home is ready" | code | The recovery case closes after replacement cleaner acceptance, completed checklist and required photos, host-confirmed keypad or connected-lock access, no blocking maintenance, frozen balance adjustment and accepted guest readiness email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). Failed delivery keeps it open. AGENT-001, OPS-003. |
-| 38 | Stay recovery | "Owner balance updated −$75.00" | partial | Approved credits and extra cleaning charges post immediately to a separate frozen, stay-linked owner adjustment statement, emailed to the owner and shown in their portal; undo posts an exact reversal (`src/cabin/recovery/finance.ts`, `src/cabin/statements.ts`, `tests/recovery.test.mjs`). Operational owner balance only: the complete trust subledger and disbursements in FIN-001 remain open. |
+| 38 | Stay recovery | "Owner balance updated −$75.00" | code | Recovery credits immediately debit the configured home/owner/stay trust balance against guest credits payable; cleaning costs use vendor payable. Undo posts the exact original ownership and entity reversal. Balanced source-linked USD journals, separate cash/deposit/tax/fee accounts, period closure and open-period corrections are inspectable and exportable. `src/cabin/ledger/`, `src/cabin/ui/ledger.ts`, `tests/ledger.test.mjs`, `tests/recovery.test.mjs`; FIN-001. |
 | 39 | Owner statements | "Airbnb, Vrbo and Stripe payouts match to their stays" | partial | Airbnb/Vrbo standard USD CSV payouts match stays, preserve actual fees and leave unmatched lines for review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible payout. `src/cabin/finance/`, `tests/finance.test.mjs`, `tests/direct.test.mjs`; FIN-002. Partner payout APIs remain later. |
 | 40 | Owner statements | "Owners get a statement" | code | Approval freezes each home’s monthly matched payouts, actual channel fees, management commission and paid expenses, then emails its owner a private portal link. Acceptance and explicit resend are recorded. `src/cabin/statements.ts`, `finance/delivery.ts`, `tests/finance.test.mjs`; FIN-004. |
 | 41 | Owner statements | "and a portal" | code | Owners use separate one-use email sign-in and an HttpOnly owner session; current home ownership and the frozen statement recipient guard every read and download. `src/cabin/owners/`, `tests/finance.test.mjs`; FIN-005. |
@@ -71,12 +71,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 40, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 45 |
-| partial | 5, 13, 15, 35, 38, 39, 42, 52, 56 | 9 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 40, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51, 53, 54, 57 | 46 |
+| partial | 5, 13, 15, 35, 39, 42, 52, 56 | 8 |
 | contract | 24, 26, 55 | 3 |
 | link (not a claim) | 58 | 1 |
 
-57 claims: 45 code, 9 partial, 3 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
+57 claims: 46 code, 8 partial, 3 contract. Every contract row names a clause in `CONTRACT.md` on `main`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 
