@@ -1,6 +1,64 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 (18 Oct 2026)
+
+Cabin's first release: vacation-rental operations for US hosts and property managers, a free, open source replacement for the day-to-day work of Guesty, Hostaway or OwnerRez. It runs on your own computer or in your own Cloudflare account, keeps every booking, guest and payout in your own database, is MIT licensed and charges nothing.
+
+### What an owner gets
+
+- **Homes and people.** Add homes with their owner and management commission, and managers and cleaners with separate access. Invite them to sign in (a hosted Cabin emails the invitation). Cleaners see only their own jobs and the Maintenance page.
+- **Calendars both ways.** Paste each home's Airbnb, Vrbo and Booking.com calendar links. Cabin reads them every 15 to 60 minutes and shows when each last synced and any error. It publishes its own calendar link per channel, listing every night held anywhere else, direct bookings included. A request for nights already held is declined with the stay it overlaps, and a collision that arrives from two channels is shown in red as a double booking to resolve.
+- **Direct bookings.** Each home can have a public booking page with your nightly rate, cleaning and extra-guest fees, minimum and maximum nights, gap rule and state or county lodging tax. Guests sign your rental agreement, pay by card through your own Stripe account, pass a Stripe Identity check if you require one, and have a separate damage deposit held on their card. The hold is released a set time after check-out, or you capture part of it with a reason. A guest can be marked checked out only once their check-in time has passed. The payment receipt itemizes nights, cleaning and taxes and states the hold as it is.
+- **Turnovers and door codes.** Every reservation, from any channel or direct, creates its turnover between check-out and the next check-in. The home's cleaner is emailed the window, the address and their own door code, and a moved or cancelled stay re-emails or cancels it. Each stay gets a guest code for its dates. Cleaners tick the checklist and mark the home ready with its required photos from their phone. A job finished after the next guests' check-in stays done and is labelled late. A job reopened because its stay or check-out time changed says why and can be marked ready again.
+- **Readiness and maintenance.** Readiness shows, for any day, which homes are ready for their next arrival, with the turnover, photos and door code. A cleaner can report a broken thing with photos: it becomes a task for the home's maintenance person, and a blocking task keeps the home not ready.
+- **Guest inbox.** One thread per guest joins their stays and emails. Check-in details with the door code, a checkout reminder and a review request go out on time in the home's time zone. They move with the stay and are sent again only when their words change. Guest email routed to your own address arrives in the thread, and every guest message gets a drafted reply (from your own Anthropic key, or a template) that waits for you to send it.
+- **Stay recovery.** When a cleaner cancels or a guest reports a problem, Cabin proposes a backup cleaner, a new door code and a credit within the limits you set. You approve it, or the owner's automatic limit applies, and the case stays open until the home is confirmed ready.
+- **Owner statements and portal.** Import Airbnb and Vrbo payout CSVs (and Stripe test payouts); each line is matched to its stay. Prepare a monthly statement with expenses paid from owner funds, approve it, and Cabin freezes it and emails the owner a link. Owners sign in separately and see only their own homes, stays and approved statements.
+- **Books.** Post each approved statement once to your own [Pantry](https://run-pantry.com) books with a scoped integration credential, with the matched booking, payout, fee and expense evidence attached. Posting again never posts twice, and revoking the credential in Pantry shows a broken connection. For QuickBooks, download a QuickBooks Online journal CSV or a QuickBooks Desktop IIF file and import it yourself.
+- **Move in.** Import homes, reservations, guests, owner balances and channel links from Guesty, Hostaway or OwnerRez CSV reports, or a simple property list. You see a preview with each refused row before anything is saved, then reconcile, sign off, and undo if needed.
+- **Agent access.** An owner-made key lets an assistant read and prepare work that only a signed-in person approves.
+- **Your data.** Run Cabin with `npx -y @runeditrun/rer dev just-every/run-cabin`, or in your own Cloudflare account with `rer deploy` and your own mail provider. `rer export` and `rer import` back up and restore Cabin on your computer, and `rer run backup:hosted` saves and restores a hosted Cabin.
+- Pinned `@runeditrun/rer` 0.2.47.
+
+### Not in this release
+
+The homepage describes some things Cabin does not do yet:
+
+- **Pricing connections.** There is no PriceLabs or Wheelhouse connection, and no single price sent to every channel. Prices are set per home for direct bookings only.
+- **QuickBooks sync.** QuickBooks gets export files that a person imports; nothing syncs to QuickBooks Online. Pantry is posted live.
+- **Channel messages and partner APIs.** Airbnb, Vrbo and Booking.com messages do not arrive in the inbox, and requests cannot be answered inside the channels. Those need partner accounts. Calendars sync by iCal, so a channel can sell a night before it next reads Cabin's link. Cabin flags the double booking but cannot prevent it.
+- **Texts in the inbox.** Twilio texting is built but stays off until you complete Twilio's US A2P registration and add your keys. Guest replies by text need a hosted Cabin.
+- **Smart locks.** Door codes are set on the keypad by hand. Pushing them to a lock needs your Seam account.
+- **Review replies, lodging-tax filing and trust accounting.** Cabin does not reply to reviews. It records tax-filing references but does not file or remit tax. Statements record what the owner is owed but do not move money. Live Stripe payout matching needs a paid automatic USD payout. Live Guesty, Hostaway or OwnerRez API move-in is not included.
+- On RER Managed hosting, provider connections (Stripe, Pantry, channel links) say "not available yet". They work on your own computer and your own Cloudflare account.
+
+### Back up first
+
+Cabin holds guests, owners, bookings and photos. Make a backup before you change anything, and keep it private.
+
+**On your computer**, in your `run-cabin` folder:
+
+```sh
+rer dev --stop
+rer export --output exports/cabin-before-0.1.0.rer
+```
+
+**Hosted**, from the folder you deploy from, with its `.rer` folder and `.env.cabin`:
+
+```sh
+rer run backup:hosted -- --env-file .env.cabin --environment NAME
+```
+
+Leave out `--environment NAME` if you deployed without one. `rer export` saves only the copy on your computer and refuses a hosted address. The hosted backup is one SQL file in `exports/`, readable only by you, and it never prints a download link. [Back up and restore](docs/backup.md) shows how to restore either into a fresh copy.
+
+**If you ran Cabin from `main` before this release**, back up as above, then `git pull` and `rer dev` on your computer, or `git pull` and `rer deploy --env-file .env.cabin` for a hosted copy. Migrations `0001` to `0021` apply in order, forward only, and keep your data.
+
+### Known issues
+
+- Changing a home's check-out or check-in time reopens any turnover already marked ready whose window it moves, including one for guests who have already left that day. The job says why and can be marked ready again.
+- On your computer, `rer dev --as` cannot sign in a cleaner or manager saved with the address of one of rer's built-in personas (`cleaner@dev.localhost`, `manager@dev.localhost`); add them with another address. This is rer's, not Cabin's.
+
+### Fixed before release
 
 - **A turnover marked ready late stays ready, and a reopened one can be finished.** Marking a home ready after the next guests' check-in time used to say "Marked ready" while Cabin reopened the job in the same moment, and every later **Mark ready** failed with "Records or access changed". Now the job stays done: the cleaner is told at once that it finished after the check-in, the job shows it, and Readiness shows that arrival with "Cleaning finished after this arrival". A job reopened because its stay or check-out changed says when and why, and marking it ready again works: photos it already holds are reused instead of stored twice, and new ones are added after them. Marking ready and reopening can no longer happen in one save: the cleaner would be refused with the reason instead.
 - **Claims say what the code does.** The homepage claims table (docs/CLAIMS.md) and CONTRACT.md quote the page's own words for QuickBooks ("the books sync to QuickBooks") and mark it partial: Cabin writes QuickBooks CSV/IIF export files, and nothing syncs. "No double bookings" and the statement card's cleaning line are also partial, and several evidence cells were corrected. The homepage is unchanged.
@@ -20,4 +78,3 @@
 - **Guest inbox**: a returning guest's message is matched to their upcoming stay once the earlier stay's check-out time has passed, so the drafted reply quotes the right check-in. When a home's check-out time (or a guest's door code) changes after check-in details went out, Cabin re-sends them marked **Updated:** with the corrected code hours, until check-out. Write a message yourself has a subject field.
 - **Smaller fixes**: local Inbox no longer says guest email "now arrives" at an address a local Cabin cannot receive; local export links say channels cannot reach them; channel link fields link to Airbnb's, Vrbo's and Booking.com's own calendar-sync steps; Books' Pantry step points at Pantry (or says to connect it first) and QuickBooks exports confirm in their own words; cleaners see door-code guidance meant for them; Readiness reads "Your home is ready" for one home; the owner portal counts only guest stays not yet checked out.
 - **Hosting docs**: stop the local app before deploying, and rerun a first deploy that stops on a Cloudflare error.
-- Pinned `@runeditrun/rer` 0.2.43.

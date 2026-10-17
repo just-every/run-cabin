@@ -655,7 +655,7 @@ Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23
 
 17 October 2026, homepage-claims pass: SITE-002 is added as partial from the existing demo seed, effect boundary, deployment workflow and test. All 88 pre-existing clause statuses and the existing homepage row status assessments are preserved. The product target table and target/push-further section boundaries now match the public parser.
 
-17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, QuickBooks CSV/IIF export files, and Pantry journal proposals that a person approves and posts in Pantry (no test or live posting proven in this repository) implemented. Nothing syncs to QuickBooks. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
+17 October 2026, owner statements: imported Airbnb/Vrbo close, Stripe test payout reader, frozen USD arithmetic, owner email and isolated portal, QuickBooks CSV/IIF export files, and live Pantry posting of approved statements with scoped, revocable integration credentials (tested in `tests/finance.test.mjs`) implemented. Nothing syncs to QuickBooks. Live Stripe matching awaits a paid automatic USD payout; supplied account settles AUD. Homepage copy unchanged.
 
 
 Direct-booking implementation updated 17 October 2026. The narrow homepage rows and broader clauses are assessed separately below; Stripe is test mode, and tax filing/remittance integration remains open.

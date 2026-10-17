@@ -8,7 +8,7 @@
     "id": "holiday-rental",
     "record": "Property, calendar snapshot, turnover and owner statement"
   },
-  "description": "Short-stay calendar imports, photographed turnover checklists and approved owner statements.",
+  "description": "Vacation-rental operations for US hosts and managers: Airbnb, Vrbo and Booking.com calendars synced both ways by iCal with overlapping requests declined, a direct-booking page with Stripe payment, signed agreement, ID check and damage hold, turnovers with door codes, cleaner email, checklists and photos, a guest inbox with scheduled messages and drafted replies, stay recovery, payout-matched owner statements with an owner portal, books posted to Pantry or exported for QuickBooks, move-in from Guesty, Hostaway or OwnerRez, and backup and restore.",
   "capabilities": [
     {
       "id": "http-dispatch",
@@ -18,17 +18,81 @@
     }
   ],
   "nonGoals": [
-    "Channel APIs or double-booking prevention",
-    "Guest payments, trust accounting or dynamic pricing",
-    "Guest messaging through channels"
+    "Airbnb, Vrbo or Booking.com partner APIs (calendars sync by iCal; channel messages, prices and closing within seconds need partner accounts)",
+    "Dynamic pricing or PriceLabs and Wheelhouse connections",
+    "A live QuickBooks Online connection (QuickBooks gets CSV and IIF export files)",
+    "Text messages in the guest inbox until the owner's Twilio A2P registration",
+    "Trust accounting, owner disbursements or lodging-tax filing",
+    "Review replies"
   ],
   "externals": [
     {
       "id": "cloudflare",
       "required": true,
-      "why": "Worker hosting",
+      "why": "Worker hosting for a hosted Cabin; Cabin also runs on your own computer without it.",
       "data": [
-        "HTTP requests"
+        "HTTP requests",
+        "Cabin's database and photos"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "mail-provider",
+      "required": false,
+      "why": "A hosted Cabin emails sign-in links, invitations, cleaner jobs, guest messages, receipts and owner statements through the owner's own SendGrid, Resend or Cloudflare mail; Cabin on your own computer sends no email.",
+      "data": [
+        "Recipient email address",
+        "Guest, cleaner and owner message text",
+        "Sign-in and invitation links"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "stripe",
+      "required": false,
+      "why": "Direct-booking payment, the damage-deposit hold, Stripe Identity checks and test payouts for statements, with the owner's own Stripe keys.",
+      "data": [
+        "Booking amount and guest email",
+        "Payment intents and payouts",
+        "Identity verification status (no ID images are kept)"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "anthropic",
+      "required": false,
+      "why": "Drafted guest replies with the owner's own Anthropic API key; without it Cabin drafts from templates.",
+      "data": [
+        "Guest message text and stay details"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "twilio",
+      "required": false,
+      "why": "Texts with guests through the owner's own Twilio number after US A2P registration.",
+      "data": [
+        "Guest phone number",
+        "Message text"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "seam",
+      "required": false,
+      "why": "Door codes pushed to the owner's smart locks through their Seam account; without it codes are set on the keypad by hand.",
+      "data": [
+        "Door codes and their windows"
+      ],
+      "adapters": []
+    },
+    {
+      "id": "pantry",
+      "required": false,
+      "why": "Approved owner statements posted to the owner's own Pantry books with a scoped, revocable integration credential.",
+      "data": [
+        "Statement journal lines",
+        "Matched booking, payout, fee and expense evidence"
       ],
       "adapters": []
     }
