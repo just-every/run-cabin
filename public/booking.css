@@ -11,5 +11,6 @@
 .guest .price{display:block;margin:18px 0}
 .price>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line-2)}
 .price dd{margin:0;flex-shrink:0;font-variant-numeric:tabular-nums}.price .total{font-weight:700;font-size:17px}
+.guest .button{background:var(--pine);color:#fff;border-color:var(--pine)}.guest .button:hover{background:var(--pine-2)}
 .guest li{padding:3px 0}.guest p,.guest a{overflow-wrap:anywhere}
 @media(max-width:700px){.guest-grid{grid-template-columns:1fr}.cabin.guest header{padding:16px 16px 0}.rer-themed .cabin.guest main{padding:18px 16px 32px}}
