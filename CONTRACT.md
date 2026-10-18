@@ -668,6 +668,8 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
+18 October 2026, SYNC-009: independently named external iCal feeds import only blocks, with scheduled reconciliation, durable assigned failure exceptions, retained inventory and automatic recovery. The existing secret exports revoke on replacement. Self-hosted product screens and public-route tests exercise the workflow; RER Managed still requires its provider relay. See `docs/channel-calendars.md`.
+
 18 October 2026, FIN-008: source-led monthly state/county/city tax reviews, channel-remitted separation, documented exemptions/refunds, frozen accountant packets and human-recorded filing/payment evidence are implemented. The clause remains partial: no authorized statutory filing partner acceptance/payment proof, differing taxable bases or nonmonthly filing periods. See `docs/taxes.md`.
 
 18 October 2026, recovery guest arrangements: exact approval withdraws early arrival to the normal time and issues the consented private future-stay rate; the guest accepts on the stay page. Hosted operator and guest screens at 1440 and 390 and received DMARC-passing guest mail exercised. AGENT-003 and WEB-005 remain partial for their broader targets.
@@ -696,10 +698,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 12 | 48 | 29 | 89 |
-| All | 25 | 48 | 29 | 102 |
+| Target and push further | 13 | 47 | 29 | 89 |
+| All | 26 | 47 | 29 | 102 |
 
-**102 clauses: 25 done, 48 partial, 29 missing.**
+**102 clauses: 26 done, 47 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -729,7 +731,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `SYNC-006` | Inventory holds, measured closure latency and double-booking prevention | target | partial | `src/cabin/inventory.ts`; `src/cabin/storage.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/calendar-grid.ts`; `tests/cabin.test.mjs` (lines 143, 178) | Every stay, hold and block takes its unit/nights; overlapping and concurrent requests cannot both hold a night (version-guarded commits) and export links reflect each change on the next read. No API channel submission or acknowledgement timing, breach alerts, stop-sell or recovery cases; polled iCal collisions are kept and shown, not assigned. |
 | `SYNC-007` | Inspectable sync failures and safe recovery | target | partial | `src/cabin/channels.ts`; `src/cabin/ui/channels.ts`; `tests/cabin.test.mjs` (line 143) | Each calendar link shows last success, last change, next poll and its error; a failed read goes stale, keeps its nights and recovers on the next good read. No provider events, throttling, uncertain-write reconciliation or assigned exceptions. |
 | `SYNC-008` | Inquiries, booking requests, special offers and alterations | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178) | Requests taken in Cabin are declined with the overlapping reservation named, or held; no inquiry states, channel deadlines, offers, alterations or channel-side answers (partner APIs). |
-| `SYNC-009` | Automatic iCal sync for channels without an API | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/calendar-file.ts`; `src/server.ts`; `src/cabin/ui/channels.ts`; `tests/cabin.test.mjs` (line 143) | URL connections polled by Cron every 15–60 minutes, applied changes, per-unit secret export links with revocation, last fetch/change/next poll, stale state that keeps its nights and a calendar-page alert all exist. No assigned exception (Cabin has no exception assignment yet). Unavailable on RER Managed until its provider relay. |
+| `SYNC-009` | Automatic iCal sync for channels without an API | target | done | `src/cabin/channels.ts`; `src/cabin/calendars.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/channels.ts`; `tests/calendars-sync.test.mjs`; `docs/channel-calendars.md` | |
 | `SYNC-010` | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
 | `RES-001` | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 143, 178) | A two-week homes-by-days grid with one row per channel, channel-coloured stays, blocks, closed nights and collisions at 1440 and 390. No day/month views, filters, payment, readiness or drill-down to a reservation record. |
 | `RES-002` | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |

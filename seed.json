@@ -19,7 +19,8 @@
     {
       "id": "channel-calendars",
       "clauses": [
-        "CABIN-02"
+        "CABIN-02",
+        "SYNC-009"
       ]
     },
     {

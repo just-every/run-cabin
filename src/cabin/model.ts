@@ -7,13 +7,13 @@ export type Role = 'owner' | 'manager' | 'cleaner' | 'agent' | 'system'
 export interface Actor { id: string; email: string; role: Role; isAgent: boolean; memberId?: string; operatorVersion: number; keyId?: string }
 export interface Property { id: string; revision: number; name: string; ownerName: string; ownerEmail: string; commissionBps: number }
 export interface Member { id: string; revision: number; name: string; email: string; role: 'manager' | 'cleaner'; active: boolean }
-export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct'
+export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct' | 'ical'
 /** A stay holds a guest; a block closes nights without one (a channel's "Not available", an owner stay or maintenance). */
 export interface CalendarEvent { uid: string; start: string; end: string; summary: string; cancelled: boolean; kind?: 'stay' | 'block'; guestName?: string }
 /** source 'request' marks a hold Cabin itself granted (reservation.request); feeds never remove it, and a feed's matching stay adopts it. */
-export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; guestErasedAt?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string }
+export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; guestErasedAt?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string; connectionId?: string }
 /** A channel's iCal export URL that Cabin polls (SYNC-009). */
-export interface Connection { id: string; revision: string; propertyId: string; channel: Channel; url: string; intervalMinutes: number; status: 'pending' | 'ok' | 'stale'; error: string | null; lastAttemptAt: string | null; lastSuccessAt: string | null; lastChangeAt: string | null; nextPollAt: string; events: number; createdBy: string }
+export interface Connection { id: string; revision: string; propertyId: string; channel: Channel; url: string; intervalMinutes: number; status: 'pending' | 'ok' | 'stale'; error: string | null; lastAttemptAt: string | null; lastSuccessAt: string | null; lastChangeAt: string | null; nextPollAt: string; events: number; createdBy: string; name?: string; exception?: { id: string; assignedTo: string; assignedName: string; openedAt: string; resolvedAt: string | null } }
 /** The listing's secret export token; replacing it revokes every old link. */
 export interface ExportFeed { id: string; revision: string; propertyId: string; token: string; createdAt: string; createdBy: string }
 export interface Request { id: string; revision: string; propertyId: string; channel: Channel; kind: 'stay' | 'block'; start: string; end: string; guestName: string; arrivalTime: string | null; note: string; status: 'accepted' | 'declined'; reason: string | null; overlaps: string | null; bookingId: string | null; requestedBy: string; requestedAt: string }

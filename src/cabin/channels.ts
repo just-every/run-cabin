@@ -1,5 +1,5 @@
 import type { Bindings } from '../auth.server'
-import { type Actor, type Connection, need, fail, text, newId, manager, property } from './model'
+import { type Actor, type Connection, need, fail, text, newId, manager, property, exact } from './model'
 import { load, mutate, SYSTEM } from './storage'
 import { parseCalendar } from './calendar-file'
 import { applyChanges, channelBookings, reconcile } from './calendars'
@@ -40,16 +40,21 @@ export async function syncConnection(env: Bindings, actor: Actor, id: string) {
  const found = (await load(env.DB)).connections.find(r => r.id === id); need(found, 'Calendar link not found', 404)
  let body: string | null = null, error: string | null = null
  try { body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
- return mutate(env.DB, actor, 'channel.sync', c => {
+ return mutate(env.DB, actor, 'channel.sync', async c => {
   const row = c.data.connections.find(r => r.id === id); need(row, 'Calendar link not found', 404); property(c, row.propertyId)
+  need(row.revision === found.revision, 'Calendar link changed while syncing. Sync the current link again.', 409)
   const before = row.status; Object.assign(row, { revision: newId(), lastAttemptAt: c.now, nextPollAt: later(c.now, row.intervalMinutes) })
   let changes = 0
   if (body !== null) {
-   const old = channelBookings(c, row.propertyId, row.channel)
-   try { const events = parseCalendar(body, old, { bytes: MAX_BYTES, events: 2000 }), found = reconcile(old, events); applyChanges(c, row.propertyId, row.channel, found); changes = found.length; Object.assign(row, { status: 'ok', error: null, lastSuccessAt: c.now, events: events.filter(e => !e.cancelled).length }); if (changes) row.lastChangeAt = c.now }
+   const old = channelBookings(c, row.propertyId, row.channel, row.channel === 'ical' ? row.id : undefined)
+   try { const parsed = parseCalendar(body, old, { bytes: MAX_BYTES, events: 2000 }), events = row.channel === 'ical' ? parsed.map(e => ({ ...e, kind: 'block' as const, guestName: undefined, summary: row.name || 'External calendar block' })) : parsed, found = reconcile(old, events); applyChanges(c, row.propertyId, row.channel, found, row.channel === 'ical' ? row.id : undefined); changes = found.length; Object.assign(row, { status: 'ok', error: null, lastSuccessAt: c.now, events: events.filter(e => !e.cancelled).length }); if (changes) row.lastChangeAt = c.now; if (row.exception && !row.exception.resolvedAt) row.exception.resolvedAt = c.now }
    catch (e) { error = `The channel sent a calendar Cabin cannot read: ${(e as Error).message}` }
   }
-  if (error) Object.assign(row, { status: 'stale', error })
+  if (error) {
+   Object.assign(row, { status: 'stale', error })
+   if (!row.exception || row.exception.resolvedAt) row.exception = { id: newId(), assignedTo: row.createdBy, assignedName: row.createdBy, openedAt: c.now, resolvedAt: null }
+   if (row.exception.assignedName === row.createdBy) { const owner = await c.db.prepare('SELECT display_name AS name FROM oa_operators WHERE id=?').bind(row.createdBy).first<{name:string}>(); row.exception.assignedName = owner?.name || 'Connection manager' }
+  }
   c.entityId = row.id; return { connection: row, changes, statusChanged: before !== row.status }
  }, r => actor.role !== 'system' || r.changes > 0 || r.statusChanged)
 }
@@ -64,19 +69,31 @@ export async function syncDue(env: Bindings) {
  return results
 }
 export async function channelCommand(env: Bindings, actor: Actor, name: string, p: Record<string, unknown>) {
- if (name === 'channel.connect') {
+ if (name === 'channel.connect' || name === 'channel.update') {
   manager(actor); need(!managedInstall(env), MANAGED_LINE, 409)
   const saved = await mutate(env.DB, actor, name, c => {
-   const prop = property(c, p.propertyId), ch = channel(p.channel, false), interval = p.intervalMinutes === undefined || p.intervalMinutes === '' ? 15 : Number(p.intervalMinutes)
+   const prop = property(c, p.propertyId), ch = p.channel === 'ical' ? 'ical' : channel(p.channel, false), interval = p.intervalMinutes === undefined || p.intervalMinutes === '' ? 15 : Number(p.intervalMinutes)
    need(Number.isInteger(interval) && interval >= 15 && interval <= 60, 'Sync every 15 to 60 minutes')
-   const id = `${prop.id}:${ch}`, old = c.data.connections.find(r => r.id === id)
-   const row: Connection = { id, revision: newId(), propertyId: prop.id, channel: ch, url: feedUrl(p.url), intervalMinutes: interval, status: 'pending', error: null, lastAttemptAt: null, lastSuccessAt: old?.lastSuccessAt ?? null, lastChangeAt: old?.lastChangeAt ?? null, nextPollAt: c.now, events: old?.events ?? 0, createdBy: actor.id }
+   const id = name === 'channel.update' ? text(p.id, 'calendar link ID') : ch === 'ical' ? newId() : `${prop.id}:${ch}`, old = c.data.connections.find(r => r.id === id)
+   if (name === 'channel.update') { need(old && old.propertyId === prop.id && old.channel === ch, 'Calendar link not found', 404); exact(old, p.revision) }
+   const row: Connection = { id, revision: newId(), propertyId: prop.id, channel: ch, url: feedUrl(p.url), intervalMinutes: interval, status: 'pending', error: null, lastAttemptAt: null, lastSuccessAt: old?.lastSuccessAt ?? null, lastChangeAt: old?.lastChangeAt ?? null, nextPollAt: c.now, events: old?.events ?? 0, createdBy: old?.createdBy || actor.id, ...(ch === 'ical' ? { name: text(p.name, 'calendar name', 100) } : {}), ...(old?.exception ? { exception: old.exception } : {}) }
    if (old) Object.assign(old, row); else c.data.connections.push(row)
    c.entityId = id; return row
   })
   return syncConnection(env, actor, saved.id)
  }
  if (name === 'channel.sync') { manager(actor); need(!managedInstall(env), MANAGED_LINE, 409); return syncConnection(env, actor, text(p.id, 'calendar link ID')) }
+ if (name === 'channel.assign') {
+  manager(actor)
+  return mutate(env.DB, actor, name, async c => {
+   const row = c.data.connections.find(r => r.id === text(p.id, 'calendar link ID')); need(row?.exception && !row.exception.resolvedAt, 'Open sync exception not found', 404)
+   const assignee = text(p.assignedTo, 'responsible manager')
+   const operator = await c.db.prepare("SELECT id,display_name AS name FROM oa_operators WHERE id=? AND status='active' AND role='owner'").bind(assignee).first<{id:string;name:string}>()
+   const member = c.data.members.find(m => m.id === assignee && m.active && m.role === 'manager')
+   need(operator || member, 'Choose the installation owner or an active manager')
+   Object.assign(row.exception, { assignedTo: assignee, assignedName: operator?.name || member!.name }); row.revision = newId(); c.entityId = row.id; return row
+  })
+ }
  if (name === 'channel.disconnect') {
   manager(actor)
   return mutate(env.DB, actor, name, c => {

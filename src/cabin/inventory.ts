@@ -4,7 +4,7 @@ import { emailOf, phoneOf } from './inbox/threads'
 // nights [first night, checkout). Commits are serialised by cb_meta's version
 // guard, so two requests for the same night cannot both be accepted.
 export const CHANNELS: Channel[] = ['airbnb', 'vrbo', 'booking.com', 'direct']
-const NAMES: Record<string, string> = { airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com', direct: 'Direct' }
+const NAMES: Record<string, string> = { airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com', direct: 'Direct', ical: 'External calendar' }
 export const channelName = (c: string) => NAMES[c] ?? c
 export function channel(value: unknown, allowDirect = true): Channel {
  const v = text(value, 'channel').toLowerCase().replace(/^booking$/, 'booking.com')

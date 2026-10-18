@@ -42,3 +42,8 @@
 .cabin .code-card{padding:22px;border-radius:var(--card);background:var(--rer-surface);border:1px solid var(--line);box-shadow:var(--shadow);margin:16px 0 20px}
 .cabin .code-card .code{font:600 48px/1 var(--rer-font-mono);letter-spacing:.2em;margin:10px 0 14px;color:var(--pine)}
 @media(max-width:700px){.cabin .ready-grid,.cabin .jobs{grid-template-columns:1fr}.cabin .home-ready{padding:16px}.cabin .door-code{font-size:21px}.rer-themed .cabin form.inline{display:grid}.cabin .photos{grid-template-columns:repeat(3,1fr)}}
+
+/* External calendar connections keep repair and assignment actions separate. */
+.cabin .link-row{padding:16px 0;border-top:1px solid var(--line);margin-top:12px}
+.cabin .link-row details{margin:12px 0}
+.cabin .link-row .actions{margin-top:12px}
