@@ -700,10 +700,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 15 | 45 | 29 | 89 |
-| All | 28 | 45 | 29 | 102 |
+| Target and push further | 16 | 44 | 29 | 89 |
+| All | 29 | 44 | 29 | 102 |
 
-**102 clauses: 28 done, 45 partial, 29 missing.**
+**102 clauses: 29 done, 44 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -746,7 +746,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
 | `WEB-001` | Branded direct-booking website | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Public responsive per-home pages and published-home directory use shared availability and one signed, Stripe test-paid checkout with optional Identity/deposit requirements. Custom-domain branding, galleries, rich search and SEO/consent controls remain open. |
 | `WEB-002` | Embeddable booking engine | target | missing |  | No implementing flow in the audited tree. |
-| `WEB-003` | Signed rental agreements | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Versioned home agreement signed with guest name, consent, timestamp and digest; exact signed text and price downloadable on the stay. Amendment and renewed-signature workflow remains open. |
+| `WEB-003` | Signed rental agreements | target | done | `src/cabin/agreements/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/dispatch.ts`; `src/cabin/guest.ts`; `src/cabin/inbox/deliver.ts`; `tests/direct.test.mjs`; `docs/rental-agreements.md` | Versioned per-property US templates and reservation rules; exact guest consent with signer evidence and immutable signed downloads. Dates, guest and check-in term amendments require renewed consent and gate configured access/instructions while preserving earlier signatures. Direct paid stays retain their price. Hosted initial and renewal guest mail, signing, downloads and access exercised at 1440 and 390. |
 | `WEB-004` | Guest identity verification | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Real Stripe Identity test sessions, explicit consent, reference/state only, required verified outcome before confirmation; pending/failed cases visible to managers. Manual-review alternatives and access-code integration remain open. |
 | `WEB-005` | Promotions, upsells and gap-night offers | target | partial | `src/cabin/guests/offers.ts`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/guests.test.mjs`; `tests/direct.test.mjs`; `docs/guests.md`; `docs/direct-bookings.md` | Private, home-scoped, expiring one-use returning-guest 10% rent offers require a completed stay, verified contact, explicit consent and home permission. Server reprices tax and guards redemption with the inventory hold; the real Stripe test charge, agreement and receipt preserve the discount. Existing gap restrictions and fees remain. Recovery now issues that private one-use future-stay rate for a confirmed impacted stay under owner policy, exact approval, verified contact and explicit consent; an unused offer is revoked on recovery undo. `src/cabin/recovery/settlement.ts`, `tests/recovery.test.mjs`. General coupons, upsells, paid early/late access and gap-night extensions with their capacity/contribution/payment/allocation workflows remain open. |
 | `PAY-001` | Processor-backed USD checkout and manual payments | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Stripe-hosted USD test-card checkout, server reconciliation, saved mandate and distinct holds/paid/confirmed states. Real test-card browser acceptance plus network-edge route test. Live mode, ACH and manual receipts remain open. |

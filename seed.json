@@ -27,7 +27,8 @@
     {
       "id": "direct-bookings",
       "clauses": [
-        "CABIN-03"
+        "CABIN-03",
+        "WEB-003"
       ]
     },
     {

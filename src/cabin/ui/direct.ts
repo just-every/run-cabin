@@ -1,3 +1,4 @@
+import { agreementPanel } from '../agreements/ui'
 import { dateLabel,timeLabel,identityLabel,depositLabel,activeDeposit,arrival } from '../direct/presentation'
 import { homeSettings as homeSettingsOf } from '../homes'
 import { h, heading, panel, form, field, area, hidden, empty, badge, manager, money, propertyName } from './shared'
@@ -104,6 +105,7 @@ export function direct(state: any) {
   return heading('Direct bookings', 'Your homes, booked directly', 'Publish booking rules, review guest agreements and payment status, and manage damage deposits and tax filing evidence.')
     + stripeSetup(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
+    + agreementPanel(state)
     + panel('Direct stays', stays.map((stay: any) => stayRecord(state, stay)).join('') || empty('Direct booking holds and completed stays will appear here.'))
 }
 

@@ -1,3 +1,5 @@
+import { bookingAgreement } from './agreement-text'
+import { recordCheckout,templateVersion } from '../agreements/records'
 import type { Bindings } from '../../auth.server'
 import { need,text,newId,sha,query } from '../model'
 import { mutate } from '../storage'
@@ -9,7 +11,6 @@ import { createCheckout,stripeCredentials,MANAGED_STRIPE_LINE } from './stripe'
 import { seal } from '../seal'
 import { homeSettings } from '../homes'
 import { instant } from '../clock'
-import { dateLabel } from './presentation'
 import type { DirectStay } from './types'
 export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>) {
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
@@ -22,9 +23,11 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate');need(!home.requireIdentity||input.identityConsent==='yes','Consent to the ID check before continuing')
   if(offer)redeemOffer(c,offer,input,bookingId)
   const settings=homeSettings(c,home.propertyId),arrivalAt=new Date(instant(price.start+'T'+settings.checkInTime,settings.timeZone)).toISOString(),departureAt=new Date(instant(price.end+'T'+settings.checkOutTime,settings.timeZone)).toISOString()
-  const agreement=`${home.agreement}\n\nStay: ${dateLabel(price.start)} to ${dateLabel(price.end)}; ${price.guests} guests.\nRent, fees and taxes: USD ${(price.totalCents/100).toFixed(2)}.${price.returningGuest?` Returning guest 10% rent saving: USD ${((price.discountCents??0)/100).toFixed(2)}.`:''} Damage authorization: USD ${(price.depositCents/100).toFixed(2)}.\nThe separate damage hold is requested within 48 hours of arrival, not when an advance booking is paid. Card authorizations expire; another authorization may be required during a longer stay. An expired hold provides no damage protection.`
-  const row:DirectStay={id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(home.requireIdentity?'consented to Stripe Identity.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
+  const rentalTemplate=c.data.rentalTemplates.find(t=>t.propertyId===home.propertyId),version=rentalTemplate?templateVersion(rentalTemplate):undefined
+  const agreement=bookingAgreement(home,price,version)
+  const row:DirectStay={id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(home.requireIdentity?'consented to Stripe Identity.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
   c.data.bookings.push({id:bookingId,revision:newId(),uid:`cabin-direct-${id}`,propertyId:home.propertyId,channel:'direct',kind:'block',start:price.start,end:price.end,summary:'Direct checkout hold',status:'confirmed',cancelled:false,approvedAt:c.now,source:'request'})
+  await recordCheckout(c,row)
   c.queries.push(query('INSERT INTO cb_direct_stays(id,property_id,token_hash,data) VALUES(?,?,?,?)',id,home.propertyId,tokenHash,JSON.stringify(row)));c.entityId=id;return row
  })
  return {token,id,url:await startPayment(env,row,token),bookingUrl:env.AUTH_ORIGIN+'/book/stay/'+token}

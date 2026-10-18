@@ -1,3 +1,5 @@
+import { messageAccessBlocked } from '../agreements/access'
+import { accessBlocked } from '../agreements/records'
 import { automaticStillAllowed } from './reply-policy'
 import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
@@ -29,6 +31,7 @@ function claimDue(env: Bindings, id: string) {
  return mutate(env.DB, INBOX_SYSTEM, 'message.scheduled.claim', c => {
   const row = c.data.scheduled.find(r => r.id === id), b = row && c.data.bookings.find(r => r.id === row.bookingId)
   if (!row || !b || row.status !== 'scheduled' || Date.parse(row.dueAt) > Date.now()) return null
+  if(row.rule==='checkin'&&accessBlocked(c.data,b.id))return null
   if (Date.now() >= Date.parse(row.deadline)) { Object.assign(row, { status: 'skipped', reason: 'Its moment passed before Cabin could send it', revision: newId() }); return null }
   const inbox = inboxSettings(c), set = inbox.schedule[row.rule], f = facts(c.data, env.AUTH_ORIGIN, b), r = route(env, inbox, b)
   const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b.propertyId, bookingId: b.id, email: 'unavailable' in r ? b.guestEmail ?? null : r.email, phone: 'unavailable' in r ? b.guestPhone ?? null : r.phone, ref: null, channel: 'unavailable' in r ? 'email' : r.channel, direction: 'out', source: 'scheduled', status: 'sending', subject: (row.updated ? 'Updated: ' : '') + fill(set.subject, f), text: (row.updated ? 'These details changed. This message replaces the earlier one.\n\n' : '') + fill(set.template, f), detail: null, replyTo: null, headerId: null, sentBy: null, approvalId: null, scheduledId: row.id, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
@@ -37,10 +40,11 @@ function claimDue(env: Bindings, id: string) {
   Object.assign(row, { status: 'sending', messageId: m.id, revision: newId() }); return { ...m }
  }, () => false).catch(() => null)
 }
-const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => { const m = c.data.messages.find(r => r.id === id); if (!m || m.status !== 'pending') return null; if (m.control?.automatic && !automaticStillAllowed(c.data, env.AUTH_ORIGIN, m)) { m.status = 'draft'; m.control.automatic = false; m.control.needsHost = true; m.detail = 'Automatic authority or sources changed before sending. Review this reply.'; m.revision = newId(); return null } Object.assign(m, { status: 'sending', revision: newId() }); return { ...m } }, () => false).catch(() => null)
+const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => { const m = c.data.messages.find(r => r.id === id); if (!m || m.status !== 'pending') return null; if(messageAccessBlocked(c.data,m))return null; if (m.control?.automatic && !automaticStillAllowed(c.data, env.AUTH_ORIGIN, m)) { m.status = 'draft'; m.control.automatic = false; m.control.needsHost = true; m.detail = 'Automatic authority or sources changed before sending. Review this reply.'; m.revision = newId(); return null } Object.assign(m, { status: 'sending', revision: newId() }); return { ...m } }, () => false).catch(() => null)
 async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ status: GuestMessage['status']; detail: string | null; providerId: string | null }> {
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {
+  if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Current rental agreement must be signed before guest instructions can be sent.',providerId:null}
   if (m.channel === 'sms') { if (!smsAccount(env) || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; const r = await sendSms(env, m.phone, m.text); return { status: 'sent', detail: null, providerId: r.providerId } }
   if (m.channel !== 'email') {
    const hotel = b ? inbox.channelIds[b.propertyId] : undefined

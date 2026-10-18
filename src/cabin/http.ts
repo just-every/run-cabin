@@ -1,3 +1,6 @@
+import { load } from './storage'
+import { documentDownload } from './agreements/ui'
+import { agreementOf } from './agreements/records'
 import { taxCommand } from './taxes/commands'
 import { taxExport } from './taxes/export'
 import { importHistory } from './audit/imports'
@@ -172,7 +175,9 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,activity:path==='/app/activity'?await history(env.DB,who,url.searchParams):undefined,activityParams:url.searchParams,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),channel:url.searchParams.get('channel'),reservation:url.searchParams.get('reservation'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
-   if(agreement){manager(who);return signedAgreement(await stay(env.DB,agreement[1]))}
+   if(agreement){manager(who);await assertLive(env.DB,who);const s=await stay(env.DB,agreement[1]),a=agreementOf(await load(env.DB),s.bookingId);if(a){const version=url.searchParams.get('version'),d=version?a.documents.find(d=>d.id===version):[...a.documents].reverse().find(d=>d.signature);need(d,'Signed document not found',404);return documentDownload(a,d)}return signedAgreement(s)}
+   const rental=path.match(/^\/api\/cabin\/agreements\/([\w-]+)\/([\w-]+)$/)
+   if(rental){manager(who);await assertLive(env.DB,who);const a=(await load(env.DB)).rentalAgreements.find(a=>a.id===rental[1]),d=a?.documents.find(d=>d.id===rental[2]);need(a&&d,'Agreement not found',404);await assertLive(env.DB,who);return documentDownload(a,d)}
    const csv=path.match(/^\/api\/cabin\/statements\/([\w-]+)\.csv$/)
    if(csv)return new Response(await statementCsv(env.DB,who,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
    const photo=path.match(/^\/api\/cabin\/turnovers\/([\w-]+)\/photo$/),direct=path.match(/^\/api\/cabin\/photos\/([\w-]+)$/)

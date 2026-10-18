@@ -1,3 +1,4 @@
+import { agreementCommand,publishTemplate } from '../agreements/commands'
 import type { Bindings } from '../../auth.server'
 import { manager,need,text,integer, type Actor } from '../model'
 import { assertLive,mutate } from '../storage'
@@ -13,11 +14,12 @@ export async function directState(env:Bindings,actor:Actor) {
 }
 export async function directCommand(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>) {
  manager(actor);await assertLive(env.DB,actor)
+ if(name.startsWith('direct.agreement.'))return agreementCommand(env,actor,name,input)
  if(name.startsWith('direct.stripe.'))return providerCommand(env,actor,name,input)
  if(name==='direct.configure')return mutate(env.DB,actor,name,async c=>{
   const propertyId=text(input.propertyId,'property ID');need(c.data.properties.some(p=>p.id===propertyId),'Property not found',404)
   const old=(await homes(env.DB)).find(h=>h.propertyId===propertyId);need(!old||old.revision===input.revision,'This home changed. Reload before saving.',409)
-  const row=configure(input,propertyId);need(!(await homes(env.DB)).some(h=>h.slug===row.slug&&h.propertyId!==row.propertyId),'Another home uses this booking address',409);saveHome(c,row);return row
+  const row=configure(input,propertyId);publishTemplate(c,{...input,propertyId,agreement:row.agreement,agreementRequired:input.agreementRequired??c.data.rentalTemplates.find(t=>t.propertyId===propertyId)?.required??false},env.AUTH_ORIGIN);need(!(await homes(env.DB)).some(h=>h.slug===row.slug&&h.propertyId!==row.propertyId),'Another home uses this booking address',409);saveHome(c,row);return row
  })
  const id=text(input.id,'stay ID');await stay(env.DB,id)
  if(name==='direct.checkout.complete')return mutate(env.DB,actor,name,async c=>{const row=await stay(env.DB,id);need(row.phase==='confirmed'&&!row.checkedOutAt,'Only a confirmed stay awaiting checkout can be checked out',409);const home=homeSettings(c,row.propertyId),checkin=arrival(row,home);need(Date.now()>=checkin,`This guest checks in ${timeLabel(new Date(checkin).toISOString(),home.timeZone)}. Mark them checked out after that.`,409);row.checkedOutAt=c.now;saveStay(c,row);return row})

@@ -90,7 +90,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **WEB-002 — Embeddable booking engine · missing.** Install the widget on an allowed external site and WordPress page, complete a stay and verify one reservation; refuse an unapproved origin and an attempt to query private reservation/guest records.
   Current evidence: none; the described acceptance journey is missing.
 
-- **WEB-003 — Signed rental agreements · missing.** Book with a required agreement, sign through the guest link, download the saved signed version, then amend dates/terms and verify renewed consent is requested and the original signature is preserved.
+- **WEB-003 — Signed rental agreements · done.** Book with a required agreement, sign through the guest link, download the saved signed version, then amend dates/terms and verify renewed consent is requested and the original signature is preserved.
   Current evidence: none; the described acceptance journey is missing.
 
 - **WEB-004 — Guest identity verification · missing.** Complete and fail partner verification from the guest check-in link, route one case for human review, confirm staff access limits and retention/erasure behavior, and prove door codes do not release while a required verification remains unresolved.

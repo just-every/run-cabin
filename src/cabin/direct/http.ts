@@ -1,3 +1,6 @@
+import { agreementResponse } from '../agreements/http'
+import { agreementOf,templateVersion } from '../agreements/records'
+import { documentDownload } from '../agreements/ui'
 import type { Bindings } from '../../auth.server'
 import { need,sha } from '../model'
 import { load } from '../storage'
@@ -13,6 +16,7 @@ import { h } from '../ui/shared'
 import { homeSettings } from '../homes'
 import { instant,localDay } from '../clock'
 export async function bookingResponse(request:Request,env:Bindings):Promise<Response|null> {
+ const rental=await agreementResponse(request,env);if(rental)return rental
  const url=new URL(request.url),path=url.pathname;if(path!=='/book'&&!path.startsWith('/book/'))return null
  let json=false
  try{
@@ -30,17 +34,17 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
   const saved=path.match(/^\/book\/stay\/([a-f0-9-]{72})(?:\/(refresh|identity|agreement|deposit|pay))?$/)
   if(saved){
    let s=await byToken(env.DB,await sha(saved[1]))
-   if(saved[2]==='agreement'&&request.method==='GET')return signedAgreement(s)
-   if(request.method==='POST'&&saved[2]==='refresh'){s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0});return json?Response.json({stay:{id:s.id,phase:s.phase,quote:s.quote,identity:s.identity,deposit:s.deposit}}):stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')}
+   if(saved[2]==='agreement'&&request.method==='GET'){const a=agreementOf(await load(env.DB),s.bookingId);if(a){const version=url.searchParams.get('version'),d=version?a.documents.find(d=>d.id===version):[...a.documents].reverse().find(d=>d.signature);need(d,'Signed document not found',404);return documentDownload(a,d)}return signedAgreement(s)}
+   if(request.method==='POST'&&saved[2]==='refresh'){s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0});return json?Response.json({stay:{id:s.id,phase:s.phase,quote:s.quote,identity:s.identity,deposit:s.deposit}}):stayPage(s,saved[1],'',env.AUTH_LOCAL==='true',agreementOf(await load(env.DB),s.bookingId))}
    if(request.method==='POST'&&(saved[2]==='identity'||saved[2]==='deposit'||saved[2]==='pay')){const target=saved[2]==='identity'?await identity(env,s.id,saved[1]):saved[2]==='pay'?await retryCheckout(env,s.id,saved[1]):await guestDeposit(env,s.id,saved[1]);return new Response(null,{status:303,headers:{location:target,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
-   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0})}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],guestText(error),env.AUTH_LOCAL==='true')}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true')
+   need(request.method==='GET'&&!saved[2],'Not found',404);if(s.checkoutId&&s.phase!=='expired')try{s=await refresh(env,s.id,{id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0})}catch(error){return stayPage(await byToken(env.DB,await sha(saved[1])),saved[1],guestText(error),env.AUTH_LOCAL==='true',agreementOf(await load(env.DB),s.bookingId))}return stayPage(s,saved[1],'',env.AUTH_LOCAL==='true',agreementOf(await load(env.DB),s.bookingId))
   }
   const data=await load(env.DB),all=(await homes(env.DB)).filter(h=>h.enabled)
   if(path==='/book'&&request.method==='GET')return shell('Find your stay',`<p class="eyebrow">Book directly</p><h1>Find your next stay</h1>${all.length?all.map(home=>`<section class="panel"><h2><a href="/book/${h(home.slug)}">${h(data.properties.find(p=>p.id===home.propertyId)?.name)}</a></h2><p>${h(home.description)}</p></section>`).join(''):'<p>No homes are accepting direct bookings yet.</p>'}`)
   const match=path.match(/^\/book\/([a-z0-9-]+)(?:\/(quote|checkout))?$/),home=all.find(h=>h.slug===match?.[1]);need(match&&home,'Booking page not found',404)
   const name=data.properties.find(p=>p.id===home.propertyId)?.name??home.slug,settings=homeSettings(data,home.propertyId)
   if(request.method==='GET'&&!match[2]){const offer=await offeredRate(data,home,url.searchParams.get('offer'));return homePage(home,name,data.bookings,localDay(Date.now(),settings.timeZone),'',offer?{token:url.searchParams.get('offer')!,name:offer.guestName}:undefined)}
-  if(request.method==='POST'&&match[2]==='quote'){const offer=await offeredRate(data,home,input.offerToken),price=quote(home,data.bookings,input,undefined,offer);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode,instant(`${price.start}T${settings.checkInTime}`,settings.timeZone)-48*3_600_000<=Date.now(),offer?String(input.offerToken):undefined)}
+  if(request.method==='POST'&&match[2]==='quote'){const offer=await offeredRate(data,home,input.offerToken),price=quote(home,data.bookings,input,undefined,offer);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode,instant(`${price.start}T${settings.checkInTime}`,settings.timeZone)-48*3_600_000<=Date.now(),offer?String(input.offerToken):undefined,data.rentalTemplates.find(t=>t.propertyId===home.propertyId)?templateVersion(data.rentalTemplates.find(t=>t.propertyId===home.propertyId)!):undefined)}
   if(request.method==='POST'&&match[2]==='checkout'){const result=await checkout(env,home.slug,input);return json?Response.json(result):new Response(null,{status:303,headers:{location:result.url,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
   need(false,'Not found',404)
  }catch(error){const stayToken=(error as any)?.stayToken as string|undefined

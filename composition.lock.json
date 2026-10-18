@@ -393,7 +393,7 @@
       "source": "editions/cabin/.gitignore"
     },
     "ACCEPTANCE.md": {
-      "sha256": "818c82b41d7b0560760c3e9197b69b3298b57c304b8a064b3293a4f908fbe696",
+      "sha256": "ed84af07481868f97126fb3d34cd11abe6981a8b7ffca9690eb78510c7d67a13",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -407,7 +407,7 @@
       "source": "editions/cabin/AGENTS.md"
     },
     "CONTRACT.md": {
-      "sha256": "d614c4c51bd19dca1d10dc48ad5586215b08a1559c2942338e9835bf8de0e951",
+      "sha256": "a58ca8d103f181d15118f7cbe4f104d831d0c916523d98c1ddb3389ac898cd43",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "948a744abba8036224d46bee1cd7c01ab9763066f8e335ab8a7ac7f4a50d066b",
+      "sha256": "3b86d55b1c4057c6da35141b80154c4ef8767feb0b0b7d285b2fb6a6d47f1e2a",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

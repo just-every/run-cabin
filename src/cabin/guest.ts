@@ -1,3 +1,4 @@
+import { accessBlocked,agreementOf } from './agreements/records'
 import { guestRecovery, guestSettlement } from './recovery/guest'
 import { settle } from './settle'
 import { record } from './audit/write'
@@ -21,7 +22,8 @@ export async function guestStayResponse(request: Request, env: Bindings) {
  const data = await load(env.DB), code = data.codes.find(r => r.holder === 'guest' && r.link === token)
  const booking = code && data.bookings.find(b => b.id === code.bookingId), home = code && data.properties.find(p => p.id === code.propertyId)
  if (!code || !booking || !home) return new Response('Not found', { status: 404, headers })
- if(request.method==='GET'&&code.status==='issued'){await record(env.DB,{...SYSTEM,id:code.id},'guest.access.release',{kind:'codes',id:code.id,propertyId:home.id,bookingId:booking.id,revision:code.revision,result:'released'})}
+ const blocked=accessBlocked(data,booking.id),agreement=agreementOf(data,booking.id)
+ if(request.method==='GET'&&code.status==='issued'&&!blocked){await record(env.DB,{...SYSTEM,id:code.id},'guest.access.release',{kind:'codes',id:code.id,propertyId:home.id,bookingId:booking.id,revision:code.revision,result:'released'})}
  let reported = false
  if (request.method === 'POST') {
   if (request.headers.get('origin') !== env.AUTH_ORIGIN || Number(request.headers.get('content-length') ?? 0) > 8000) return new Response('Request refused', { status: 403, headers })
@@ -46,7 +48,7 @@ export async function guestStayResponse(request: Request, env: Bindings) {
   }); reported = true } catch { return new Response('Your stay changed. Reload before reporting the problem.', { status: 409, headers }) }
  }
  const s = homeSettings({ data }, home.id), state = codeState(code), frame = await themeFrame({ href: '/rer-theme.css', productName: branding.name, accentColor: branding.primaryColor })
- const body = code.status === 'revoked' ? `<p class="notice">This stay was cancelled, so this door code no longer works. Contact your host with any questions.</p>`
+ const body = blocked ? `<p class="notice">Your current rental agreement needs a signature before door access is released.</p>${agreement?.token?`<a class="button" href="/book/stay/agreement/${h(agreement.token)}">Review and sign your agreement</a>`:''}` : code.status === 'revoked' ? `<p class="notice">This stay was cancelled, so this door code no longer works. Contact your host with any questions.</p>`
   : `<div class="code-card"><p class="eyebrow">Your door code</p><p class="code">${h(code.code)}</p><p class="chip ${state === 'active' ? 'chip-good' : ''}"><span class="dot"></span>${h(state === 'active' ? 'Active now' : state === 'scheduled' ? 'Not active yet' : 'Expired')}</p><p>Works ${h(between(code.validFrom, code.validUntil))}.</p></div>
    <dl class="facts"><dt>Check in</dt><dd>${h(when(code.validFrom))}</dd><dt>Check out</dt><dd>${h(when(code.validUntil))}</dd><dt>Address</dt><dd>${s.address ? `<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(s.address)}" rel="noreferrer">${h(s.address)}</a>` : 'Your host will send the address.'}</dd></dl>
    <p class="muted">${code.lock.state === 'set' ? 'This code is set on the door lock.' : 'Your host sets this code on the door keypad before you arrive.'}</p>`

@@ -1,3 +1,4 @@
+import { accessBlocked } from './agreements/records'
 import { type Booking, type Context, type HomeSettings, type Turnover, newId, need } from './model'
 import { homeSettings } from './homes'
 import { issue, move, revoke } from './codes'
@@ -54,7 +55,8 @@ export function dispatch(c: Context) {
   const current = nights(b).checkout >= localDay(now, s.timeZone)
   if (!current && !t) continue
   const stay = { validFrom: `${nights(b).first}T${b.arrivalTime ?? s.checkInTime}`, validUntil: checkoutTime(s, b) }, guest = codes.find(r => r.holder === 'guest')
-  if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
+  if(accessBlocked(c.data,b.id)){if(guest)revoke(guest,'Current rental agreement must be signed')}
+  else if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
   const w = windowOf(c, s, b)
   if (!t) {
    const cleaner = s.dispatch ? null : activeCleaner(c, s.cleanerId)
