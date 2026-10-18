@@ -407,7 +407,7 @@
       "source": "editions/cabin/AGENTS.md"
     },
     "CONTRACT.md": {
-      "sha256": "b5fc4c19bb97b3247e94b180ff1158c767fbeb739f15979ba733e7ed62df2a1f",
+      "sha256": "d614c4c51bd19dca1d10dc48ad5586215b08a1559c2942338e9835bf8de0e951",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
