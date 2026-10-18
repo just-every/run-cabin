@@ -1,7 +1,9 @@
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
-import { need, text, sha, newId, fail } from '../model'
-import { load } from '../storage'
+import { need, text, sha, newId } from '../model'
+import { authorizedStatement } from './state'
+export { portalState } from './state'
+import { recordStatementAccess } from './activity'
 import { approvedStatementCsv } from '../statements'
 import { h } from '../ui/shared'
 const cookieName='cabin_owner_session'
@@ -11,16 +13,11 @@ export async function ownerEmail(request:Request,env:Bindings){
  const session=await env.DB.prepare('SELECT email FROM cb_owner_sessions WHERE token_hash=? AND expires_at>?').bind(await sha(raw),Date.now()).first<{email:string}>()
  need(session,'Your owner sign-in expired',401);return session.email
 }
-/** Current home ownership AND the frozen recipient govern access to statements. */
-export async function portalState(env:Bindings,email:string){
- const data=await load(env.DB),properties=data.properties.filter(p=>p.ownerEmail.toLowerCase()===email.toLowerCase()),ids=new Set(properties.map(p=>p.id))
- return {email,properties:properties.map(p=>({id:p.id,name:p.name,ownerName:p.ownerName})),bookings:data.bookings.filter(b=>ids.has(b.propertyId)).map(b=>({id:b.id,propertyId:b.propertyId,channel:b.channel,start:b.start,end:b.end,status:b.status,kind:b.kind??'stay',guestName:b.guestName??'',summary:b.summary})),statements:data.statements.filter(s=>ids.has(s.propertyId)&&s.ownerEmail.toLowerCase()===email.toLowerCase()&&s.status==='approved')}
-}
 export async function requestOwnerLink(env:Bindings,input:Record<string,unknown>){
  const email=text(input.email,'owner email',254).toLowerCase();need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email')
  const now=Date.now(),count=await env.DB.prepare('SELECT count(*) AS n FROM cb_owner_links WHERE email=? AND created_at>?').bind(email,now-15*60_000).first<{n:number}>()
  if((count?.n??0)>=3)return
- const property=await env.DB.prepare('SELECT 1 FROM cb_properties WHERE owner_email=? COLLATE NOCASE').bind(email).first()
+ const property=await env.DB.prepare(`SELECT 1 FROM cb_properties WHERE owner_email=? COLLATE NOCASE UNION ALL SELECT 1 FROM cb_owner_statement_grants g JOIN cb_records s ON s.id=g.statement_id AND s.kind='statements' WHERE g.email=? COLLATE NOCASE AND g.revoked_at IS NULL AND json_extract(s.data,'$.status')='approved' AND json_extract(s.data,'$.ownerEmail')=g.email COLLATE NOCASE LIMIT 1`).bind(email,email).first()
  if(!property)return
  const token=newId()+newId(),hash=await sha(token)
  await env.DB.batch([env.DB.prepare('DELETE FROM cb_owner_links WHERE expires_at<?').bind(now),env.DB.prepare('DELETE FROM cb_owner_sessions WHERE expires_at<?').bind(now),env.DB.prepare('INSERT INTO cb_owner_links(token_hash,email,created_at,expires_at) VALUES(?,?,?,?)').bind(hash,email,now,now+20*60_000)])
@@ -31,7 +28,7 @@ export async function requestOwnerLink(env:Bindings,input:Record<string,unknown>
 export async function confirmOwner(env:Bindings,token:unknown){
  const hash=await sha(text(token,'sign-in token',200)),now=Date.now(),session=newId()+newId(),sessionHash=await sha(session),expires=now+30*86400_000
  const results=await env.DB.batch([
-  env.DB.prepare('INSERT INTO cb_owner_sessions(token_hash,email,expires_at) SELECT ?,email,? FROM cb_owner_links WHERE token_hash=? AND used_at IS NULL AND expires_at>? AND EXISTS(SELECT 1 FROM cb_properties WHERE owner_email=cb_owner_links.email COLLATE NOCASE)').bind(sessionHash,expires,hash,now),
+  env.DB.prepare(`INSERT INTO cb_owner_sessions(token_hash,email,expires_at) SELECT ?,email,? FROM cb_owner_links WHERE token_hash=? AND used_at IS NULL AND expires_at>? AND (EXISTS(SELECT 1 FROM cb_properties WHERE owner_email=cb_owner_links.email COLLATE NOCASE) OR EXISTS(SELECT 1 FROM cb_owner_statement_grants g JOIN cb_records s ON s.id=g.statement_id AND s.kind='statements' WHERE g.email=cb_owner_links.email COLLATE NOCASE AND g.revoked_at IS NULL AND json_extract(s.data,'$.status')='approved' AND json_extract(s.data,'$.ownerEmail')=g.email COLLATE NOCASE))`).bind(sessionHash,expires,hash,now),
   env.DB.prepare('UPDATE cb_owner_links SET used_at=? WHERE token_hash=? AND used_at IS NULL AND expires_at>?').bind(now,hash,now),
  ])
  need(results[0].meta.changes===1,'This sign-in link has expired or was already used. Request another link.',401)
@@ -43,6 +40,6 @@ export async function signOutOwner(request:Request,env:Bindings){
  return `${cookieName}=; Path=/owners; HttpOnly; SameSite=Lax; Max-Age=0`
 }
 export async function ownerCsv(env:Bindings,email:string,id:string){
- const s=(await portalState(env,email)).statements.find(s=>s.id===id);need(s,'Approved statement not found',404)
+ const s=await authorizedStatement(env,email,id);await recordStatementAccess(env,email,[s],'download')
  return approvedStatementCsv(s)
 }

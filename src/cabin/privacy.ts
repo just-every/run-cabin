@@ -1,3 +1,4 @@
+import { eraseOwnerProperty } from './owners/privacy'
 import { eraseProfiles } from './guests/erase'
 import { eraseGuest } from './audit/privacy'
 import { eraseProviderSource } from './movein/provider-erasure'
@@ -31,6 +32,7 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
   await eraseProviderSource(c,id)
+  eraseOwnerProperty(c,id)
   c.queries.push(query("DELETE FROM cb_photos WHERE turnover_id IN (SELECT id FROM cb_records WHERE kind IN ('turnovers','tasks') AND json_extract(data,'$.propertyId')=?)",id),query('DELETE FROM cb_approvals WHERE record_id IN (SELECT id FROM cb_records WHERE json_extract(data,\'$.propertyId\')=?)',id),query("DELETE FROM cb_records WHERE json_extract(data,'$.propertyId')=?",id),query('DELETE FROM cb_import_revisions WHERE property_id=?',id),query('DELETE FROM cb_direct_stays WHERE property_id=?',id),query('DELETE FROM cb_direct_homes WHERE property_id=?',id),query('DELETE FROM cb_properties WHERE id=?',id),query("INSERT INTO cb_erasure_fences(entity,id_hash,at) VALUES('property',?,?)",await sha(id),c.now))
   // Reviewed source bytes live only in these plans and kit custody. Remove any
   // review containing this property; kit retains anonymous source tombstones.

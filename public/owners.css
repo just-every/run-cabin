@@ -52,3 +52,12 @@ td{padding:10px 10px 10px 0;border-bottom:1px solid #eef1f4}
  tr{padding:10px 0;border-bottom:1px solid #e4e9ed}td{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border:0}
  .mobile-label{display:inline;color:var(--rer-muted);font-size:12px}
 }
+/* Owner agreements, decisions and personal-stay forms. */
+select,textarea{width:100%;min-height:42px;padding:8px 12px;border:1px solid #d2d9df;border-radius:10px;background:var(--rer-surface);font:14px var(--rer-font-body);color:var(--rer-text)}
+textarea{min-height:72px;resize:vertical}
+h3{font-size:15px;line-height:1.4;margin:18px 0 6px;overflow-wrap:anywhere}
+.section>p,.section>ul{margin-top:12px}.explanation{margin:14px 0;font-size:13px}
+.owner-record{margin-top:16px;padding-top:4px;border-top:1px solid #e4e9ed}.owner-record form{max-width:520px}
+.date-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card p,.card li,.top-actions p{overflow-wrap:anywhere}.section .download{line-height:1.4;padding:10px 14px}
+@media(max-width:480px){.date-fields{grid-template-columns:1fr}.figures{grid-template-columns:1fr}.metric.total{grid-column:auto}}
