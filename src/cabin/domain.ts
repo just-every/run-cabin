@@ -50,7 +50,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
   data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
-  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
+  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({blockUse:_use,guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
   data.properties=data.properties.filter(p=>propertyIds.has(p.id)).map(p=>({...p,ownerName:'',ownerEmail:'',commissionBps:0}))
   data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=data.recoveries.filter(r=>turnoverIds.has(r.turnoverId)).map(r=>({...r,proposal:r.proposal?{...r.proposal,creditCents:0,extraCleaningCents:0,guestText:'',baseline:''}:undefined,previous:undefined,offerUrl:undefined,offerId:undefined,guestAcceptedAt:undefined,balanceCents:undefined,appliedBaseline:undefined}))
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]

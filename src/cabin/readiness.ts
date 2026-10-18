@@ -1,3 +1,4 @@
+import { occupancy } from './blocks'
 import { arrivalChecks } from './readiness/records'
 import type { AccessCode, Booking, Data, Property, Task, Turnover } from './model'
 import { codeState } from './codes'
@@ -12,8 +13,8 @@ export interface HomeReadiness { property: Property; state: 'ready' | 'not-ready
 const stay = (b: Booking) => (b.kind ?? 'stay') === 'stay' && b.status === 'confirmed'
 const live = (t: Turnover) => t.status !== 'draft' && t.status !== 'cancelled'
 export function homeReadiness(s: Pick<Data, 'properties' | 'bookings' | 'turnovers' | 'tasks' | 'codes' | 'homeSettings' | 'members' | 'readinessPlans' | 'readinessRecords'>, p: Property, day: string, now = Date.now()): HomeReadiness {
- const stays = s.bookings.filter(b => b.propertyId === p.id && stay(b)).sort((a, b) => a.start.localeCompare(b.start))
- const arrival = stays.find(b => b.start.slice(0, 10) >= day) ?? null
+ const stays = s.bookings.filter(b => b.propertyId === p.id && b.status==='confirmed' && occupancy(b)).sort((a, b) => a.start.localeCompare(b.start))
+ const arrival = stays.find(b => stay(b) && b.start.slice(0, 10) >= day) ?? null
  const before = arrival ? stays.filter(b => b.end.slice(0, 10) <= arrival.start.slice(0, 10)).at(-1) : stays.filter(b => b.end.slice(0, 10) <= day).at(-1)
  const turnover = (before && s.turnovers.find(t => t.bookingId === before.id && live(t))) || null
  const blockers = s.tasks.filter(t => t.propertyId === p.id && t.status === 'open' && t.blocking)

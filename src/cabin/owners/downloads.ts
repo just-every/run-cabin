@@ -18,6 +18,8 @@ export async function ownerRecordsCsv(env:Bindings,email:string,propertyId:strin
  for(const r of s.issues.filter(r=>r.propertyId===propertyId))rows.push([r.id,r.title,r.blocking?'Yes':'No',r.raisedAt])
  rows.push([],['Personal stay','Arrival','Checkout','Status','Decision'])
  for(const r of s.stayRequests.filter(r=>r.propertyId===propertyId))rows.push([r.id,r.start,r.end,r.status,r.decisionNote])
+ rows.push([],['Owner-use block','Arrival','Checkout','Agreed cleaning USD cents','Status','Reason'])
+ for(const b of s.blockUses.filter(b=>b.propertyId===propertyId))rows.push([b.id,b.start,b.end,b.cleaningCents,b.cleaningStatus,b.reason])
  rows.push([],['Ledger entry','Effective date','Recorded transaction','Account','Debit USD cents','Credit USD cents'])
  for(const r of s.ledgerEntries.filter(r=>r.propertyId===propertyId))for(const l of r.lines)rows.push([r.id,r.effectiveDate,r.sourceType,l.label,l.debitCents,l.creditCents])
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'

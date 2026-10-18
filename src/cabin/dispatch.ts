@@ -1,3 +1,4 @@
+import { occupancy } from './blocks'
 import { accessBlocked } from './agreements/records'
 import { type Booking, type Context, type HomeSettings, type Turnover, newId, need } from './model'
 import { homeSettings } from './homes'
@@ -15,7 +16,7 @@ import { synchronizeDispatch, reconcileAccepted, offerEligible } from './dispatc
 // window and an email. A moved stay moves its turnover, codes and email; a
 // cancelled one cancels them. Stays that checked out before today start nothing.
 const nights = (b: Booking) => ({ first: b.start.slice(0, 10), checkout: b.end.slice(0, 10) })
-const isStay = (b: Booking) => (b.kind ?? 'stay') === 'stay'
+const isStay = occupancy
 export const liveTurnover = (c: { data: { turnovers: Turnover[] } }, bookingId: string) => c.data.turnovers.find(t => t.bookingId === bookingId && t.status !== 'draft' && t.status !== 'cancelled')
 const activeCleaner = (c: Context, id: string | null) => id ? c.data.members.find(m => m.id === id && m.active && m.role === 'cleaner') ?? null : null
 
@@ -55,7 +56,7 @@ export function dispatch(c: Context) {
   const current = nights(b).checkout >= localDay(now, s.timeZone)
   if (!current && !t) continue
   const stay = { validFrom: `${nights(b).first}T${b.arrivalTime ?? s.checkInTime}`, validUntil: checkoutTime(s, b) }, guest = codes.find(r => r.holder === 'guest')
-  if(accessBlocked(c.data,b.id)){if(guest)revoke(guest,'Current rental agreement must be signed')}
+  if(b.kind==='block'||accessBlocked(c.data,b.id)){if(guest)revoke(guest,'Current rental agreement must be signed')}
   else if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
   const w = windowOf(c, s, b)
   if (!t) {

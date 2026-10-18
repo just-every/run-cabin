@@ -1,3 +1,4 @@
+import { blockEditor } from './blocks'
 import { h, form, hidden, select, panel, empty, heading, propertyName } from './shared'
 import { addDays, channelName, nights, span } from '../inventory'
 import { ARRIVAL_DAYS, stayLabel, time12 } from './calendar-grid'
@@ -7,14 +8,14 @@ const input = (name: string, label: string, type: string, attrs = '') => `<label
 export function requestForms(s: any) {
   const homes = s.properties.map((p: any) => [p.id, p.name])
   const stay = form('reservation.request', 'reservations', hidden('kind', 'stay') + select('propertyId', 'Home', homes) + select('channel', 'Requested on', [['direct', 'Direct (phone, email or your site)'], ['airbnb', 'Airbnb'], ['vrbo', 'Vrbo'], ['booking.com', 'Booking.com']]) + input('guestName', 'Guest name', 'text', 'required maxlength="120" autocomplete="off"') + `<div class="pair">${input('guestEmail', 'Guest email (optional)', 'email', 'maxlength="254" autocomplete="off"')}${input('guestPhone', 'Guest phone (optional)', 'tel', 'maxlength="40" autocomplete="off"')}</div>` + `<div class="pair">${input('start', 'Arrival', 'date', 'required')}${input('end', 'Checkout', 'date', 'required')}</div>` + input('arrivalTime', 'Arrival time (optional)', 'time'), 'Check and hold these nights')
-  const block = form('reservation.request', 'reservations', hidden('kind', 'block') + select('propertyId', 'Home', homes) + `<div class="pair">${input('start', 'First night', 'date', 'required')}${input('end', 'Open again on', 'date', 'required')}</div>` + input('note', 'Reason (owner stay, maintenance…)', 'text', 'maxlength="300"'), 'Block these nights')
+  const block = form('reservation.request', 'reservations', hidden('kind', 'block') + select('purpose','Block purpose',[['maintenance','Maintenance'],['owner','Owner personal stay']])+select('propertyId', 'Home', homes) + `<div class="pair">${input('start', 'First night', 'date', 'required')}${input('end', 'Open again on', 'date', 'required')}</div>` + input('note', 'Reason (owner stay, maintenance…)', 'text', 'maxlength="300" required'), 'Block these nights')
   return `<section class="panel" id="request"><h2>Take a request</h2><p class="muted">Cabin declines a request that overlaps any held night and says why; an accepted one closes on every channel at their next sync. Answering requests inside Airbnb, Vrbo and Booking.com needs their partner APIs, which come later.</p>${stay}</section>` + panel('Block nights', block)
 }
 export function decisions(s: any) {
   const rows = [...s.requests].sort((a: any, b: any) => b.requestedAt.localeCompare(a.requestedAt)).slice(0, 12).map((r: any) => {
     const held = r.bookingId && s.bookings.find((b: any) => b.id === r.bookingId && b.status === 'confirmed' && b.source === 'request')
     const what = r.kind === 'block' ? `Block ${span(r)}` : `${channelName(r.channel)} request ${span(r)} · ${h(r.guestName)}`
-    return `<article class="record decision ${r.status}"><p class="chip ${r.status === 'declined' ? 'chip-bad' : 'chip-good'}"><span class="dot"></span>${h(r.status === 'declined' ? 'Declined' : r.kind === 'block' ? 'Blocked' : 'Accepted')}</p><p><strong>${what}</strong> · ${h(propertyName(s, r.propertyId))}</p>${r.reason ? `<p class="reason">${h(r.reason)}</p>` : ''}${held ? form('reservation.cancel', 'reservations', hidden('id', held.id), r.kind === 'block' ? 'Remove block' : 'Cancel hold', 'class="danger"') : ''}</article>`
+    return `<article class="record decision ${r.status}"><p class="chip ${r.status === 'declined' ? 'chip-bad' : 'chip-good'}"><span class="dot"></span>${h(r.status === 'declined' ? 'Declined' : r.kind === 'block' ? 'Blocked' : 'Accepted')}</p><p><strong>${what}</strong> · ${h(propertyName(s, r.propertyId))}</p>${r.reason ? `<p class="reason">${h(r.reason)}</p>` : ''}${held && !held.blockUse ? form('reservation.cancel', 'reservations', hidden('id', held.id), r.kind === 'block' ? 'Remove block' : 'Cancel hold', 'class="danger"') : ''}</article>`
   }).join('')
   return panel('Recent requests', rows || empty('Requests and blocks you take appear here with Cabin’s decision.'))
 }
@@ -31,5 +32,5 @@ export function reservations(s: any) {
   const today = new Date().toISOString().slice(0, 10)
   const lead = heading('Vacation rental operations', 'Reservations', 'Take a phone, email or channel request, block nights for an owner stay or maintenance, and keep each arrival’s guest details and arrival time.')
   if (!s.properties.length) return lead + panel('Take a request', empty('Add a home in Properties & people, or use Move in, to begin.'))
-  return lead + `<div class="columns">${requestForms(s)}</div><div class="columns">${decisions(s)}${arrivals(s, today, addDays(today, ARRIVAL_DAYS))}</div>`
+  return lead + blockEditor(s)+`<div class="columns">${requestForms(s)}</div><div class="columns">${decisions(s)}${arrivals(s, today, addDays(today, ARRIVAL_DAYS))}</div>`
 }

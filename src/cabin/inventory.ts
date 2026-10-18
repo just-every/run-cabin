@@ -1,4 +1,5 @@
 import { type Context, type Booking, type Channel, type Request, need, text, newId, manager, property } from './model'
+import { blockUse, changeBlock, cancelBlock } from './blocks'
 import { emailOf, phoneOf } from './inbox/threads'
 // One unit/night inventory per home: every confirmed booking or block holds its
 // nights [first night, checkout). Commits are serialised by cb_meta's version
@@ -42,15 +43,20 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
   const hit = held(c, prop.id).find(b => overlaps(b, { start, end }))
   const row: Request = { id: newId(), revision: newId(), propertyId: prop.id, channel: ch, kind, start, end, guestName, arrivalTime: kind === 'stay' ? arrival(p.arrivalTime) : null, note, status: hit ? 'declined' : 'accepted', reason: hit ? `Overlaps ${describe(hit)}` : null, overlaps: hit?.id ?? null, bookingId: null, requestedBy: c.actor.id, requestedAt: c.now }
   if (!hit) {
-   const booking: Booking = { id: newId(), revision: newId(), uid: `cabin-${row.id}`, start, end, summary: kind === 'block' ? note || 'Blocked' : guestName, cancelled: false, kind, propertyId: prop.id, channel: ch, status: 'confirmed', approvedAt: c.now, source: 'request', ...(kind === 'stay' ? { guestName, ...contact(p) } : {}), ...(row.arrivalTime ? { arrivalTime: row.arrivalTime } : {}) }
+   const use = kind === 'block' ? await blockUse(c, prop, p, note) : undefined
+   const booking: Booking = { id: newId(), revision: newId(), uid: `cabin-${row.id}`, start, end, summary: kind === 'block' ? note || 'Blocked' : guestName, cancelled: false, kind, propertyId: prop.id, channel: ch, status: 'confirmed', approvedAt: c.now, source: 'request', ...(use ? {blockUse:use} : {}), ...(kind === 'stay' ? { guestName, ...contact(p) } : {}), ...(row.arrivalTime ? { arrivalTime: row.arrivalTime } : {}) }
    c.data.bookings.push(booking); row.bookingId = booking.id
   }
   c.data.requests.push(row); c.entityId = row.id; return row
+ }
+ if (name === 'block.edit') {
+  manager(c.actor); const b=c.data.bookings.find(b=>b.id===text(p.id,'block ID'));need(b,'Block not found',404);property(c,b.propertyId);return changeBlock(c,b,p)
  }
  if (name === 'reservation.cancel') {
   manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b, 'Booking not found', 404); property(c, b.propertyId);need(!c.data.tasks.some(t=>t.work?.blockId===b.id),'This inventory belongs to a maintenance work order. Complete and inspect the work before reopening it.',409)
   need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Review its payment and deposit in Direct bookings before changing inventory.', 409)
   need(b.source === 'request', 'Cancel a channel stay on the channel; its next sync reopens the nights.', 409); need(b.status === 'confirmed', 'This hold is already cancelled', 409)
+  if(b.blockUse)return cancelBlock(c,b,p);
   Object.assign(b, { status: 'cancelled', cancelled: true, revision: newId(), approvedAt: c.now }); c.entityId = b.id; return b
  }
  if (name === 'booking.details') {

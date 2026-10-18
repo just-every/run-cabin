@@ -38,7 +38,8 @@ export async function portalState(env:Bindings,email:string,requestedMonth?:stri
   return legs.length?[{account,label,debitCents:legs.reduce((n,l)=>n+l.debitCents,0),creditCents:legs.reduce((n,l)=>n+l.creditCents,0)}]:[]
  })}))
  const version=await env.DB.prepare('SELECT version FROM cb_meta WHERE id=1').first<{version:number}>();need(version?.version===data.version,'Records changed. Refresh your owner portal.',409)
- return {reserves:scopedReserves(data,email,await reserveReports(env.DB)),email,month,properties,bookings,statements,performance,documents,expenses,stayRequests,issues,ledgerEntries,ledgerBalances}
+ const blockUses=data.bookings.filter(b=>ids.has(b.propertyId)&&b.blockUse&&(b.blockUse.purpose==='owner'||records.stayRequests.some(r=>r.bookingId===b.id&&sameEmail(r.email,email)))&&sameEmail(b.blockUse.ownerEmail,email)).map(b=>({propertyId:b.propertyId,id:b.id,start:b.start,end:b.end,...b.blockUse!,cleaningStatus:data.turnovers.some(t=>t.bookingId===b.id&&t.status==='completed')?'completed · payable recorded':b.status==='cancelled'?'cancelled · no cleaning charge':'pending completion'}))
+ return {blockUses,reserves:scopedReserves(data,email,await reserveReports(env.DB)),email,month,properties,bookings,statements,performance,documents,expenses,stayRequests,issues,ledgerEntries,ledgerBalances}
 }
 export async function authorizedStatement(env:Bindings,email:string,id:string):Promise<Statement>{
  const s=(await portalState(env,email)).statements.find(s=>s.id===id);need(s,'Approved statement not found',404);return s

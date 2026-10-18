@@ -2,6 +2,7 @@ import { reserveCommand } from './reserves'
 import { type Context, type Actor, need, text, newId, query, manager, owner, property, exact } from '../model'
 import { assertLive } from '../storage'
 import { peopleCommand } from '../people'
+import { changeBlock } from '../blocks'
 import { reservationCommand } from '../inventory'
 import { ownerRecords, sameEmail, optionalText, numberInput, policyFor, stayDates } from './records'
 
@@ -20,6 +21,7 @@ export async function ownerCommand(c:Context,name:string,input:Record<string,unk
   const visibility=text(input.calendarVisibility,'calendar visibility');need(['hidden','availability','stays'].includes(visibility),'Choose calendar visibility')
   const revision=newId(),expenseLimit=input.approvalLimitUsd===undefined?numberInput(input.expenseLimitCents,'expense approval limit in cents'):usd(input.approvalLimitUsd,'expense approval limit'),maxStay=numberInput(input.maxStayNights,'maximum personal stay nights',0,365),notice=numberInput(input.noticeDays,'notice days',0,365),agreement=text(input.agreement,'agreed owner access terms',2000)
   c.queries.push(query('INSERT INTO cb_owner_policies(property_id,email,revision,calendar_visibility,expense_limit_cents,max_stay_nights,notice_days,agreement,updated_at,updated_by) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(property_id) DO UPDATE SET email=excluded.email,revision=excluded.revision,calendar_visibility=excluded.calendar_visibility,expense_limit_cents=excluded.expense_limit_cents,max_stay_nights=excluded.max_stay_nights,notice_days=excluded.notice_days,agreement=excluded.agreement,updated_at=excluded.updated_at,updated_by=excluded.updated_by',p.id,p.ownerEmail,revision,visibility,expenseLimit,maxStay,notice,agreement,c.now,c.actor.id))
+  c.queries.push(query('UPDATE cb_owner_policies SET cleaning_cents=? WHERE property_id=?',input.cleaningUsd===undefined?numberInput(input.cleaningCents??old?.cleaningCents??0,'owner-use cleaning cents'):usd(input.cleaningUsd,'owner-use cleaning'),p.id))
   audit('owner-policy',p.id,p.id);return {id:p.id,revision}
  }
  if(name==='owner.statement.grant'||name==='owner.statement.revoke'){
@@ -65,10 +67,15 @@ export async function ownerCommand(c:Context,name:string,input:Record<string,unk
   const r=rows.expenses.find(r=>r.id===text(input.id,'expense ID'));need(r,'Expense not found',404);exact(r,input.revision);need(r.status==='pending','This expense already has a decision',409)
   c.queries.push(query("UPDATE cb_owner_expenses SET status='withdrawn',revision=?,decided_at=?,decision_note=? WHERE id=?",newId(),c.now,text(input.reason,'withdrawal reason',1000),r.id));audit('owner-expense',r.id,r.propertyId,'revoked');return {id:r.id}
  }
+ if(name==='owner.stay.edit'){
+  const r=rows.stayRequests.find(r=>r.id===text(input.id,'stay request ID'));need(r?.status==='approved'&&r.bookingId,'Choose an approved block',409);exact(r,input.revision);
+  const b=c.data.bookings.find(b=>b.id===r.bookingId);need(b,'Block not found',404);const changed=changeBlock(c,b,{...input,revision:b.revision});
+  const revision=newId();c.queries.push(query('UPDATE cb_owner_stay_requests SET start=?,end=?,note=?,revision=? WHERE id=?',changed.start,changed.end,changed.blockUse!.reason,revision,r.id));audit('owner-stay',r.id,r.propertyId);return {id:r.id,revision}
+ }
  if(name==='owner.stay.cancel'){
   const r=rows.stayRequests.find(r=>r.id===text(input.id,'stay request ID'));need(r,'Stay request not found',404);exact(r,input.revision);need(r.status==='approved'&&r.bookingId,'Choose an approved personal stay',409)
   const booking=c.data.bookings.find(b=>b.id===r.bookingId&&b.propertyId===r.propertyId&&b.kind==='block');need(booking,'Personal stay block not found',409)
-  if(booking.status==='confirmed')await reservationCommand(c,'reservation.cancel',{id:booking.id})
+  if(booking.status==='confirmed')await reservationCommand(c,'reservation.cancel',{id:booking.id,revision:booking.revision})
   const revision=newId();c.queries.push(query("UPDATE cb_owner_stay_requests SET status='cancelled',revision=?,decided_at=?,decided_by=?,decision_note=? WHERE id=?",revision,c.now,c.actor.id,text(input.reason,'cancellation reason',1000),r.id))
   audit('owner-stay',r.id,r.propertyId,'cancelled');return {id:r.id,revision,status:'cancelled'}
  }
@@ -79,7 +86,7 @@ export async function ownerCommand(c:Context,name:string,input:Record<string,unk
   if(input.decision==='approve'){
    const p=property(c,r.propertyId);need(sameEmail(p.ownerEmail,r.email),'Ownership changed. Decline this request and ask the current owner to request again.',409)
    stayDates(c.data,policyFor(rows.policies,p),r,new Date(c.now))
-   const hold=await reservationCommand(c,'reservation.request',{propertyId:p.id,kind:'block',start:r.start,end:r.end,note:'Owner personal stay'})
+   const hold=await reservationCommand(c,'reservation.request',{propertyId:p.id,kind:'block',start:r.start,end:r.end,note:r.note||'Owner personal stay',purpose:r.purpose,ownerEmail:r.email})
    need(hold&&'bookingId' in hold&&hold.status==='accepted','Those nights are no longer available. Review the calendar.',409);bookingId=hold.bookingId
   }
   const status=input.decision==='approve'?'approved':'declined',revision=newId()
