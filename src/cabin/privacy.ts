@@ -1,3 +1,5 @@
+import { eraseVerification } from './verification/retention'
+import { cases } from './verification/records'
 import { eraseOwnerProperty } from './owners/privacy'
 import { eraseProfiles } from './guests/erase'
 import { eraseGuest } from './audit/privacy'
@@ -30,6 +32,8 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
   const bookingIds=new Set(c.data.bookings.filter(b=>b.propertyId===id).map(b=>b.id));eraseProfiles(c,new Set(c.data.guests.filter(g=>bookingIds.has(g.bookingId)).map(g=>g.id)))
   for(const g of c.data.guests){g.facts=g.facts.filter(f=>!f.propertyIds.includes(id));g.consents=g.consents.filter(v=>v.propertyId!==id)}
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
+  await eraseVerification(c,bookingIds)
+  for(const v of cases(c.data).filter(v=>bookingIds.has(v.bookingId))){ids.push(v.id,'guest:'+v.bookingId)}
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
   await eraseProviderSource(c,id)
   eraseOwnerProperty(c,id)

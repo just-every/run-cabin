@@ -13,6 +13,8 @@ import { seal } from '../seal'
 import { homeSettings } from '../homes'
 import { instant } from '../clock'
 import type { DirectStay } from './types'
+import { policyFor,riskReasons } from '../verification/policy'
+import { createVerification,saveVerification } from '../verification/records'
 export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>) {
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
  const credentials=await stripeCredentials(env)
@@ -21,15 +23,20 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   const home=(await homes(env.DB)).find(h=>h.enabled&&h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
   const price=quote(home,c.data.bookings,input,undefined,offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
-  need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate');need(!home.requireIdentity||input.identityConsent==='yes','Consent to the ID check before continuing')
+  need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate')
+  const owner=await c.db.prepare("SELECT id,email FROM oa_operators WHERE status='active' AND role='owner' LIMIT 1").first<{id:string;email:string}>();need(owner,'Installation owner unavailable',409)
+  const identityPolicy=policyFor(home,owner,env.AUTH_ORIGIN),identityReasons=riskReasons(identityPolicy,{start:price.start,createdAt:c.now},price.totalCents,price.guests,Date.parse(c.now)),requiresIdentity=identityReasons.length>0
+  need(!requiresIdentity||input.identityConsent==='yes','Consent to the identity requirement before continuing')
   if(offer)redeemOffer(c,offer,input,bookingId)
   const managementTerms=managementFor(c.data,home.propertyId,price.start);need(!input.managementVersion||input.managementVersion===managementTerms.id,'The management agreement changed. Review a fresh quote.',409);price.managementVersion=managementTerms.id
   const profile=c.data.propertyProfiles.find(p=>p.propertyId===home.propertyId);need(!profile||price.guests<=profile.occupancyLimit,'Guest count exceeds the property occupancy limit')
   const settings=homeSettings(c,home.propertyId),arrivalAt=new Date(instant(price.start+'T'+settings.checkInTime,settings.timeZone)).toISOString(),departureAt=new Date(instant(price.end+'T'+settings.checkOutTime,settings.timeZone)).toISOString()
   const rentalTemplate=c.data.rentalTemplates.find(t=>t.propertyId===home.propertyId),version=rentalTemplate?templateVersion(rentalTemplate):undefined
   const agreement=bookingAgreement(home,price,version)
-  const row:DirectStay={id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(home.requireIdentity?'consented to Stripe Identity.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
+  const row:DirectStay={id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(requiresIdentity?'consented to identity verification with a manual-review alternative.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
   c.data.bookings.push({id:bookingId,revision:newId(),uid:`cabin-direct-${id}`,propertyId:home.propertyId,channel:'direct',managementTerms:structuredClone(managementTerms),kind:'block',start:price.start,end:price.end,summary:'Direct checkout hold',status:'confirmed',cancelled:false,approvedAt:c.now,source:'request'})
+  row.requireIdentity=requiresIdentity
+  const verification=createVerification(c,bookingId,home.propertyId,identityPolicy,identityReasons,price.end);if(requiresIdentity){verification.consentAt=c.now;verification.consentMethod='stripe';saveVerification(c,verification)}
   await recordCheckout(c,row)
   c.queries.push(query('INSERT INTO cb_direct_stays(id,property_id,token_hash,data) VALUES(?,?,?,?)',id,home.propertyId,tokenHash,JSON.stringify(row)));c.entityId=id;return row
  })

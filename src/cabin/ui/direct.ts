@@ -1,3 +1,4 @@
+import { verificationPolicyFields,verificationQueue } from '../verification/ui'
 import { agreementPanel } from '../agreements/ui'
 import { dateLabel,timeLabel,identityLabel,depositLabel,activeDeposit,arrival } from '../direct/presentation'
 import { homeSettings as homeSettingsOf } from '../homes'
@@ -52,7 +53,7 @@ function homeSettings(state: any, property: any) {
     + `<div class="pair">${optional('taxLabel', 'State tax label (for example, Maine lodging tax)', home.taxLabel)}${percent('taxBps', 'State tax rate', home.taxBps)}</div>`
     + `<div class="pair">${optional('countyTaxLabel', 'County tax label', home.countyTaxLabel)}${percent('countyTaxBps', 'County tax rate', home.countyTaxBps)}</div>`
     + '<h3>Guest agreement and identity</h3>' + area('agreement', 'Agreement guests must sign', home.agreement, 'maxlength="20000"')
-    + check('requireIdentity', 'Require a Stripe identity check before confirmation', home.requireIdentity)
+    + verificationPolicyFields(state,home)
   return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
 }
 
@@ -106,6 +107,7 @@ export function direct(state: any) {
     + stripeSetup(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
     + agreementPanel(state)
+    + verificationQueue(state)
     + panel('Direct stays', stays.map((stay: any) => stayRecord(state, stay)).join('') || empty('Direct booking holds and completed stays will appear here.'))
 }
 

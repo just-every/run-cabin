@@ -137,3 +137,50 @@ test('direct booking refuses minimum nights, orphan gaps, changed terms and cros
   try{await home(managed);const no=await managed.send('/book/pine-ridge/checkout',{});assert.equal(no.status,409);assert.match(no.value.error,/not available yet/)}finally{await managed.close()}
  }finally{await h.close()}
 })
+
+test('WEB-004 risk policy assigns failed checks, offers consented manual review and fences access and erased links',async()=>{
+ let redacted=false
+ const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fixture'},outbound:async request=>{
+  const path=new URL(request.url).pathname
+  if(path==='/v1/identity/verification_sessions')return Response.json({id:'vs_review',status:'requires_input',url:'https://verify.stripe.com/start/review'})
+  if(path==='/v1/identity/verification_sessions/vs_review/redact'){redacted=true;return Response.json({id:'vs_review',redaction:{status:'redacted'}})}
+  if(path==='/v1/identity/verification_sessions/vs_review')return Response.json({id:'vs_review',status:'requires_input',last_error:{code:'document_unverified_other'}})
+  assert.fail('Unexpected provider request '+path)
+ }})
+ try{
+  const manager=await h.person('Reviewer','manager'),other=await h.person('Other','manager'),cleaner=await h.person('Cleaner')
+  let homeConfig=await home(h)
+  const policy={identityMode:'risk',identityLeadDays:0,identityMinGuests:3,identityMinTotalDollars:0,identityReviewerId:manager.id,identityBlockAccess:true,identityBeforeConfirmation:false,identityRetentionDays:1}
+  homeConfig=await h.cmd('direct.configure',{...settings,...policy,propertyId:homeConfig.propertyId,revision:homeConfig.revision})
+  const request=await h.cmd('reservation.request',{propertyId:homeConfig.propertyId,channel:'airbnb',guestName:'Alex Example',guestEmail:'alex@stay.example',start:day(3),end:day(6)})
+  let s=await h.state(),v=s.verifications.find(v=>v.bookingId===request.bookingId)
+  assert.ok(v.reasons.some(reason=>reason.includes('unavailable')),'missing channel party size requires review, rather than pretending a low risk')
+  assert.equal(v.policy.reviewerId,manager.id)
+  assert.equal(s.codes.filter(c=>c.bookingId===request.bookingId&&c.holder==='guest'&&c.status==='issued').length,0)
+  const raw=JSON.parse((await h.db.prepare('SELECT data FROM cb_verifications WHERE id=?').bind(v.id).first()).data),link='/book/verification/'+raw.token
+  const post=async(action,body)=>h.mf.dispatchFetch(h.origin+link+'/'+action,{method:'POST',headers:{origin:h.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),redirect:'manual'})
+  assert.equal((await post('stripe',{})).status,400)
+  assert.equal((await post('stripe',{consent:'yes'})).status,303)
+  assert.equal((await post('refresh',{})).status,200)
+  s=await h.state();v=s.verifications.find(row=>row.id===v.id);assert.equal(v.status,'requires_input')
+  assert.equal((await post('manual',{consent:'yes'})).status,200)
+  s=await h.state();v=s.verifications.find(row=>row.id===v.id)
+  const decision={id:v.id,revision:v.revision,outcome:'approved',method:'In-person check by assigned manager',reference:'Front desk appointment',reason:'Guest matched the reservation identity during the agreed manual review.'}
+  await h.cmd('direct.verification.decide',decision,other.cookie,403)
+  const limited=(await h.state(other.cookie)).verifications.find(row=>row.id===v.id)
+  assert.equal(limited.provider,undefined);assert.equal(limited.decision,undefined);assert.equal(limited.token,undefined)
+  assert.equal((await h.state(cleaner.cookie)).verifications?.length??0,0)
+  await h.cmd('direct.configure',{...settings,...policy,identityMode:'none',propertyId:homeConfig.propertyId,revision:homeConfig.revision})
+  assert.equal((await h.state()).verifications.find(row=>row.id===v.id).policy.mode,'risk','an existing reservation keeps its policy snapshot')
+  await h.cmd('direct.verification.decide',decision,manager.cookie)
+  await h.cmd('direct.verification.decide',decision,manager.cookie,409)
+  s=await h.state();assert.equal(s.verifications.find(row=>row.id===v.id).status,'approved')
+  assert.ok(s.codes.some(c=>c.bookingId===request.bookingId&&c.holder==='guest'&&c.status==='issued'))
+  const booking=s.bookings.find(b=>b.id===request.bookingId)
+  await h.cmd('privacy.erase',{entity:'guest',id:booking.id,revision:booking.revision})
+  assert.equal((await h.send(link)).status,404)
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  const erased=JSON.parse((await h.db.prepare('SELECT data FROM cb_verifications WHERE id=?').bind(v.id).first()).data)
+  assert.equal(erased.status,'erased');assert.equal(erased.provider,undefined);assert.equal(erased.decision,undefined);assert.ok(redacted)
+ }finally{await h.close()}
+})

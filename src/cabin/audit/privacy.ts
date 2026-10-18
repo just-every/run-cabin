@@ -1,3 +1,5 @@
+import { eraseVerification } from '../verification/retention'
+import { cases } from '../verification/records'
 import { eraseProfiles } from '../guests/erase'
 import { guestGroup } from '../guests/resolve'
 import { type Context, type Query, need, text, query, newId, sha } from '../model'
@@ -22,6 +24,8 @@ export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[
  for(const t of c.data.turnovers.filter(r=>ids.has(r.bookingId)||!!r.nextBookingId&&ids.has(r.nextBookingId))){subjects.add(t.id);if(t.completion)t.completion.caption='Guest identity erased'}
  for(const r of c.data.recoveries.filter(r=>ids.has(r.bookingId))){subjects.add(r.id);r.reason='Guest identity erased';r.history=r.history.map(h=>({...h,why:''}));if(r.proposal)Object.assign(r.proposal,{why:'Guest identity erased',guestText:'',baseline:''});delete r.previous;delete r.appliedBaseline;r.revision=newId()}
  for(const d of await stays(c.db))if(ids.has(d.bookingId)){subjects.add(d.id);subjects.add('guest:'+d.id);d.guestName='Erased guest';d.email='';delete d.checkoutUrl;delete d.bookingLinkSealed;saveStay(c,d);c.queries.push(query('UPDATE cb_direct_stays SET token_hash=? WHERE id=?',await sha(newId()),d.id))}
+ for(const v of cases(c.data).filter(v=>ids.has(v.bookingId))){subjects.add(v.id);subjects.add('guest:'+v.bookingId)}
+ await eraseVerification(c,ids)
  // Retained vendor plans and their undo snapshots may contain the same contact.
  const plans=(await c.db.prepare('SELECT id,plan FROM cb_provider_moveins').all<{id:string;plan:string}>()).results
  for(const row of plans){const plan=JSON.parse(row.plan),guests=plan.guests??[],affected=guests.filter((g:any)=>email&&g.email?.toLowerCase()===email||phone&&g.phone===phone)

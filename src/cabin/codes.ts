@@ -1,4 +1,5 @@
-import { type AccessCode, type Context, type HomeSettings, newId } from './model'
+import { verificationAccessBlocked } from './verification/records'
+import { type AccessCode, type Context, type HomeSettings, newId, need } from './model'
 import { instant } from './clock'
 // Door codes: Cabin issues a four-digit code for each stay (the guest's, valid
 // check-in to check-out) and for each assigned turnover (the cleaner's, valid
@@ -14,6 +15,7 @@ export function digits(c: Context, propertyId: string, window: { validFrom: stri
 }
 const lockFor = (s: HomeSettings) => ({ state: s.lockDeviceId ? 'pending' : 'manual', providerId: null, error: null, at: null }) as AccessCode['lock']
 export function issue(c: Context, s: HomeSettings, fields: Pick<AccessCode, 'bookingId' | 'turnoverId' | 'holder' | 'memberId' | 'validFrom' | 'validUntil'>) {
+ need(fields.holder!=='guest'||!verificationAccessBlocked(c.data,fields.bookingId),'Guest identity verification must be resolved before issuing access.',409)
  const row: AccessCode = { id: newId(), revision: newId(), propertyId: s.propertyId, ...fields, code: digits(c, s.propertyId, fields), timeZone: s.timeZone, status: 'issued', reason: null, link: fields.holder === 'guest' ? token() : null, lock: lockFor(s), createdAt: c.now }
  c.data.codes.push(row); return row
 }

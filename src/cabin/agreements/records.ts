@@ -1,3 +1,5 @@
+import { verificationAccessBlocked } from '../verification/records'
+import type { VerificationData } from '../verification/types'
 import { type Booking,type Context,newId,sha,need } from '../model'
 import { homeSettings } from '../homes'
 import type { DirectStay } from '../direct/types'
@@ -6,8 +8,8 @@ import { accessMessage } from './access'
 
 export const agreementOf=(data:{rentalAgreements?:RentalAgreement[]},bookingId:string)=>data.rentalAgreements?.find(a=>a.bookingId===bookingId)
 export const currentDocument=(a:RentalAgreement)=>a.documents.find(d=>d.id===a.currentVersion)!
-export const accessBlocked=(data:{rentalAgreements?:RentalAgreement[]},bookingId:string)=>{
- const a=agreementOf(data,bookingId);return !!a?.required&&a.blockAccess&&!currentDocument(a)?.signature
+export const accessBlocked=(data:{rentalAgreements?:RentalAgreement[]}&VerificationData,bookingId:string)=>{
+ const a=agreementOf(data,bookingId);return verificationAccessBlocked(data,bookingId)||!!a?.required&&a.blockAccess&&!currentDocument(a)?.signature
 }
 export function templateVersion(t:RentalTemplate){const v=t.versions.find(v=>v.id===t.currentVersion);need(v,'Agreement template version is missing',409);return v}
 export function newAgreement(c:Context,b:Booking,t:RentalTemplate):RentalAgreement {

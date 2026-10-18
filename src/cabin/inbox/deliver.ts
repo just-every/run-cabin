@@ -44,7 +44,7 @@ const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, '
 async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ status: GuestMessage['status']; detail: string | null; providerId: string | null }> {
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {
-  if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Current rental agreement must be signed before guest instructions can be sent.',providerId:null}
+  if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Required agreement and identity tasks must be resolved before guest access instructions can be sent.',providerId:null}
   if (m.channel === 'sms') { if (!smsAccount(env) || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; const r = await sendSms(env, m.phone, m.text); return { status: 'sent', detail: null, providerId: r.providerId } }
   if (m.channel !== 'email') {
    const hotel = b ? inbox.channelIds[b.propertyId] : undefined

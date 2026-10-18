@@ -1,4 +1,6 @@
+import type { VerificationPolicy } from '../verification/types'
 export interface DirectHome {
+ verificationPolicy?:VerificationPolicy;
  propertyId:string; revision:string; enabled:boolean; slug:string; description:string;
  nightlyCents:number; cleaningCents:number; extraGuestCents:number; includedGuests:number; maxGuests:number;
  minNights:number; maxNights:number; minGapNights:number; depositCents:number; releaseHours:number;

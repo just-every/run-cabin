@@ -1,3 +1,4 @@
+import { verificationState } from './verification/records'
 import { workOrderCommand } from './work-orders/commands'
 import { managementCommand } from './properties/terms'
 import { propertyProfileCommand } from './properties/profile'
@@ -60,6 +61,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
+ data.verifications=verificationState(data,actor) as typeof data.verifications
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
  const state={...data,taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state

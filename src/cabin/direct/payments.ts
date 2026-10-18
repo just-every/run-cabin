@@ -9,6 +9,10 @@ import { activeDeposit } from './presentation'
 import { queueConfirmation } from './confirmation'
 import { deliverGuestMessages } from '../inbox/deliver'
 import type { DirectStay } from './types'
+import { verificationOf,resolved,saveVerification } from '../verification/records'
+import { load } from '../storage'
+import { verificationDue } from '../verification/retention'
+import { startVerification,reconcileVerification } from '../verification/provider'
 const update=async(env:Bindings,id:string,action:string,change:(s:DirectStay)=>void,actor=DIRECT_SYSTEM)=>mutate(env.DB,actor,action,async c=>{const s=await stay(env.DB,id);change(s);saveStay(c,s);return s})
 export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYSTEM) {
  let s=await stay(env.DB,id)
@@ -28,7 +32,8 @@ export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYS
  if(!s.paymentMessageId)s=await mutate(env.DB,DIRECT_SYSTEM,'direct.receipt',async c=>{const row=await stay(env.DB,id);await queueConfirmation(env,c,row,'payment');saveStay(c,row);return row})
  if(failure){await deliverGuestMessages(env);throw failure}
  const deferred=!!s.depositDueAt&&Date.now()<Date.parse(s.depositDueAt)
- const ready=(!s.requireIdentity||s.identity?.status==='verified')&&(!s.quote.depositCents||deferred||activeDeposit(s))
+ const verification=await mutate(env.DB,DIRECT_SYSTEM,'direct.verification.checked',async c=>{const v=verificationOf(c.data,s.bookingId);if(v)await reconcileVerification(env,c,v);return v})
+ const ready=(verification?(!verification.policy.requireBeforeConfirmation||resolved(verification)):!s.requireIdentity||s.identity?.status==='verified')&&(!s.quote.depositCents||deferred||activeDeposit(s))
  if(ready&&s.phase==='paid')s=await mutate(env.DB,DIRECT_SYSTEM,'direct.confirmed',async c=>{
   const row=await stay(env.DB,id);need(row.phase==='paid'||row.phase==='confirmed','This stay is no longer awaiting confirmation',409)
   row.phase='confirmed';delete row.error;const booking=c.data.bookings.find(b=>b.id===row.bookingId);need(booking&&booking.status==='confirmed','The booking hold is missing. Contact the host.',409)
@@ -40,6 +45,13 @@ export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYS
 async function expire(env:Bindings,id:string) {return mutate(env.DB,DIRECT_SYSTEM,'direct.expired',async c=>{const row=await stay(env.DB,id);need(!row.paymentId,'A paid stay cannot expire',409);row.phase='expired';const b=c.data.bookings.find(b=>b.id===row.bookingId);if(b)Object.assign(b,{status:'cancelled',cancelled:true,revision:newId()});saveStay(c,row);return row})}
 export async function identity(env:Bindings,id:string,token:string) {
  let s=await stay(env.DB,id);need(s.paymentId&&s.requireIdentity,'Pay for the stay before starting the required ID check',409)
+ const verification=verificationOf(await load(env.DB),s.bookingId)
+ if(verification?.token){
+  need(verification.consentAt&&verification.consentMethod==='stripe','Open your identity check page and consent before continuing',409)
+  const result=await startVerification({...env,DIRECT_STRIPE_MODE:s.paymentMode} as Bindings,verification)
+  await mutate(env.DB,DIRECT_SYSTEM,'direct.identity.started',async c=>{const v=verificationOf(c.data,s.bookingId)!;need(v.status!=='erased'&&!resolved(v),'Verification changed',409);v.provider=result.provider;v.status='requires_input';saveVerification(c,v);const row=await stay(env.DB,id);row.identity={id:result.provider.id,status:result.provider.status};saveStay(c,row)})
+  return result.url
+ }
  if(s.identity){const saved=await readIdentity(paymentEnv(env,s),s.identity.id);if(saved.url)return saved.url;need(saved.status!=='verified','Your ID check is already complete',409)}
  const actor:AuditActor={id:'guest:'+s.id,role:'guest',isAgent:false,operatorVersion:0},scope={kind:'direct-stay',id:s.id,propertyId:s.propertyId,bookingId:s.bookingId,revision:s.revision}
  await record(env.DB,actor,'guest.identity.request', {...scope,result:'pending'})
@@ -61,6 +73,7 @@ export async function settleDeposit(env:Bindings,actor:Actor,id:string,action:'r
  }catch(error){await update(env,id,'direct.deposit.error',row=>{row.error=(error as Error).message+' Refresh the payment status before submitting another action.'},actor);throw error}
 }
 export async function directDue(env:Bindings) {
+ await verificationDue(env)
  for(const row of await dueStays(env.DB))try{
   let s=row;s=await refresh(env,s.id)
   if(s.deposit?.status==='canceled'&&!s.checkedOutAt&&Date.now()<departure(s))await update(env,s.id,'direct.deposit.expired-alert',r=>{r.error='The damage authorization closed before checkout. No damage funds are secured. Ask the guest to renew it from their booking page.'})

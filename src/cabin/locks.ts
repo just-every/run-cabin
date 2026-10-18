@@ -1,3 +1,5 @@
+import { verificationAccessBlocked } from './verification/records'
+import { revoke } from './codes'
 import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
 import { type AccessCode, type LockState } from './model'
@@ -41,6 +43,8 @@ export async function pushLocks(env: Bindings) {
  if (!lockAccount(env)) return []
  const data = await load(env.DB), due = data.codes.filter(r => r.lock.state === 'pending').slice(0, 20), results = []
  for (const code of due) {
+  if(code.holder==='guest'&&code.status==='issued'&&verificationAccessBlocked(data,code.bookingId)){await mutate(env.DB,SYSTEM,'lock.verification.withheld',c=>{const current=c.data.codes.find(r=>r.id===code.id);if(current)revoke(current,'Guest identity verification unresolved')});continue}
+
   await record(env.DB,SYSTEM,'lock.requested',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:'requested'})
   const lock = await push(env, code, homeSettings({ data }, code.propertyId).lockDeviceId)
   await record(env.DB,SYSTEM,'lock.result',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:lock.state})
