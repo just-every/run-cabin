@@ -1,7 +1,7 @@
 import type { Booking, Data, GuestMessage, Scheduled } from '../model'
 import { homeSettings } from '../homes'
 import { instant } from '../clock'
-import { guestRoot, type GuestBook } from '../guests/resolve'
+import { guestRoot } from '../guests/resolve'
 import type { GuestData } from '../guests/types'
 // Reviewed guest links determine shared history. Unlinked contacts never merge profiles.
 export const emailOf = (value: unknown) => { const v = String(value ?? '').trim().toLowerCase(); return /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(v) && v.length <= 254 ? v : null }
@@ -13,7 +13,7 @@ export function phoneOf(value: unknown) {
  return e164 && /^\+[1-9]\d{7,14}$/.test(e164) ? e164 : null
 }
 const isStay = (b: Booking) => (b.kind ?? 'stay') === 'stay'
-export const guestKey = (b: Booking,data?:Partial<GuestData>) => (b as GuestBook).guestId ? `g:${guestRoot(data??{},(b as GuestBook).guestId!)?.id??(b as GuestBook).guestId}` : `b:${b.id}`
+export const guestKey = (b: Booking,data?:Partial<GuestData>) => { const origin=data?.guests?.find(g=>g.bookingId===b.id&&!g.erasedAt); return origin ? `g:${guestRoot(data??{},origin.id)?.id??origin.id}` : `b:${b.id}` }
 /** The stay a guest's message is about: their current or next stay, else their latest one. A stay is over once its home's check-out time passes, so on a changeover day the stay that starts wins over the one that just ended. */
 export function stayFor(data: Pick<Data, 'bookings' | 'homeSettings'> & Partial<GuestData>, who: { email?: string | null; phone?: string | null; bookingId?: string | null }, now = Date.now()) {
  if (who.bookingId) return data.bookings.find(b => b.id === who.bookingId) ?? null

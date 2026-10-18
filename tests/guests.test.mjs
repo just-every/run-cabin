@@ -25,7 +25,6 @@ test('GUEST-001: staff review identity matches, preserve provenance, restrict no
   const p=await property(h),a=await priorStay(h,p.id),b=await priorStay(h,p.id,'vrbo',-10)
   // Legacy installation fixture: reservations predate guest-profile records.
   await h.db.prepare("DELETE FROM cb_records WHERE kind='guests'").run()
-  await h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.guestId') WHERE kind='bookings'").run()
   await h.cmd('guest.sync',{})
   let state=await h.state(),ga=guestFor(state,a.bookingId),gb=guestFor(state,b.bookingId)
   assert.notEqual(ga.id,gb.id);assert.equal(ga.mergedInto,undefined);assert.equal(gb.mergedInto,undefined)

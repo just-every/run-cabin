@@ -1,6 +1,5 @@
-import type { Booking, Data } from '../model'
+import type { Data } from '../model'
 import type { GuestData, GuestProfile } from './types'
-export type GuestBook = Booking & {guestId?:string}
 export type GuestSource = Pick<Data,'bookings'> & Partial<GuestData>
 export function guestRoot(data:Pick<GuestSource,'guests'>,id:string):GuestProfile|undefined {
  const seen=new Set<string>();let profile=data.guests?.find(g=>g.id===id)
@@ -11,7 +10,7 @@ export function guestRoot(data:Pick<GuestSource,'guests'>,id:string):GuestProfil
 export function guestGroup(data:Pick<GuestSource,'guests'>,id:string) {
  const root=guestRoot(data,id);return root?(data.guests??[]).filter(g=>!g.erasedAt&&guestRoot(data,g.id)?.id===root.id):[]
 }
-export function guestBookings(data:GuestSource,id:string) {const ids=new Set(guestGroup(data,id).map(g=>g.id));return data.bookings.filter(b=>ids.has((b as GuestBook).guestId??''))}
+export function guestBookings(data:GuestSource,id:string) {const ids=new Set(guestGroup(data,id).map(g=>g.bookingId));return data.bookings.filter(b=>ids.has(b.id))}
 /** An explicit opt-out anywhere in the reviewed group wins; no consent is inferred from a booking. */
 export function consent(data:Pick<GuestSource,'guests'>,id:string,propertyId:string,purpose:'preferences'|'offers') {
  const decisions=guestGroup(data,id).map(g=>[...g.consents].reverse().find(c=>c.propertyId===propertyId&&c.purpose===purpose)).filter(Boolean)

@@ -11,7 +11,7 @@ export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct'
 /** A stay holds a guest; a block closes nights without one (a channel's "Not available", an owner stay or maintenance). */
 export interface CalendarEvent { uid: string; start: string; end: string; summary: string; cancelled: boolean; kind?: 'stay' | 'block'; guestName?: string }
 /** source 'request' marks a hold Cabin itself granted (reservation.request); feeds never remove it, and a feed's matching stay adopts it. */
-export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; guestId?: string; guestErasedAt?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string }
+export interface Booking extends CalendarEvent { id: string; revision: string; propertyId: string; channel: Channel; status: 'confirmed' | 'cancelled'; approvedAt: string; source?: 'feed' | 'request' | 'migration'; arrivalTime?: string; guestErasedAt?: string; collision?: string; guestEmail?: string; guestPhone?: string; channelRef?: string }
 /** A channel's iCal export URL that Cabin polls (SYNC-009). */
 export interface Connection { id: string; revision: string; propertyId: string; channel: Channel; url: string; intervalMinutes: number; status: 'pending' | 'ok' | 'stale'; error: string | null; lastAttemptAt: string | null; lastSuccessAt: string | null; lastChangeAt: string | null; nextPollAt: string; events: number; createdBy: string }
 /** The listing's secret export token; replacing it revokes every old link. */

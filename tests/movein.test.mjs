@@ -47,7 +47,7 @@ test('a host moves native provider exports into reconciled listings, guests and 
    const signed=await h.cmd('import.provider.signoff',{id:job.id,fingerprint:job.fingerprint,confirm:'yes'})
    assert.equal(signed.status,'signed-off')
    await h.cmd('import.provider.undo',{id:job.id})
-   state=await h.state();assert.equal(state.properties.length,0);assert.equal(state.bookings.length,0);assert.equal(state.connections.length,0)
+   state=await h.state();assert.equal(state.properties.length,0);assert.equal(state.bookings.length,0);assert.equal(state.connections.length,0);assert.ok(state.guests.every(g=>g.erasedAt&&g.identities.length===0&&g.facts.length===0&&g.consents.length===0),'undo leaves no active or personal guest origins')
    assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_opening_balances').first()).n,0)
    assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_movein_guests').first()).n,0)
    // A duplicate source row is named, excluded and remains visible in source

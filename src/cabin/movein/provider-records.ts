@@ -1,3 +1,4 @@
+import { syncGuests } from '../guests/sync'
 import { type Context, type Booking, type Connection, kinds, query, need, newId } from '../model'
 import { dispatch } from '../dispatch'
 import { scheduleMessages } from '../inbox/schedule'
@@ -5,7 +6,8 @@ import type { Normalized } from './providers'
 import { listingId } from './provider-plan'
 export interface Inventory { properties:unknown[]; records:{kind:string;id:string;data:string}[]; guests:{id:string;source_id:string;data:string}[]; balances:{id:string;property_id:string;source_id:string;owner_email:string;amount_cents:number;as_of:string}[] }
 export function capture(c:Context,ids:Set<string>):Inventory{
- return {properties:c.data.properties.filter(p=>ids.has(p.id)),records:kinds.flatMap(kind=>c.data[kind].filter(r=>'propertyId' in r&&ids.has(String(r.propertyId))).map(r=>({kind,id:r.id,data:JSON.stringify(r)}))),guests:[],balances:[]}
+ const bookings=new Set(c.data.bookings.filter(b=>ids.has(b.propertyId)).map(b=>b.id)),guests=new Set(c.data.guests.filter(g=>bookings.has(g.bookingId)).map(g=>g.id))
+ return {properties:c.data.properties.filter(p=>ids.has(p.id)),records:kinds.flatMap(kind=>c.data[kind].filter(r=>'propertyId' in r&&ids.has(String(r.propertyId))||kind==='guests'&&'bookingId' in r&&bookings.has(String(r.bookingId))||kind==='guestMerges'&&'fromId' in r&&'intoId' in r&&(guests.has(String(r.fromId))||guests.has(String(r.intoId)))).map(r=>({kind,id:r.id,data:JSON.stringify(r)}))),guests:[],balances:[]}
 }
 export function installRecords(c:Context,id:string,plan:Normalized):Inventory{
  const ids=new Set<string>()
@@ -27,7 +29,7 @@ export function installRecords(c:Context,id:string,plan:Normalized):Inventory{
   c.data.bookings.push(booking)
  }
  // Include the same automatic operations as a reservation created through any other public door.
- dispatch(c);scheduleMessages(c)
+ syncGuests(c);dispatch(c);scheduleMessages(c)
  const inventory=capture(c,ids)
  for(const guest of plan.guests){
   const row={id:`${id}:guest:${guest.externalId}`,source_id:guest.externalId,data:JSON.stringify(guest)}
@@ -50,9 +52,10 @@ export async function removeRecords(c:Context,id:string,inventory:Inventory){
   const dependency=await c.db.prepare('SELECT 1 FROM cb_direct_homes WHERE property_id=? UNION ALL SELECT 1 FROM cb_direct_stays WHERE property_id=? LIMIT 1').bind(propertyId,propertyId).first()
   need(!dependency,'An imported listing now has direct-booking configuration or stays. Undo is blocked.',409)
  }
+ const recordIds=new Set(inventory.records.map(r=>r.id))
  for(const kind of kinds){
   const rows=c.data[kind] as {id:string;propertyId?:string}[]
-  for(let i=rows.length-1;i>=0;i--)if(rows[i].propertyId&&ids.has(rows[i].propertyId!)){c.queries.push(query('DELETE FROM cb_records WHERE kind=? AND id=?',kind,rows[i].id));rows.splice(i,1)}
+  for(let i=rows.length-1;i>=0;i--)if(recordIds.has(rows[i].id)){c.queries.push(query('DELETE FROM cb_records WHERE kind=? AND id=?',kind,rows[i].id));rows.splice(i,1)}
  }
  c.data.properties=c.data.properties.filter(p=>!ids.has(p.id))
  c.queries.push(query('DELETE FROM cb_opening_balances WHERE movein_id=?',id),query('DELETE FROM cb_movein_guests WHERE movein_id=?',id))
