@@ -132,6 +132,8 @@
 .rer-themed .cabin form{display:grid;gap:14px;margin:0 0 12px}.rer-themed .cabin form:last-child{margin-bottom:0}
 .rer-themed .cabin label{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--ink-2)}
 .rer-themed .cabin input:not([type=checkbox]):not([type=hidden]):not([type=radio]):not([type=file]),.cabin select,.cabin textarea{width:100%;min-height:40px;padding:8px 12px;border:1px solid var(--field);border-radius:10px;background:var(--rer-surface);color:var(--ink);font:400 14px/1.4 var(--rer-font-body);transition:border-color .12s,box-shadow .12s}
+/* every single-choice select draws its chevron 14px in from the right border (two gradient strokes in the theme's muted ink: the theme CSP allows no data: images); multiple and size>1 lists keep their native look */
+.cabin select:not([multiple]):not([size]), .cabin select[size="1"]:not([multiple]) { -webkit-appearance: none; appearance: none; padding-inline-end: 40px; background-image: linear-gradient(to top right, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)), linear-gradient(to top left, transparent calc(50% - 1.1px), var(--rer-muted) calc(50% - .55px), var(--rer-muted) calc(50% + .55px), transparent calc(50% + 1.1px)); background-repeat: no-repeat; background-position: right 20px center, right 14px center; background-size: 6px 6px; }
 .cabin textarea{resize:vertical;line-height:1.5}
 .cabin textarea[name=calendar],.cabin textarea[name=csv],.cabin textarea[name=source]{font:13px/1.5 var(--rer-font-mono)}
 .rer-themed .cabin input:not([type=checkbox]):not([type=hidden]):not([type=radio]):hover,.cabin select:hover,.cabin textarea:hover{border-color:#b6c0c8}
