@@ -5,13 +5,14 @@ import { time12 } from '../clock'
 import { guestKey, threadId } from '../inbox/threads'
 import { GLYPHS, icon } from './icons'
 import { fitted, firstAndInitial, initials, lineForms, nameForms } from './fit'
+import { availability, bookingKind, bookingMoment, bookingReadiness, directStay, paymentState, readinessLabel } from './calendar-state'
 // What the timeline draws: a bar per stay or block in its channel's colour, a
 // dashed bar per declined request with Cabin's reason, a chip per turnover
 // with its cleaner and window, and runs of open nights at the direct rate.
 // Every bar opens its details (a popover, so nothing is cut off) with the
 // whole label, the dates, the door code and where to change it.
 export interface Item { a: number; z: number; html: (cls: string) => string; lane?: number; pop?: string; spill?: number }
-export interface View { from: string; today: string; days: number }
+export interface View { from: string; today: string; days: number; link?: (q: Record<string, string | number | null>) => string }
 const dayIndex = (from: string, day: string) => Math.round((Date.parse(day) - Date.parse(from)) / 86_400_000)
 const slug = (ch: string) => ch === 'booking.com' ? 'booking' : ch
 export const short = (d: string, weekday = false) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { ...(weekday ? { weekday: 'short' } : {}), month: 'short', day: 'numeric', timeZone: 'UTC' } as Intl.DateTimeFormatOptions)
@@ -35,14 +36,15 @@ export function stayBar(s: any, v: View, b: any, clash: Set<string>, arrivalsUnt
   const n = nights(b), at = placeAt(v, n.first, n.checkout); if (at.z <= at.a) return null
   const block = (b.kind ?? 'stay') === 'block', count = dayIndex(n.first, n.checkout), channel = channelName(b.channel)
   const fromFeed = b.channel !== 'direct' && block
-  const [name, ...rest] = String(block ? (b.channel === 'direct' ? b.summary || 'Blocked' : 'Blocked') : stayLabel(b)).split(' · ')
+  const kindLabel = bookingKind(s, b), payment = paymentState(s, b), readiness = bookingReadiness(s, b), checkout = directStay(s, b)
+  const [name, ...rest] = String(block ? (b.channel === 'direct' ? `${kindLabel}${checkout?.guestName ? ' · ' + checkout.guestName : b.summary ? ' · ' + b.summary : ''}` : 'Blocked') : stayLabel(b)).split(' · ')
   const named = !block && !!b.guestName
-  const paid = b.channel === 'direct' && !block ? s.direct?.stays?.find((d: any) => d.bookingId === b.id && ['paid', 'confirmed'].includes(d.phase)) : null
-  const settings = homeSettings(s, b.propertyId), arrives = b.arrivalTime ?? (block ? null : settings.checkInTime)
-  const parts = [...rest, plural(count, 'night'), ...(fromFeed || (!block && !named) ? [channel] : []), ...(paid ? [`${money(paid.quote.totalCents)} paid`] : []), ...(b.arrivalTime ? [`arrives ${time12(b.arrivalTime)}`] : [])]
+  const settings = homeSettings(s, b.propertyId)
+  const states = [payment.short, ...(!block ? [readinessLabel(readiness)] : [])].filter(Boolean)
+  const parts = [...rest, ...states, plural(count, 'night'), ...(fromFeed || (!block && !named) ? [channel] : []), ...(b.arrivalTime ? [`arrives ${time12(b.arrivalTime)}`] : [])]
   const code = !block && n.first >= v.today ? s.codes?.find((c: any) => c.bookingId === b.id && c.holder === 'guest' && c.status === 'issued') : null
   const others = CHANNELS.filter(ch => ch !== b.channel).map(channelName)
-  const title = `${channel} · ${block ? 'blocked' : stayLabel(b)} · ${span(b)}${clash.has(b.id) ? ' · overlaps another stay' : ''} · closed on ${others.slice(0, -1).join(', ')} and ${others.at(-1)}`
+  const title = `${channel} · ${block ? 'blocked' : stayLabel(b)} · ${span(b)}${clash.has(b.id) ? ' · overlaps another stay' : ''} · ${kindLabel}${states.length ? ' · ' + states.join(' · ') : ''} · ${availability(s, b.propertyId).label} · closed on ${others.slice(0, -1).join(', ')} and ${others.at(-1)}`
   const kind = block ? (b.channel === 'direct' ? 'block' : `block ch-${slug(b.channel)}`) : `ch-${slug(b.channel)}`
   const id = `stay-${b.id}`, nightsShort = `${count} nt${count === 1 ? '' : 's'}`
   // A named stay shortens to "Brooke S.", then initials; a stay its channel names nobody
@@ -50,13 +52,15 @@ export function stayBar(s: any, v: View, b: any, clash: Set<string>, arrivalsUnt
   const guest = !block && !!knownGuest(b)
   const first = guest ? [...new Set([name, ...firstAndInitial(name), ...nameForms(name, [initials(name), initials(name)[0]])])] : [name, '']
   const turnover = s.turnovers?.find((t: any) => t.bookingId === b.id && !['draft', 'cancelled'].includes(t.status))
+  const preparation = readiness?.turnover
+  const issues = s.tasks.filter((t: any) => t.propertyId === b.propertyId && t.status === 'open')
   const thread = !block && (b.guestEmail || b.guestPhone || s.messages?.some((m: any) => m.bookingId === b.id)) ? threadId(guestKey(b,s)) : null
   const source = block
     ? b.channel === 'booking.com' ? 'Booking.com’s calendar closes these nights (“CLOSED - Not available”) without saying whether a guest booked them, so Cabin keeps them as a block.' : b.channel === 'direct' ? 'Blocked in Cabin.' : `${channel}’s calendar marks these nights not available.`
     : b.source === 'request' ? `Taken in Cabin as a ${channel} ${b.channel === 'direct' ? 'booking' : 'request'}.` : b.source === 'migration' ? 'Moved in from your previous system.' : named ? `From the ${channel} calendar; the guest’s name was added in Cabin.` : `From the ${channel} calendar, which names no guest. Add the guest’s name under Reservations.`
   const details = pop(id, block ? `${name}${rest.length ? ' · ' + rest.join(' · ') : ''}` : stayLabel(b), `${channel} · ${short(n.first, true)} → ${short(n.checkout, true)} · ${plural(count, 'night')}`,
-    facts([['Check-in', block ? '' : `${short(n.first, true)}${arrives ? `, ${time12(arrives)}` : ''}`], ['Check-out', block ? '' : `${short(n.checkout, true)}, ${time12(settings.checkOutTime)}`], ['Door code', code ? `${code.code}` : ''], ['Paid', paid ? money(paid.quote.totalCents) : ''], ['Email', b.guestEmail ?? ''], ['Phone', b.guestPhone ? usPhone(b.guestPhone) : ''], ['Turnover', turnover ? `${turnover.cleanerId ? memberName(s, turnover.cleanerId) : 'No cleaner yet'}${turnover.windowStart ? ` · ${short(turnover.windowStart.slice(0, 10), true)}, ${time12(turnover.windowStart.slice(11, 16))}` : ''}` : ''], ['Overlap', clash.has(b.id) ? 'Another stay holds some of these nights' : '']]) + `<p class="pop-note">${h(source)}</p>`,
-    [...(!block && n.first >= v.today && n.first < arrivalsUntil ? [[`/app/reservations#${id}`, 'Guest details'] as [string, string]] : []), ...(thread ? [[`/app/inbox?thread=${thread}`, 'Messages'] as [string, string]] : []), ...(turnover ? [[`/app/turnovers#turnover-${turnover.id}`, 'Turnover'] as [string, string]] : [])])
+    facts([['Type', kindLabel], ['Check-in', block ? '' : bookingMoment(s, b, 'arrival')], ['Check-out', block ? '' : bookingMoment(s, b, 'departure')], ['Door code', code ? `${code.code}` : ''], ['Payment', payment.label], ['Readiness', readiness ? `${readinessLabel(readiness)}${readiness.reasons.length ? ' · ' + readiness.reasons.join(' · ') : ''}` : ''], ['Availability', availability(s, b.propertyId).label], ['Open issues', issues.length ? issues.map((t: any) => `${t.title}${t.blocking ? ' (blocks arrival)' : ''}`).join(' · ') : 'None recorded'], ['Email', b.guestEmail ?? ''], ['Phone', b.guestPhone ? usPhone(b.guestPhone) : ''], ['Turnover', turnover ? `${turnover.cleanerId ? memberName(s, turnover.cleanerId) : 'No cleaner yet'}${turnover.windowStart ? ` · ${short(turnover.windowStart.slice(0, 10), true)}, ${time12(turnover.windowStart.slice(11, 16))} (${settings.timeZone})` : ''}` : 'None recorded'], ['Overlap', clash.has(b.id) ? 'Another stay holds some of these nights' : '']]) + `<p class="pop-note">${h(source)}</p>`,
+    [[v.link ? v.link({ reservation: b.id }) : `/app/calendar?reservation=${encodeURIComponent(b.id)}`, 'Open reservation record'], ...(!block && n.first >= v.today && n.first < arrivalsUntil ? [[`/app/reservations#${id}`, 'Guest details'] as [string, string]] : []), ...(thread ? [[`/app/inbox?thread=${thread}`, 'Messages'] as [string, string]] : []), ...(preparation ? [[`/app/turnovers#turnover-${preparation.id}`, 'Before arrival'] as [string, string]] : []), ...(turnover ? [[`/app/turnovers#turnover-${turnover.id}`, 'Turnover'] as [string, string]] : [])])
   return { a: at.a, z: at.z, pop: details, html: cls => `<button type="button" class="bar ${kind}${guest ? '' : ' keep-mark'}${clash.has(b.id) ? ' clash' : ''}${at.cutStart ? ' cut-start' : ''}${at.cutEnd ? ' cut-end' : ''} ${cls}" title="${h(title)}" popovertarget="${h(id)}">${block && b.channel === 'direct' ? GLYPHS.block : GLYPHS[b.channel] ?? ''}<span class="t">${clash.has(b.id) ? '<em>Collision</em>' : ''}${fitted('b', first)}${fitted('small', guest ? lineForms(parts.join(' · '), [plural(count, 'night'), nightsShort, `${count}n`]) : [...new Set([parts.join(' · '), parts.filter(x => x !== channel).join(' · '), plural(count, 'night'), nightsShort, `${count}n`])])}${code ? `<small class="code">${icon('lock')}Code ${h(code.code)}</small>` : ''}<small class="when">${h(short(n.first, true))} → ${h(short(n.checkout, true))}</small></span></button>` }
 }
 
@@ -71,7 +75,7 @@ export function turnoverChip(s: any, v: View, t: any, width: number): Item | nul
   const who = none ? 'No cleaner' : cleaner ?? 'Cleaner'
   const by = t.windowEnd ? new Date(t.windowEnd.slice(0, 10) + 'T00:00:00Z').toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }) : ''
   const span = !start ? [] : oneDay ? [`${time12(start)}–${time12(end!)}`, `${hour(start)}–${hour(end!)}`] : [`${time12(start)}–${by} ${time12(end!)}`, `${hour(start)}–${by} ${hour(end!)}`, `${time12(start)} → ${by}`, time12(start), hour(start)]
-  const label = v.days === 28 ? `${fitted('b', [...new Set([who, initials(who)])])}${fitted('small', [...span, ''])}` : ''
+  const label = v.days >= 28 ? `${fitted('b', [...new Set([who, initials(who)])])}${fitted('small', [...span, ''])}` : ''
   const forms = !start ? [who] : oneDay ? [`${who} ${time12(start)}–${time12(end!)}`, `${who} ${hour(start)}–${hour(end!)}`, who] : [`${who} ${time12(start)}–${by} ${time12(end!)}`, `${who} ${hour(start)}–${by} ${hour(end!)}`, `${who} ${time12(start)} → ${by}`, `${who} ${time12(start)}`, who]
   const state = done ? 'ready' : draft ? 'draft for review' : none ? 'no cleaner yet' : 'scheduled'
   const title = `Turnover · ${none ? 'no cleaner yet' : memberName(s, t.cleanerId)} · ${state} · ${short(due, true)}${start ? ` ${time12(start)}` : ''}${end ? ` until ${t.windowEnd.slice(0, 10) === due ? '' : short(t.windowEnd.slice(0, 10), true) + ' '}${time12(end)}` : ''}${same ? ' · same-day turnover: the next guests arrive that day' : ''}`

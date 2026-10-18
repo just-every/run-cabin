@@ -1,13 +1,13 @@
 import { h, money, memberName, propertyName, approve, manager } from './shared'
 import { homeReadiness } from '../readiness'
-import { homeSettings } from '../homes'
 import { channelName } from '../inventory'
-import { when, between } from '../clock'
+import { between } from '../clock'
 import { statementMonth, statementStatus } from '../finance/presentation'
 import { guestOf, town, homeThumb } from './calendar-grid'
 import { type Step, panelDay as day, stepList } from './stay-steps'
 import { casePanel, liveCases } from './stay-case'
 import { icon } from './icons'
+import { bookingMoment } from './calendar-state'
 // Beside the calendar. A stay with a recovery case leads (stay-case.ts). With
 // none: the home whose next arrival is not ready yet, what already happened to
 // put it right (the turnover's history, door codes and the cleaner's email,
@@ -41,8 +41,8 @@ function waiting(s: any, propertyId: string | null) {
   return [...files, ...turnovers, ...statements] as { title: string; note: string; act: string; review: string; bad?: boolean }[]
 }
 const card = (w: { title: string; note: string; act: string; review: string; bad?: boolean }) => `<article class="ask${w.bad ? ' bad' : ''}"><div class="ask-text">${icon(w.bad ? 'alert' : 'agent')}<div><strong>${h(w.title)}</strong><p>${h(w.note)}</p></div></div><div class="actions">${w.act}<a class="button quiet" href="${h(w.review)}">Review</a></div></article>`
-export function stayPanel(s: any, today: string, until: string, homes: any[]) {
-  const all = homes.map((p: any) => homeReadiness(s, p, today)), shaky = all.filter(x => x.state !== 'ready' && (!x.arrival || x.arrival.start.slice(0, 10) < until)).sort((a, b) => (a.arrival?.start ?? '9999').localeCompare(b.arrival?.start ?? '9999'))
+export function stayPanel(s: any, today: string, homes: any[]) {
+  const all = homes.map((p: any) => homeReadiness(s, p, today)), shaky = all.filter(x => x.state !== 'ready').sort((a, b) => (a.arrival?.start ?? '9999').localeCompare(b.arrival?.start ?? '9999'))
   const count = homes.length > 1 ? `<span class="ready-count">${homes.length - shaky.length} of ${homes.length} ready</span>` : ''
   const cases = manager(s) ? liveCases(s, homes, today) : []
   if (cases.length) {
@@ -61,7 +61,7 @@ export function stayPanel(s: any, today: string, until: string, homes: any[]) {
   const statement = s.statements.filter((r: any) => r.propertyId === p.id).sort((a: any, b: any) => b.month.localeCompare(a.month))[0]
   return `<aside class="panel stay-panel" aria-label="Stay recovery"><header>${icon('spark')}<h2>Stay recovery</h2>${count}</header>
   <div class="stay-home">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}</div></div>
-  ${a ? `<p class="next">Next arrival <strong>${h(guestOf(a))}</strong> · ${h(channelName(a.channel))} · ${h(when(`${a.start.slice(0, 10)}T${a.arrivalTime ?? homeSettings(s, p.id).checkInTime}`))}</p>` : ''}
+  ${a ? `<p class="next">Next arrival <strong>${h(guestOf(a))}</strong> · ${h(channelName(a.channel))} · ${h(bookingMoment(s, a, 'arrival'))}</p>` : ''}
   <section><h3>${h(subject)} – ${h(x.reasons[0] ?? 'not ready')}</h3>${stepList(s, p.id, today, steps(s, x), open)}${t ? `<p class="more"><a href="/app/turnovers#turnover-${h(t.id)}">Open this turnover</a></p>` : ''}</section>
   ${asks.length || others.length ? `<section><h3>${asks.length ? 'Waiting for your approval' : 'Also waiting for you'}</h3>${(asks.length ? asks : others).slice(0, 2).map(card).join('')}</section>` : ''}
   ${statement ? `<section class="balance"><h3>${h(statementMonth(statement.month))} owner payout</h3><div class="money-line"><strong class="money">${h(money(statement.netCents))}</strong><span class="chip ${statement.status === 'approved' ? 'chip-good' : 'chip-wait'}"><span class="dot"></span>${h(statementStatus(statement.status))}</span></div><p class="muted">${h(statement.ownerName)} · management ${(statement.commissionBps / 100).toFixed(2)}% · <a href="/app/statements#statement-${h(statement.id)}">Statement</a></p></section>` : ''}

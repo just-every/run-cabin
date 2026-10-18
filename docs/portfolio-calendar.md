@@ -1,0 +1,9 @@
+# Portfolio calendar
+
+Calendar shows all homes by day, week, two weeks or a full calendar month (including its final nights). Earlier/Later steps one displayed period. Today uses the selected home's local day, or the first portfolio home's day when all are shown. From, Property and Channel filters retain their choices across navigation. A channel filter hides other channels' records, not their inventory allocations; it never turns hidden reservations into open nights.
+
+Select a stay or block for its payment/readiness state, dates and context, then Open reservation record. This durable URL works for past dates too. The record links overlapping reservations, before/after turnovers, maintenance and recovery cases, and channel sync details. Dates use the home's time zone, including the correct daylight-saving offset on each side of a stay; paid direct stays use their saved arrival/departure instants. Owner-use and maintenance reasons remain blocks with no invented guest revenue. Direct checkout holds remain explicitly unpaid or awaiting confirmation until their processor-backed requirements finish.
+
+A failed, pending, missing or overdue channel read shows availability stale/unknown. Previously held nights remain visible. Open-night price offers are suppressed until reads are current and no channel filter is hiding inventory. Polled iCal does not establish a channel closure guarantee. Missing payment data is labelled unknown, never paid; missing cleaning or field evidence never means ready.
+
+`tests/calendar.test.mjs` exercises a 20-home portfolio, filters, final-month nights, overlapping reservations through a DST change, source records, owner blocks, unpaid checkout, stale-read retention and recovery. The existing scheduled-iCal test explicitly requests a rolling two-week range now that Month means a calendar month.

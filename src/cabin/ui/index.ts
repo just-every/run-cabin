@@ -22,7 +22,7 @@ import { threads } from '../inbox/threads'
 import { icon } from './icons'
 import { recovery } from './recovery'
 
-export interface Extras { activity?:any; activityParams?:URLSearchParams; identity?: { idpSignIn?: boolean } | null; message?: string; error?: string; result?: any; from?: string | null; thread?: string | null; days?: string | null; home?: string | null }
+export interface Extras { activity?:any; activityParams?:URLSearchParams; identity?: { idpSignIn?: boolean } | null; message?: string; error?: string; result?: any; from?: string | null; thread?: string | null; days?: string | null; home?: string | null; channel?: string | null; reservation?: string | null }
 // The workspace shell: the left rail (brand, home switcher, the pages this
 // role may open, the signed-in person and calendar sync), then the page.
 // Below 900px the rail folds into a top bar whose menu opens without script.

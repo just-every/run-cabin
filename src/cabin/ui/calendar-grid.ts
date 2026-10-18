@@ -3,6 +3,7 @@ import { addDays, overlaps } from '../inventory'
 import { homeSettings } from '../homes'
 import { GLYPHS, icon } from './icons'
 import { type Item, declinedBar, openNights, short, stayBar, turnoverChip } from './calendar-items'
+import { availability } from './calendar-state'
 export { stayLabel, knownGuest, guestOf } from './calendar-items'
 // The timeline: one row per home, days across. Each home's row stacks its
 // stays and blocks first, then any declined requests, then a lane of turnover
@@ -11,7 +12,7 @@ export { stayLabel, knownGuest, guestOf } from './calendar-items'
 // Placement uses classes (cabin's CSP refuses inline styles): s-N and w-N set
 // the grid column, ln-N the lane, x-N today.
 export const DAYS = 28
-export const SPANS: [number, string][] = [[7, 'Week'], [14, '2 weeks'], [28, 'Month']]
+export const SPANS: [number, string][] = [[1, 'Day'], [7, 'Week'], [14, '2 weeks'], [28, 'Month']]
 /** The next two weeks: what Reservations lists as arrivals. */
 export const ARRIVAL_DAYS = 14
 /** Days a turnover chip spans at each view, so its cleaner and window can show. */
@@ -44,34 +45,36 @@ function lanes(items: Item[], first: number) {
   }
   return first + taken.length
 }
-export interface GridView { from: string; today: string; days: number; homes: any[]; link: (q: Record<string, string | number | null>) => string }
+export interface GridView { from: string; today: string; days: number; homes: any[]; channel?: string | null; previous: string; next: string; link: (q: Record<string, string | number | null>) => string }
 export function grid(s: any, v: GridView) {
   const { from, today, days } = v, end = addDays(from, days), arrivalsUntil = addDays(today, ARRIVAL_DAYS)
   const clash = new Set(collisions(s.bookings).flat().map(b => b.id))
   const dates = Array.from({ length: days }, (_, i) => addDays(from, i)), t = dayIndex(from, today)
   const months: [string, number, number][] = []
   dates.forEach((d, i) => { const m = new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }); if (months.at(-1)?.[0] === m) months.at(-1)![2]++; else months.push([m, i, 1]) })
-  const monthBar = `<div class="tl-months"><a class="step" href="${v.link({ from: addDays(from, -7) })}" aria-label="Earlier">${icon('back')}</a><div class="tl-grid d${days}">${months.map(([m, i, n]) => `<span class="month ${where(i, i + n)}">${h(n < 3 ? m.split(' ')[0] : m)}</span>`).join('')}</div><a class="step" href="${v.link({ from: addDays(from, 7) })}" aria-label="Later">${icon('chevron')}</a></div>`
+  const monthBar = `<div class="tl-months"><a class="step" href="${h(v.link({ from: v.previous, reservation: null }))}" aria-label="Earlier">${icon('back')}</a><div class="tl-grid d${days}">${months.map(([m, i, n]) => `<span class="month ${where(i, i + n)}">${h(n < 3 ? m.split(' ')[0] : m)}</span>`).join('')}</div><a class="step" href="${h(v.link({ from: v.next, reservation: null }))}" aria-label="Later">${icon('chevron')}</a></div>`
   const head = `<div class="tl-head"><span class="tl-label">${v.homes.length === s.properties.length ? `All ${s.properties.length} home${s.properties.length === 1 ? '' : 's'}` : h(v.homes[0]?.name ?? '')}</span><div class="tl-grid d${days}">${dates.map((d, i) => { const w = new Date(d + 'T00:00:00Z'); return `<span class="day ${where(i, i + 1)}${d === today ? ' today' : ''}${[0, 6].includes(w.getUTCDay()) ? ' weekend' : ''}"><abbr title="${h(w.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }))}">${h(w.toLocaleDateString('en-US', { weekday: days > 14 ? 'narrow' : 'short', timeZone: 'UTC' }))}</abbr><b>${w.getUTCDate()}</b>${d === today ? '<em>Today</em>' : ''}</span>` }).join('')}</div></div>`
   const pops: string[] = []
   const rows = v.homes.map((p: any) => {
-    const stays = s.bookings.filter((b: any) => b.propertyId === p.id && b.status === 'confirmed' && overlaps(b, { start: from, end })).sort((a: any, b: any) => a.start.localeCompare(b.start))
+    const current = availability(s, p.id)
+    const stays = s.bookings.filter((b: any) => b.propertyId === p.id && b.status === 'confirmed' && (!v.channel || b.channel === v.channel) && overlaps(b, { start: from, end })).sort((a: any, b: any) => a.start.localeCompare(b.start))
     const bars = stays.map((b: any) => stayBar(s, v, b, clash, arrivalsUntil)).filter(Boolean) as Item[]
-    const jobs = s.turnovers.filter((x: any) => x.propertyId === p.id && x.status !== 'cancelled' && !(x.status === 'draft' && s.turnovers.some((y: any) => y.bookingId === x.bookingId && y.status !== 'draft' && y.status !== 'cancelled'))).sort((a: any, b: any) => (a.windowStart ?? a.dueDate).localeCompare(b.windowStart ?? b.dueDate))
-    const chips = jobs.map((x: any) => turnoverChip(s, v, x, CHIP[days] ?? 2)).filter(Boolean) as Item[]
+    const jobs = s.turnovers.filter((x: any) => x.propertyId === p.id && x.status !== 'cancelled' && (!v.channel || s.bookings.some((b: any) => b.id === x.bookingId && b.channel === v.channel)) && !(x.status === 'draft' && s.turnovers.some((y: any) => y.bookingId === x.bookingId && y.status !== 'draft' && y.status !== 'cancelled'))).sort((a: any, b: any) => (a.windowStart ?? a.dueDate).localeCompare(b.windowStart ?? b.dueDate))
+    const chips = jobs.map((x: any) => turnoverChip(s, v, x, days >= 28 ? 4 : CHIP[days] ?? 2)).filter(Boolean) as Item[]
     // A chip gives way to the next one rather than stacking, down to two days.
     chips.forEach((c, i) => { const next = chips[i + 1]; if (next && next.a < c.z) c.z = Math.max(next.a, Math.min(c.z, c.a + 2)) })
-    const declined = s.requests.filter((r: any) => r.propertyId === p.id && r.status === 'declined' && overlaps(r, { start: from, end })).map((r: any) => declinedBar(s, v, r)).filter(Boolean) as Item[]
+    const declined = s.requests.filter((r: any) => r.propertyId === p.id && r.status === 'declined' && (!v.channel || r.channel === v.channel) && overlaps(r, { start: from, end })).map((r: any) => declinedBar(s, v, r)).filter(Boolean) as Item[]
     const direct = s.direct?.homes?.find((d: any) => d.propertyId === p.id)
-    const vacant = openNights(v, bars, direct?.enabled ? direct.nightlyCents : null)
+    const vacant = openNights(v, bars, !v.channel && current.state === 'fresh' && direct?.enabled ? direct.nightlyCents : null)
     const count = lanes(chips, lanes(declined, lanes([...bars, ...vacant], 1))) - 1, place = town(s, p.id)
     // A short declined request's reason runs on past its last night while its lane is free.
-    for (const d of declined) { const next = Math.min(days, ...declined.filter(o => o !== d && o.lane === d.lane && o.a >= d.z).map(o => o.a)); d.spill = Math.max(0, Math.min(next - d.z, (SPILL[days] ?? 0) - (d.z - d.a))) }
+    for (const d of declined) { const next = Math.min(days, ...declined.filter(o => o !== d && o.lane === d.lane && o.a >= d.z).map(o => o.a)); d.spill = Math.max(0, Math.min(next - d.z, (days >= 28 ? 7 : SPILL[days] ?? 0) - (d.z - d.a))) }
     for (const x of [...bars, ...declined]) if (x.pop) pops.push(x.pop)
-    const label = `<div class="tl-label">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}${direct ? `<span class="rate" title="${direct.enabled ? 'Direct booking nightly rate' : 'Direct nightly rate (booking page not published)'}">${h(money(direct.nightlyCents).replace(/\.00$/, ''))}/night</span>` : ''}</div></div>`
+    const label = `<div class="tl-label">${homeThumb(s, p)}<div><h3>${h(p.name)}</h3>${place ? `<p>${h(place)}</p>` : ''}${current.state !== 'fresh' ? `<p class="availability-${current.state}" title="${h(current.label)}">Availability ${current.state}</p>` : ''}${direct ? `<span class="rate" title="${direct.enabled ? 'Direct booking nightly rate' : 'Direct nightly rate (booking page not published)'}">${h(money(direct.nightlyCents).replace(/\.00$/, ''))}/night</span>` : ''}</div></div>`
     const now = t >= 0 && t < days ? `<i class="now x-${t + 1}" aria-hidden="true"></i>` : ''
     const items = [...bars, ...vacant, ...declined, ...chips].sort((x, y) => (x.lane! - y.lane!) || x.a - y.a)
-    return `<div class="tl-row">${label}<div class="tl-grid tl-track d${days} lanes-${count}">${now}${items.map(x => x.html(`${where(x.a, x.z + (x.spill ?? 0))}${x.spill ? ` spill nw-${x.z - x.a}` : ''} ln-${x.lane}`)).join('') || '<p class="tl-free">No stays in these dates</p>'}</div></div>`
+    const blank = current.state !== 'fresh' ? current.label : v.channel ? 'No matching stays · other channels may still hold nights' : 'No stays recorded in these dates'
+    return `<div class="tl-row">${label}<div class="tl-grid tl-track d${days} lanes-${count}">${now}${items.map(x => x.html(`${where(x.a, x.z + (x.spill ?? 0))}${x.spill ? ` spill nw-${x.z - x.a}` : ''} ln-${x.lane}`)).join('') || `<p class="tl-free">${h(blank)}</p>`}</div></div>`
   }).join('')
   const legend = `<p class="tl-legend"><span class="key ch-airbnb">${GLYPHS.airbnb}Airbnb</span><span class="key ch-vrbo">${GLYPHS.vrbo}Vrbo</span><span class="key ch-booking">${GLYPHS['booking.com']}Booking.com</span><span class="key ch-direct">${GLYPHS.direct}Direct</span><span class="key block">${GLYPHS.block}Blocked</span><span class="key declined">${icon('alert')}Request declined</span><span class="key k-turn"><i class="dot"></i>Turnover</span><span class="key k-same">${icon('turn')}Same-day turnover</span><span class="note">Airbnb’s calendar names every stay “Reserved” and Booking.com’s closes nights without a guest, so their bars show a guest only once you add one under Reservations. A night held on any channel closes on every other channel through Cabin’s calendar links. Select a bar for its details.</span></p>`
   return `<section class="panel tl-card" aria-label="Calendar of every home, ${h(short(from))} to ${h(short(addDays(from, days - 1)))}"><div class="tl-scroll" role="region" aria-label="Homes by day" tabindex="0"><div class="tl d${days}">${monthBar}${head}${rows}</div></div>${legend}${pops.join('')}</section>`

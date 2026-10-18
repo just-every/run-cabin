@@ -20,7 +20,8 @@
       "id": "channel-calendars",
       "clauses": [
         "CABIN-02",
-        "SYNC-009"
+        "SYNC-009",
+        "RES-001"
       ]
     },
     {

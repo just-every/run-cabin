@@ -87,7 +87,7 @@ function fitLabels() {
       if (mark && ((i === 0 && line.textContent !== forms[0] && !bar.classList.contains('keep-mark')) || !fits(line, box))) { bar.classList.add('no-mark'); line.textContent = pick() }
       used.add(line.textContent)
     }
-    if (code) code.hidden = box.scrollHeight > box.clientHeight + 0.5
+    if (code) { code.hidden = false; if (box.scrollHeight > box.clientHeight + 0.5) code.hidden = true }
     // A declined request's reason that runs past its nights: its dashed box widens to hold it.
     if (bar.classList.contains('spill')) {
       const right = Math.max(...lines.map(([line]) => { const r = document.createRange(); r.selectNodeContents(line); return r.getBoundingClientRect().right }))

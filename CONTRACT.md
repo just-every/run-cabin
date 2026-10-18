@@ -668,6 +668,8 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
+18 October 2026, RES-001: day/week/full-month portfolio navigation, property/channel filters, addressable authoritative reservation records, timezone-correct arrival/departure, payment, owner blocks, readiness, turnover, issues and sync freshness are implemented. Stale/unknown reads never show open-night offers. A 20-home product journey at 1440 and 390 includes a real unpaid Stripe test checkout. See `docs/portfolio-calendar.md`.
+
 18 October 2026, SYNC-009: independently named external iCal feeds import only blocks, with scheduled reconciliation, durable assigned failure exceptions, retained inventory and automatic recovery. The existing secret exports revoke on replacement. Self-hosted product screens and public-route tests exercise the workflow; RER Managed still requires its provider relay. See `docs/channel-calendars.md`.
 
 18 October 2026, FIN-008: source-led monthly state/county/city tax reviews, channel-remitted separation, documented exemptions/refunds, frozen accountant packets and human-recorded filing/payment evidence are implemented. The clause remains partial: no authorized statutory filing partner acceptance/payment proof, differing taxable bases or nonmonthly filing periods. See `docs/taxes.md`.
@@ -698,10 +700,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 13 | 47 | 29 | 89 |
-| All | 26 | 47 | 29 | 102 |
+| Target and push further | 14 | 46 | 29 | 89 |
+| All | 27 | 46 | 29 | 102 |
 
-**102 clauses: 26 done, 47 partial, 29 missing.**
+**102 clauses: 27 done, 46 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -733,7 +735,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `SYNC-008` | Inquiries, booking requests, special offers and alterations | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178) | Requests taken in Cabin are declined with the overlapping reservation named, or held; no inquiry states, channel deadlines, offers, alterations or channel-side answers (partner APIs). |
 | `SYNC-009` | Automatic iCal sync for channels without an API | target | done | `src/cabin/channels.ts`; `src/cabin/calendars.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/channels.ts`; `tests/calendars-sync.test.mjs`; `docs/channel-calendars.md` | |
 | `SYNC-010` | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
-| `RES-001` | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 143, 178) | A two-week homes-by-days grid with one row per channel, channel-coloured stays, blocks, closed nights and collisions at 1440 and 390. No day/month views, filters, payment, readiness or drill-down to a reservation record. |
+| `RES-001` | Portfolio calendar with operational context | target | done | `src/cabin/ui/calendar.ts`; `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar-state.ts`; `src/cabin/ui/calendar-detail.ts`; `public/calendar.css`; `tests/calendar.test.mjs`; `docs/portfolio-calendar.md` | |
 | `RES-002` | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
 | `RES-003` | Owner stays and maintenance blocks | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178) | Managers block nights with a reason; blocks hold inventory, publish to every channel's export link and can be removed. No owner portal, billable owner-use rules or readiness tasks. |
 | `RES-004` | Stay rules, fees and cancellation policies | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Per-home min/max nights, orphan gaps, occupancy, cleaning/extra-guest fees and tax-inclusive totals enforced through direct quote and checkout. Seasonal rates, buffers, cancellation policies and OTA restriction publication remain open. |
