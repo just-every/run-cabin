@@ -710,10 +710,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 33 | 27 | 29 | 89 |
-| All | 46 | 27 | 29 | 102 |
+| Target and push further | 34 | 26 | 29 | 89 |
+| All | 47 | 26 | 29 | 102 |
 
-**102 clauses: 46 done, 27 partial, 29 missing.**
+**102 clauses: 47 done, 26 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -817,5 +817,5 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-006` | Bounded action authority and durable agent cases | push-further | done | `src/cabin/recovery/`; `src/cabin/connections/mail.ts`; `src/cabin/locks.ts`; `src/cabin/ui/recovery.ts`; `tests/recovery-authority.test.mjs`; `tests/recovery.test.mjs`; `docs/recovery-authority.md` | Separate owner-granted per-home action/provider scopes, time windows and cumulative compensation/cleaning ceilings fence the native recovery agent. Exact plans bind current stay, recipient, inventory, cleaner and terms; changed grants require reviewed continuation. Durable queued/started/acknowledged/uncertain effects stop at pause/revoke and reconcile provider evidence across restart without blind resend. A $75 credit under $100 posts a balanced owner adjustment automatically; $150 waits unsent for a person. Native grant, automatic credit, actual authenticated guest mail, provider outcomes and pause/resume/revoke used at 1440 and 390. Uncertain lock responses are isolated at the network edge; no live-lock acceptance is claimed. Bearer keys stay draft-only and human signature, payout and readiness doors remain separate. |
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
-| `OPEN-001` | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |
+| `OPEN-001` | Free and open source under the MIT licence | target | done | `LICENSE`; `package.json`; `src/cabin/people.ts`; `src/cabin/connections/store.ts`; `src/cabin/connections/ui.ts`; `src/cabin/connections/security-ui.ts`; `docs/free-source.md` | Public MIT source installs and creates its local owner without an author account or key. An anonymous public clone was used with 40 homes, 25 active invited staff and all 20 linked product areas without an author payment/upgrade gate; browser requests stayed on localhost. Desktop/phone provider cost and source-term disclosure preceded a scoped owner authorization. Providers collect their own fees; Cabin collects none. This free-access clause does not complete other unfinished PMS target clauses. |
 | `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |

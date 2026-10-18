@@ -407,7 +407,7 @@
       "source": "editions/cabin/AGENTS.md"
     },
     "CONTRACT.md": {
-      "sha256": "ff890e762c41f48193b531b00a47be9d0633c698ce9df746ed9e870720031c5a",
+      "sha256": "db46081da91ec0ba436f41a6a5c1894e29004d664123b6f159026579ca613574",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "b513a8e80689ce3115092b6527ba97a610bbe08f0303921d96a543f2226fafc9",
+      "sha256": "3d04c5eefb6c3178f766e6d402cd0c3240b4a8c2a1f1b3383b2c86d0660780ba",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

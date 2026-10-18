@@ -172,6 +172,12 @@
       "clauses": [
         "PAY-003"
       ]
+    },
+    {
+      "id": "free-source-access",
+      "clauses": [
+        "OPEN-001"
+      ]
     }
   ],
   "nonGoals": [
