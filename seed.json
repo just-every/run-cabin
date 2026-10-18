@@ -165,6 +165,12 @@
       "clauses": [
         "AGENT-003"
       ]
+    },
+    {
+      "id": "reviewed-damage-and-refund-settlement",
+      "clauses": [
+        "PAY-003"
+      ]
     }
   ],
   "nonGoals": [

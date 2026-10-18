@@ -1,6 +1,8 @@
 import { type Context, sha } from '../model'
 import { post, contextJournals } from './store'
 import { debit as dr, credit as cr } from './types'
+import { stays } from '../direct/store'
+import { paymentLedger } from '../direct/settlement-ledger'
 /** Recovery is a payable credit, never invented cash movement. Undo reverses the exact original scope. */
 export async function postRecovery(c:Context,statement:{id:string;revision:string;propertyId:string;preparedAt:string;ownerEmail:string;reversalOf?:string;lines:{bookingId?:string;amountCents:number}[]}) {
  if(!c.data.ledgerSettings.some(s=>s.propertyId===statement.propertyId))return
@@ -14,11 +16,14 @@ export async function postRecovery(c:Context,statement:{id:string;revision:strin
 /** Reconcile provider-confirmed records only. Nothing manufactures a bank receipt. */
 export async function syncLedger(c:Context) {
  const configured=new Set(c.data.ledgerSettings.map(s=>s.propertyId))
+ const direct=await stays(c.db)
+ for(const s of direct)await paymentLedger(c,s)
  for(const s of c.data.statements.filter(s=>s.source==='recovery'&&s.status==='approved'))await postRecovery(c,s)
  for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&(!c.before.payouts.some(old=>old.id===p.id&&old.match===p.match&&old.bookingId===p.bookingId)))){
   if(!p.grossCents)continue
   const signed=(account:Parameters<typeof dr>[0],n:number,side:'dr'|'cr')=>n===0?[]:[(n>0===(side==='dr')?dr:cr)(account,Math.abs(n))]
-  const lines=[...signed('cash',p.netCents,'dr'),...signed('channelFees',p.feeCents,'dr'),...signed('ownerLiability',p.grossCents,'cr'),...signed('ownerLiability',p.feeCents,'dr'),...signed('channelFees',p.feeCents,'cr')]
+  const processor=p.source==='stripe'&&direct.some(s=>s.bookingId===p.bookingId&&s.paymentId===p.paymentId)
+  const lines=[...signed('cash',p.netCents,'dr'),...signed('channelFees',p.feeCents,'dr'),...signed(processor?'processorFunds':'ownerLiability',p.grossCents,'cr'),...signed('ownerLiability',p.feeCents,'dr'),...signed('channelFees',p.feeCents,'cr')]
   await post(c,{sourceKey:'payout:'+p.id,propertyId:p.propertyId!,bookingId:p.bookingId!,effectiveDate:await openDate(c,p.date),sourceType:'payout',sourceId:p.id,sourceRevision:p.revision,lines})
  }
 }

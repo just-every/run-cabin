@@ -24,7 +24,8 @@ export async function paymentBalance(c:Pick<Context,'db'|'data'>,b:Booking){
  const family=(j:typeof rows[number]):string=>j.reversalOf?(()=>{const original=rows.find(r=>r.id===j.reversalOf);return original?family(original):j.sourceType})():j.sourceType
  const received=rows.filter(j=>family(j)==='payment').reduce((n,j)=>n+j.lines.filter(l=>l.account==='receivable').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
  const refunded=rows.filter(j=>family(j)==='refund').reduce((n,j)=>n+j.lines.filter(l=>l.account==='cash').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
- const paidCents=received+(d?.paymentId?d.quote.totalCents:0)-refunded
+ const directRefunded=d?.refunds?.filter((r:any)=>r.status==='succeeded'&&r.kind!=='deposit').reduce((n:number,r:any)=>n+r.amounts.totalCents,0)??0
+ const paidCents=received+(d?.paymentId?d.quote.totalCents:0)-refunded-directRefunded
  const totalCents=b.lifecycle?.price?charge(b):d?.quote?.totalCents
  return {paidCents,totalCents:totalCents??null,balanceCents:totalCents===undefined?null:totalCents-paidCents}
 }
@@ -36,6 +37,8 @@ export async function syncReservationFinance(c:Context){
   l.allocation={agreementId:terms.id,grossCents:gross,commissionCents:commission,ownerCents:net-reserve,reserveCents:reserve,owners:model.owners.map((o,i)=>({name:o.name,amountCents:parts[i]}))}
   const old=c.before.bookings.find(o=>o.id===b.id),direct=await c.db.prepare("SELECT data FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first<{data:string}>(),d=direct?JSON.parse(direct.data):null,previous=old?.lifecycle?.price?charge(old):d?.paymentId?d.quote.totalCents:0,delta=gross-previous
   const transferred=old&&old.propertyId!==b.propertyId
+  // Paid direct stays recognize provider funds and actual refunds in their own settlement journals.
+  if(d?.paymentId)continue
   if((!delta&&!transferred)||!c.data.ledgerSettings.some(s=>s.propertyId===b.propertyId))continue
   const amount=transferred?gross:Math.abs(delta)
   if(transferred)for(const original of (await contextJournals(c)).filter(j=>j.bookingId===b.id&&j.propertyId===old.propertyId&&j.sourceType==='reservation-charge'&&!j.reversalOf)){

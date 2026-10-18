@@ -140,12 +140,22 @@ export async function readPayment(env: StripeEnv, id: string) {
  return stripe(env, objectPath('payment_intents', id), 'GET', { 'expand[0]': 'latest_charge' })
 }
 
-export async function releaseDeposit(env: StripeEnv, id: string) {
- return stripe(env, `${objectPath('payment_intents', id)}/cancel`, 'POST', { cancellation_reason: 'requested_by_customer' }, requestKey(env, 'release', id))
+export async function releaseDeposit(env: StripeEnv, id: string, attempt?:string) {
+ return stripe(env, `${objectPath('payment_intents', id)}/cancel`, 'POST', { cancellation_reason: 'requested_by_customer' }, requestKey(env, 'release', attempt??id))
 }
 
-export async function captureDeposit(env: StripeEnv, id: string, amountCents: number) {
- return stripe(env, `${objectPath('payment_intents', id)}/capture`, 'POST', { amount_to_capture: amount(amountCents) }, requestKey(env, 'capture-single', id))
+export async function captureDeposit(env: StripeEnv, id: string, amountCents: number, attempt?:string) {
+ return stripe(env, `${objectPath('payment_intents', id)}/capture`, 'POST', { amount_to_capture: amount(amountCents) }, requestKey(env, 'capture-single', attempt??id))
+}
+
+export function createRefund(env:StripeEnv,input:{id:string;stayId:string;paymentId:string;amountCents:number}){
+ return stripe(env,'/refunds','POST',{payment_intent:input.paymentId,amount:amount(input.amountCents),reason:'requested_by_customer','metadata[stayId]':input.stayId,'metadata[cabinRefundId]':input.id},requestKey(env,'refund',input.id))
+}
+export function readRefund(env:StripeEnv,id:string){return stripe(env,objectPath('refunds',id))}
+/** Search all pages, including after Stripe's idempotency retention window. Never blindly resubmit an uncertain refund. */
+export async function paymentRefunds(env:StripeEnv,paymentId:string){
+ const rows:any[]=[];let after=''
+ for(;;){const page=await stripe(env,'/refunds','GET',{payment_intent:paymentId,limit:'100',...(after?{starting_after:after}:{})});need(Array.isArray(page.data),'Stripe returned an invalid refund list',502);rows.push(...page.data);if(!page.has_more)return rows;need(page.data.length&&page.data.at(-1).id!==after,'Stripe refund pagination did not advance',502);after=page.data.at(-1).id}
 }
 
 /** Uses Stripe Identity's hosted verification flow. */

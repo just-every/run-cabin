@@ -6,6 +6,7 @@ import { homeSettings } from '../homes'
 import { instant } from '../clock'
 import { managementFor } from '../properties/terms'
 import { stays,saveStay } from '../direct/store'
+import { unsettled } from '../direct/refund-calculation'
 import { price,policy } from './finance'
 import { lifecycle } from './history'
 const commands=new Set(['reservation.create','reservation.amend','reservation.end','reservation.reconcile'])
@@ -40,6 +41,8 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
  exact(b,p.revision);need(name==='reservation.reconcile'||b.status==='confirmed','This reservation has already ended',409);fence(c,b)
  if(name==='reservation.reconcile'){need(l.sourceConflict,'No source conflict to reconcile',409);need(p.resolution==='keep'||p.resolution==='source','Choose the reviewed source or the current revision');if(p.resolution==='source'){const incoming=l.sourceConflict;const next={...b,start:incoming.start,end:incoming.end};if(!incoming.cancelled)availability(c,next);Object.assign(b,next,{summary:incoming.summary,status:incoming.cancelled?'cancelled':'confirmed',cancelled:incoming.cancelled,revision:newId(),approvedAt:c.now});l.sourceReview=false}delete l.sourceConflict;c.entityId=b.id;return b}
  const direct=(await stays(c.db)).find(s=>s.bookingId===b.id)
+ need(!direct||!unsettled(direct),'A refund is awaiting Stripe reconciliation. Resolve it before changing the stay.',409)
+ need(!direct||!direct.deposit?.action||['succeeded','canceled'].includes(direct.deposit.status),'A damage settlement is awaiting Stripe reconciliation.',409)
  need(!direct||direct.phase==='confirmed','Finish or expire the checkout before amending the confirmed stay',409)
  if(direct&&!l.price){l.price={rentCents:direct.quote.rentCents,feesCents:direct.quote.cleaningCents+direct.quote.extraGuestCents,taxCents:direct.quote.taxes.reduce((n,t)=>n+t.amountCents,0),totalCents:direct.quote.totalCents}}
  if(b.source==='feed'){l.sourceReview=true;l.sourceOrigin??={propertyId:b.propertyId,channel:b.channel,uid:b.uid,connectionId:b.connectionId,snapshot:{start:b.start,end:b.end,summary:b.summary}}}
@@ -56,6 +59,7 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
  }else{
   const target=property(c,p.propertyId??b.propertyId),next={...b,...dates(p),propertyId:target.id};availability(c,next)
   const changedHome=target.id!==b.propertyId
+  need(!direct||!changedHome,'A paid direct stay retains its original payment and owner scope. Settle it before creating a reservation for another home.',409)
   if(changedHome){
    for(const code of c.data.codes.filter(code=>code.bookingId===b.id&&code.status==='issued')){code.status='revoked';code.reason='Reservation moved to a different home';code.revision=newId()}
    for(const job of c.data.turnovers.filter(job=>job.bookingId===b.id&&job.status!=='cancelled')){job.status='cancelled';job.cancelReason='Reservation moved to a different home';job.revision=newId()}

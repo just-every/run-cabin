@@ -5,10 +5,13 @@ import { assess } from './calculate'
 import { sourceCommand } from './sources'
 import { taxData } from './store'
 import type { TaxData, Config } from './types'
+import { contextJournals } from '../ledger/store'
+import { debit,credit } from '../ledger/types'
+import { directJournal,refundTaxLines,paymentLedger } from '../direct/settlement-ledger'
 /** Imports the actual frozen paid quote; never recalculates a historical receipt with today's rate. */
 export async function directSource(c:Context,data:TaxData,p:Record<string,unknown>){
  const receipt=await stay(c.db,text(p.stayId,'paid direct stay'))
- need(receipt.paymentId&&receipt.phase==='confirmed','Only a provider-confirmed paid direct reservation can supply tax evidence',409)
+ need(receipt.paymentId&&['confirmed','cancelled'].includes(receipt.phase),'Only a provider-confirmed paid direct reservation can supply tax evidence',409)
  const quote=receipt.quote as Quote&{taxConfiguration?:Config[];taxConfigurationDigest?:string},frozen=quote.taxConfiguration,config=frozen?.length?frozen:data.config.filter(r=>r.propertyId===receipt.propertyId)
  if(frozen?.length)need(quote.taxConfigurationDigest===await sha(JSON.stringify(config)),'The paid receipt rule snapshot does not match its digest',409)
  const assessed=assess(config,receipt.propertyId,receipt.start,receipt.end,receipt.quote.rentCents+receipt.quote.cleaningCents+receipt.quote.extraGuestCents,0)
@@ -18,5 +21,13 @@ export async function directSource(c:Context,data:TaxData,p:Record<string,unknow
  const fields={bookingId:receipt.bookingId,baseCents:receipt.quote.rentCents+receipt.quote.cleaningCents+receipt.quote.extraGuestCents,exemptCents:0,reference:`stripe:${receipt.paymentId}`,document:`Frozen paid direct quote ${receipt.id}; Stripe payment ${receipt.paymentId}; mode ${receipt.paymentMode??'recorded by provider'}; checkout ${receipt.checkoutId??''}; signed quote ${receipt.signature.sha256}; ${frozen?.length?`rule snapshot ${quote.taxConfigurationDigest}`:'legacy receipt matched to effective rules by jurisdiction level, rate and exact tax amount'}; charged levies ${JSON.stringify(receipt.quote.taxes)}.`,collections:assessed.map(r=>({ruleId:r.rule.id,month:r.month,channelCents:0})),confirm:p.confirm}
  const preview=await sourceCommand(c,{...data,config},'tax.source.preview',fields)
  need(preview&&'previewDigest' in preview,'Calculate this paid receipt first',409)
- return sourceCommand(c,{...data,config},'tax.source.record',{...fields,previewDigest:preview.previewDigest})
+ await paymentLedger(c,receipt)
+ const result=await sourceCommand(c,{...data,config},'tax.source.record',{...fields,previewDigest:preview.previewDigest})
+ if(result&&'source' in result&&result.source&&result.lines){
+  const tax=receipt.quote.taxes.reduce((n,t)=>n+t.amountCents,0)
+  if(tax&&(await contextJournals(c)).some(j=>j.sourceKey==='direct-payment:'+receipt.paymentId))await directJournal(c,receipt,'direct-tax-source:'+result.source.id,'direct-tax-allocation',[debit('taxes',tax),credit('receivable',tax)])
+  const current={...data,sources:[...data.sources,result.source],lines:[...data.lines,...result.lines]}
+  for(const refund of receipt.refunds??[])if(refund.status==='succeeded'&&refund.kind!=='deposit')await refundTaxLines(c,receipt,refund,current)
+ }
+ return result
 }

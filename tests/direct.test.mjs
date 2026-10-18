@@ -203,3 +203,116 @@ test('WEB-004 risk policy assigns failed checks, offers consented manual review 
   assert.equal(erased.status,'erased');assert.equal(erased.provider,undefined);assert.equal(erased.decision,undefined);assert.ok(redacted)
  }finally{await h.close()}
 })
+
+test('PAY-003 settles approved claims, rent refunds, saved cancellations and changes once with receipts and balanced tax/owner books',async()=>{
+ const sessions=new Map(),payments=new Map(),refunds=new Map(),writes={capture:0,release:0,refund:0},captureKeys=[];let lostRefund=false,declineCapture=true
+ const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:async request=>{
+  const u=new URL(request.url),p=u.pathname,f=new URLSearchParams(request.method==='POST'?await request.text():'')
+  assert.equal(u.hostname,'api.stripe.com')
+  if(p==='/v1/checkout/sessions'&&request.method==='POST'){
+   const id='cs_'+sessions.size,stayId=f.get('metadata[stayId]');let amount=0
+   for(const [k,v] of f)if(k.endsWith('[unit_amount]'))amount+=Number(v)
+   const pi={id:'pi_rent_'+sessions.size,status:'succeeded',amount_received:amount,amount,currency:'usd',payment_method:'pm_test'},s={id,url:'https://checkout.stripe.com/'+id,metadata:{stayId},customer:'cus_test',status:'complete',payment_status:'paid',payment_intent:pi};sessions.set(id,s);payments.set(pi.id,pi);return Response.json(s)
+  }
+  if(p.startsWith('/v1/checkout/sessions/'))return Response.json(sessions.get(p.split('/').at(-1)))
+  if(p==='/v1/payment_intents'&&request.method==='POST'){
+   const id='pi_damage_'+payments.size,payment={id,status:'requires_capture',amount:Number(f.get('amount')),amount_received:0,amount_capturable:Number(f.get('amount')),currency:'usd',latest_charge:{payment_method_details:{card:{capture_before:Math.floor(Date.now()/1000)+2*86400}}}};payments.set(id,payment);return Response.json(payment)
+  }
+  if(p.startsWith('/v1/payment_intents/')){
+   const [,id,action]=p.match(/\/payment_intents\/([^/]+)(?:\/(.*))?/),payment=payments.get(id);assert.ok(payment,p)
+   if(action==='capture'){captureKeys.push(request.headers.get('idempotency-key'));assert.equal(f.has('final_capture'),false);if(captureKeys.length>1&&captureKeys[0]===captureKeys.at(-1))return Response.json({error:{type:'idempotency_error'}},{status:400});if(declineCapture){declineCapture=false;return Response.json({error:{type:'invalid_request_error'}},{status:400})}writes.capture++;payment.status='succeeded';payment.amount_received=Number(f.get('amount_to_capture'));payment.amount_capturable=0}
+   if(action==='cancel'){writes.release++;payment.status='canceled'}
+   return Response.json(payment)
+  }
+  if(p==='/v1/refunds'&&request.method==='GET')return Response.json({data:[...refunds.values()].filter(r=>r.payment_intent===u.searchParams.get('payment_intent')),has_more:false})
+  if(p.startsWith('/v1/refunds/'))return Response.json(refunds.get(p.split('/').at(-1)))
+  if(p==='/v1/refunds'&&request.method==='POST'){
+   writes.refund++;const r={id:'re_'+writes.refund,payment_intent:f.get('payment_intent'),amount:Number(f.get('amount')),currency:'usd',status:'succeeded',metadata:{stayId:f.get('metadata[stayId]'),cabinRefundId:f.get('metadata[cabinRefundId]')}};refunds.set(r.id,r)
+   if(lostRefund){lostRefund=false;return new Response('lost response',{status:502})}return Response.json(r)
+  }
+  assert.fail('Unexpected provider call '+p)
+ }})
+ try{
+  let cfg=await home(h);cfg=await h.cmd('direct.configure',{...settings,requireIdentity:false,retainedBps:2500,policyName:'Retain 25% of the saved booking total on cancellation',propertyId:cfg.propertyId,revision:cfg.revision})
+  await h.cmd('ledger.configure',{propertyId:cfg.propertyId,legalEntity:'Owner trust'})
+  const cleaner=await h.person('RefundCleaner')
+  const book=async(n,end=n+3)=>{
+   const result=await h.send('/book/pine-ridge/checkout',{start:day(n),end:day(end),guests:2,homeRevision:cfg.revision,guestName:'Refund Guest',email:'refund@stay.example',signature:'Refund Guest',consent:'yes'});assert.equal(result.status,200,result.text)
+   assert.equal((await h.send(`/book/stay/${result.value.token}/refresh`,{})).value.stay.phase,'confirmed');return result.value
+  }
+  const first=await book(0),get=async id=>(await h.accessState()).direct.stays.find(s=>s.id===id)
+  const prepare=async(id,kind,amountCents)=>h.cmd('direct.refund.prepare',{id,kind,...(amountCents?{amountCents}:{}),reason:'Guest-approved settlement',evidence:'Retained guest request and incident evidence'})
+  const approve=async(id,r,status=200)=>h.cmd('direct.refund.approve',{id,refundId:r.id,revision:r.revision,confirm:'yes'},h.owner,status)
+  const totals=async id=>{const s=await get(id),journals=(await h.state()).ledger.journals.filter(j=>j.bookingId===s.bookingId);for(const j of journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0);const balance=key=>journals.flatMap(j=>j.lines).filter(l=>l.account===key).reduce((n,l)=>n+l.creditCents-l.debitCents,0);return {owner:balance('ownerLiability'),tax:balance('taxes'),hold:balance('damageHolds')}}
+  assert.match((await get(first.id)).error,/expires before/,'a provider expiry two days away is flagged immediately on refresh')
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.match((await get(first.id)).error,/expires before/,'long authorization is flagged to a person before expiry')
+  await h.db.prepare("UPDATE cb_direct_stays SET data=json_set(data,'$.arrivalAt',?) WHERE id=?").bind(new Date(Date.now()-3600000).toISOString(),first.id).run()
+  await h.cmd('direct.checkout.complete',{id:first.id})
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:5000,reason:'Broken lamp',evidence:'photo:lamp'},cleaner.cookie,403)
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:5000,reason:'Broken lamp',evidence:''},h.owner,400)
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:5000,reason:'Broken lamp',evidence:'photo:lamp'},h.owner,400)
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:5000,reason:'Broken lamp',evidence:'photo:lamp'})
+  assert.equal(captureKeys.length,1,'uncertain capture never automatically resubmits')
+  let pending=await get(first.id),review={id:first.id,revision:pending.revision,confirm:'yes',reference:'Stripe request log: rejected validation; full hold remains'}
+  await h.cmd('direct.deposit.reconcile',review,cleaner.cookie,403)
+  await h.cmd('direct.deposit.reconcile',{...review,confirm:'no'},h.owner,400)
+  await h.cmd('direct.deposit.reconcile',{...review,revision:'stale'},h.owner,409)
+  const held=payments.get(pending.deposit.id);held.amount_capturable-=1
+  await h.cmd('direct.deposit.reconcile',review,h.owner,409);held.amount_capturable+=1
+  await h.cmd('direct.deposit.reconcile',review)
+  pending=await get(first.id);assert.equal(pending.deposit.reviewRequired,true);assert.equal(pending.depositReconciliations[0].prior.claimCents,5000);assert.ok(pending.depositReconciliations[0].prior.approvedBy)
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(captureKeys.length,1)
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:4000,reason:'Broken lamp',evidence:'photo:lamp'},h.owner,409)
+  await h.cmd('direct.deposit.capture',{id:first.id,amountCents:5000,reason:'Broken lamp',evidence:'photo:lamp'})
+  assert.equal(writes.capture,1);assert.equal(captureKeys.length,2);assert.notEqual(captureKeys[0],captureKeys[1]);assert.equal((await get(first.id)).deposit.capturedCents,5000);assert.equal((await totals(first.id)).hold,0)
+  const draft=await prepare(first.id,'rent',10000);assert.equal(draft.amounts.totalCents,11000)
+  await approve(first.id,{...draft,revision:'stale'},409)
+  await h.cmd('direct.refund.approve',{id:first.id,refundId:draft.id,revision:draft.revision,confirm:'yes'},cleaner.cookie,403)
+  lostRefund=true;await approve(first.id,draft,502);assert.equal((await get(first.id)).refunds[0].status,'uncertain')
+  await h.cmd('direct.refund.prepare',{id:first.id,kind:'full',reason:'Second request',evidence:'Guest request'},h.owner,409)
+  await h.restart();await approve(first.id,draft);await approve(first.id,draft);assert.equal(writes.refund,1)
+  assert.deepEqual(await totals(first.id),{owner:56500,tax:5150,hold:0})
+  let state=await h.accessState(),firstStay=await get(first.id),booking=state.bookings.find(b=>b.id===firstStay.bookingId)
+  assert.equal(booking.reservationBalance.balanceCents,0)
+  const receipt=state.messages.find(m=>m.id===firstStay.refunds[0].messageId);assert.equal(receipt.status,'sent');assert.match(receipt.text,/USD 110.00/)
+  assert.equal(state.messages.filter(m=>m.subject==='Your refund receipt').length,1)
+  assert.match((await h.send('/book/stay/'+first.token)).text,/Stripe confirmed your refund/)
+  // Map the original levies after the refund: importing the source must not double liabilities.
+  await h.cmd('tax.profile.save',{propertyId:cfg.propertyId,country:'US',state:'Maine',county:'Example County',city:'Unincorporated'})
+  for(const [level,bps] of [['state',900],['county',100],['city',0]]){
+   const j=await h.cmd('tax.jurisdiction.save',{propertyId:cfg.propertyId,level,registrationStatus:bps?'active':'not-required',registrationReference:'Tax registration',partner:'Accountant',recipient:'accountant@stay.example',source:'Reviewed registration'})
+   await h.cmd('tax.rule.save',{jurisdictionId:j.id,taxType:'lodging',bps,from:day(-1),until:day(365),source:'Reviewed effective tax law'})
+  }
+  await h.cmd('tax.source.direct',{stayId:first.id,confirm:'yes'})
+  assert.deepEqual(await totals(first.id),{owner:56500,tax:5150,hold:0})
+  state=await h.state();assert.equal(state.taxes.lines.filter(l=>l.bookingId===booking.id).reduce((n,l)=>n+l.hostCents,0),5150)
+  const full=await prepare(first.id,'full');await approve(first.id,full);await approve(first.id,full)
+  assert.deepEqual(await totals(first.id),{owner:5000,tax:0,hold:0})
+  const damageRefund=await prepare(first.id,'deposit',5000);await approve(first.id,damageRefund)
+  assert.deepEqual(await totals(first.id),{owner:0,tax:0,hold:0})
+  const cancelled=await book(10),cancelledStay=await get(cancelled.id)
+  await h.db.prepare("UPDATE cb_direct_stays SET data=json_set(data,'$.depositDueAt',?) WHERE id=?").bind(new Date(Date.now()-3600000).toISOString(),cancelled.id).run()
+  await h.cmd('direct.refresh',{id:cancelled.id});booking=(await h.state()).bookings.find(b=>b.id===cancelledStay.bookingId)
+  await h.cmd('reservation.end',{id:booking.id,revision:booking.revision,outcome:'cancelled',reason:'Guest cancellation request'})
+  const cancelPlan=await prepare(cancelled.id,'settlement');assert.equal(cancelPlan.amounts.totalCents,50737)
+  await approve(cancelled.id,cancelPlan);await approve(cancelled.id,cancelPlan)
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await get(cancelled.id)).deposit.status,'canceled')
+  assert.deepEqual(await totals(cancelled.id),{owner:16913,tax:0,hold:0})
+  assert.equal((await h.send('/book/stay/'+cancelled.token+'/deposit',{})).status,409)
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await get(cancelled.id)).error,undefined)
+  assert.match((await h.send('/book/stay/'+cancelled.token)).text,/Stripe confirmed your refund/)
+  const changed=await book(20),changedStay=await get(changed.id);booking=(await h.state()).bookings.find(b=>b.id===changedStay.bookingId)
+  await h.cmd('reservation.amend',{id:booking.id,revision:booking.revision,start:day(20),end:day(22),propertyId:cfg.propertyId,guestName:'Refund Guest',guestEmail:'refund@stay.example',rentCents:36000,feesCents:7500,taxCents:4350,reason:'Guest accepted shortening to two nights'})
+  const changePlan=await prepare(changed.id,'settlement');assert.equal(changePlan.amounts.totalCents,19800);await approve(changed.id,changePlan)
+  assert.deepEqual(await totals(changed.id),{owner:43500,tax:4350,hold:0})
+  assert.equal((await h.state()).bookings.find(b=>b.id===booking.id).reservationBalance.balanceCents,0)
+  // A third active authorization, no claim: the existing cron performs automatic release once.
+  const unclaimed=await book(30)
+  await h.db.prepare("UPDATE cb_direct_stays SET data=json_set(data,'$.depositDueAt',?,'$.arrivalAt',?) WHERE id=?").bind(new Date(Date.now()-3600000).toISOString(),new Date(Date.now()-3600000).toISOString(),unclaimed.id).run()
+  await h.cmd('direct.refresh',{id:unclaimed.id});await h.cmd('direct.checkout.complete',{id:unclaimed.id})
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await get(unclaimed.id)).deposit.status,'canceled');assert.equal(writes.release,2)
+  assert.equal((await h.send('/app/direct',undefined,h.owner)).status,200)
+ }finally{await h.close()}
+})
