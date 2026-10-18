@@ -713,7 +713,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Target and push further | 33 | 27 | 29 | 89 |
 | All | 46 | 27 | 29 | 102 |
 
-**102 clauses: 45 done, 28 partial, 29 missing.**
+**102 clauses: 46 done, 27 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
