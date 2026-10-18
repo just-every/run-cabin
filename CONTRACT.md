@@ -646,7 +646,7 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 | 31 | "Airbnb's payout matches Megan's stay to the cent" | FIN-002 | partial (live Stripe USD payout prerequisite) |
 | 32 | The owner's October statement and its arithmetic | FIN-003, FIN-004 | implemented (reviewed paid expenses; wider clause gaps below) |
 | 33 | "QuickBooks · synced Oct 31" | FIN-007 | partial (QuickBooks CSV/IIF export only; Pantry live posting proven) |
-| 34 | "Owner portal · Karen viewed Nov 1" | FIN-005, AUDIT-001 | partial |
+| 34 | "Owner portal · Karen viewed Nov 1" | FIN-005, AUDIT-001 | implemented |
 | 35 | "Lodging tax 9% · $172.44 · filed Nov 1" | FIN-008 | partial |
 | 36 | "Your own booking site takes the payment" / "Pay … Powered by Stripe" | WEB-001, PAY-001 | implemented (direct-booking scope; see clause Status) |
 | 37 | "the rental agreement" | WEB-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
@@ -690,10 +690,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 11 | 49 | 29 | 89 |
-| All | 24 | 49 | 29 | 102 |
+| Target and push further | 12 | 48 | 29 | 89 |
+| All | 25 | 48 | 29 | 102 |
 
-**102 clauses: 24 done, 49 partial, 29 missing.**
+**102 clauses: 25 done, 48 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -766,7 +766,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD payout CSVs match stays with actual imported fees and unmatched review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible automatic USD payout (fleet test account settles AUD). Partner APIs, FX, bank receipt and full exception closure remain later. |
 | `FIN-003` | Management agreements and expense allocation | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/books.ts`; `tests/finance.test.mjs` | Imported gross less actual channel fees, the home’s fixed commission and reviewed expenses already paid from owner funds gives the frozen payable, using integer cents. Pantry journals retain the allocation evidence. Versioned agreements, invoice/work-order approval, shared costs, reserves and multiple-owner splits remain absent. |
 | `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/statements.ts`; `src/cabin/finance/delivery.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` | Monthly home/owner USD statements freeze matched payouts, recipient, commission and described paid expenses. Approval emails the owner portal link with provider acceptance and explicit resend status. CSV and scoped owner access ship. Scheduled generation, PDF, opening balances, reserves, distribution rails and complete later-period adjustments remain absent. |
-| `FIN-005` | Rental-owner portal and personal stays | target | partial | `src/cabin/owners/`; `tests/finance.test.mjs` | Separate one-use email sign-in and HttpOnly owner session show only current owned homes, stays and approved statements whose frozen recipient matches. Owner sessions cannot call operator APIs. Personal-stay requests, expense authorization, wider documents, performance reports and historical ownership grants remain absent. |
+| `FIN-005` | Rental-owner portal and personal stays | target | done | `src/cabin/owners/`; `src/cabin/ui/owners-operations.ts`; `migrations/core/0028_owner_operations.sql`; `tests/owners.test.mjs`; `tests/finance.test.mjs`; `docs/statements.md` | One-use mail sign-in and separate owner sessions scope homes, agreed calendar visibility, occupancy, approved receipts, frozen statements, shared invoice/record text, source-backed reserve reports, owner-key ledger activity, recorded distributions and open issues. Exact expense decisions obey agreement limits; personal stays require manager approval and a fresh inventory/rules check, then block published nights. Actual HTML views/downloads append events and show name/date on the operator card; previews/API reads do not count. Explicit revocable grants retain only original-recipient statements after transfer; old documents, guest details and successor records stay private. Local public-door tests and hosted two-owner mail/browser journey at 1440 and 390 cover isolation, approval, transfer and revocation. Records report money; distribution execution and bank reconciliation remain FIN-006. |
 | `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | missing |  | No implementing flow in the audited tree. |
 | `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-client.ts`; `src/cabin/finance/pantry-posting.ts`; `src/cabin/ui/books.ts`; `docs/statements.md`; `tests/finance.test.mjs` | QuickBooks Online journal CSV and Desktop IIF remain files a person downloads and imports; Cabin has no QuickBooks connection or QBO live sync. Pantry now posts approved owner journals live with scoped, revocable integration credentials, account choices and automatically attached booking/payout/fee/expense evidence. Saved intent, deterministic keys and exact journal lookup prevent duplicate replay; revoked credentials give a plain broken connection. Proven against fresh local and hosted Pantry. No person session or manual source upload is needed. QBO OAuth and QBO conflicts remain later. Provider calls on RER Managed are not available yet. |
 | `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Configured state/county lines collected separately with rent and fees; stay retains each jurisdiction/rate/amount and manual filing confirmation references. No automatic filing/remittance provider, exemption/refund adjustments or city levies yet. |
