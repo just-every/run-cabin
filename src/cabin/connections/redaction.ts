@@ -3,7 +3,8 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
  let result = value
  for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.split(secret).join('[restricted]')
  return result
-  .replace(/https?:\/\/[^\s<>"']*\/(?:stay\/|ical\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
+  .replace(/https?:\/\/[^\s<>"']*\/(?:stay\/|ical\/|message-preferences\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
+  .replace(/\/message-preferences\/[a-z0-9_-]+\/[a-f0-9]{64}/gi, '[private link]')
   .replace(/\/(?:stay\/|book\/stay\/|book\/return\/)[a-z0-9_-]{20,}/gi, '[private link]')
   .replace(/\b(?:sk_(?:test|live)_[a-z0-9]+|sk-ant-[a-z0-9_-]+|Bearer\s+[a-z0-9._~-]+)/gi, '[credential]')
   .replace(/((?:door|guest|cleaner|entry|access)\s*(?:code|PIN)\s*[:#]?\s*)\d{4,10}\b/gi, '$1[restricted]')

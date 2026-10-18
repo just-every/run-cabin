@@ -33,6 +33,8 @@ test('MESSAGE-003: per-home event templates, required-task reminders, secret rel
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   assert.equal((await mail(h,'megan@stay.example')).filter(m=>m.subject==='Reservation for Lake Loft').length,1,'event confirmation deduplicated')
   const preference=messages.find(m=>m.subject==='Reservation for Lake Loft').text.match(/http:\/\/[^\s]+\/message-preferences\/[^\s]+/)[0]
+  const capability=new URL(preference).pathname.split('/').at(-1)
+  assert.ok(!JSON.stringify(await h.state()).includes(capability),'ordinary API representations omit the active guest preference capability')
   const path=new URL(preference).pathname
   assert.equal((await h.send(path)).status,200)
   assert.equal((await h.send(path,{},'',{origin:'https://unrelated.example'})).status,403)
