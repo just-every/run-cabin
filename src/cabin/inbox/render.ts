@@ -8,7 +8,7 @@ export type Facts = Record<'guest' | 'home' | 'checkin' | 'checkout' | 'address'
 /** With no origin the stay link is its path alone: what statement() compares. */
 export function facts(data: Pick<Data, 'properties' | 'homeSettings' | 'codes'>, origin: string | null, b: Booking): Facts {
  const s = homeSettings({ data }, b.propertyId), code = data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')
- const first = `${b.start.slice(0, 10)}T${s.checkInTime}`, last = `${b.end.slice(0, 10)}T${s.checkOutTime}`
+ const first = `${b.start.slice(0, 10)}T${b.arrivalTime ?? s.checkInTime}`, last = `${b.end.slice(0, 10)}T${s.checkOutTime}`
  return {
   guest: (b.guestName ?? '').split(/\s+/)[0] || 'there',
   home: data.properties.find(p => p.id === b.propertyId)?.name ?? 'the home',

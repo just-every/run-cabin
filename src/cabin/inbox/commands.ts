@@ -6,6 +6,8 @@ import { managedInstall } from '../channels'
 import { settingsCommand, stored, inboxSettings } from './settings'
 import { threads } from './threads'
 import { route } from './deliver'
+import { policyCommand, replySources } from './reply-policy'
+import { arrivalCommand } from './arrival'
 import { receiveEmail } from './inbound'
 import { facts } from './render'
 import { AI_MANAGED, AI_MODEL, AI_PURPOSE, aiDraft, aiKey, DraftError } from './ai'
@@ -46,6 +48,8 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   return outcome
  }
  return mutate(env.DB, who, name, c => {
+  const policy = policyCommand(c, name, p); if (policy !== undefined) return policy
+  const arrival = arrivalCommand(c, name, p); if (arrival !== undefined) return arrival
   const settled = settingsCommand(c, name, p); if (settled !== undefined) return settled
   if (name === 'inbox.ai.remove') { stored(c, p.revision).ai = null; return { removed: true } }
   if (name === 'message.send' || name === 'message.discard') {
@@ -53,6 +57,8 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
    need(m.status === 'draft', m.status === 'drafting' ? 'This draft is still being written. Reload in a moment.' : 'This draft was already sent or discarded', 409)
    c.entityId = m.id
    if (name === 'message.discard') { Object.assign(m, { status: 'discarded', revision: newId() }); return m }
+   const booking = c.data.bookings.find(b => b.id === m.bookingId)
+   if (m.control && booking) need(m.control.baseline === JSON.stringify(replySources(c.data, env.AUTH_ORIGIN, booking)), 'The stay, instructions or readiness changed. Discard this draft and write a current reply.', 409)
    const approval = { id: newId(), kind: 'message', recordId: m.id, revision: m.revision, actorId: who.id, at: c.now }
    c.data.approvals.push(approval)
    Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, approvalId: approval.id, revision: newId() }); return m

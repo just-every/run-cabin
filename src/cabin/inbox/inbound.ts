@@ -8,6 +8,9 @@ import { load, mutate } from '../storage'
 import { inboxSettings } from './settings'
 import { emailOf, stayFor } from './threads'
 import { startDraft, finishDrafts } from './drafts'
+import { deliverGuestMessages } from './deliver'
+import { escalateReplies } from './reply-policy'
+import { deliverNotices } from '../notify'
 import { aiKey } from './ai'
 import { bookingAccount, latestBooking } from './adapters/booking'
 // Guest messages arriving: email routed to the inbox address (the Worker's
@@ -36,6 +39,9 @@ export async function receiveGuest(env: Bindings, m: Incoming) {
   c.data.messages.push(row); startDraft(c, env.AUTH_ORIGIN, row, ai); c.entityId = row.id; return row
  })
  await finishDrafts(env)
+ await escalateReplies(env)
+ await deliverNotices(env)
+ await deliverGuestMessages(env)
  return row
 }
 /** The address a reply reaches: Reply-To when the message names one, else From. */

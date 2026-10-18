@@ -3,6 +3,7 @@ import { chip, atHome } from './ops'
 import { channelName, span } from '../inventory'
 import { threads, type Thread } from '../inbox/threads'
 import { RULE_NAMES } from '../inbox/settings'
+import { replySettings, replyEvidence, earlyArrival } from '../inbox/reply-ui'
 import { inboxSetup } from '../inbox/setup-ui'
 import { lateMinutes, dueFrom } from '../inbox/schedule'
 import { CHANNEL_LINE } from '../inbox/adapters/booking'
@@ -30,7 +31,7 @@ function status(s: any, m: any, t: Thread) {
 function draft(s: any, t: Thread, m: any) {
   if (m.status === 'drafting') return `<article class="msg out draft"><p class="meta">Drafting a reply with your AI key…</p><p class="muted">Reload in a moment. Nothing is sent until you send it.</p></article>`
   const body = hidden('id', m.id) + hidden('revision', m.revision) + `<label>Reply to ${h(t.name)} by ${h(CHANNEL[m.channel].toLowerCase())}<textarea name="text" rows="8" maxlength="4000" required>${h(m.text)}</textarea></label>`
-  return `<article class="msg out draft" id="draft"><div class="record-title"><p class="meta">${m.source === 'ai' ? 'AI draft' : 'Drafted reply'} · waiting for your nod</p>${chip('Not sent', 'wait')}</div>${m.grounds?.length ? `<p class="muted">Uses: ${h(m.grounds.join(', '))}</p>` : ''}${m.detail ? `<p class="note">${h(m.detail)}</p>` : ''}${form('message.send', page(t), body, 'Send to guest')}${form('message.discard', page(t), hidden('id', m.id) + hidden('revision', m.revision), 'Discard draft', 'class="quiet"')}</article>`
+  return `<article class="msg out draft" id="draft"><div class="record-title"><p class="meta">${m.source === 'ai' ? 'AI draft' : 'Drafted reply'} · waiting for your nod</p>${chip('Not sent', 'wait')}</div>${m.grounds?.length ? `<p class="muted">Uses: ${h(m.grounds.join(', '))}</p>` : ''}${m.detail ? `<p class="note">${h(m.detail)}</p>` : ''}${replyEvidence(m)}${form('message.send', page(t), body, 'Send to guest')}${form('message.discard', page(t), hidden('id', m.id) + hidden('revision', m.revision), 'Discard draft', 'class="quiet"')}</article>`
 }
 function schedule(s: any, t: Thread) {
   const rows = [...t.scheduled].sort((a, b) => a.dueAt.localeCompare(b.dueAt)).map(r => {
@@ -48,17 +49,17 @@ function contact(s: any, t: Thread) {
 }
 function conversation(s: any, t: Thread) {
   const shown = t.messages.filter(m => m.status !== 'draft' && m.status !== 'drafting'), drafts = t.messages.filter(m => m.status === 'draft' || m.status === 'drafting')
-  const bubbles = shown.map(m => `<article class="msg ${m.direction}">${m.subject && m.channel === 'email' ? `<p class="subject">${h(m.subject)}</p>` : ''}<div class="text">${h(m.text)}</div>${status(s, m, t)}</article>`).join('')
+  const bubbles = shown.map(m => `<article class="msg ${m.direction}">${m.subject && m.channel === 'email' ? `<p class="subject">${h(m.subject)}</p>` : ''}<div class="text">${h(m.text)}</div>${status(s, m, t)}${m.control?.automatic ? replyEvidence(m) : ''}</article>`).join('')
   const reach = t.email ?? t.phone
   const lastIn = [...t.messages].reverse().find((m: any) => m.direction === 'in')
   const compose = form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="/app/inbox">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
-  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${schedule(s, t)}`
+  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${schedule(s, t)}`
 }
 export function inbox(s: any, thread?: string | null) {
   const all = threads(s), open = all.find(t => t.id === thread) ?? (thread ? undefined : all[0])
   const list = all.length ? all.map(t => row(s, t, t === open)).join('') : empty('No guests yet. Each stay’s guest gets a thread here with its scheduled messages; guest email lands in it.')
   return heading('Guest inbox', 'One thread per guest', 'Email, text and every stay from Airbnb, Vrbo, Booking.com or booked direct join one thread per guest. Check-in details, checkout reminders and review requests go out on time; each guest message gets a drafted reply that waits for your nod.')
     + `<div class="inbox${thread && open ? ' has-thread' : ''}"><aside class="threads" aria-label="Guests">${list}</aside><section class="conversation" aria-label="Conversation">${open ? conversation(s, open) : empty(thread ? 'That conversation is not here any more.' : 'Choose a guest.')}</section></div>`
-    + inboxSetup(s)
+    + replySettings(s) + inboxSetup(s)
 }

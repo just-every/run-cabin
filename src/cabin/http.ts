@@ -86,6 +86,8 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='reservation.request')return result.status==='declined'?`Request declined: ${result.reason}.`:result.kind==='block'?'Nights blocked on every channel.':'Request accepted. These nights now close on every channel.'
  if(name==='channel.connect'||name==='channel.sync')return result.connection.status==='ok'?`Synced: ${result.changes} change${result.changes===1?'':'s'}.`:`Sync failed: ${result.connection.error}`
  if(name==='reservation.move')return 'Stay moved. Its turnover, door codes and scheduled messages moved with it.'
+ if(name==='message.arrival.approve')return 'Early check-in approved. The guest access window and cleaner window changed; guest mail status is in the thread.'
+ if(name==='inbox.reply.policy')return 'Reply authority and approved sources saved.'
  if(name==='message.send')return 'Approved exactly as written. The thread shows when it went out, or why it could not.'
  if(name==='message.compose')return 'Sending. The thread shows when it went out, or why it could not.'
  if(name==='message.discard')return 'Draft discarded. Nothing was sent.'

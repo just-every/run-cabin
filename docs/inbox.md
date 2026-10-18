@@ -71,3 +71,9 @@ Both are tested against responses in Twilio's and Booking.com's documented shape
 ## Who sees what
 
 Owners and managers see every thread. Cleaners see no guest messages, and agents see none. Messages are kept in the installation and included in its exports; erasing a home erases the messages tied to its stays.
+
+## Approved replies and early arrivals
+
+Under Reply authority and approved instructions, save a responsible manager, reply deadline, approved property instruction and optional automatic rule per home. Automatic replies require the saved AI key, an allowed topic, model confidence, local hours and unchanged sources. They render saved facts or the exact approved instruction; money, safety and changes need a person. Uncertain drafts and missed deadlines notify the manager without sending the guest reply. The thread keeps sources, confidence, authority and delivery outcome. A source change fences an old draft; discard it and write a current reply.
+
+Approve an early check-in from its guest thread only after the preceding turnover is complete with photos and no blocking work remains. Confirm the manual keypad is ready. The exact reservation revision changes with one approval, moves guest and cleaner access windows and sends one guest update. Connected lock acceptance still depends on the owner’s lock account; manual keypads must be set by hand.
