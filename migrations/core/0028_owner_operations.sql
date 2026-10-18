@@ -33,3 +33,10 @@ CREATE INDEX cb_owner_expenses_scope ON cb_owner_expenses(property_id,email);
 CREATE INDEX cb_owner_documents_scope ON cb_owner_documents(property_id,email);
 CREATE INDEX cb_owner_stays_scope ON cb_owner_stay_requests(property_id,email);
 CREATE UNIQUE INDEX cb_owner_stays_pending ON cb_owner_stay_requests(property_id,email,start,end) WHERE status='pending';
+CREATE TABLE cb_owner_reserve_reports (
+ id TEXT PRIMARY KEY, property_id TEXT NOT NULL, email TEXT NOT NULL COLLATE NOCASE,
+ amount_cents INTEGER NOT NULL CHECK(amount_cents>=0), effective_date TEXT NOT NULL,
+ document_id TEXT NOT NULL, note TEXT NOT NULL, recorded_at TEXT NOT NULL, recorded_by TEXT NOT NULL
+);
+CREATE INDEX cb_owner_reserves_scope ON cb_owner_reserve_reports(property_id,email,effective_date);
+CREATE TRIGGER cb_owner_reserves_no_update BEFORE UPDATE ON cb_owner_reserve_reports BEGIN SELECT RAISE(ABORT,'Reserve reports are immutable; add a correction report'); END;

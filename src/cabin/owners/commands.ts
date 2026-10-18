@@ -1,3 +1,4 @@
+import { reserveCommand } from './reserves'
 import { type Context, type Actor, need, text, newId, query, manager, owner, property, exact } from '../model'
 import { assertLive } from '../storage'
 import { peopleCommand } from '../people'
@@ -10,6 +11,7 @@ function usd(value:unknown,label:string){const v=text(value,label,20);need(/^\d+
 export async function ownerCommand(c:Context,name:string,input:Record<string,unknown>){
  if(!name.startsWith('owner.'))return undefined
  manager(c.actor);need(!c.actor.isAgent,'Human manager access required',403)
+ if(name==='owner.reserve.record')return reserveCommand(c,input)
  const rows=await ownerRecords(c.db)
  const audit=(kind:string,id:string,propertyId:string,result='completed')=>{c.entityId=id;(c.audit??=[]).push({kind,id,propertyId,result})}
  if(name==='owner.policy'){

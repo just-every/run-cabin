@@ -10,6 +10,8 @@ export async function ownerRecordsCsv(env:Bindings,email:string,propertyId:strin
  const s=await portalState(env,email,month),home=s.properties.find(p=>p.id===propertyId&&p.access==='current');need(home,'Home not found',404)
  const rows:unknown[][]=[['Cabin owner records',home.name,s.month],['Performance month','Occupied guest nights','Calendar nights','Occupancy percent','Approved gross USD cents','Approved owner payable USD cents']]
  for(const p of s.performance.filter(p=>p.propertyId===propertyId))rows.push([p.month,p.occupiedNights,p.calendarNights,p.occupancyPercent,p.hasApprovedStatement?p.approvedGrossCents:'No approved statement',p.approvedOwnerPayableCents])
+ rows.push([],['Reserve report','As of','Amount USD cents','Supporting record','Scope and reconciliation note','Recorded'])
+ for(const r of s.reserves.filter(r=>r.propertyId===propertyId))rows.push([r.id,r.effectiveDate,r.amountCents,r.documentId,r.note,r.recordedAt])
  rows.push([],['Expense','Description','Amount USD cents','Status','Requested','Decision date','Decision note'])
  for(const r of s.expenses.filter(r=>r.propertyId===propertyId))rows.push([r.id,r.description,r.amountCents,r.status,r.requestedAt,r.decidedAt,r.decisionNote])
  rows.push([],['Open issue','Title','Blocks readiness','Raised'])
