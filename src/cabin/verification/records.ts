@@ -25,5 +25,5 @@ export async function synchronizeVerification(c:Context,changedHome?:import('../
 }
 export function mayReview(actor:Actor,v:VerificationCase){return !actor.isAgent&&(actor.role==='owner'||actor.role==='manager'&&actor.memberId===v.policy.reviewerId)}
 /** Never expose guest capabilities, provider references or evidence to unrelated staff. */
-export function verificationState(data:VerificationData,actor:Actor){if(actor.isAgent||!['owner','manager'].includes(actor.role))return [];return cases(data).filter(v=>v.status!=='erased').map(v=>mayReview(actor,v)?{...v,token:null}:{id:v.id,bookingId:v.bookingId,propertyId:v.propertyId,status:v.status,policy:{blockAccess:v.policy.blockAccess}})}
+export function verificationState(data:VerificationData,actor:Actor){if(actor.isAgent||!['owner','manager'].includes(actor.role))return [];return cases(data).filter(v=>v.status!=='erased'||actor.role==='owner'&&!!v.provider).map(v=>mayReview(actor,v)?{...v,token:null}:{id:v.id,bookingId:v.bookingId,propertyId:v.propertyId,status:v.status,policy:{blockAccess:v.policy.blockAccess}})}
 export function currentCase(c:Context,id:string,revision:unknown){const v=cases(c.data).find(v=>v.id===id);need(v,'Verification case not found',404);need(v.revision===revision,'Verification changed. Reload before deciding.',409);return v}
