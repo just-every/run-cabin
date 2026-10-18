@@ -1,0 +1,11 @@
+# Recovery execution authority
+
+Stay recovery has a native deterministic agent with its own per-home execution grant. The owner first saves approved backup cleaners and cumulative per-stay USD credit/extra-cleaning ceilings, then separately selects allowed actions, approved providers and an explicit time window in Stay recovery. Existing bearer credentials remain draft-only. Guest reports and optional AI wording cannot grant authority or choose money, recipients, vendors, access or readiness.
+
+An automatic plan must fit both the current grant and the remaining per-stay limits. A $75 credit under a $100 ceiling posts a balanced owner-liability/guest-payable adjustment and sends the exact arrangement; a $150 proposal waits for a person. No recovery action transfers funds. Changed booking, recipient, inventory, cleaner, property terms or authority invalidates the previous proposal. The execution retains the owner grant, limits, exact plan revision and native-agent attribution.
+
+Pause or revoke stops new provider requests at the mail/lock boundary. The case retains queued effects, each started attempt, provider acknowledgements and uncertain outcomes. A timeout or interrupted request is never blindly resent. After restart, unresolved attempts remain visible in the case and block closure. The owner reconciles the provider request history, records its reference and whether the request was accepted or had no effect. Only evidence of no effect permits a retry, under current authority. A replaced grant additionally requires exact continuation approval; changed underlying terms cannot reuse that approval.
+
+Cleaner completion, guest acceptance and a person’s physical access/readiness verification remain separate requirements. Provider acceptance proves neither a working door nor a ready home. This execution grant cannot sign agreements, approve payouts or verify readiness for a person.
+
+The public command tests in `tests/recovery-authority.test.mjs` exercise grants, limits, stale approvals, adversarial guest instructions and revocation during an uncertain lock-provider response. The lock provider is isolated at the network edge; this does not establish a live smart-lock connection.

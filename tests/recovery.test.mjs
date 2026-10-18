@@ -43,6 +43,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   await h.cmd('recovery.approve', { id: recovery.id, revision: recovery.revision }, manager.cookie, 403)
   recovery = await h.cmd('recovery.reject', { id: recovery.id, revision: recovery.revision })
   policy = await h.cmd('recovery.settings', { ...policy, auto: true })
+    policy=await h.cmd('recovery.authority.save',{propertyId:home.id,revision:policy.revision,actions:['cleaner:assign','credit:post','access:write','guest:send','owner:notify'],providers:['cabin','mail'],startsAt:new Date(Date.now()-60000).toISOString(),endsAt:new Date(Date.now()+86400000).toISOString()})
   recovery = await propose()
   assert.equal(recovery.status, 'active')
   s = await h.accessState(); turnover = s.turnovers.find(t => t.id === turnover.id)

@@ -1,3 +1,4 @@
+import { beginRecoveryEffect, finishRecoveryEffect, type RecoveryEffectTicket } from './recovery/effects'
 import { providerCredentials, secureAccount } from './connections/credentials'
 import { verificationAccessBlocked } from './verification/records'
 import { revoke } from './codes'
@@ -49,7 +50,10 @@ export async function pushLocks(env: Bindings) {
   if(code.holder==='guest'&&code.status==='issued'&&verificationAccessBlocked(data,code.bookingId)){await mutate(env.DB,SYSTEM,'lock.verification.withheld',c=>{const current=c.data.codes.find(r=>r.id===code.id);if(current)revoke(current,'Guest identity verification unresolved')});continue}
 
   await record(env.DB,SYSTEM,'lock.requested',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:'requested'})
+  let ticket:RecoveryEffectTicket|null
+  try{ticket=await beginRecoveryEffect(env.DB,'lock',code.id)}catch{continue}
   const lock = await push(env, code, homeSettings({ data }, code.propertyId).lockDeviceId)
+  await finishRecoveryEffect(env.DB,ticket,{state:['set','removed'].includes(lock.state)?'acknowledged':'uncertain',reference:lock.providerId??undefined})
   await record(env.DB,SYSTEM,'lock.result',{kind:'codes',id:code.id,propertyId:code.propertyId,bookingId:code.bookingId,revision:code.revision,result:lock.state})
   results.push(await mutate(env.DB, SYSTEM, 'lock.push', c => { const row = c.data.codes.find(r => r.id === code.id); if (!row || row.revision !== code.revision) return null; row.lock = lock; c.entityId = row.id; return row }).catch(() => null))
  }

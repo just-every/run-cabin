@@ -568,7 +568,7 @@
       "source": "modules/operator-auth/accounts/schema/owner-signin.sql"
     },
     "package.json": {
-      "sha256": "58cd263d347f7c34c4ed76e7f5d596a85100641d30fb2f61d2a7bd50c268ed78",
+      "sha256": "afa2013cfcf9ac9b11fc13408e91eaa0ad826a1d933779ed264c09b841054b05",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

@@ -707,10 +707,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 29 | 31 | 29 | 89 |
-| All | 42 | 31 | 29 | 102 |
+| Target and push further | 30 | 30 | 29 | 89 |
+| All | 43 | 30 | 29 | 102 |
 
-**102 clauses: 42 done, 31 partial, 29 missing.**
+**102 clauses: 43 done, 30 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -812,7 +812,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `AGENT-003` | Resolve guest issues through accepted field work | push-further | partial | `src/cabin/recovery/commands.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs` | Reported guest problems dispatch approved replacement cleaning and track acceptance/photos/readiness. Exact recovery approval can withdraw an early-arrival promise to normal check-in and offer a consented one-use 10% future rent rate. The guest accepts or requests a person on the private stay page; unresolved arrangements block closure. `src/cabin/recovery/settlement.ts`, `src/cabin/recovery/guest.ts`, `tests/recovery.test.mjs`. Automatic issue classification, named emergency triage, maintenance troubleshooting and recurrence confirmation remain open. |
 | `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
-| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/recovery/cases.ts`; `src/cabin/recovery/limits.ts`; `src/cabin/recovery/actions.ts`; `tests/recovery.test.mjs` | Owner policies scope backup cleaners and per-stay compensation/cleaning ceilings; approvals bind current recipients, home, stay, cleaner, code and limits. Durable histories, denied/stale approvals, pending mail and exact compensating undo exist. AI supplies optional wording only from the install’s own encrypted key. No general tool grants, pause/revoke interface or uncertain external-write reconciliation. |
+| `AGENT-006` | Bounded action authority and durable agent cases | push-further | done | `src/cabin/recovery/`; `src/cabin/connections/mail.ts`; `src/cabin/locks.ts`; `src/cabin/ui/recovery.ts`; `tests/recovery-authority.test.mjs`; `tests/recovery.test.mjs`; `docs/recovery-authority.md` | Separate owner-granted per-home action/provider scopes, time windows and cumulative compensation/cleaning ceilings fence the native recovery agent. Exact plans bind current stay, recipient, inventory, cleaner and terms; changed grants require reviewed continuation. Durable queued/started/acknowledged/uncertain effects stop at pause/revoke and reconcile provider evidence across restart without blind resend. A $75 credit under $100 posts a balanced owner adjustment automatically; $150 waits unsent for a person. Native grant, automatic credit, actual authenticated guest mail, provider outcomes and pause/resume/revoke used at 1440 and 390. Uncertain lock responses are isolated at the network edge; no live-lock acceptance is claimed. Bearer keys stay draft-only and human signature, payout and readiness doors remain separate. |
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
 | `OPEN-001` | Free and open source under the MIT licence | target | partial | `LICENSE`; `package.json`; `tests/launch.test.mjs` (line 10) | The repository and package are MIT and nothing charges, and a fresh public clone installs; no test checks the licence or every product area for paid gates at 40 properties and 25 staff, and provider-cost disclosure (INTERFACE-001) is not built. |
 | `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |

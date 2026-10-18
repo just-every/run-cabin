@@ -6,6 +6,7 @@ import { guestMessage } from './messages'
 import { withinLimits } from './limits'
 import { applySettlement } from './settlement'
 import { postRecoveryBalance } from './finance'
+import { requireRecoveryAuthority } from './authority'
 import type { Recovery } from './types'
 
 export async function applyRecovery(c: Context, row: Recovery, automatic = false) {
@@ -18,10 +19,11 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  need(policy?.cleanerIds.includes(p.cleanerId), 'Choose a cleaner from this home’s recovery list')
  need(c.data.members.some(m => m.id === p.cleanerId && m.active && m.role === 'cleaner'), 'Cleaner is no longer active', 409)
  need(!c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === p.cleanerId && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!), 'This cleaner has another turnover in this window. Review another backup.', 409)
+ if (automatic) requireRecoveryAuthority(c, row)
  const old = c.data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')
  need(old, 'This stay has no active code to replace. Review access first.', 409)
  row.previous = { turnover: structuredClone(t), code: structuredClone(old), arrivalTime: b.arrivalTime }
- const approval = { id: newId(), kind: 'recovery', recordId: row.id, revision: row.revision, actorId: c.actor.id, actorName: c.actor.email, at: c.now }
+ const approval = { id: newId(), kind: automatic ? 'recovery-agent' : 'recovery', recordId: row.id, revision: row.revision, actorId: automatic ? 'cabin:stay-recovery' : c.actor.id, actorName: automatic ? 'Cabin recovery agent within owner grant' : c.actor.email, at: c.now }
  c.data.approvals.push(approval); row.approvalId = approval.id
  await applySettlement(c, row)
  if (settings.dispatch) requestCleaner(c, t, p.cleanerId)
@@ -32,10 +34,13 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  // Retain the guest's secret stay URL; its current code changes on the same page.
  code.link = old.link; old.link = null; revoke(old, 'Replaced by approved stay recovery'); row.codeId = code.id
  row.creditMessageId = guestMessage(c, row, 'An update about your stay', p.guestText).id
- row.statementId = postRecoveryBalance(c, row, p.creditCents, p.extraCleaningCents, p.why)
+ const postingContext = automatic ? { ...c, actor: { ...c.actor, role: 'system' as const, id: 'cabin:stay-recovery', email: 'Cabin recovery agent within owner grant' } } : c
+ row.statementId = postRecoveryBalance(postingContext, row, p.creditCents, p.extraCleaningCents, p.why)
  row.balanceCents = -p.creditCents - p.extraCleaningCents; row.status = 'active'
  note(c, row, automatic ? 'Applied within owner limits' : 'Action approved and applied', p.why)
+ if (automatic) row.history[row.history.length - 1].by = 'cabin:stay-recovery'
  row.appliedBaseline = JSON.stringify({ booking: b.revision, recipient: b.guestEmail, cleanerId: t.cleanerId })
+ if (row.execution) row.execution.bookingRevision = b.revision
  return row
 }
 export function undoRecovery(c: Context, row: Recovery, why: string) {

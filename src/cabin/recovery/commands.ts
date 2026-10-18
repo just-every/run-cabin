@@ -8,6 +8,9 @@ import { withinLimits } from './limits'
 import { applyRecovery, undoRecovery } from './actions'
 import { prepareSettlement } from './settlement'
 import { creditText, guestMessage } from './messages'
+import { authorityCommand, automaticAuthorityReason } from './authority'
+import { captureRecoveryEffects, unresolvedRecoveryEffects } from './effects'
+import { recoveryEffectCommand } from './reconcile'
 
 function amount(p: Record<string, unknown>, cents: string, dollars: string) {
  if (p[cents] !== undefined) return integer(p[cents], cents, 0, 100_000_000)
@@ -16,6 +19,9 @@ function amount(p: Record<string, unknown>, cents: string, dollars: string) {
 }
 export async function recoveryCommand(c: Context, name: string, p: Record<string, unknown>) {
  if (!name.startsWith('recovery.')) return undefined
+ need(!c.actor.isAgent, 'Bearer keys can prepare drafts only. Recovery execution uses its separately granted native authority.', 403)
+ const authority = authorityCommand(c, name, p); if (authority !== undefined) return authority
+ if (name === 'recovery.effect.resolve' || name === 'recovery.execution.review') return recoveryEffectCommand(c, name, p)
  if (name === 'recovery.open') { if (c.actor.role !== 'cleaner') manager(c.actor); return openReported(c, p) }
  if (name === 'recovery.settings') {
   owner(c.actor); const propertyId = text(p.propertyId, 'home'); need(c.data.properties.some(h => h.id === propertyId), 'Home not found', 404)
@@ -23,7 +29,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   const ids = Array.isArray(p.cleanerIds) ? p.cleanerIds.filter(Boolean) : p.cleanerIds ? [p.cleanerIds] : []
   need(ids.length > 0 && ids.length <= 50 && ids.every(id => c.data.members.some(m => m.id === id && m.active && m.role === 'cleaner')), 'Choose the home’s active backup cleaners')
   const row = { id: `recovery-policy:${propertyId}`, propertyId, revision: newId(), cleanerIds: [...new Set(ids)] as string[], auto: p.auto === true || p.auto === 'on', creditLimitCents: amount(p, 'creditLimitCents', 'creditLimitDollars'), cleaningLimitCents: amount(p, 'cleaningLimitCents', 'cleaningLimitDollars'), savedBy: c.actor.id, futureDiscountBps: p.futureDiscountAllowed === true || p.futureDiscountAllowed === 'on' ? 1000 : 0 }
-  if (old) Object.assign(old, row); else c.data.recoveryPolicies.push(row)
+  if (old) { if(old.authority)old.authority.revision=newId(); Object.assign(old, row) } else c.data.recoveryPolicies.push(row)
   c.entityId = propertyId; return row
  }
  if (name === 'recovery.plan') {
@@ -54,7 +60,11 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   const settlement = await prepareSettlement(c, row, p)
   row.proposal = { ...settlement, cleanerId, creditCents, extraCleaningCents, why: text(p.why || row.reason, 'why this action', 2000), baseline: baseline(c, row, cleanerId), guestText: creditText(c, row, creditCents) + (settlement.arrivalTime ? `\n\nYour earlier check-in no longer fits. We propose check-in at ${settlement.arrivalTime} (${homeSettings(c, row.propertyId).timeZone}). Please confirm on your stay page; until then your host must follow up.` : '') + (settlement.futureRate ? `\n\nWe offer 10% off the rent on one future stay at this home, subject to availability and the home’s stay rules. The private offer on your stay page expires ${settlement.futureRate.expiresAt}. Cleaning, extras and taxes are separate. You can accept the revised arrangements or ask your host for help on your stay page.` : '') }
   row.status = 'proposed'; note(c, row, 'Action proposed', row.proposal.why)
-  if (policy?.auto && withinLimits(c, row, row.proposal)) await applyRecovery(c, row, true)
+  if (policy?.auto && withinLimits(c, row, row.proposal)) {
+   const reason = automaticAuthorityReason(c, row)
+   if (!reason) await applyRecovery(c, row, true)
+   else note(c, row, 'Human approval required', reason)
+  }
   return row
  }
  if (name === 'recovery.approve') return applyRecovery(c, row)
@@ -68,6 +78,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
  }
  if (name === 'recovery.close') {
   need(row.status === 'active', 'This case is not awaiting readiness confirmation', 409)
+  need(!unresolvedRecoveryEffects(row).length, 'Reconcile blocked or uncertain recovery effects before confirming readiness', 409)
   need(row.acceptedAt && t.status === 'completed' && t.completion && (t.completion.photos?.length ?? 1) >= (t.photosRequired ?? 1), 'The replacement cleaner must accept and mark ready with all required photos', 409)
   need(!c.data.tasks.some(task => task.propertyId === row.propertyId && task.blocking && task.status === 'open'), 'Resolve the home’s blocking maintenance tasks first', 409)
   const code = c.data.codes.find(r => r.id === row.codeId)
@@ -87,7 +98,8 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
 }
 
 /** A sent confirmation is part of closure; a failed or unavailable email leaves the case open. */
-export function finishRecoveries(c: Context) {
+export async function finishRecoveries(c: Context) {
+ await captureRecoveryEffects(c)
  for (const row of c.data.recoveries) {
   if(row.restorePaused)continue
   if(row.status==='active'){
@@ -98,6 +110,7 @@ export function finishRecoveries(c: Context) {
    }
   }
   if (row.status !== 'ready') continue
+  if (unresolvedRecoveryEffects(row).length) continue
   const m = c.data.messages.find(m => m.id === row.confirmationMessageId)
   if (m?.status !== 'sent' && m?.status !== 'suppressed') continue
   const t = c.data.turnovers.find(t => t.id === row.turnoverId), code = c.data.codes.find(code => code.id === row.codeId)

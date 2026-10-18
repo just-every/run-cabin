@@ -9,6 +9,6 @@ export function creditText(c: Context, row: Recovery, credit: number) {
 /** The approved case owns this exact email. No LLM chooses its recipient or money. */
 export function guestMessage(c: Context, row: Recovery, subject: string, text: string) {
  const b = c.data.bookings.find(b => b.id === row.bookingId)!
- const m: GuestMessage = { id: newId(), revision: newId(), propertyId: row.propertyId, bookingId: b.id, email: b.guestEmail ?? null, phone: null, ref: null, channel: 'email', direction: 'out', source: 'host', status: 'pending', subject, text, detail: null, replyTo: null, headerId: null, sentBy: c.actor.id, approvalId: row.approvalId ?? null, scheduledId: null, providerId: null, grounds: ['approved recovery case', row.id], createdAt: c.now, sentAt: null }
+ const m: GuestMessage = { id: newId(), revision: newId(), propertyId: row.propertyId, bookingId: b.id, email: b.guestEmail ?? null, phone: null, ref: null, channel: 'email', direction: 'out', source: 'host', status: 'pending', subject, text, detail: null, replyTo: null, headerId: null, sentBy: row.execution?.principal ?? c.actor.id, approvalId: row.approvalId ?? null, scheduledId: null, providerId: null, grounds: ['approved recovery case', row.id], createdAt: c.now, sentAt: null }
  c.data.messages.push(m); return m
 }
