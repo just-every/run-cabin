@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { canonicalJson, sha256 } from '../../modules/import-kit/src/d1/index.ts'
-import type { SourceBundle, SourceRecord } from '../../modules/import-kit/src/types.ts'
-import { ImportError, requiredText } from './errors'
+import type { SourceBundle, SourceRecord, Diagnostic } from '../../modules/import-kit/src/types.ts'
+import { ImportError } from './errors'
 
 export const namespace = 'cabin.properties.csv.v1'
 const columns = ['external_id', 'name', 'owner_name', 'owner_email', 'commission_bps']
@@ -36,7 +36,8 @@ function parse(text: string): { cells: string[]; line: number }[] {
 }
 
 export function propertySource(value: unknown): SourceBundle {
-  const csv = requiredText(value, 'csv'), bytes = Buffer.from(csv, 'utf8')
+  if (typeof value !== 'string' || !value.trim()) throw new ImportError('invalid_csv')
+  const csv = value, bytes = Buffer.from(csv, 'utf8')
   if (bytes.length > 100_000) throw new ImportError('csv_too_large', 413, 'Property CSV is limited to 100,000 UTF-8 bytes')
   if (csv.includes('\0')) throw new ImportError('invalid_csv', 422)
   const rows = parse(csv.replace(/^\uFEFF/, ''))
@@ -47,17 +48,19 @@ export function propertySource(value: unknown): SourceBundle {
   if (!body.length || body.length > 100) throw new ImportError('invalid_property_count', 422, 'Import between 1 and 100 property rows')
   const ids = new Set<string>()
   const artifactHash = sha256(bytes)
-  const records: SourceRecord[] = body.map(({ cells, line }) => {
-    if (cells.length !== 5) throw new ImportError('invalid_csv_row', 422, `Line ${line} must have five cells`)
+  const records: SourceRecord[] = [], diagnostics: Diagnostic[] = []
+  const refuse = (line: number, code: string, message: string) => diagnostics.push({ severity: 'error', code, message, kind: 'property', location: { artifact: 'properties.csv', row: line } })
+  for (const { cells, line } of body) {
+    if (cells.length !== 5) { refuse(line, 'invalid_csv_row', `Line ${line} must have five cells`); continue }
     const [id, name, owner_name, rawEmail, rawCommission] = cells.map(v => v.trim())
     const owner_email = rawEmail.toLowerCase(), commission_bps = Number(rawCommission)
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !name || name.length > 160 || !owner_name || owner_name.length > 160 || owner_email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(owner_email) || !/^\d+$/.test(rawCommission) || !Number.isInteger(commission_bps) || commission_bps < 0 || commission_bps > 10000) {
-      throw new ImportError('invalid_property_row', 422, `Invalid property fields at line ${line}`)
+      refuse(line, 'invalid_property_row', `Invalid property fields at line ${line}`); continue
     }
-    if (ids.has(id)) throw new ImportError('duplicate_property', 422, `Duplicate property ID at line ${line}`)
+    if (ids.has(id)) { refuse(line, 'duplicate_property', `Duplicate property ID at line ${line}; the later row is excluded`); continue }
     ids.add(id)
     const payload = { id, name, owner_name, owner_email, commission_bps }
-    return { namespace, kind: 'property', sourceId: id, payload, payloadHash: sha256(canonicalJson(payload)), artifactHash, location: { artifact: 'properties.csv', row: line } }
-  })
-  return { records, diagnostics: [], artifacts: [{ name: 'properties.csv', sha256: artifactHash, size: bytes.length, original: { status: 'available', base64: bytes.toString('base64') } }] }
+    records.push({ namespace, kind: 'property', sourceId: id, payload, payloadHash: sha256(canonicalJson(payload)), artifactHash, location: { artifact: 'properties.csv', row: line } })
+  }
+  return { records, diagnostics, artifacts: [{ name: 'properties.csv', sha256: artifactHash, size: bytes.length, original: { status: 'available', base64: bytes.toString('base64') } }] }
 }

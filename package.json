@@ -27,7 +27,7 @@
     "check": "rer check",
     "deps": "rer install",
     "rer": "rer",
-    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/calendars-sync.test.mjs tests/calendar.test.mjs tests/direct.test.mjs tests/turnovers.test.mjs tests/finance.test.mjs tests/ledger.test.mjs tests/audit.test.mjs tests/inbox.test.mjs tests/recovery.test.mjs tests/movein.test.mjs tests/demo.test.mjs tests/dispatch.test.mjs tests/guests.test.mjs tests/replies.test.mjs tests/owners.test.mjs tests/taxes.test.mjs tests/readiness.test.mjs",
+    "test:cabin": "node --test --test-concurrency=1 tests/cabin.test.mjs tests/calendars-sync.test.mjs tests/calendar.test.mjs tests/direct.test.mjs tests/turnovers.test.mjs tests/finance.test.mjs tests/ledger.test.mjs tests/audit.test.mjs tests/inbox.test.mjs tests/recovery.test.mjs tests/movein.test.mjs tests/demo.test.mjs tests/dispatch.test.mjs tests/guests.test.mjs tests/replies.test.mjs tests/owners.test.mjs tests/taxes.test.mjs tests/readiness.test.mjs tests/movein-register.test.mjs",
     "test:archive": "node --test --test-concurrency=1 tests/archive.test.mjs",
     "test:launch": "node --test --test-concurrency=1 tests/launch.test.mjs",
     "test:site": "node --test tests/site/*.test.mjs",

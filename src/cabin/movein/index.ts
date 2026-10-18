@@ -35,6 +35,7 @@ export async function importCommand(db:D1Database,actor:Actor,name:string,input:
    if(review.job_id)return {id:review.id,job:await readD1ImportJob(review.job_id,context)}
    const plan=JSON.parse(review.plan) as ImportPlan
    need(plan.fingerprint===review.fingerprint&&plan.principalId===actor.id,'The immutable import plan changed',409)
+   need(plan.counts.effects>0,'No accepted properties. Correct the CSV and preview again.',409)
    const conflicts=await nativeConflicts(db,values(plan));need(conflicts.length===0,'Properties now conflict with this plan. Preview a corrected CSV.',409)
    const job=await createD1ImportJob(plan,{...context,reviewedFingerprint:review.fingerprint,operationKey:review.id})
    const at=new Date().toISOString()
@@ -45,9 +46,9 @@ export async function importCommand(db:D1Database,actor:Actor,name:string,input:
   if(name==='import.undo')return {id:review.id,job:await undoD1Import(review.job_id,context),report:await readD1ImportUndoReport(review.job_id,context)}
   if(name==='import.resume')return {id:review.id,job:await resumeD1Import(review.job_id,context)}
   if(name==='import.journal'){
-   const job=await readD1ImportJob(review.job_id,context),originals=await readD1ImportOriginals(review.job_id,context)
+   const job=await readD1ImportJob(review.job_id,context),originals=await readD1ImportOriginals(review.job_id,context),report=await readD1ImportUndoReport(review.job_id,context)
    const batches=(await db.prepare('SELECT action,position,end_position AS endPosition,fence FROM ik_batches WHERE job_id=? ORDER BY rowid').bind(review.job_id).all()).results
-   await assertLive(db,actor);return {id:review.id,job,originals,batches}
+   await assertLive(db,actor);return {id:review.id,fingerprint:review.fingerprint,job,originals,batches,report}
   }
   need(false,'Unknown import command',404)
  }catch(error){const message=String((error as Error)?.message??error)
@@ -60,5 +61,10 @@ export async function importCommand(db:D1Database,actor:Actor,name:string,input:
 export async function importJobs(db:D1Database,actor:Actor){
  if(actor.role!=='owner')return []
  const reviews=(await db.prepare('SELECT r.*,j.state,j.checkpoint,j.total,j.error FROM cb_import_reviews r LEFT JOIN ik_jobs j ON j.id=r.job_id WHERE r.actor_id=? ORDER BY r.rowid DESC LIMIT 30').bind(actor.id).all<any>()).results
- return [...await providerJobs(db,actor),...reviews.map(r=>({id:r.id,jobId:r.job_id,fingerprint:r.fingerprint,status:r.state??(r.job_id?'retired':'review'),state:r.state??'review',checkpoint:r.checkpoint,total:r.total,error:r.error,createdAt:r.created_at,...(!r.job_id?{properties:properties(JSON.parse(r.plan))}:{})}))]
+ const jobs=await Promise.all(reviews.map(async r=>{
+  const preview=!r.job_id?JSON.parse(r.plan) as ImportPlan:null
+  return {id:r.id,jobId:r.job_id,fingerprint:r.fingerprint,status:r.state??(r.job_id?'retired':'review'),state:r.state??'review',checkpoint:r.checkpoint,total:r.total,error:r.error,createdAt:r.created_at,
+   ...(preview?{properties:properties(preview),diagnostics:preview.diagnostics,conflicts:await nativeConflicts(db,values(preview))}:{})}
+ }))
+ return [...await providerJobs(db,actor),...jobs]
 }

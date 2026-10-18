@@ -700,10 +700,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 17 | 43 | 29 | 89 |
-| All | 30 | 43 | 29 | 102 |
+| Target and push further | 18 | 42 | 29 | 89 |
+| All | 31 | 42 | 29 | 102 |
 
-**102 clauses: 30 done, 43 partial, 29 missing.**
+**102 clauses: 31 done, 42 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -784,7 +784,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `REPORT-001` | Operational, revenue and owner performance reports | target | missing |  | No implementing flow in the audited tree. |
 | `REPORT-002` | Saved reports and scheduled sharing | target | missing |  | No implementing flow in the audited tree. |
 | `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` (lines 31, 109) | Session commands and draft-only bearer API exist; booking/finance APIs, event webhooks, scoped app grants and Zapier do not. |
-| `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/index.ts`; `src/cabin/movein/csv.ts`; `src/cabin/movein/targets.ts`; `docs/move-in.md`; `tests/cabin.test.mjs` (line 124); `tests/archive.test.mjs` (line 27) | Basic inert preview, apply, journal, guarded undo and erasure round-trip are tested. All documented collision, resume and dependency cases are not independently exercised. |
+| `MIGRATE-001` | Reviewed property-register move-in | target | done | `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md` | Exact original CSV bytes and source fingerprint accompany normalized accepted rows and persisted per-row refusals. Owner-only immutable-plan approval publishes homes without users, inventory or funds. Commit-time collision/authority guards, resumable batches and durable journals support safe undo that preserves edits and dependent owner/tax/ledger/operational work. Erasure retires retained source and withdrawn previews. Product forms, reload, approval, native edit and retained undo dispositions exercised locally at 1440 and 390. |
 | `MIGRATE-002` | Migration from Guesty | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-003` | Migration from Hostaway | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-004` | Migration from OwnerRez | target | partial | `src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply/undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads/attachments, fees/rules/tasks/settlement history, full channel account/co-host mappings and inaccessible source history remain open. |

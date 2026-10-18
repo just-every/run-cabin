@@ -45,19 +45,19 @@ home-two,Ocean Loft,Alex Chen,alex@stay.example,1000
 | `owner_email` | Required, and must be a valid email address. |
 | `commission_bps` | Whole basis points from 0 to 10,000: `1500` means 15%. |
 
-A file holds up to 100 rows and 100,000 bytes of UTF-8 (a byte-order mark is fine). Quoted commas and line breaks are supported. Cabin refuses malformed quoting, wrong columns, duplicate IDs, fractional commission and invalid email, and says which.
+A file holds up to 100 rows and 100,000 bytes of UTF-8 (a byte-order mark is fine). Quoted commas and line breaks are supported. Cabin refuses the file for malformed quoting or wrong columns. It lists invalid fields, fractional commissions, invalid email and later duplicate-ID rows as refused rows, with their source line and reason; those rows are excluded from the saved plan. Correct the CSV and preview again, or approve only its accepted properties.
 
 ## Move in with the property-register kit
 
 1. Sign in as the installation owner and open **Move in**.
 2. Paste the CSV into **Property register CSV** and choose **Preview move-in**. This is a dry run: Cabin stores the plan and its fingerprint but creates no home.
-3. Read the plan under **Import journal**: each home with its owner and commission, and any conflicts. An external ID that already exists, or belongs to an erased home, is never overwritten; correct the file and preview again.
+3. Read the plan under **Import journal**: each accepted home with its normalized owner and commission, every refused row and its source line, the fingerprint, and any conflicts. These remain visible when you reload the page. An external ID that already exists, or belongs to an erased home, is never overwritten; correct the file and preview again.
 4. Choose **Approve this import**. Cabin records who approved it and applies exactly the plan you read; a changed file cannot be swapped in at this point.
-5. Cabin applies ten homes per request. If the journal shows the import still running, choose **Continue approved import** until it reads completed. **Read import journal** shows its progress and the original file.
+5. Cabin applies ten homes per request. If the journal shows the import still running, choose **Continue approved import** until it reads completed. **Read import journal** shows its progress, original source availability and saved undo dispositions. The command journal includes the exact original bytes, including the byte-order mark and line endings.
 
 ## Undo
 
-Choose **Undo imported properties** on a completed import. Homes still exactly as imported are removed. Homes you have since edited, or that now have calendars, turnovers or statements, are kept and listed in the undo report: undo never overwrites your later work. A large undo may need **Continue approved import** again.
+Choose **Undo imported properties** on a completed import. Homes still exactly as imported are removed. Homes you have since edited, or that now have calendars, turnovers, statements, owner work, tax records or ledger history, are kept and listed in the undo report: undo never overwrites your later work. A large undo may need **Continue approved import** again.
 
 ## Through the command API
 
