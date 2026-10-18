@@ -637,7 +637,7 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 | 22 | The cleaner's phone: job window, ready time, ticked checklist, "Photos 12 / 12" | OPS-002, EVIDENCE-001 | partial |
 | 23 | "Desert Casita · front door": the cleaner's and next guest's codes | OPS-005 | partial |
 | 24 | "Patio light out · task added for Dale" | OPS-004, OPS-002 | partial |
-| 25 | "Cabin finds a new cleaner" / "Asked 3 nearby cleaners · Ana Diaz accepted" | AGENT-001, OPS-001 | partial |
+| 25 | "Cabin finds a new cleaner" / "Asked 3 nearby cleaners · Ana Diaz accepted" | AGENT-001, OPS-001 | implemented (accepted capacity-aware backup dispatch; OPS-001 done) |
 | 26 | "resets the door codes" | AGENT-001, OPS-005 | partial |
 | 27 | "settles it with the guest before she arrives" / "Offered 10% off her next stay" | AGENT-001, AGENT-003, AGENT-006, WEB-005 | partial |
 | 28 | "Checklist 18 / 18 · photos 14 / 14" / "Lake Loft ready" / "Resolved 3:32 pm" | AGENT-001, EVIDENCE-001, OPS-003 | implemented (stay-recovery scope; see clause Status) |
@@ -653,7 +653,7 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 | 38 | "the ID check" | WEB-004, WEB-001 | implemented (direct-booking scope; see clause Status) |
 | 39 | "the damage deposit" / "held, not charged" | PAY-003, WEB-001 | implemented (direct-booking scope; see clause Status) |
 | 40 | Checkout lines: nights, cleaning fee, lodging tax 9%, total | RES-004, FIN-008 | implemented (direct-booking scope; see clause Status) |
-| 41 | "Returning guest 10%" / "Welcome back, Megan" | GUEST-001, WEB-005 | missing |
+| 41 | "Returning guest 10%" / "Welcome back, Megan" | GUEST-001, WEB-005 | implemented (private returning-stay rate; GUEST-001 done, broader WEB-005 partial) |
 | 42 | "Jul 10–14 · closed on Airbnb, Vrbo, Booking.com" | SYNC-006, SYNC-002, SYNC-003, SYNC-004 | partial |
 | 43 | "No channel fee" | WEB-001, PAY-001 | implemented (direct-booking scope; see clause Status) |
 | 44 | "Move from Guesty, Hostaway or OwnerRez" | MIGRATE-002, MIGRATE-003, MIGRATE-004 | implemented (CSV move-in scope; see clause Status) |
@@ -667,6 +667,8 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 ## Status
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
+
+18 October 2026, OPS-001 and GUEST-001: accepted capacity-aware turnover dispatch with nearby backup offers, and reviewed guest profiles with private returning-stay rates, are implemented and exercised locally and hosted. See `docs/turnover-dispatch.md` and `docs/guests.md`. Broader promotions and recovery-issued offers under WEB-005 remain partial.
 
 18 October 2026, AUDIT-001: append-only scoped business and provider history, native authority changes, bearer-agent attribution, guest access release, complete search/export and anonymous history after operational guest erasure. Legacy events retain only their original evidence. See `docs/activity.md`.
 
