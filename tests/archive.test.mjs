@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import { archiveEdge, populateArchive, checkRestored } from './archive-records.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -59,7 +60,7 @@ test('DATA-001: public CLI archive round trip refuses damaged or populated store
     const corrupt=join(temporary,'corrupt.rer');await writeFile(corrupt,bytes.replace('Temporary property','Changed property'),{mode:0o600})
     // Checksum damage is a transfer failure (1); restore policy conflicts remain 4.
     await command(erased,['import','--input',corrupt,'--yes'],1)
-    h=await harness({root:source,...identity});await h.cmd('privacy.erase',{entity:'property',id:p.id,revision:p.revision},await h.signIn(h.auth.OWNER_EMAIL));await h.close();h=null
+    h=await harness({root:source,...identity});await erase(h,{entity:'property',id:p.id,revision:p.revision},await h.signIn(h.auth.OWNER_EMAIL));await h.close();h=null
     await command(source,['export','--output',later])
     await command(erased,['import','--input',old,'--journal',later,'--yes'],4)
     await command(erased,['import','--input',later,'--yes'])

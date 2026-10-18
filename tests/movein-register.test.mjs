@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
@@ -50,7 +51,7 @@ test('MIGRATE-001: reviewed property rows, exact source custody, resumable publi
  page=await form(h,'import.journal',{id:review.id});assert.ok(page.includes(home(0).id));assert.ok(page.includes('retained'))
  // Erasure retires the shared original while unrelated imported native work survives.
  const erased=home(1),pending=await h.cmd('import.preview',{csv:header+'\n'+row(erased.id)+'\n'})
- await h.cmd('privacy.erase',{entity:'property',id:erased.id,revision:erased.revision})
+ await erase(h,{entity:'property',id:erased.id,revision:erased.revision})
  journal=await h.cmd('import.journal',{id:review.id})
  assert.ok(journal.originals.every(o=>o.original.status==='unavailable'&&!o.original.base64))
  assert.ok(!(await h.state()).importJobs.some(j=>j.id===pending.id))

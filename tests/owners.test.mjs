@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
@@ -116,7 +117,7 @@ test('FIN-005: ownership transfer grants exactly selected historical statements 
  assert.equal((await h.send('/owners/statements/'+retained.id+'.csv',undefined,historical)).status,404)
  assert.deepEqual((await state(h,historical)).properties,[])
  assert.ok((await h.state()).ownerOperations.views.some(v=>v.statementId===retained.id),'immutable access events remain after grant revocation')
- await h.cmd('privacy.erase',{entity:'property',id:old.id,revision:incomingProperty.revision})
+ await erase(h,{entity:'property',id:old.id,revision:incomingProperty.revision})
  const erased=(await h.state()).ownerOperations
  for(const key of ['policies','documents','expenses','stayRequests'])assert.ok(!erased[key].some(r=>r.propertyId===old.id),key+' removed with property')
  assert.ok(!JSON.stringify(erased).includes(old.ownerEmail),'view history no longer reconstructs erased owner identity')

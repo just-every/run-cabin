@@ -25,6 +25,8 @@
         { "slug": "move-in", "title": "Move in your homes", "file": "move-in.md", "summary": "Upload Guesty, Hostaway or OwnerRez exports, review records and refusals, reconcile totals and sign off or undo." },
         { "slug": "move-in-formats", "title": "Provider export formats", "file": "move-in-formats.md", "summary": "Documented provider CSV columns, missing export data and the supplementary cutover file." },
         { "slug": "backup", "title": "Back up, restore and erase", "file": "backup.md", "summary": "Export the whole installation to one archive, restore it into a fresh copy, and erase a home for good." },
+        { "slug": "erasure", "title": "Erasure and retention", "file": "erasure.md", "summary": "Review and erase personal data, inspect legal holds and receipts, and prevent erased contacts being reused." },
+        { "slug": "management-allocations", "title": "Management allocations", "file": "management-allocations.md", "summary": "Allocate source-backed receipts, shared invoices, reserves and multiple owner interests under frozen agreements." },
         { "slug": "portable-records", "title": "Portable records", "file": "portable-records.md", "summary": "Inspect the archive schema, retained evidence, excluded credentials and review steps before restarting restored work." },
         { "slug": "commands", "title": "Command reference", "file": "commands.md", "summary": "Every command the app and the agent door accept, with its input and who may run it." }
       ]

@@ -668,6 +668,8 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
+19 October 2026, FIN-003 and DATA-002: frozen agreement-based financial allocations and reviewed erasure with explicit retention custody are implemented and exercised through public routes and product screens at 1440 and 390. See `docs/management-allocations.md` and `docs/erasure.md`. Provider-gated clauses remain unchanged.
+
 18 October 2026, RES-001: day/week/full-month portfolio navigation, property/channel filters, addressable authoritative reservation records, timezone-correct arrival/departure, payment, owner blocks, readiness, turnover, issues and sync freshness are implemented. Stale/unknown reads never show open-night offers. A 20-home product journey at 1440 and 390 includes a real unpaid Stripe test checkout. See `docs/portfolio-calendar.md`.
 
 18 October 2026, SYNC-009: independently named external iCal feeds import only blocks, with scheduled reconciliation, durable assigned failure exceptions, retained inventory and automatic recovery. The existing secret exports revoke on replacement. Self-hosted product screens and public-route tests exercise the workflow; RER Managed still requires its provider relay. See `docs/channel-calendars.md`.
@@ -700,10 +702,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 25 | 35 | 29 | 89 |
-| All | 38 | 35 | 29 | 102 |
+| Target and push further | 26 | 34 | 29 | 89 |
+| All | 39 | 34 | 29 | 102 |
 
-**102 clauses: 38 done, 35 partial, 29 missing.**
+**102 clauses: 39 done, 34 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -794,7 +796,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `MOBILE-001` | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
 | `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
 | `DATA-001` | Complete portable product records and safe restore | target | done | `src/cabin/archive/`; `src/cabin/archive-policy.mjs`; `scripts/backup/`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs`; `tests/hosted-backup.test.mjs`; `docs/portable-records.md` | Versioned structured archives retain all current business families, signed evidence, ledger totals, journals and original media; native CSV/PDF/media downloads remain usable. Staged integrity checks refuse damage and populated stores. Credentials, sessions and private capabilities are removed; restored jobs, provider sharing and reservation service require explicit owner review/reconnection, with historical payments and queued effects retired. Local public CLI and hosted-only remote round trips exercised; restore review/restart and approved PDF download used at 1440 and 390. |
-| `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs`; `tests/audit.test.mjs` | Property/source retirement and later-journal refusal, operational guest identity/message erasure, revoked stay links and anonymous audit references ship. Full vendor/ID retention, legal holds, operator erasure and completion receipts need work. |
+| `DATA-002` | Erasure, retention and later-journal fencing | target | done | `src/cabin/privacy/`; `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/verification/retention.ts`; `migrations/core/0034_erasure.sql`; `tests/privacy.test.mjs`; `tests/archive.test.mjs`; `docs/erasure.md` | Exact owner-reviewed erasure covers guests, invited members and properties, original attachments and retained sources. Isolated dated document holds and named immutable accounting holds explain every retained record; owner-only downloads, permanent completion receipts, anonymous attribution, contact-delivery fences and later-journal archive refusal are exercised. Independent provider copies and downloaded backups require the receipt’s explicit external steps. Desktop and phone review/erase/download journeys passed. |
 | `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | done | `src/cabin/connections/`; `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/data-custody.test.mjs`; `docs/data-custody.md` | Installation-owned records and media, declared provider destinations/data, owner-only durable sharing revocation at every provider and product-mail boundary, blocked calendar exports and explicit reconnection. Populated route journey records outbound requests and proves disconnection stops manual and Cron effects while retaining history. |
 | `AUDIT-001` | Permanent attributable business and automation history | target | done | `src/cabin/audit/`; `src/cabin/ui/activity.ts`; `migrations/core/0023_audit.sql`; `tests/audit.test.mjs`; `docs/activity.md` | Append-only events retain safe actor/agent/authority, scope, source revision and controlled outcomes for domain changes, approvals, guest access, providers, money, imports and erasures. Search and full paginated export include legacy native history without its value field. Guest erasure preserves stable anonymous action references and necessary accounting; broader retention controls remain DATA-002. |
 | `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |

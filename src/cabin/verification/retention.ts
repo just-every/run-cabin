@@ -7,6 +7,7 @@ import { reconcileVerification } from './provider'
 /** Called inside guest/property erasure before the normal transaction commits. References remain private only until provider redaction finishes. */
 export async function eraseVerification(c:Context,bookingIds:Set<string>){for(const v of cases(c.data))if(bookingIds.has(v.bookingId)){
  v.status='erased';v.token=null;v.reasons=[];delete v.consentAt;delete v.consentMethod;delete v.decision;delete v.error;v.history=[];if(v.provider)v.redaction='pending';saveVerification(c,v)
+ for(const n of c.data.notices)if(n.recordId===v.id){n.email='';n.text='';n.subject='Erased identity review';n.status='suppressed';n.detail=null}
 }for(const id of bookingIds)c.queries.push(query("UPDATE cb_direct_stays SET data = json_remove(data,'$.identity') WHERE json_extract(data,'$.bookingId')=?",id))}
 export async function verificationDue(env:Bindings){
  for(const snapshot of (await loadVerifications(env.DB)).filter(v=>!v.restorePaused).filter(v=>v.status==='erased'?!!v.provider:Date.parse(v.retainUntil)<=Date.now()||!!v.provider&&!['verified','approved','rejected','manual_requested'].includes(v.status)).slice(0,100))try{

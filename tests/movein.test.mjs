@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
@@ -86,7 +87,7 @@ test('a host moves native provider exports into reconciled listings, guests and 
    await h.cmd('booking.details',{id:booking.id,guestName:'A native correction'})
    await h.cmd('import.provider.undo',{id:again.id},h.owner,409)
    // Erasure retires all personal source custody and the opening balance.
-   for(const p of (await h.state()).properties)await h.cmd('privacy.erase',{entity:'property',id:p.id,revision:p.revision})
+   for(const p of (await h.state()).properties)await erase(h,{entity:'property',id:p.id,revision:p.revision})
    assert.equal((await h.state()).properties.length,0)
    assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_movein_guests').first()).n,0)
   }

@@ -11,6 +11,13 @@ import { retireD1ImportCustody } from '../modules/import-kit/src/d1/index.ts'
 import { importContext } from './movein'
 import { type Context, type Query, kinds, owner, text, integer, need, query, sha, newId } from './model'
 import { commit, transaction } from './storage'
+import { reviewErasure, checkReview, completion, holdCommand } from './privacy/records'
+import { erasureScope } from './privacy/scope'
+import { retainedRecords } from './privacy/holds'
+import { eraseMember } from './privacy/member'
+import { eraseAttachments, fenceSending, scrubOperational } from './privacy/attachments'
+import { eraseSources } from './privacy/sources'
+import { fenceContacts } from './privacy/contacts'
 /** Preserve Base's generated statements as inert SQL for the kit's shared batch.
  * Reads still use the real D1 binding; no independent erasure commits occur. */
 async function checkpoint(db:D1Database):Promise<Query[]>{
@@ -23,12 +30,19 @@ async function checkpoint(db:D1Database):Promise<Query[]>{
  const statements=[...await portability.redactionStatements(),...await portability.invalidateTransfersStatements()]
  return statements.map((s:any)=>{const q=s.cabinQuery;need(q&&typeof q.sql==='string','Base erasure statement could not be bound',500);return q})
 }
-export async function privacyCommand(c:Context,p:Record<string,unknown>){
- owner(c.actor);const entity=text(p.entity??'property','entity'),id=text(p.id,'record ID'),fence=await checkpoint(c.db)
+export async function privacyCommand(c:Context,p:Record<string,unknown>,name='privacy.erase'){
+ owner(c.actor);if(name==='privacy.review')return reviewErasure(c,p)
+ if(name.startsWith('privacy.hold.'))return holdCommand(c,name,p,name==='privacy.hold.release'?await checkpoint(c.db):[])
+ need(name==='privacy.erase','Unknown privacy command',404)
+ await checkReview(c,p)
+ const scope=await erasureScope(c,p),entity=scope.entity,id=scope.id,fence=await checkpoint(c.db)
+ if(entity==='member')return eraseMember(c,scope,p,fence)
  if(entity==='guest')return eraseGuest(c,p,fence)
  const revision=integer(p.revision,'revision',1)
  if(entity==='property'){
   const prop=c.data.properties.find(v=>v.id===id);need(prop,'Property not found',404);need(prop.revision===revision,'Property changed; reload before erasing',409)
+  const retained=await retainedRecords(c,scope,p);await fenceSending(c,scope);await fenceContacts(c,scope);await eraseAttachments(c,scope);await eraseSources(c,scope);scrubOperational(c,scope)
+  const receiptId=await completion(c,entity,id,retained)
   const bookingIds=new Set(c.data.bookings.filter(b=>b.propertyId===id).map(b=>b.id));eraseProfiles(c,new Set(c.data.guests.filter(g=>bookingIds.has(g.bookingId)).map(g=>g.id)))
   for(const g of c.data.guests){g.facts=g.facts.filter(f=>!f.propertyIds.includes(id));g.consents=g.consents.filter(v=>v.propertyId!==id)}
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
@@ -37,6 +51,8 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
   await eraseProviderSource(c,id)
   eraseOwnerProperty(c,id)
+  const ownerEmail=c.before.properties.find(p=>p.id===id)!.ownerEmail
+  c.queries.push(query('DELETE FROM cb_tax_config WHERE property_id=?',id),query("UPDATE cb_tax_deliveries SET status='unavailable',data=json_object('id',id,'reportId',report_id,'status','unavailable','detail','Property erased; contact removed') WHERE report_id IN (SELECT id FROM cb_tax_reports WHERE property_id=?)",id),query('DELETE FROM cb_owner_links WHERE email=? COLLATE NOCASE',ownerEmail),query('DELETE FROM cb_owner_sessions WHERE email=? COLLATE NOCASE',ownerEmail))
   c.queries.push(query("DELETE FROM cb_photos WHERE turnover_id IN (SELECT id FROM cb_records WHERE kind IN ('turnovers','tasks','propertyProfiles') AND json_extract(data,'$.propertyId')=?)",id),query('DELETE FROM cb_approvals WHERE record_id IN (SELECT id FROM cb_records WHERE json_extract(data,\'$.propertyId\')=?)',id),query("DELETE FROM cb_records WHERE json_extract(data,'$.propertyId')=?",id),query('DELETE FROM cb_import_revisions WHERE property_id=?',id),query('DELETE FROM cb_direct_stays WHERE property_id=?',id),query('DELETE FROM cb_direct_homes WHERE property_id=?',id),query('DELETE FROM cb_properties WHERE id=?',id),query("INSERT INTO cb_erasure_fences(entity,id_hash,at) VALUES('property',?,?)",await sha(id),c.now))
   // Reviewed source bytes live only in these plans and kit custody. Remove any
   // review containing this property; kit retains anonymous source tombstones.
@@ -44,12 +60,7 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
   for(const r of reviewRows){const plan=JSON.parse(r.plan);if(plan.entries?.some((e:any)=>e.effects?.some((effect:any)=>effect.targetKind==='property'&&effect.targetId===id))){if(r.job_id)c.queries.push(query("UPDATE cb_import_reviews SET plan='{}' WHERE id=?",r.id));else c.queries.push(query('DELETE FROM cb_import_reviews WHERE id=?',r.id))}}
   c.entityId=id;c.audit=[{kind:'property',id,propertyId:id,revision:String(revision),result:'erased'}]
   const result=await retireD1ImportCustody({target:{kind:'property',id}},transaction(c,'privacy.erase'),importContext(c.db,c.actor),fence)
-  return {id,entity,erased:true,erasedRecords:ids.length,receiptId:result.receiptId}
+  return {id,entity,erased:true,erasedRecords:ids.length,receiptId,sourceReceiptId:result.receiptId}
  }
- need(entity==='member','Choose property or member')
- const member=c.data.members.find(m=>m.id===id);need(member,'Member not found',404);need(member.revision===revision,'Member changed; reload before erasing',409)
- need(!c.data.turnovers.some(t=>t.cleanerId===id)&&!c.data.tasks.some(t=>t.assigneeId===id)&&!c.data.homeSettings.some(r=>r.cleanerId===id||r.maintenanceId===id),'Members with turnover or maintenance history, or set as a home’s cleaner, must be deactivated; erase the property history first.',409)
- need(!await c.db.prepare('SELECT 1 FROM oa_operators WHERE email=? COLLATE NOCASE').bind(member.email).first(),'An invited identity has authentication history. Deactivate the grant instead.',409)
- c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',id,'erased:'+newId(),c.now,c.actor.id),query('DELETE FROM cb_members WHERE id=?',id),query("INSERT INTO cb_erasure_fences(entity,id_hash,at) VALUES('member',?,?)",await sha(member.email.toLowerCase()),c.now),...fence);c.entityId=id
- c.audit=[{kind:'member',id,revision:String(revision),result:'erased'}];await commit(c,'privacy.erase');return {id,entity,erased:true}
+ need(false,'Unknown erasure entity')
 }

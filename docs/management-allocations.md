@@ -1,5 +1,3 @@
-# Management agreements and allocations
-
 Under **Properties & people → Management agreements**, save a new effective-dated agreement and enable its structured allocation model. Choose the commission base (rent, rent less channel fees, or receipts excluding collected tax), percentage and fixed per-stay fee, reserve percentage, owner-use cleaning amount and responsibility for pass-through and property-tax expenses. Enter each owner's interest in basis points, totaling 10,000, and the account mappings reviewed by the named accountant. The operator records the accountant's review; Cabin does not provide an accounting opinion.
 
 Each new reservation freezes the complete agreement selected by arrival date. Amendments affect later reservations and never rewrite earlier stays, approved invoices or allocations. The agreement's designated contact receives the combined property statement; its owner-interest breakdown remains visible to authorized operators.

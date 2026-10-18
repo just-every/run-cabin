@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {harness} from './harness.mjs'
@@ -98,8 +99,8 @@ test('rental agreements work without outside accounts: versioned property terms,
   state=await h.state();assert.ok(state.messages.some(m=>m.bookingId===stay.bookingId&&m.scheduledId&&m.text.includes(newCode.code)))
   await h.cmd('reservation.move',{id:stay.bookingId,start:day(9),end:day(12)})
   state=await h.state();a=state.rentalAgreements.find(a=>a.bookingId===stay.bookingId);assert.equal(a.documents.length,3);assert.equal(a.documents.at(-1).signature,undefined,'moving through the ordinary reservation command also requests renewed consent')
-  const b=state.bookings.find(b=>b.id===stay.bookingId);await h.cmd('privacy.erase',{entity:'guest',id:b.id,revision:b.revision})
-  assert.equal((await h.send(link)).status,404);assert.equal((await h.send(`/api/cabin/agreements/${a.id}/${d.id}`,undefined,h.owner)).text,original.text,'staff retain the immutable legal record after guest-link revocation')
+  const b=state.bookings.find(b=>b.id===stay.bookingId);await erase(h,{entity:'guest',id:b.id,revision:b.revision})
+  assert.equal((await h.send(link)).status,404);assert.equal((await h.send(`/api/cabin/agreements/${a.id}/${d.id}`,undefined,h.owner)).status,404);const held=(await h.state()).privacy.holds.find(v=>v.sourceTable==='cb_records:rentalAgreements'&&v.sourceId===a.id);const retained=await h.cmd('privacy.hold.read',{id:held.id});assert.equal((await h.send(`/api/cabin/privacy/holds/${held.id}/document/${d.id}`,undefined,h.owner)).text,original.text,'owner retains the exact signed legal record in an isolated hold')
  }finally{await h.close()}
 })
 
@@ -177,7 +178,7 @@ test('WEB-004 risk policy assigns failed checks, offers consented manual review 
   s=await h.state();assert.equal(s.verifications.find(row=>row.id===v.id).status,'approved')
   assert.ok(s.codes.some(c=>c.bookingId===request.bookingId&&c.holder==='guest'&&c.status==='issued'))
   const booking=s.bookings.find(b=>b.id===request.bookingId)
-  await h.cmd('privacy.erase',{entity:'guest',id:booking.id,revision:booking.revision})
+  await erase(h,{entity:'guest',id:booking.id,revision:booking.revision})
   assert.equal((await h.send(link)).status,404)
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   const erased=JSON.parse((await h.db.prepare('SELECT data FROM cb_verifications WHERE id=?').bind(v.id).first()).data)

@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
@@ -28,7 +29,7 @@ test('AUDIT-001: a stay has portable attributable history past the view window a
  const events=exported.text.trim().split('\n').map(JSON.parse);assert.ok(events.some(e=>e.id===first.id));assert.ok(events.some(e=>e.actorKind==='agent'&&e.actorKeyId===key.id));assert.ok(events.some(e=>e.action==='guest.access.release'&&e.bookingId===bookingId));assert.ok(events.some(e=>e.entityKind==='ledger-journal'&&e.bookingId===bookingId));assert.ok(events.some(e=>e.action==='statement.provider.result'&&e.bookingId===bookingId&&e.result==='sent'));assert.ok(events.some(e=>e.action==='task.raise'&&e.bookingId===bookingId&&e.result===maintenance.status),'history must retain the unfinished task state')
  assert.ok(!exported.text.includes('ana@stay.example'));assert.ok(!exported.text.includes('Private guest discussion'));assert.ok(!exported.text.includes(code.link));assert.ok(!exported.text.includes(key.token))
  const current=(await h.state()).bookings.find(b=>b.id===bookingId)
- await h.cmd('privacy.erase',{entity:'guest',id:bookingId,revision:current.revision})
+ await erase(h,{entity:'guest',id:bookingId,revision:current.revision})
  assert.equal((await h.send('/stay/'+code.link)).status,404)
  const erasedState=await h.state();assert.ok(!erasedState.bookings.find(b=>b.id===bookingId).guestEmail);assert.ok(erasedState.messages.filter(m=>m.bookingId===bookingId).every(m=>!m.text&&!m.email))
  await h.cmd('booking.details',{id:bookingId,guestName:'Ana Ruiz',guestEmail:'ana@stay.example'},h.owner,409)

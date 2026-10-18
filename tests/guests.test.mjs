@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {harness} from './harness.mjs'
@@ -43,7 +44,7 @@ test('GUEST-001: staff review identity matches, preserve provenance, restrict no
   const merge=state.guestMerges.find(m=>m.id===merged.id)
   await h.cmd('guest.merge.undo',{id:merge.id,revision:merge.revision,confirm:'yes'})
   state=await h.state();assert.equal(guestFor(state,a.bookingId).mergedInto,undefined);assert.equal(guestFor(state,a.bookingId).facts.find(f=>f.kind==='preference').value,'Feather-free pillows');assert.equal(guestFor(state,b.bookingId).consents.at(-1).allowed,false)
-  await h.cmd('privacy.erase',{entity:'property',id:p.id,revision:p.revision})
+  await erase(h,{entity:'property',id:p.id,revision:p.revision})
   assert.ok((await h.state()).guests.every(g=>g.erasedAt&&g.identities.length===0&&g.facts.length===0&&g.consents.length===0),'property erasure clears its guest origins and private context')
  }finally{await h.close()}
 })
@@ -101,7 +102,7 @@ test('an unused offer stops working after consent withdrawal, identity separatio
   await h.cmd('booking.details',{id:prior.bookingId,guestName:'Corrected guest',guestEmail:'corrected@stay.example'})
   assert.equal((await h.send(corrected.url)).status,409,'correcting the prior guest contact invalidates an issued offer')
   const beforeErasure=await h.state(),booking=beforeErasure.bookings.find(b=>b.id===prior.bookingId)
-  await h.cmd('privacy.erase',{entity:'guest',id:booking.id,revision:booking.revision})
+  await erase(h,{entity:'guest',id:booking.id,revision:booking.revision})
   const erased=guestFor(await h.state(),prior.bookingId);assert.ok(erased.erasedAt);assert.deepEqual(erased.identities,[]);assert.deepEqual(erased.facts,[]);assert.deepEqual(erased.consents,[])
   assert.equal((await h.send(first.url)).status,409)
   assert.ok(guestFor(await h.state(),other.bookingId).identities.length,'an unmerged contact sharing a phone retains its separate identity')

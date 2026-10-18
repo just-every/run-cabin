@@ -1,4 +1,5 @@
 import { approvedStatement } from './statements'
+import { privacyDownload } from './privacy/download'
 import { restoreCommand } from './archive/review'
 import { sharingCommand } from './connections/store'
 import { load } from './storage'
@@ -49,6 +50,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
  const result=name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ if(name==='privacy.review'||name==='privacy.hold.read')return result
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
@@ -59,6 +61,8 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name==='privacy.review')return 'Erasure review saved. Read the exact retention holds and external deletion steps before confirming below.'
+ if(name==='privacy.erase')return `Local erasure completed. Receipt ${result.receiptId} lists retained records and external deletion steps under Properties & people.`
  if(name==='restore.review')return 'Restored records reviewed. Reconnect each provider separately; historical effects stay retired.'
  if(name==='restore.booking')return 'Reservation service restarted with fresh access. Historical payment operations stay in Stripe.'
  if(name==='provider.sharing')return result.enabled?'Provider sharing reconnected after your review.':'Provider sharing disconnected. New provider requests are stopped.'
@@ -182,6 +186,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/api/cabin/ledger.csv'){manager(who);need(!who.isAgent,'Human access required',403);const ledger=await ledgerState(env.DB,who);const rows=[['Journal','Entity','Property','Owner reference','Reservation','Effective','Posted','Actor','Source type','Source','Revision','Reversal','Correction','Account','Debit USD cents','Credit USD cents'],...ledger.journals.flatMap(j=>j.lines.map(l=>[j.id,j.legalEntity,j.propertyId,j.ownerKey,j.bookingId,j.effectiveDate,j.postedAt,j.actorId,j.sourceType,j.sourceId,j.sourceRevision,j.reversalOf??'',j.correctionOf??'',l.account,l.debitCents,l.creditCents]))];return new Response(rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="cabin-ledger.csv"'}})}
    if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,activity:path==='/app/activity'?await history(env.DB,who,url.searchParams):undefined,activityParams:url.searchParams,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),channel:url.searchParams.get('channel'),reservation:url.searchParams.get('reservation'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(await snapshot(env,who))
+   if(path.startsWith('/api/cabin/privacy/'))return await privacyDownload(env.DB,who,path)??json({error:'Not found'},404)
    const agreement=path.match(/^\/api\/cabin\/direct\/stays\/([\w-]+)\/agreement$/)
    if(agreement){manager(who);await assertLive(env.DB,who);const s=await stay(env.DB,agreement[1]),a=agreementOf(await load(env.DB),s.bookingId);if(a){const version=url.searchParams.get('version'),d=version?a.documents.find(d=>d.id===version):[...a.documents].reverse().find(d=>d.signature);need(d,'Signed document not found',404);return documentDownload(a,d)}return signedAgreement(s)}
    const rental=path.match(/^\/api\/cabin\/agreements\/([\w-]+)\/([\w-]+)$/)
