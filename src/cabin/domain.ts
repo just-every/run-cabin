@@ -1,3 +1,4 @@
+import { workOrderCommand } from './work-orders/commands'
 import { managementCommand } from './properties/terms'
 import { propertyProfileCommand } from './properties/profile'
 import { readinessCommand } from './readiness/commands'
@@ -33,19 +34,19 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  await assertLive(db,actor);need(!actor.isAgent||['calendar.prepare','turnover.prepare','statement.prepare'].includes(name),'Agents may only prepare drafts',403)
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
  if(name==='privacy.erase')return privacyCommand(c,input)
- for(const handler of [managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  await assertLive(env.DB,actor);const data=await load(env.DB)
  if(actor.role==='cleaner'){
-  data.propertyProfiles=[]; data.managementTerms=[];
+  data.workExpenses=[];data.propertyProfiles=[]; data.managementTerms=[];
   data.readinessPlans=[];data.readinessRecords=[];
   data.rentalTemplates=[];data.rentalAgreements=[];
   // A cleaner sees their own turnovers and codes, and tasks they raised or were given; never guest codes or other homes.
   data.turnovers=data.turnovers.filter(t=>t.status!=='draft'&&(t.cleanerId===actor.memberId||t.dispatch?.offers.some(o=>o.memberId===actor.memberId&&o.status==='pending'&&o.generation===t.dispatch?.generation))).map(t=>({...t,dispatch:t.dispatch?{...t.dispatch,offers:t.dispatch.offers.filter(o=>o.memberId===actor.memberId),reasons:[]}:undefined}))
   data.cleanerProfiles=data.cleanerProfiles.filter(p=>p.id===actor.memberId)
-  data.tasks=data.tasks.filter(t=>t.assigneeId===actor.memberId||t.raisedBy===actor.id)
+  data.tasks=data.tasks.filter(t=>t.assigneeId===actor.memberId||t.raisedBy===actor.id||t.work?.inspectorId===actor.memberId).map(t=>({...t,work:t.work?{...t.work,ownerTerms:undefined}:undefined}))
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
   data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
@@ -55,7 +56,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
   data.approvals=data.approvals.filter(a=>a.kind==='turnover'&&turnoverIds.has(a.recordId))
  }
- if(actor.isAgent){data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
+ if(actor.isAgent){data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
@@ -68,7 +69,7 @@ export async function turnoverPhoto(db:D1Database,actor:Actor,id:string,byPhotoI
  need(!actor.isAgent,'Human access required for photo evidence',403);await assertLive(db,actor)
  const photo=await db.prepare(`SELECT p.id,p.mime_type,hex(p.bytes) AS bytes_hex,r.kind,r.data FROM cb_photos p JOIN cb_records r ON r.id=p.turnover_id AND r.kind IN ('turnovers','tasks','propertyProfiles') WHERE p.id=${byPhotoId?'?':"(SELECT json_extract(data,'$.completion.photoId') FROM cb_records WHERE kind='turnovers' AND id=?)"}`).bind(id).first<any>()
  need(photo,'Photo not found',404);const row=JSON.parse(photo.data),cleaner=actor.role==='cleaner'
- const allowed=photo.kind==='turnovers'?cleaner&&row.cleanerId===actor.memberId&&row.status==='completed':cleaner&&(row.assigneeId===actor.memberId||row.raisedBy===actor.id)
+ const allowed=photo.kind==='turnovers'?cleaner&&row.cleanerId===actor.memberId&&row.status==='completed':cleaner&&(row.assigneeId===actor.memberId||row.raisedBy===actor.id||row.work?.inspectorId===actor.memberId)
  need(actor.role==='owner'||actor.role==='manager'||allowed,'Photo not found',404)
  need(typeof photo.bytes_hex==='string'&&photo.bytes_hex.length>0&&/^(?:[0-9A-F]{2})+$/.test(photo.bytes_hex),'Stored photo evidence is invalid',500)
  const hex:string=photo.bytes_hex,bytes=Uint8Array.from(hex.match(/../g)!,value=>parseInt(value,16)).buffer

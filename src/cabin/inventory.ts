@@ -48,13 +48,13 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
   c.data.requests.push(row); c.entityId = row.id; return row
  }
  if (name === 'reservation.cancel') {
-  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b, 'Booking not found', 404); property(c, b.propertyId)
+  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b, 'Booking not found', 404); property(c, b.propertyId);need(!c.data.tasks.some(t=>t.work?.blockId===b.id),'This inventory belongs to a maintenance work order. Complete and inspect the work before reopening it.',409)
   need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Review its payment and deposit in Direct bookings before changing inventory.', 409)
   need(b.source === 'request', 'Cancel a channel stay on the channel; its next sync reopens the nights.', 409); need(b.status === 'confirmed', 'This hold is already cancelled', 409)
   Object.assign(b, { status: 'cancelled', cancelled: true, revision: newId(), approvedAt: c.now }); c.entityId = b.id; return b
  }
  if (name === 'booking.details') {
-  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId)
+  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId);need(!c.data.tasks.some(t=>t.work?.blockId===b.id),'This inventory belongs to a maintenance work order. Complete and inspect the work before reopening it.',409)
   need((b.kind ?? 'stay') === 'stay', 'Blocks have no guest');need(!b.guestErasedAt,'This guest identity was erased; contact details cannot be restored on this stay',409)
   const guestName = optional(p.guestName, 'guest name', 120), time = arrival(p.arrivalTime)
   if (guestName) b.guestName = guestName; else delete b.guestName
@@ -65,7 +65,7 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
  }
  if (name === 'reservation.move') {
   // New dates for a stay Cabin holds itself; its turnover, door code and scheduled messages follow it.
-  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId)
+  manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId);need(!c.data.tasks.some(t=>t.work?.blockId===b.id),'This inventory belongs to a maintenance work order. Complete and inspect the work before reopening it.',409)
   need(b.source === 'request', 'Change a channel stay on the channel; its next sync moves it here.', 409)
   need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Its dates are part of the signed agreement.', 409)
   const start = day(p.start, 'arrival date'), end = day(p.end, 'checkout date'); need(start < end, 'Checkout must follow arrival')

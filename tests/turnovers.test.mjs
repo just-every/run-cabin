@@ -115,8 +115,8 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // Casey's job page confirms the report was saved and keeps it on the job.
     const reported = (await h.send('/app/turnovers?done=task.raise', undefined, casey.cookie)).text
     assert.match(reported, /role="status">Reported\./); assert.match(reported, /You reported[\s\S]*Patio light out/)
-    const fixed = (await h.state(dale.cookie)).tasks.find(t => t.id === task.id)
-    await h.cmd('task.close', { id: fixed.id, revision: fixed.revision, note: 'New bulb', photos: [{ photo, mimeType: 'image/png' }] }, dale.cookie)
+    const fixed = await h.cmd('work.accept',{id:task.id,revision:(await h.state(dale.cookie)).tasks.find(t => t.id === task.id).revision},dale.cookie)
+    await h.cmd('task.close', { id: fixed.id, revision: fixed.revision, checks:['Verify repair'], note: 'New bulb', photos: [{ photo, mimeType: 'image/png' }] }, dale.cookie)
     await attestArrival(h,kai.id)
     assert.match(await board(), /class="home-ready ready"/)
 
