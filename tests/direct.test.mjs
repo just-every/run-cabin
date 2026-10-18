@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises'
+import { attestArrival } from './readiness-helpers.mjs'
 import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
@@ -72,6 +74,8 @@ test('rental agreements work without outside accounts: versioned property terms,
  try{
   const manager=await h.person('AgreementManager','manager'),cleaner=await h.person('AgreementCleaner')
   const p=await h.cmd('property.save',{name:'Agreement Home',ownerName:'Casey Owner',ownerEmail:'casey@stay.example',commissionBps:2000})
+  await h.cmd('home.settings',{propertyId:p.id,address:'18 Harbor Road, Portland, ME',timeZone:'America/New_York',cleanerId:cleaner.id,checklist:['Ready'],photosRequired:1})
+  const previous=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',start:day(-4),end:day(-1),guestName:'Previous guest'})
   const policy={propertyId:p.id,agreementTitle:'Maine vacation rental terms',agreementState:'ME',agreement:'No smoking. Pets only with written agreement.',agreementRequired:true,agreementBlockAccess:true}
   const template=await h.cmd('direct.agreement.template',policy,manager.cookie)
   await h.cmd('inbox.schedule',{checkinEnabled:true,checkinHours:720,checkoutEnabled:false,reviewEnabled:false})
@@ -103,6 +107,12 @@ test('rental agreements work without outside accounts: versioned property terms,
   assert.equal((await h.send(link,renewed)).status,303);assert.equal((await h.send(link,renewed)).status,303,'repeated signing is idempotent')
   state=await h.accessState();a=state.rentalAgreements.find(a=>a.bookingId===stay.bookingId);assert.equal(a.documents.length,2);assert.equal(a.documents.filter(d=>d.signature).length,2)
   const newCode=state.codes.find(c=>c.bookingId===stay.bookingId&&c.status==='issued'&&c.holder==='guest');assert.ok(newCode);assert.notEqual(newCode.id,code.id)
+  let cleaning=await h.cmd('turnover.prepare',{bookingId:previous.bookingId,cleanerId:cleaner.id,dueDate:day(8),checklist:['Ready']})
+  await h.cmd('turnover.approve',{id:cleaning.id,revision:cleaning.revision})
+  cleaning=(await h.accessState()).turnovers.find(t=>t.id===cleaning.id)
+  await h.cmd('turnover.complete',{id:cleaning.id,revision:cleaning.revision,checks:['Ready'],caption:'Physical cleaning before arrival',photos:[{photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png'}]},cleaner.cookie)
+  await attestArrival(h,stay.bookingId)
+  state=await h.accessState()
   await h.cmd('inbox.schedule',{checkinEnabled:true,checkinHours:720,checkoutEnabled:false,reviewEnabled:false,revision:state.inbox[0].revision})
   state=await h.accessState();assert.ok(state.messages.some(m=>m.bookingId===stay.bookingId&&m.scheduledId&&m.text.includes(newCode.code)))
   await h.cmd('reservation.move',{id:stay.bookingId,revision:(await h.accessState()).bookings.find(row=>row.id===stay.bookingId).revision,start:day(9),end:day(12)})

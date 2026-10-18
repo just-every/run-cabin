@@ -12,7 +12,7 @@ import { changes } from './audit/write'
 import { retainGuestErasure } from './audit/privacy'
 import { syncLedger } from './ledger/automatic'
 import { dispatch } from './dispatch'
-import { scheduleMessages } from './inbox/schedule'
+import { synchronizeMessages } from './inbox/schedule'
 /** The scheduled iCal sync acts as Cabin itself; principal() never issues this role. */
 export const SYSTEM: Actor = { id: 'cabin:ical-sync', email: '', role: 'system', isAgent: false, operatorVersion: 0 }
 export function authority(a: Actor): Query {
@@ -51,7 +51,7 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await scheduleMessages(c); retainGuestErasure(c); finishRecoveries(c); await syncLedger(c); await allocateBlockCleaning(c)
+ captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); finishRecoveries(c); await syncLedger(c); await allocateBlockCleaning(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

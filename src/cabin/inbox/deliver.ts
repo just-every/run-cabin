@@ -33,11 +33,13 @@ function claimDue(env: Bindings, id: string) {
  return mutate(env.DB, INBOX_SYSTEM, 'message.scheduled.claim', async c => {
   const row = c.data.scheduled.find(r => r.id === id), b = row && c.data.bookings.find(r => r.id === row.bookingId)
   if (!row || !b || row.status !== 'scheduled' || Date.parse(row.dueAt) > Date.now()) return null
+  if(row.rule==='checkin'&&accessBlocked(c.data,b.id)){row.reason='Waiting for the current rental signature or identity check';return null}
   if (b.status !== 'confirmed' || lifecycleOptout(c.data, b) || !lifecycleHome(c.data,b.propertyId).schedule[row.rule].enabled) { Object.assign(row, {status:'cancelled',reason:'Stay, guest preference or schedule no longer permits this send',revision:newId()}); return null }
   const quiet = quietUntil(c.data, b, Date.now())
   if (quiet > Date.now()) { row.nextEligibleAt = new Date(quiet).toISOString(); row.reason = 'Waiting for the home’s quiet hours to end'; return null }
   delete row.nextEligibleAt
   if (Date.now() >= Date.parse(row.deadline)) { Object.assign(row, { status: 'skipped', reason: `Late by ${Math.max(0,Math.floor((Date.now()-Date.parse(row.dueAt))/60000))} minutes; its stay window passed before submission`, revision: newId() }); lifecycleEscalation(c,b,row.id,row.reason!,env.OWNER_EMAIL); return null }
+  row.sourceRevision=b.revision
   const inbox = inboxSettings(c), content = await lifecycleContent(c,b,row.rule,env.AUTH_ORIGIN), r = await route(env,inbox,await lifecycleRecipient(c.db,b))
   if (!content.eligible) { Object.assign(row,{status:'skipped',reason:'The required task is already resolved or follow-up consent is absent',revision:newId()}); return null }
   if (!('unavailable' in r) && !lifecycleHome(c.data,b.propertyId).channels.includes(r.channel)) { Object.assign(row,{status:'unavailable',reason:'The guest’s available channel is disabled by this home’s messaging policy',revision:newId()}); lifecycleEscalation(c,b,row.id,row.reason!,env.OWNER_EMAIL); return null }

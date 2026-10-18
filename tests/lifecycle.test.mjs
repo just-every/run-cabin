@@ -59,6 +59,7 @@ test('MESSAGE-003: local quiet hours, restart-due submission, late visibility, c
   assert.equal(r.status,'scheduled')
   await configure(h,p,['confirmation','checkin','checkout','arrival'],{quietFrom:'',quietUntil:''})
   assert.equal((await mail(h,'ana@guest.example')).filter(m=>m.subject.includes('Your reservation')).length,1)
+  assert.equal((await state(h)).scheduled.find(r=>r.bookingId===result.bookingId&&r.rule==='checkin').status,'sent','removing quiet hours releases the currently eligible message')
   // Simulate persisted pre-restart due work, keeping the actual Worker and public Cron delivery door.
   s=await state(h);r=s.scheduled.find(r=>r.bookingId===result.bookingId&&r.rule==='checkout')
   r.dueAt=new Date(Date.now()-120000).toISOString();r.createdAt=new Date(Date.now()-3600000).toISOString()
@@ -84,6 +85,8 @@ test('MESSAGE-003: local quiet hours, restart-due submission, late visibility, c
   s=await state(h)
   assert.equal(s.scheduled.find(r=>r.bookingId===next.bookingId).status,'unavailable')
   assert.ok(s.notices.some(n=>n.email==='manager@stay.example'&&n.recordId===s.scheduled.find(r=>r.bookingId===next.bookingId).id),'failed chosen channel assigned to a named manager')
+  await configure(h,p,['confirmation'],{email:true,sms:false})
+  assert.equal((await state(h)).scheduled.find(r=>r.bookingId===next.bookingId).status,'sent','enabling the available channel re-evaluates unsent work')
  }finally{await h.close()}
 })
 
