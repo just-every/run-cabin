@@ -25,7 +25,7 @@ export async function portalState(env:Bindings,email:string,requestedMonth?:stri
    for(let t=Date.parse(start);t<Date.parse(end);t+=86400000)occupied.add(new Date(t).toISOString().slice(0,10))
   }
   const approved=statements.filter(s=>s.propertyId===p.id&&s.month===month),regular=approved.filter(s=>s.source!=='recovery')
-  return {propertyId:p.id,month,occupiedNights:occupied.size,calendarNights:days,occupancyPercent:Math.round(occupied.size/days*1000)/10,approvedGrossCents:regular.reduce((n,s)=>n+s.grossCents,0),approvedOwnerPayableCents:approved.reduce((n,s)=>n+s.netCents,0),hasApprovedStatement:regular.length>0}
+  return {propertyId:p.id,month,occupiedNights:occupied.size,calendarNights:days,occupancyPercent:Math.round(occupied.size/days*1000)/10,approvedGrossCents:regular.reduce((n,s)=>n+s.grossCents,0),approvedOwnerPayableCents:approved.filter(s=>s.close).at(-1)?.netCents??approved.reduce((n,s)=>n+s.netCents,0),hasApprovedStatement:regular.length>0}
  })
  const scoped=<T extends {propertyId:string;email:string}>(rows:T[])=>rows.filter(r=>ids.has(r.propertyId)&&sameEmail(r.email,email))
  const documents=scoped(records.documents).filter(d=>!d.withdrawnAt).map(({content:_,createdBy:__,email:___,...r})=>r)

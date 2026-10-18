@@ -16,10 +16,10 @@ export async function postRecovery(c:Context,statement:{id:string;revision:strin
 /** Reconcile provider-confirmed records only. Nothing manufactures a bank receipt. */
 export async function syncLedger(c:Context) {
  const configured=new Set(c.data.ledgerSettings.map(s=>s.propertyId))
- const direct=await stays(c.db)
+ const direct=await stays(c.db),postedKeys=new Set((await contextJournals(c)).map(j=>j.sourceKey))
  for(const s of direct)await paymentLedger(c,s)
  for(const s of c.data.statements.filter(s=>s.source==='recovery'&&s.status==='approved'))await postRecovery(c,s)
- for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&(!c.before.payouts.some(old=>old.id===p.id&&old.match===p.match&&old.bookingId===p.bookingId)))){
+ for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&!postedKeys.has('payout:'+p.id))){
   if(!p.grossCents)continue
   const signed=(account:Parameters<typeof dr>[0],n:number,side:'dr'|'cr')=>n===0?[]:[(n>0===(side==='dr')?dr:cr)(account,Math.abs(n))]
   const processor=p.source==='stripe'&&direct.some(s=>s.bookingId===p.bookingId&&s.paymentId===p.paymentId)

@@ -1,4 +1,6 @@
 import { runtimeBindings,type Bindings } from '../../auth.server'
+import { authorizedStatement } from './state'
+import { statementPdf } from '../archive/statement-pdf'
 import { need } from '../model'
 import { ownerEmail,portalState,requestOwnerLink,confirmOwner,signOutOwner,ownerCsv } from './access'
 import { ownerAction } from './actions'
@@ -46,6 +48,8 @@ export async function ownersResponse(request:Request,original:Bindings):Promise<
     return portalPage({...s,statements:shown},false,url.searchParams.get('done')??'')
    }
    if(path==='/owners/api/state')return Response.json(await portalState(env,email,month),{headers})
+   const pdf=path.match(/^\/owners\/statements\/([\w-]+)\.pdf$/)
+   if(pdf){const s=await authorizedStatement(env,email,pdf[1]);await recordStatementAccess(env,email,[s],'download');return new Response(new Uint8Array(await statementPdf(s)).buffer,{headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="cabin-statement-${s.id}.pdf"`}})}
    const csv=path.match(/^\/owners\/statements\/([\w-]+)\.csv$/)
    if(csv)return new Response(await ownerCsv(env,email,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
    const document=path.match(/^\/owners\/documents\/([\w-]+)\.txt$/)
@@ -57,7 +61,7 @@ export async function ownersResponse(request:Request,original:Bindings):Promise<
  }catch(error){
   const status=Number((error as any).status)||500,message=status<500?(error as Error).message:'Could not complete the request. Try again.'
   if(status===401&&path==='/owners')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin'}})
-  if(path.startsWith('/owners/api/')||path.endsWith('.csv')||path.endsWith('.txt')||request.headers.get('content-type')?.includes('application/json')&&path==='/owners/action')return Response.json({error:message},{status,headers})
+  if(path.startsWith('/owners/api/')||path.endsWith('.pdf')||path.endsWith('.csv')||path.endsWith('.txt')||request.headers.get('content-type')?.includes('application/json')&&path==='/owners/action')return Response.json({error:message},{status,headers})
   if(path==='/owners/action'||path==='/owners')return portalErrorPage(message,status)
   return signInPage(message,status)
  }

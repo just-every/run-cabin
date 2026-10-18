@@ -1,3 +1,4 @@
+import { closePdf } from '../finance/close-pdf'
 import { PDFDocument, rgb, type PDFFont } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import fontData from './inter-font.json'
@@ -8,6 +9,7 @@ export async function statementPdf(s:Statement) {
  const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit)
  const font=await pdf.embedFont(Uint8Array.from(atob(fontData),c=>c.charCodeAt(0)),{subset:true})
  pdf.setTitle(`${s.propertyName} - ${s.month} owner statement`);pdf.setAuthor('Cabin')
+ const frozenAt=new Date(s.approval?.at??s.preparedAt);pdf.setCreationDate(frozenAt);pdf.setModificationDate(frozenAt)
  const green=rgb(.06,.25,.2),ink=rgb(.12,.16,.2),muted=rgb(.35,.4,.44)
  let page=pdf.addPage([612,792]),y=735
  const header=()=>{page.drawText('Cabin | Approved owner statement',{x:48,y:752,size:11,font,color:green});page.drawLine({start:{x:48,y:740},end:{x:564,y:740},color:green,thickness:1});y=714}
@@ -19,7 +21,8 @@ export async function statementPdf(s:Statement) {
   }
  }
  line(s.propertyName,20,green);line(`${s.month} | ${s.ownerName}`);line(s.ownerEmail,10,muted);y-=14
- for(const item of s.lines){line(`${item.description}    ${usd(item.amountCents)}`);if(item.managementAgreementId)line(`Agreement ${item.managementAgreementId} | ${(item.commissionBps!/100).toFixed(2)}%`,9,muted)}
+ if(s.close)closePdf(s,line)
+ for(const item of s.close?[]:s.lines){line(`${item.description}    ${usd(item.amountCents)}`);if(item.managementAgreementId)line(`Agreement ${item.managementAgreementId} | ${(item.commissionBps!/100).toFixed(2)}%`,9,muted)}
  y-=14
  if(s.source!=='recovery') {
   line(`Gross: ${usd(s.grossCents)}`);line(`Channel fees: ${usd(s.channelFeeCents??0)}`)
@@ -36,8 +39,12 @@ function wrap(value:string,font:PDFFont,size:number,width:number) {
  const lines:string[]=[]
  for(const paragraph of value.split(/\r?\n/)) {
   let line=''
-  // Character wrapping also handles long source references without clipping.
-  for(const char of paragraph){if(line&&font.widthOfTextAtSize(line+char,size)>width){lines.push(line);line=''}line+=char}
+  for(const word of paragraph.split(/\s+/)) {
+   if(line&&font.widthOfTextAtSize(line+' '+word,size)>width){lines.push(line);line=''}
+   if(font.widthOfTextAtSize(word,size)>width){
+    for(const char of word){if(line&&font.widthOfTextAtSize(line+char,size)>width){lines.push(line);line=''}line+=char}
+   }else line+=(line?' ':'')+word
+  }
   lines.push(line)
  }
  return lines

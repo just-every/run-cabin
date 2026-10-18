@@ -1,3 +1,4 @@
+import { generateStatements } from './finance/close-schedule'
 import { advanceIssueChecks } from './issues/due'
 import { restorationPaused } from './connections/guard'
 import { deliverTaxes } from './taxes/delivery'
@@ -17,6 +18,7 @@ export async function settle(env: Bindings) {
  try { await advanceIssueChecks(env) } catch { console.error('Cabin issue follow-up failed') }
  try { await deliverNotices(env) } catch (error) { console.error('Cabin notices', (error as Error).message) }
  try { await deliverTaxes(env) } catch { console.error('Cabin tax packet delivery failed') }
+ try { await generateStatements(env) } catch { console.error('Cabin statement generation failed') }
  try { await deliverStatements(env) } catch { console.error('Cabin statement delivery failed') }
  try { await pushLocks(env) } catch (error) { console.error('Cabin locks', (error as Error).message) }
  try { await finishDrafts(env) } catch (error) { console.error('Cabin drafts', (error as Error).message) }

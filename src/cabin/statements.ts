@@ -1,3 +1,6 @@
+import { prepareClose, approveClose } from './finance/month-close'
+import { closeScheduleCommand } from './finance/close-schedule'
+import { closeRows } from './finance/close-presentation'
 import { allocatedStatement, approveAllocatedStatement } from './finance/allocation-statements'
 import { allocationTerms } from './properties/terms'
 import { type Context, type Statement, type StatementLine, type Actor, need, text, integer, newId, preparer, manager, property, approve } from './model'
@@ -5,6 +8,8 @@ import { sha } from './model'
 import { assertLive, load } from './storage'
 import { statementMonth, usd } from './finance/presentation'
 export async function statementCommand(c:Context,name:string,p:Record<string,unknown>){
+ if(name==='statement.close.prepare')return prepareClose(c,p)
+ if(name==='statement.schedule')return closeScheduleCommand(c,p)
  if(name==='statement.prepare'){
   preparer(c.actor);const prop=property(c,p.propertyId),month=text(p.month,'statement month',7);need(/^\d{4}-(0[1-9]|1[0-2])$/.test(month),'Use a YYYY-MM month')
   if(p.lines===undefined){
@@ -42,7 +47,8 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  if(name==='statement.approve'){
   manager(c.actor);const row=c.data.statements.find(s=>s.id===text(p.id,'statement ID'));need(row,'Statement not found',404)
   need(property(c,row.propertyId).revision===row.propertyRevision,'Property or fee terms changed. Prepare the statement again.',409)
-  need(!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.ownerEmail===row.ownerEmail&&s.status==='approved'),'This property month already has an approved statement',409)
+  need(row.source==='ledger'||!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.ownerEmail===row.ownerEmail&&s.status==='approved'),'This property month already has an approved statement',409)
+  if(row.source==='ledger')await approveClose(c,row)
   if(row.source==='allocated')await approveAllocatedStatement(c,row)
   if(row.source==='imported'){
    const payouts=c.data.payouts.filter(r=>r.propertyId===row.propertyId&&r.date.startsWith(row.month)&&!r.statementId&&r.bookingId&&allocationTerms(c.data,c.data.bookings.find(b=>b.id===r.bookingId)!).ownerEmail===row.ownerEmail)
@@ -68,7 +74,7 @@ export function approvedStatementCsv(s:Statement){
   const rows:unknown[][]=[['Cabin recovery adjustment'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Recovery case',s.recoveryId],['Revision',s.revision],...(s.reversalOf?[['Reversal of statement',s.reversalOf]]:[]),['Description','Owner balance adjustment (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Owner balance adjustment total (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or refund is sent by this statement. The configured trust ledger records the owner and guest payables.']]
   return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
  }
- const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission','Per reservation agreement (see source lines)'],...s.lines.filter(l=>l.managementAgreementId).map(l=>['Agreement',l.bookingId,l.managementAgreementId,`${(l.commissionBps!/100).toFixed(2)}%`]),['Management fee (USD)',usd(s.managementFeeCents)],['Collected tax payable (USD)',usd(s.taxCents??0)],['Owner reserve payable (USD)',usd(s.reserveCents??0)],...(s.ownerAllocations??[]).map(o=>['Owner allocation',o.name,o.email,'Payable',usd(o.payableCents),'Reserve',usd(o.reserveCents)]),['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or owner distribution is sent by this statement.']]
+ const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],...closeRows(s),['Description','Owner payable movement (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission','Per reservation agreement (see source lines)'],...s.lines.filter(l=>l.managementAgreementId).map(l=>['Agreement',l.bookingId,l.managementAgreementId,`${(l.commissionBps!/100).toFixed(2)}%`]),['Management fee (USD)',usd(s.managementFeeCents)],['Collected tax payable (USD)',usd(s.taxCents??0)],['Owner reserve payable (USD)',usd(s.reserveCents??0)],...(s.ownerAllocations??[]).map(o=>['Owner allocation',o.name,o.email,'Payable',usd(o.payableCents),'Reserve',usd(o.reserveCents)]),['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or owner distribution is sent by this statement.']]
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
 }
 export async function approvedStatement(db:D1Database,actor:Actor,id:string){

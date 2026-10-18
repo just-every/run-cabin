@@ -46,6 +46,7 @@ if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  await assertLive(env.DB,actor);const data=await load(env.DB)
  if(actor.role==='cleaner'){
+  data.statementSchedules=[];
   data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[]; data.managementTerms=[];
   data.readinessPlans=[];data.readinessRecords=[];
   data.rentalTemplates=[];data.rentalAgreements=[];
@@ -62,7 +63,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
   data.approvals=data.approvals.filter(a=>a.kind==='turnover'&&turnoverIds.has(a.recordId))
  }
- if(actor.isAgent){data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
+ if(actor.isAgent){data.statementSchedules=[];data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.bookings=data.bookings.map(({lifecycle:_l,...b})=>b);data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.

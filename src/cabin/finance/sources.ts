@@ -1,11 +1,13 @@
 import { need } from '../model'
 import { stripe, type StripeEnv } from '../direct/stripe'
 import { payoutRows, sumCents, type PayoutRow } from './csv'
+import { parseSettlementCsv } from './settlement-csv'
 
 export interface SourceLine {
- source: 'airbnb' | 'vrbo' | 'stripe'; externalId: string; payoutId: string; reference: string;
+ source: 'airbnb' | 'vrbo' | 'booking.com' | 'stripe'; externalId: string; payoutId: string; reference: string;
  start: string | null; end: string | null; guestName: string; date: string;
  grossCents: number; feeCents: number; netCents: number; currency: 'USD'; paymentId?: string;
+ transactionId?: string; evidenceReference?: string;
 }
 
 const airbnbFee = ['Host service fee', 'Host fee', 'Service fee']
@@ -70,7 +72,8 @@ function usd(row: PayoutRow) {
  * Blank cells are missing, not zero. No headerless, localized or FX exports.
  * payoutId is empty when the provider export supplies no batch identifier.
  */
-export function parsePayoutCsv(source: 'airbnb' | 'vrbo', csv: string): SourceLine[] {
+export function parsePayoutCsv(source: SourceLine['source'], csv: string, evidenceReference?: string): SourceLine[] {
+ if (source === 'booking.com' || source === 'stripe') return parseSettlementCsv(source, csv, evidenceReference)
  need(source === 'airbnb' || source === 'vrbo', 'Choose Airbnb or Vrbo for a payout CSV.')
  const lines: SourceLine[] = [], seen = new Set<string>()
  for (const row of payoutRows(csv)) {

@@ -66,7 +66,8 @@
     {
       "id": "owner-statements-and-portal",
       "clauses": [
-        "CABIN-09"
+        "CABIN-09",
+        "FIN-004"
       ]
     },
     {
