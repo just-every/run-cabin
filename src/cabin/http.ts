@@ -1,3 +1,5 @@
+import { taxCommand } from './taxes/commands'
+import { taxExport } from './taxes/export'
 import { importHistory } from './audit/imports'
 import { history, exportHistory } from './audit/read'
 import { record } from './audit/write'
@@ -34,13 +36,13 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/guests','/app/import','/app/agent','/app/direct','/app/books','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
+const pages=new Set(['/app','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/guests','/app/import','/app/agent','/app/direct','/app/books','/app/taxes','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
@@ -160,6 +162,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   who=await principal(request,env,isAgent)
   if(request.method==='GET'){
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
+   const tax=path.match(/^\/api\/cabin\/taxes\/([\w-]+)\.json$/)
+   if(tax)return new Response(await taxExport(env.DB,who,tax[1]),{headers:{...headers,'content-type':'application/json; charset=utf-8','content-disposition':`attachment; filename="cabin-tax-${tax[1]}.json"`}})
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
    if(path==='/api/cabin/activity')return json(await history(env.DB,who,url.searchParams))

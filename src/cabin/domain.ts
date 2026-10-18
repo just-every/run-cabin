@@ -1,3 +1,4 @@
+import { taxState } from './taxes/store'
 import { ownerCommand, ownerOperationsState } from './owners/commands'
 import { guestCommand } from './guests/commands'
 import { guestState } from './guests/state'
@@ -53,7 +54,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
- const state={...data,ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ const state={...data,taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
 /** A completed turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */

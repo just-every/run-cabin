@@ -1,0 +1,16 @@
+import { h, field, hidden, select, area, form, owner, propertyName } from '../ui/shared'
+import type { TaxData, Jurisdiction, Profile } from './types'
+export function setup(s:any,data:TaxData){
+ const cards=s.properties.map((home:any)=>{
+  const profile=data.config.find((r):r is Profile=>r.kind==='profile'&&r.propertyId===home.id)
+  const location=owner(s)?form('tax.profile.save','taxes',hidden('propertyId',home.id)+hidden('revision',profile?.revision??'')+hidden('country','US')+field('state','State','text',profile?.state??'')+field('county','County or equivalent','text',profile?.county??'')+field('city','City (or Unincorporated)','text',profile?.city??''),'Save US location'):''
+  return `<details><summary>${h(home.name)} · ${profile?h(profile.state+', '+profile.county+', '+profile.city):'Jurisdiction needs review'}</summary>${location}${profile?(['state','county','city'] as const).map(level=>{
+   const j=data.config.find((r):r is Jurisdiction=>r.kind==='jurisdiction'&&r.propertyId===home.id&&r.level===level&&r.name===profile[level])
+   const registration=owner(s)?form('tax.jurisdiction.save','taxes',hidden('propertyId',home.id)+hidden('level',level)+hidden('revision',j?.revision??'')+select('registrationStatus',`Registration (${j?.registrationStatus??'unconfigured'})`,[['active','Active'],['pending','Pending'],['expired','Expired'],['not-required','Not required (document why)']])+field('registrationReference','Registration number or exemption reference','text',j?.registrationReference??'')+`<label>Registration expiry (if applicable)<input type="date" name="registrationUntil" value="${h(j?.registrationUntil??'')}"></label>`+field('partner','Accountant / approved filing partner','text',j?.partner??'')+field('recipient','Tax packet email','email',j?.recipient??'')+area('source','Registration and partner authorization evidence',j?.source??''),'Save registration and recipient'):''
+   const rules=j?data.config.filter(r=>r.kind==='rule'&&r.jurisdictionId===j.id):[]
+   const ruleForm=j&&owner(s)?form('tax.rule.save','taxes',hidden('jurisdictionId',j.id)+select('taxType','Levy type',[['lodging','Lodging'],['occupancy','Occupancy'],['sales','Sales']])+field('bps','Rate in basis points (900 = 9%; 0 = documented zero levy)','number','','min="0" max="10000"')+field('from','Effective first stay night','date')+field('until','Effective final stay night','date')+area('source','Authoritative rule source and which rent/fees are taxable'),'Add effective rule'):''
+   return `<section><h3>${h(level)} · ${h(profile[level])}</h3><p>${j?`Registration: ${h(j.registrationStatus)} · ${h(j.partner)} (${h(j.recipient)})`:'Unsupported or unconfigured: this remains a work item.'}</p>${rules.map((r:any)=>`<p>${h(r.taxType)} · ${h(r.bps/100)}% · ${h(r.from)} to ${h(r.until)}<br>${h(r.source)}</p>`).join('')}${registration}${ruleForm}</section>`
+  }).join(''):''}</details>`
+ }).join('')
+ return `<section class="panel"><h2>Jurisdictions, registration and effective rules</h2><p>The owner supplies the applicable rule and taxable fee treatment. Record a documented 0% rule for a jurisdiction with no levy. Missing state, county or city determinations remain work items.</p>${cards||'<p>Add a property first.</p>'}</section>`
+}
