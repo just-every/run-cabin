@@ -28,6 +28,7 @@ function scrub(value) {
 export function exportRow(table, row) {
  if (table === 'cb_restore_review') return {...row,restored:1,reviewed:0,revision:'archive-review',reviewed_by:null,reviewed_at:null}
  if (table === 'cb_provider_sharing') return {...row,enabled:0,revision:'archive-review:'+row.id}
+ if (table === 'cb_booking_site') { const data=JSON.parse(row.data); data.domainVerified=false; data.domainChallenge=''; return {...row,data:JSON.stringify(data)} }
  if (table === 'cb_direct_homes') { const data=JSON.parse(row.data); data.enabled=false; return {...row,data:JSON.stringify(data)} }
  if (table === 'cb_direct_stays') {
   const data = scrub(JSON.parse(row.data)); data.restored = true; data.error = 'Restored payment history is inactive. Reconcile existing charges and holds directly in Stripe; Cabin will not replay them.'

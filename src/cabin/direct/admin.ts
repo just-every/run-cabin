@@ -1,3 +1,4 @@
+import { bookingSite,websiteCommand } from '../website/store'
 import { agreementCommand,publishTemplate } from '../agreements/commands'
 import type { Bindings } from '../../auth.server'
 import { manager,need,text,integer, type Actor } from '../model'
@@ -14,10 +15,11 @@ import { refundCommand } from './refunds'
 import { loadVerifications,mayReview,synchronizeVerification } from '../verification/records'
 export async function directState(env:Bindings,actor:Actor) {
  if(!['owner','manager'].includes(actor.role)||actor.isAgent)return {homes:[],stays:[]}
- await assertLive(env.DB,actor);const verifications=await loadVerifications(env.DB);const data={homes:await homes(env.DB),stays:(await stays(env.DB)).map(({bookingLinkSealed,...row})=>{const v=verifications.find(v=>v.bookingId===row.bookingId);if(v&&!mayReview(actor,v))delete row.identity;return row}),provider:await providerState(env)};await assertLive(env.DB,actor);return data
+ await assertLive(env.DB,actor);const verifications=await loadVerifications(env.DB);const data={site:await bookingSite(env.DB),homes:await homes(env.DB),stays:(await stays(env.DB)).map(({bookingLinkSealed,...row})=>{const v=verifications.find(v=>v.bookingId===row.bookingId);if(v&&!mayReview(actor,v))delete row.identity;return row}),provider:await providerState(env)};await assertLive(env.DB,actor);return data
 }
 export async function directCommand(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>) {
  manager(actor);await assertLive(env.DB,actor)
+ const website=await websiteCommand(env,actor,name,input);if(website!==undefined)return website
  const refund=await refundCommand(env,actor,name,input);if(refund!==undefined)return refund
  const verification=await verificationCommand(env,actor,name,input);if(verification!==undefined)return verification
  if(name.startsWith('direct.agreement.'))return agreementCommand(env,actor,name,input)

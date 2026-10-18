@@ -710,10 +710,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 34 | 26 | 29 | 89 |
-| All | 47 | 26 | 29 | 102 |
+| Target and push further | 35 | 25 | 29 | 89 |
+| All | 48 | 25 | 29 | 102 |
 
-**102 clauses: 47 done, 26 partial, 29 missing.**
+**102 clauses: 48 done, 25 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -754,7 +754,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `PRICE-001` | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-002` | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
-| `WEB-001` | Branded direct-booking website | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Public responsive per-home pages and published-home directory use shared availability and one signed, Stripe test-paid checkout with optional Identity/deposit requirements. Custom-domain branding, galleries, rich search and SEO/consent controls remain open. |
+| `WEB-001` | Branded direct-booking website | target | done | `src/cabin/website/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `migrations/core/0036_booking_website.sql`; `tests/website.test.mjs`; `tests/direct.test.mjs`; `tests/archive.test.mjs`; `docs/booking-website.md` | Host branding, editable pages and SEO, explicitly published galleries, amenities, guide/policies and exact available-date/guest/amenity search. Owner-verified HTTPS routing enables portable custom domains with same-origin forms and checkout returns; consented anonymous page counts omit identity and query data. Withdrawn photos/domains refuse access and restored domains require verification. Hosted two-home custom-domain search, native editor and gallery at 1440/390; one USD Stripe test-paid reservation retained its signed agreement, consented manual identity decision and actual damage authorization before confirmation. Owner and guest receipt mail arrived with SPF/DKIM/DMARC passing. |
 | `WEB-002` | Embeddable booking engine | target | missing |  | No implementing flow in the audited tree. |
 | `WEB-003` | Signed rental agreements | target | done | `src/cabin/agreements/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/dispatch.ts`; `src/cabin/guest.ts`; `src/cabin/inbox/deliver.ts`; `tests/direct.test.mjs`; `docs/rental-agreements.md` | Versioned per-property US templates and reservation rules; exact guest consent with signer evidence and immutable signed downloads. Dates, guest and check-in term amendments require renewed consent and gate configured access/instructions while preserving earlier signatures. Direct paid stays retain their price. Hosted initial and renewal guest mail, signing, downloads and access exercised at 1440 and 390. |
 | `WEB-004` | Guest identity verification | target | done | `src/cabin/verification/`; `src/cabin/direct/`; `src/cabin/codes.ts`; `src/cabin/agreements/records.ts`; `src/cabin/guest.ts`; `src/cabin/audit/privacy.ts`; `migrations/core/0031_verification.sql`; `tests/direct.test.mjs`; `docs/identity-verification.md` | Reservation snapshots retain objective property risk rules, responsible review and independent confirmation/access policy. Guests explicitly consent to Stripe Identity or human review; only the assigned current reviewer or installation owner decides, with method/reference/reason and distinct provider outcomes. Incomplete checks fence code creation, guest access, locks and access messages. Minimal state/references, erasure, revocable links and durable asynchronous Stripe redaction ship without ID copies. Real hosted Stripe test success/failure, consented manual approval, access withholding/release, authentic guest/reviewer mail and erased-link refusal exercised at 1440 and 390. Stripe acknowledged the erasure request as processing; private references remain only until Stripe confirms redaction complete, with confirmed cleanup covered at the network edge. |

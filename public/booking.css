@@ -21,3 +21,6 @@
 .cabin .stay-sheet .code-card .code{margin:4px 0 10px;font:800 40px/1 var(--rer-font-heading);letter-spacing:.08em;color:var(--pine)}
 .cabin .stay-page>.panel+.panel{margin-top:16px}
 .cabin.guest:has(main.stay-page) header{max-width:640px}
+.booking-gallery{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:16px 0}.booking-gallery figure{margin:0;flex:0 0 80%;max-width:640px;scroll-snap-align:start}.booking-gallery img{display:block;width:100%;height:280px;object-fit:cover;border-radius:12px}.guest .panel .booking-gallery img{height:200px}
+@media(max-width:700px){.booking-gallery figure{flex-basis:100%}.booking-gallery img{height:220px}}
+.website-photo-options{display:flex;flex-wrap:wrap;gap:12px}.website-photo-options img{display:block;max-width:100%;border-radius:8px;margin-bottom:6px}
