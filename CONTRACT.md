@@ -666,9 +666,10 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
+Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 18 October 2026, recovery guest arrangements: exact approval withdraws early arrival to the normal time and issues the consented private future-stay rate; the guest accepts on the stay page. Hosted operator and guest screens at 1440 and 390 and received DMARC-passing guest mail exercised. AGENT-003 and WEB-005 remain partial for their broader targets.
 
-Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
+
 
 18 October 2026, OPS-001 and GUEST-001: accepted capacity-aware turnover dispatch with nearby backup offers, and reviewed guest profiles with private returning-stay rates, are implemented and exercised locally and hosted. See `docs/turnover-dispatch.md` and `docs/guests.md`. Broader promotions and recovery-issued offers under WEB-005 remain partial.
 
