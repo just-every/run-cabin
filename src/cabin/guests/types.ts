@@ -18,6 +18,7 @@ export interface GuestPolicy { id:string; revision:string; propertyId:string; al
 export interface GuestOffer {
  id:string; revision:string; guestId:string; propertyId:string; priorBookingId:string; priorBookingRevision:string;
  profileIds:string[]; email:string; guestName:string; tokenHash:string; expiresAt:string; createdAt:string; createdBy:string;
+ recoveryId?:string;
  status:'issued'|'redeemed'|'revoked'; redeemedBookingId?:string; redeemedAt?:string; consentBaseline:string; homeRevision:string;
 }
 export interface GuestData { guests:GuestProfile[]; guestMerges:GuestMerge[]; guestPolicies:GuestPolicy[]; guestOffers:GuestOffer[] }

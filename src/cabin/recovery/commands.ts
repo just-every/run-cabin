@@ -5,6 +5,7 @@ import { type Context, need, text, integer, newId, manager, owner, exact } from 
 import { context, openReported, baseline, note } from './cases'
 import { withinLimits } from './limits'
 import { applyRecovery, undoRecovery } from './actions'
+import { prepareSettlement } from './settlement'
 import { creditText, guestMessage } from './messages'
 
 function amount(p: Record<string, unknown>, cents: string, dollars: string) {
@@ -20,7 +21,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   const old = c.data.recoveryPolicies.find(r => r.propertyId === propertyId); if (old) exact(old, p.revision)
   const ids = Array.isArray(p.cleanerIds) ? p.cleanerIds.filter(Boolean) : p.cleanerIds ? [p.cleanerIds] : []
   need(ids.length > 0 && ids.length <= 50 && ids.every(id => c.data.members.some(m => m.id === id && m.active && m.role === 'cleaner')), 'Choose the home’s active backup cleaners')
-  const row = { id: `recovery-policy:${propertyId}`, propertyId, revision: newId(), cleanerIds: [...new Set(ids)] as string[], auto: p.auto === true || p.auto === 'on', creditLimitCents: amount(p, 'creditLimitCents', 'creditLimitDollars'), cleaningLimitCents: amount(p, 'cleaningLimitCents', 'cleaningLimitDollars'), savedBy: c.actor.id }
+  const row = { id: `recovery-policy:${propertyId}`, propertyId, revision: newId(), cleanerIds: [...new Set(ids)] as string[], auto: p.auto === true || p.auto === 'on', creditLimitCents: amount(p, 'creditLimitCents', 'creditLimitDollars'), cleaningLimitCents: amount(p, 'cleaningLimitCents', 'cleaningLimitDollars'), savedBy: c.actor.id, futureDiscountBps: p.futureDiscountAllowed === true || p.futureDiscountAllowed === 'on' ? 1000 : 0 }
   if (old) Object.assign(old, row); else c.data.recoveryPolicies.push(row)
   c.entityId = propertyId; return row
  }
@@ -49,9 +50,10 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   need(policy?.cleanerIds.includes(cleanerId), 'Choose a cleaner from this home’s recovery list')
   need(cleanerId !== t.cleanerId, 'Choose a replacement cleaner')
   const creditCents = amount(p, 'creditCents', 'creditDollars'), extraCleaningCents = amount(p, 'extraCleaningCents', 'extraCleaningDollars')
-  row.proposal = { cleanerId, creditCents, extraCleaningCents, why: text(p.why || row.reason, 'why this action', 2000), baseline: baseline(c, row, cleanerId), guestText: creditText(c, row, creditCents) }
+  const settlement = await prepareSettlement(c, row, p)
+  row.proposal = { ...settlement, cleanerId, creditCents, extraCleaningCents, why: text(p.why || row.reason, 'why this action', 2000), baseline: baseline(c, row, cleanerId), guestText: creditText(c, row, creditCents) + (settlement.arrivalTime ? `\n\nYour earlier check-in no longer fits. We propose check-in at ${settlement.arrivalTime} (${homeSettings(c, row.propertyId).timeZone}). Please confirm on your stay page; until then your host must follow up.` : '') + (settlement.futureRate ? `\n\nWe offer 10% off the rent on one future stay at this home, subject to availability and the home’s stay rules. The private offer on your stay page expires ${settlement.futureRate.expiresAt}. Cleaning, extras and taxes are separate. You can accept the revised arrangements or ask your host for help on your stay page.` : '') }
   row.status = 'proposed'; note(c, row, 'Action proposed', row.proposal.why)
-  if (policy?.auto && withinLimits(c, row, row.proposal)) applyRecovery(c, row, true)
+  if (policy?.auto && withinLimits(c, row, row.proposal)) await applyRecovery(c, row, true)
   return row
  }
  if (name === 'recovery.approve') return applyRecovery(c, row)
@@ -70,6 +72,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   const code = c.data.codes.find(r => r.id === row.codeId)
   need(code?.status === 'issued' && (code.lock.state === 'set' || row.manualAckAt), 'Confirm the replacement code on the lock or keypad first', 409)
   need(row.statementId && c.data.statements.some(s => s.id === row.statementId && s.status === 'approved'), 'The owner balance has not posted', 409)
+  need(!(row.proposal?.arrivalTime || row.proposal?.futureRate) || row.guestAcceptedAt, 'The guest must accept the revised arrangements on their stay page before closing', 409)
   const creditMessage = c.data.messages.find(m => m.id === row.creditMessageId)
   need(creditMessage && ['sent', 'suppressed'].includes(creditMessage.status), 'Deliver the approved credit offer before closing; check the guest Inbox for failures', 409)
   need(b.guestEmail, 'Add the guest’s email before sending readiness confirmation', 409)
@@ -94,7 +97,7 @@ export function finishRecoveries(c: Context) {
   const m = c.data.messages.find(m => m.id === row.confirmationMessageId)
   if (m?.status !== 'sent' && m?.status !== 'suppressed') continue
   const t = c.data.turnovers.find(t => t.id === row.turnoverId), code = c.data.codes.find(code => code.id === row.codeId)
-  if (t?.status !== 'completed' || !t.completion || !row.acceptedAt || (t.completion.photos?.length ?? 1) < (t.photosRequired ?? 1) || code?.status !== 'issued' || !(code.lock.state === 'set' || row.manualAckAt) || c.data.tasks.some(task => task.propertyId === row.propertyId && task.blocking && task.status === 'open') || !c.data.statements.some(s => s.id === row.statementId && s.status === 'approved')) continue
+  if (((row.proposal?.arrivalTime || row.proposal?.futureRate) && !row.guestAcceptedAt) || t?.status !== 'completed' || !t.completion || !row.acceptedAt || (t.completion.photos?.length ?? 1) < (t.photosRequired ?? 1) || code?.status !== 'issued' || !(code.lock.state === 'set' || row.manualAckAt) || c.data.tasks.some(task => task.propertyId === row.propertyId && task.blocking && task.status === 'open') || !c.data.statements.some(s => s.id === row.statementId && s.status === 'approved')) continue
   row.status = 'closed'; row.closedAt = c.now; note(c, row, 'Case closed', m.status === 'sent' ? 'Guest readiness email accepted; final owner adjustment is frozen' : 'Local readiness email suppressed; all deterministic steps completed')
  }
 }

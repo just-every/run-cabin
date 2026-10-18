@@ -34,7 +34,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 24 | Turnover day | "Patio light out · task added for Dale" | code | A cleaner reports a broken thing with photos; it becomes a maintenance task for the home's maintenance person, emailed to them (`src/cabin/maintenance.ts`, `src/cabin/ui/maintenance.ts`). OPS-004. |
 | 25 | Stay recovery | "Cabin finds a new cleaner"; "Asked 3 nearby cleaners · Ana Diaz accepted, arrives 1:30 pm" | code | A cancelling accepted cleaner triggers offers to up to three eligible approved backups, ranked by manager-entered home-base drive minutes. First eligible acceptance wins after rechecking daily jobs/hours, travel and work windows; the planned arrival is shown. Old access is revoked and assignment/withdrawal mail follows the result (`src/cabin/dispatch/`, `src/cabin/dispatch.ts`, `tests/dispatch.test.mjs`, `docs/turnover-dispatch.md`). Hosted Luis cancellation → three offers → Ana acceptance and 1:30 pm arrival proven at 1440 and 390 with received cleaner mail. OPS-001. Broader recovery remains AGENT-001. |
 | 26 | Stay recovery | "resets the door codes"; "Code 7102 for Ana · 1:30 – 4:00 pm"; "code 4417 live at 4:00 pm" | partial | Recovery issues the new cleaner's code for the window and rotates or moves the guest code (`src/cabin/recovery/actions.ts`, `src/cabin/codes.ts`). The host confirms the keypad; live lock verification needs the owner's lock account (OPS-005). |
-| 27 | Stay recovery | "settles it with the guest before she arrives": "Megan's 2 pm early check-in no longer fits", "Offered 10% off her next stay", her reply | partial | Recovery messages the guest through the inbox and records offers within the owner’s limits (`src/cabin/recovery/limits.ts`, `commands.ts`, `src/cabin/inbox/schedule.ts`). Private redeemable returning-stay offers now ship under GUEST-001/WEB-005 (`src/cabin/guests/`), but issuing one from a recovery action and resolving the early-arrival promise remain contract: AGENT-003, WEB-005. |
+| 27 | Stay recovery | "settles it with the guest before she arrives": "Megan's 2 pm early check-in no longer fits", "Offered 10% off her next stay", her reply | code | An exactly approved recovery can withdraw an early-arrival promise to the normal check-in and issue a private one-use 10% rent offer for a future stay, within the owner’s saved policy and the guest’s verified contact and consent. Access, cleaner window and scheduled facts follow the revised time; the guest accepts or asks a person for help on the stay page. Closure waits for acceptance plus cleaning/photos/access, and undo revokes an unused offer. Hosted exact approval, changed access, authentic guest mail, guest acceptance and private returning-rate page exercised at 1440 and 390. `src/cabin/recovery/settlement.ts`, `guest.ts`, `src/cabin/guests/offers.ts`, `tests/recovery.test.mjs`; AGENT-003, WEB-005 remain partial for their broader target workflows. |
 | 28 | Stay recovery | "Checklist 18 / 18 · photos 14 / 14"; "Lake Loft ready"; "Resolved 3:32 pm" | code | The case closes only after the replacement cleaner's completed checklist, required photos, confirmed access and accepted guest email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). AGENT-001, EVIDENCE-001, OPS-003. |
 | 29 | Stay recovery | "Cost to owner $0.00" | code | Each recovery case posts its approved credits and extra cleaning to a frozen owner adjustment and to the reservation trust ledger of a configured home (owner funds against guest credits payable or vendor payable), and nothing when there are none; undo posts the exact reversal (`src/cabin/recovery/finance.ts`, `src/cabin/ledger/automatic.ts`; `tests/recovery.test.mjs`; FIN-001). |
 | 30 | Interlude | "All five homes ready for Saturday" | code | Readiness for any day: "All 5 homes ready for Saturday" or the homes still open (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). OPS-003, OPS-008. |
@@ -63,12 +63,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 18, 19, 21, 22, 23, 24, 25, 28, 29, 30, 32, 36, 37, 38, 39, 40, 41, 43, 44, 45, 47, 49 | 33 |
-| partial | 5, 12, 15, 16, 17, 20, 26, 27, 31, 33, 34, 35, 42, 46 | 14 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 30, 32, 34, 36, 37, 38, 39, 40, 41, 43, 44, 45, 47, 49 | 36 |
+| partial | 5, 12, 15, 16, 17, 26, 31, 33, 35, 42, 46 | 11 |
 | contract | 14 | 1 |
 | not a claim | 48, 50 | 2 |
 
-48 claims: 33 code, 14 partial, 1 contract. Every partial and contract row names a clause in `CONTRACT.md`; nothing on the page is outside the contract.
+48 claims: 36 code, 11 partial, 1 contract. Every partial and contract row names a clause in `CONTRACT.md`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 
