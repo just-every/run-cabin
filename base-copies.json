@@ -334,9 +334,9 @@
     {
       "path": "src/base/run-site.ts",
       "originPath": "foundation/runtime/run-site.ts",
-      "revision": "8ca1b3d612a2d90983de38da33c2d015abdf78fb",
+      "revision": "ce4fab52c9f1e3bf4d5bfe7643144cf728717b81",
       "files": {
-        "src/base/run-site.ts": "a062e26ebd7a6a89cef4957c0e5f64cf61812a2f9f6f549e8b5de9e435e33a10"
+        "src/base/run-site.ts": "c2557b98e34a74b2693a028bb40b2c606d463731e86ff1cd9e7fbfef5d295aaf"
       },
       "modes": {
         "src/base/run-site.ts": "100644"
