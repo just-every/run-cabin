@@ -1,3 +1,4 @@
+import { readinessEvidence } from '../readiness/ui'
 import { h, heading, empty, memberName } from './shared'
 import { chip, codeLine, lockNote, windowText, photos, checkedOut } from './ops'
 import { portfolio } from '../readiness'
@@ -25,8 +26,8 @@ export function readiness(s: any, from?: string | null) {
     <dt>Photos</dt><dd>${t ? `${done ? list.length : 0} / ${h(t.photosRequired ?? 1)}` : '—'}</dd></dl>
     ${x.guestCode ? `<div class="doors">${codeLine(s, x.guestCode, 'Door code')}</div>${lockNote(s, x.guestCode)}` : ''}
     ${x.reasons.length ? `<ul class="reasons">${x.reasons.map(reason => `<li>${h(reason)}</li>`).join('')}</ul>` : ''}
-    ${photos(list.slice(0, 4), `${x.property.name} ready photo`)}${list.length > 4 ? `<p class="muted"><a href="/app/turnovers#turnover-${h(t!.id)}">All ${list.length} photos</a></p>` : ''}</article>`
+    ${readinessEvidence(s,x)}${photos(list.slice(0, 4), `${x.property.name} ready photo`)}${list.length > 4 ? `<p class="muted"><a href="/app/turnovers#turnover-${h(t!.id)}">All ${list.length} photos</a></p>` : ''}</article>`
   }).join('')
-  return heading('Readiness', title, notReady.length ? `Not ready: ${notReady.join(', ')}. A home is ready when the turnover before its next arrival is done with its photos and no blocking maintenance task is open.` : 'A home is ready when the turnover before its next arrival is done with its photos and no blocking maintenance task is open.')
+  return heading('Readiness', title, notReady.length ? `Not ready: ${notReady.join(', ')}. Readiness requires completed cleaning, resolved maintenance, attested supplies and access, and inspector acceptance. Every exception records its guest impact.` : 'Readiness requires completed cleaning, resolved maintenance, attested supplies and access, and inspector acceptance. Every exception records its guest impact.')
     + `<nav class="days" aria-label="Choose a day">${days}<form class="pick-day" method="get" action="/app/readiness"><label><span class="muted">Any day</span><input type="date" name="from" value="${h(day)}" required></label><button type="submit" class="quiet">Show</button></form></nav>` + (cards ? `<div class="ready-grid">${cards}</div>` : empty('Add homes and stays to see readiness.'))
 }

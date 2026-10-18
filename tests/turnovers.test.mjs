@@ -1,3 +1,4 @@
+import { attestArrival } from './readiness-helpers.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -103,6 +104,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(done.completion.photos.length, 3)
     for (const p of done.completion.photos) assert.equal((await h.mf.dispatchFetch(`${h.origin}/api/cabin/photos/${p.id}`, { headers: { cookie: h.owner } })).status, 200)
     const board = async () => (await h.send(`/app/readiness?from=${day(7)}`, undefined, h.owner)).text
+    await attestArrival(h,kai.id)
     assert.match(await board(), /class="home-ready ready"/)
 
     // A broken patio light, reported from the turnover with a photo, goes to Dale and holds the home.
@@ -115,6 +117,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.match(reported, /role="status">Reported\./); assert.match(reported, /You reported[\s\S]*Patio light out/)
     const fixed = (await h.state(dale.cookie)).tasks.find(t => t.id === task.id)
     await h.cmd('task.close', { id: fixed.id, revision: fixed.revision, note: 'New bulb', photos: [{ photo, mimeType: 'image/png' }] }, dale.cookie)
+    await attestArrival(h,kai.id)
     assert.match(await board(), /class="home-ready ready"/)
 
     // The guest's stay page shows their code; cancelling the stay cancels its turnover and code.
@@ -136,6 +139,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(first.status, 'completed')
     assert.equal(first.nextBookingId, inserted.bookingId)
     assert.equal(first.windowEnd, `${day(2)}T16:00`)
+    await attestArrival(h,inserted.bookingId)
     assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready ready"/)
     await h.cmd('reservation.move', { id: ana.id, start: day(-2), end: day(1) })
     s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
@@ -154,6 +158,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.deepEqual(again.completion.photos.slice(0, 3).map(p => p.id), done.completion.photos.map(p => p.id))
     assert.equal((await h.db.prepare('SELECT COUNT(*) AS n FROM cb_photos WHERE turnover_id=?').bind(first.id).first()).n, 4)
     assert.match((await h.send(`/app/turnovers?done=turnover.complete&record=${first.id}`, undefined, casey.cookie)).text, /role="status">Marked ready with 4 photos\./)
+    await attestArrival(h,inserted.bookingId)
     assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready ready"/)
   } finally { await h.close() }
 })

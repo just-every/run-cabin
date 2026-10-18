@@ -1,3 +1,4 @@
+import { attestArrival } from './readiness-helpers.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -77,6 +78,7 @@ test('MESSAGE-004 OPS-005: human early-arrival approval follows readiness and ch
   if(!turnover){turnover=await h.cmd('turnover.prepare',{bookingId:prev.bookingId,cleanerId:cleaner.id,dueDate:day(2),checklist:['Ready']});await h.cmd('turnover.approve',{id:turnover.id,revision:turnover.revision})}
   s=await h.state();turnover=s.turnovers.find(t=>t.bookingId===prev.bookingId)
   await h.cmd('turnover.complete',{id:turnover.id,revision:turnover.revision,checks:['Ready'],photos:[{photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png'}],caption:'Ready for Megan'},cleaner.cookie)
+  await attestArrival(h,req.bookingId)
   await approve()
   s=await h.state();assert.equal(s.bookings.find(b=>b.id===req.bookingId).arrivalTime,'14:00')
   assert.ok(s.codes.find(c=>c.bookingId===req.bookingId&&c.holder==='guest').validFrom.endsWith('T14:00'))

@@ -56,6 +56,7 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name.startsWith('readiness.'))return 'Readiness evidence saved. Review the current arrival status below.'
  if(name==='recovery.ai.test')return result.message
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
  if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'

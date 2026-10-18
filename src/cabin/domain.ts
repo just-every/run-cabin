@@ -1,3 +1,4 @@
+import { readinessCommand } from './readiness/commands'
 import { taxState } from './taxes/store'
 import { ownerCommand, ownerOperationsState } from './owners/commands'
 import { guestCommand } from './guests/commands'
@@ -30,12 +31,13 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  await assertLive(db,actor);need(!actor.isAgent||['calendar.prepare','turnover.prepare','statement.prepare'].includes(name),'Agents may only prepare drafts',403)
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
  if(name==='privacy.erase')return privacyCommand(c,input)
- for(const handler of [ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  await assertLive(env.DB,actor);const data=await load(env.DB)
  if(actor.role==='cleaner'){
+  data.readinessPlans=[];data.readinessRecords=[];
   data.rentalTemplates=[];data.rentalAgreements=[];
   // A cleaner sees their own turnovers and codes, and tasks they raised or were given; never guest codes or other homes.
   data.turnovers=data.turnovers.filter(t=>t.status!=='draft'&&(t.cleanerId===actor.memberId||t.dispatch?.offers.some(o=>o.memberId===actor.memberId&&o.status==='pending'&&o.generation===t.dispatch?.generation))).map(t=>({...t,dispatch:t.dispatch?{...t.dispatch,offers:t.dispatch.offers.filter(o=>o.memberId===actor.memberId),reasons:[]}:undefined}))
@@ -50,7 +52,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
   data.approvals=data.approvals.filter(a=>a.kind==='turnover'&&turnoverIds.has(a.recordId))
  }
- if(actor.isAgent){data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
+ if(actor.isAgent){data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.

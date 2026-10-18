@@ -1,3 +1,4 @@
+import { attestArrival } from './readiness-helpers.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -73,6 +74,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   recovery = (await h.state()).recoveries.find(r => r.id === recovery.id)
   await h.cmd('recovery.close', { id: recovery.id, revision: recovery.revision }, h.owner, 409)
   recovery = await h.cmd('recovery.access', { id: recovery.id, revision: recovery.revision })
+  await attestArrival(h,stay.bookingId)
   await h.cmd('recovery.close', { id: recovery.id, revision: recovery.revision })
   s = await h.state(); recovery = s.recoveries.find(r => r.id === recovery.id)
   assert.equal(recovery.status, 'closed')

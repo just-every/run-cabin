@@ -1,3 +1,4 @@
+import { homeReadiness } from '../readiness'
 import { offerCommand } from '../dispatch/offers'
 import { planAssignment } from '../dispatch/planner'
 import { homeSettings } from '../homes'
@@ -77,6 +78,8 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   need(creditMessage && ['sent', 'suppressed'].includes(creditMessage.status), 'Deliver the approved credit offer before closing; check the guest Inbox for failures', 409)
   need(b.guestEmail, 'Add the guest’s email before sending readiness confirmation', 409)
   const home = c.data.properties.find(p => p.id === row.propertyId)!
+  const readiness = homeReadiness(c.data,home,b.start.slice(0,10),Date.parse(c.now))
+  need(readiness.arrival?.id === b.id && readiness.state === 'ready', `Verify the arrival in Readiness first: ${readiness.reasons.join('; ')}`,409)
   row.confirmationMessageId = guestMessage(c, row, `${home.name} is ready`, `Hi ${b.guestName || 'there'},\n\nYour cleaner has marked ${home.name} ready with photos, and your host has confirmed access. Your stay page shows the current door code. We look forward to welcoming you.`).id
   row.status = 'ready'; note(c, row, 'Readiness confirmed', 'Cleaner acceptance, photo completion, door access and owner balance verified. Waiting for guest email acceptance.'); return row
  }
@@ -98,6 +101,8 @@ export function finishRecoveries(c: Context) {
   if (m?.status !== 'sent' && m?.status !== 'suppressed') continue
   const t = c.data.turnovers.find(t => t.id === row.turnoverId), code = c.data.codes.find(code => code.id === row.codeId)
   if (((row.proposal?.arrivalTime || row.proposal?.futureRate) && !row.guestAcceptedAt) || t?.status !== 'completed' || !t.completion || !row.acceptedAt || (t.completion.photos?.length ?? 1) < (t.photosRequired ?? 1) || code?.status !== 'issued' || !(code.lock.state === 'set' || row.manualAckAt) || c.data.tasks.some(task => task.propertyId === row.propertyId && task.blocking && task.status === 'open') || !c.data.statements.some(s => s.id === row.statementId && s.status === 'approved')) continue
+  const b=c.data.bookings.find(b=>b.id===row.bookingId),home=c.data.properties.find(p=>p.id===row.propertyId)
+  if (!b || !home || homeReadiness(c.data,home,b.start.slice(0,10),Date.parse(c.now)).state !== 'ready') continue
   row.status = 'closed'; row.closedAt = c.now; note(c, row, 'Case closed', m.status === 'sent' ? 'Guest readiness email accepted; final owner adjustment is frozen' : 'Local readiness email suppressed; all deterministic steps completed')
  }
 }
