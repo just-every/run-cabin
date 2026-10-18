@@ -7,9 +7,13 @@
 // every record and photo in it and creates no R2 bucket. Credentials come from
 // the same --env-file rer deploy uses.
 import { spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { openBackup, sanitizeDump } from './backup/format.mjs'
+import { openDump } from './backup/sql.mjs'
+import { migrationSeeds, restorePlan } from './backup/restore.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const usage = `Usage, from the Cabin folder:
@@ -57,39 +61,56 @@ function database(environment) {
   return { name: names[0], worker: record.worker }
 }
 
-// Wrangler's own output is never shown: `d1 export` prints a presigned link that
-// downloads the whole database for an hour, and any failure text is shown with
-// every URL's query string removed. Cabin prints only what it saved and where.
-const hideLinks = text => text.replace(/https?:\/\/[^\s"'<>]+/g, url => url.replace(/[?#].*$/, '?[removed]'))
+// Wrangler can print presigned download links, SQL cells and credentials on both
+// success and failure. Keep all provider output private.
 function wrangler(env, list) {
   const bin = join(root, 'node_modules', 'wrangler', 'bin', 'wrangler.js')
-  if (!existsSync(bin)) stop('Wrangler is not installed in this Cabin folder. Run rer install, then try again.', 1)
+  if (!existsSync(bin)) throw Error('Wrangler is not installed in this Cabin folder. Run rer install, then try again.')
   const run = spawnSync(process.execPath, [bin, ...list], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, env: { ...process.env, ...env, WRANGLER_SEND_METRICS: 'false' } })
-  if (run.status !== 0) { console.error(hideLinks(`${run.stdout ?? ''}${run.stderr ?? ''}`).trim()); console.error(`wrangler ${list.slice(0, 3).join(' ')} failed (exit ${run.status}). Nothing else was changed.`); process.exit(1) }
+  if (run.status !== 0) throw Error(`wrangler ${list.slice(0, 3).join(' ')} failed (exit ${run.status ?? 'unavailable'}). Provider details were withheld because they may contain private data.`)
   return run.stdout
 }
 
-const o = args(process.argv.slice(2)), env = credentials(o.envFile), db = database(o.environment)
-if (o.restore) {
-  const file = resolve(root, o.restore)
-  if (!existsSync(file) || !statSync(file).size) stop(`${o.restore} is missing or empty.`, 1)
-  if (!o.yes) stop(`Restoring replaces every table in ${db.name} (Worker ${db.worker}) with ${o.restore}. Add --yes to confirm.`)
-  console.log(`Clearing ${db.name}, then loading ${o.restore} into it.`)
-  // The dump recreates every table, so the fresh deployment's own tables go first.
-  const names = JSON.parse(wrangler(env, ['d1', 'execute', db.name, '--remote', '--json', '--command', "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"]))[0].results.map(r => r.name)
-  if (names.length) wrangler(env, ['d1', 'execute', db.name, '--remote', '--yes', '--command', `PRAGMA defer_foreign_keys=ON; ${names.map(n => `DROP TABLE IF EXISTS "${n.replace(/"/g, '""')}";`).join(' ')}`])
-  wrangler(env, ['d1', 'execute', db.name, '--remote', '--yes', '--file', file])
-  console.log(`Restored ${o.restore} into ${db.name}. Sign in again, then enter private settings (Stripe, AI keys) again: they were sealed with the old installation's secret.`)
-} else {
-  const output = resolve(root, o.output ?? join('exports', `${db.name}-${new Date().toISOString().replace(/[:.]/g, '-')}.sql`))
-  if (existsSync(output)) stop(`${output} already exists. Name a new file with --output.`, 1)
-  mkdirSync(dirname(output), { recursive: true, mode: 0o700 })
-  console.log(`Saving ${db.name} (Worker ${db.worker}) to ${output}.`)
-  // Files the export creates are owner-only from their first byte.
-  process.umask(0o077)
-  wrangler(env, ['d1', 'export', db.name, '--remote', '--output', output])
-  chmodSync(output, 0o600)
-  const sql = readFileSync(output, 'utf8'), rows = (sql.match(/^INSERT INTO/gm) ?? []).length
-  if (!rows) { console.error(`${output} holds no rows. Do not remove hosting on the strength of it.`); process.exit(1) }
-  console.log(`Saved ${rows} rows to ${output} (${statSync(output).size} bytes), readable only by you (mode 600). Keep it private: it holds guests, owners, bookings and photos.`)
+async function main() {
+  const o = args(process.argv.slice(2))
+  if (o.restore && !o.yes) stop('Restore requires empty product data and pauses all restored outbound work. Add --yes to confirm.')
+  // The archive is checked before even contacting the destination.
+  let archive, target, seeded, scratch
+  try {
+    if (o.restore) {
+      const file = resolve(root, o.restore)
+      if (!existsSync(file) || !statSync(file).size) throw Error(`${o.restore} is missing or empty.`)
+      archive = await openBackup(readFileSync(file, 'utf8'))
+    }
+    const env = credentials(o.envFile), db = database(o.environment)
+    process.umask(0o077)
+    scratch = mkdtempSync(join(tmpdir(), 'cabin-hosted-backup-'))
+    const raw = join(scratch, 'download.sql')
+    if (archive) {
+      wrangler(env, ['d1', 'export', db.name, '--remote', '--output', raw])
+      chmodSync(raw, 0o600)
+      target = openDump(readFileSync(raw, 'utf8'), { triggers: true }).db
+      seeded = migrationSeeds(join(root, 'migrations', 'core'))
+      const plan = restorePlan(archive, target, seeded), file = join(scratch, 'restore.sql')
+      writeFileSync(file, plan, { mode: 0o600, flag: 'wx' })
+      // D1's file import ingests in one transaction. The file includes destination
+      // guards, row replacement and the restored fence; no raw dump is uploaded.
+      wrangler(env, ['d1', 'execute', db.name, '--remote', '--yes', '--file', file])
+      console.log(`Restored ${o.restore} into ${db.name}. Sign in again, review restored history and reconnect providers before creating new work. Old charges, messages and access are never replayed.`)
+    } else {
+      const output = resolve(root, o.output ?? join('exports', `${db.name}-${new Date().toISOString().replace(/[:.]/g, '-')}.sql`))
+      if (existsSync(output)) throw Error(`${output} already exists. Name a new file with --output.`)
+      mkdirSync(dirname(output), { recursive: true, mode: 0o700 })
+      console.log(`Saving ${db.name} (Worker ${db.worker}) to ${output}.`)
+      wrangler(env, ['d1', 'export', db.name, '--remote', '--output', raw])
+      chmodSync(raw, 0o600)
+      const backup = await sanitizeDump(readFileSync(raw, 'utf8'))
+      writeFileSync(output, backup.text, { mode: 0o600, flag: 'wx' })
+      console.log(`Saved ${backup.rows} rows to ${output} (${statSync(output).size} bytes), readable only by you (mode 600). Keep it private: it holds guests, owners, bookings and photos.`)
+    }
+  } finally {
+    for (const db of [archive, target, seeded]) db?.close()
+    if (scratch) rmSync(scratch, { recursive: true, force: true })
+  }
 }
+main().catch(() => { console.error('Hosted backup failed. The file may be damaged, contain active work, or the destination may contain data or use a different schema. Provider output and record values were withheld.'); process.exitCode = 1 })

@@ -89,6 +89,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
 /** A sent confirmation is part of closure; a failed or unavailable email leaves the case open. */
 export function finishRecoveries(c: Context) {
  for (const row of c.data.recoveries) {
+  if(row.restorePaused)continue
   if(row.status==='active'){
    const t=c.data.turnovers.find(t=>t.id===row.turnoverId),b=c.data.bookings.find(b=>b.id===row.bookingId)
    if(t?.dispatch&&b){

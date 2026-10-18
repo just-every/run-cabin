@@ -1,4 +1,4 @@
-import { occupancy } from './blocks'
+import { occupancy as isStay } from './blocks'
 import { accessBlocked } from './agreements/records'
 import { type Booking, type Context, type HomeSettings, type Turnover, newId, need } from './model'
 import { homeSettings } from './homes'
@@ -16,7 +16,6 @@ import { synchronizeDispatch, reconcileAccepted, offerEligible } from './dispatc
 // window and an email. A moved stay moves its turnover, codes and email; a
 // cancelled one cancels them. Stays that checked out before today start nothing.
 const nights = (b: Booking) => ({ first: b.start.slice(0, 10), checkout: b.end.slice(0, 10) })
-const isStay = occupancy
 export const liveTurnover = (c: { data: { turnovers: Turnover[] } }, bookingId: string) => c.data.turnovers.find(t => t.bookingId === bookingId && t.status !== 'draft' && t.status !== 'cancelled')
 const activeCleaner = (c: Context, id: string | null) => id ? c.data.members.find(m => m.id === id && m.active && m.role === 'cleaner') ?? null : null
 
@@ -45,7 +44,9 @@ function cleanerCode(c: Context, s: HomeSettings, t: Turnover) {
 
 export function dispatch(c: Context) {
  const now = Date.parse(c.now)
+ const paused = (t: Turnover) => c.data.bookings.some(b=>b.id===t.bookingId&&b.restorePaused)
  for (const b of c.data.bookings) {
+  if(b.restorePaused)continue
   if (!isStay(b) || b.guestErasedAt || !c.data.properties.some(p => p.id === b.propertyId)) continue
   const s = homeSettings(c, b.propertyId), t = liveTurnover(c, b.id), codes = c.data.codes.filter(r => r.bookingId === b.id && r.status === 'issued')
   if (b.status !== 'confirmed') {
@@ -87,11 +88,11 @@ export function dispatch(c: Context) {
   }
  }
  // Bring all windows and work revisions current before evaluating any route.
- for (const t of c.data.turnovers) synchronizeDispatch(c, t)
- for (const t of c.data.turnovers) reconcileAccepted(c, t)
- for (const t of c.data.turnovers) offerEligible(c, t)
+ for (const t of c.data.turnovers) if(!paused(t)) synchronizeDispatch(c, t)
+ for (const t of c.data.turnovers) if(!paused(t)) reconcileAccepted(c, t)
+ for (const t of c.data.turnovers) if(!paused(t)) offerEligible(c, t)
  for (const t of c.data.turnovers) {
-  if (t.status === 'draft' || !t.windowStart) continue
+  if (paused(t) || t.status === 'draft' || !t.windowStart) continue
   const s = homeSettings(c, t.propertyId)
   if (t.status === 'cancelled') { for (const r of c.data.codes) if (r.turnoverId === t.id) revoke(r, t.cancelReason ?? 'Turnover cancelled'); if (t.notified) assignmentNotice(c, s, t, null); continue }
   const code = cleanerCode(c, s, t)

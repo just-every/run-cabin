@@ -1,4 +1,4 @@
-import { sharingAllowed } from './connections/guard'
+import { sharingAllowed, restorationPaused } from './connections/guard'
 import type { Bindings } from '../auth.server'
 import { type Actor, type Connection, need, fail, text, newId, manager, property, exact } from './model'
 import { load, mutate, SYSTEM } from './storage'
@@ -40,7 +40,7 @@ async function fetchFeed(url: string): Promise<string> {
 export async function syncConnection(env: Bindings, actor: Actor, id: string) {
  const found = (await load(env.DB)).connections.find(r => r.id === id); need(found, 'Calendar link not found', 404)
  let body: string | null = null, error: string | null = null
- try { await sharingAllowed(env.DB, 'calendars'); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
+ try { need(!found.restorePaused, 'Reconnect this restored calendar with a fresh link.', 409); await sharingAllowed(env.DB, 'calendars'); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
  return mutate(env.DB, actor, 'channel.sync', async c => {
   const row = c.data.connections.find(r => r.id === id); need(row, 'Calendar link not found', 404); property(c, row.propertyId)
   need(row.revision === found.revision, 'Calendar link changed while syncing. Sync the current link again.', 409)
@@ -61,7 +61,7 @@ export async function syncConnection(env: Bindings, actor: Actor, id: string) {
 }
 /** The Worker's Cron: every link whose poll is due, oldest first, a bounded number per run. */
 export async function syncDue(env: Bindings) {
- if (managedInstall(env)) return []
+ if (managedInstall(env) || await restorationPaused(env.DB)) return []
  const now = new Date().toISOString(), due = (await load(env.DB)).connections.filter(r => r.nextPollAt <= now).sort((a, b) => a.nextPollAt.localeCompare(b.nextPollAt)).slice(0, PER_RUN), results = []
  for (const row of due) {
   try { results.push(await syncConnection(env, SYSTEM, row.id)) }

@@ -14,6 +14,7 @@ export interface Quote {
  returningGuest?:{offerId:string; guestId:string; name:string; discountBps:number};
 }
 export interface DirectStay {
+ restored?:boolean;
  id:string; propertyId:string; bookingId:string; revision:string; homeRevision:string; phase:'held'|'paid'|'confirmed'|'expired';
  start:string; end:string; guestName:string; email:string; quote:Quote; createdAt:string; holdUntil:string;
  signature:{name:string; at:string; version:string; text:string; sha256:string; consent:string};

@@ -1,3 +1,4 @@
+import { restorationPaused } from '../connections/guard'
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
 import { need,newId,type Actor } from '../model'
@@ -16,7 +17,7 @@ import { startVerification,reconcileVerification } from '../verification/provide
 const update=async(env:Bindings,id:string,action:string,change:(s:DirectStay)=>void,actor=DIRECT_SYSTEM)=>mutate(env.DB,actor,action,async c=>{const s=await stay(env.DB,id);change(s);saveStay(c,s);return s})
 export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYSTEM) {
  let s=await stay(env.DB,id)
- if(s.phase==='expired')return s
+ if(s.restored||s.phase==='expired')return s
  if(s.checkoutId&&!s.paymentId){
   const session=await readCheckout(paymentEnv(env,s),s.checkoutId)
   if(session.payment_status==='paid'){
@@ -63,6 +64,7 @@ export async function identity(env:Bindings,id:string,token:string) {
 }
 export async function settleDeposit(env:Bindings,actor:Actor,id:string,action:'release'|'capture',amount=0,reason='',evidence='') {
  const s=await update(env,id,`direct.deposit.${action}.requested`,row=>{
+  need(!row.restored,'Restored payment operations must be reconciled in Stripe; Cabin will not replay them.',409)
   need(row.deposit&&activeDeposit(row),'No active authorization is available',409);need(Date.now()>=departure(row),'Settle the damage deposit after checkout',409)
   if(action==='capture'){need(Number.isSafeInteger(amount)&&amount>0&&amount<=row.deposit.amountCents,'Capture an amount within the held deposit');need(reason.trim()&&evidence.trim(),'Give a damage reason and evidence reference')}
   if(action==='capture')row.deposit.claimCents=amount;row.deposit.status=action==='release'?'releasing':'capturing';row.deposit.reason=reason;row.deposit.evidence=evidence
@@ -73,6 +75,7 @@ export async function settleDeposit(env:Bindings,actor:Actor,id:string,action:'r
  }catch(error){await update(env,id,'direct.deposit.error',row=>{row.error=(error as Error).message+' Refresh the payment status before submitting another action.'},actor);throw error}
 }
 export async function directDue(env:Bindings) {
+ if(await restorationPaused(env.DB))return
  await verificationDue(env)
  for(const row of await dueStays(env.DB))try{
   let s=row;s=await refresh(env,s.id)

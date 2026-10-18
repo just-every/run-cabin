@@ -77,3 +77,5 @@ Channel partner APIs for Airbnb, Vrbo and Booking.com (SYNC-002–004), which cl
 ## Contract progress beyond the homepage
 
 DATA-003 is done: installation-owned booking, guest/thread, payout/ledger and media custody, declared provider sharing and immediate owner-controlled disconnection (`src/cabin/connections/`, `tests/data-custody.test.mjs`, `docs/data-custody.md`). This clause has no separate homepage claim row; the account-gated homepage statuses above are unchanged.
+
+DATA-001 is done: versioned local and hosted backups preserve business evidence, exclude credentials and sessions, and restore with provider and reservation review fences; approved statement CSV/PDF and original media remain usable (`src/cabin/archive/`, `scripts/backup/`, `tests/archive.test.mjs`, `tests/hosted-backup.test.mjs`, `docs/portable-records.md`). It also has no separate homepage row. Channel partner APIs, live messaging/locks/pricing, QuickBooks, authorized tax filing and eligible USD payouts still need outside accounts or provider outcomes, so those homepage rows remain partial or contract.

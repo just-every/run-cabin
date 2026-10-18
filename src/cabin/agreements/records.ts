@@ -43,6 +43,7 @@ export async function recordCheckout(c:Context,s:DirectStay){
 /** Runs before dispatch in every commit, so a changed stay cannot release access under old consent. */
 export async function synchronizeAgreements(c:Context){
  for(const b of c.data.bookings){
+  if(b.restorePaused)continue
   if((b.kind??'stay')!=='stay'||b.guestErasedAt||b.status!=='confirmed')continue
   const t=c.data.rentalTemplates.find(t=>t.propertyId===b.propertyId)
   let a=agreementOf(c.data,b.id)

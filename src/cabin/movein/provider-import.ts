@@ -29,6 +29,7 @@ export async function providerCommand(db:D1Database,actor:Actor,name:string,inpu
   return details(db,await saved(db,actor,id))
  }
  const id=text(input.id,'move-in ID'),row=await saved(db,actor,id),plan=JSON.parse(row.plan) as Normalized
+ need(!(plan as Normalized & {restorePaused?:boolean}).restorePaused,'This restored move-in is historical. Preview the source files again with fresh calendar links before applying or changing it.',409)
  need(await sha(canonicalJson(plan))===row.fingerprint,'The saved preview changed. Preview the exports again.',409)
  if(name==='import.provider.apply'){
   need(input.fingerprint===row.fingerprint,'Approve the exact preview fingerprint',409)

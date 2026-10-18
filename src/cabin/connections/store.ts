@@ -1,3 +1,4 @@
+import { restorationPaused } from './guard'
 import type { Bindings } from '../../auth.server'
 import { type Actor, owner, need, query, newId } from '../model'
 import { mutate } from '../storage'
@@ -25,6 +26,7 @@ export async function sharingCommand(env: Bindings, actor: Actor, input: Record<
  return mutate(env.DB, actor, 'provider.sharing', async c => {
   const old = await env.DB.prepare('SELECT revision FROM cb_provider_sharing WHERE id=?').bind(id).first<{ revision: string }>()
   need((old?.revision ?? '') === input.revision, 'Sharing settings changed. Reload before saving.', 409)
+  need(!enabled || !await restorationPaused(env.DB), 'Review the restored installation before reconnecting providers.', 409)
   need(!enabled || input.confirm === 'yes', 'Review the destination and data, then confirm reconnection.')
   const revision = newId()
   c.queries.push(query('INSERT INTO cb_provider_sharing(id,enabled,revision,changed_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,revision=excluded.revision,changed_at=excluded.changed_at', id, enabled ? 1 : 0, revision, c.now))

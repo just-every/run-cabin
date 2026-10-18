@@ -3,6 +3,7 @@ export interface VerificationPolicy {
  reviewerId:string; reviewerEmail:string; blockAccess:boolean; requireBeforeConfirmation:boolean; retentionDays:number; origin:string;
 }
 export interface VerificationCase {
+ restorePaused?:boolean;
  id:string; revision:string; propertyId:string; bookingId:string; policy:VerificationPolicy; reasons:string[];
  status:'not_required'|'pending'|'processing'|'requires_input'|'verified'|'manual_requested'|'approved'|'rejected'|'erased';
  token:string|null; createdAt:string; retainUntil:string; consentAt?:string; consentMethod?:'stripe'|'manual';

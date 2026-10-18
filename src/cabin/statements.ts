@@ -68,7 +68,9 @@ export function approvedStatementCsv(s:Statement){
  const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission','Per reservation agreement (see source lines)'],...s.lines.filter(l=>l.managementAgreementId).map(l=>['Agreement',l.bookingId,l.managementAgreementId,`${(l.commissionBps!/100).toFixed(2)}%`]),['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or owner distribution is sent by this statement.']]
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
 }
-export async function statementCsv(db:D1Database,actor:Actor,id:string){
+export async function approvedStatement(db:D1Database,actor:Actor,id:string){
  manager(actor);await assertLive(db,actor);const s=(await load(db)).statements.find(s=>s.id===id);need(s&&s.status==='approved','Approved statement not found',404)
- await assertLive(db,actor);return approvedStatementCsv(s)
+ await assertLive(db,actor);return s
 }
+
+export async function statementCsv(db:D1Database,actor:Actor,id:string){return approvedStatementCsv(await approvedStatement(db,actor,id))}

@@ -9,7 +9,7 @@ export async function eraseVerification(c:Context,bookingIds:Set<string>){for(co
  v.status='erased';v.token=null;v.reasons=[];delete v.consentAt;delete v.consentMethod;delete v.decision;delete v.error;v.history=[];if(v.provider)v.redaction='pending';saveVerification(c,v)
 }for(const id of bookingIds)c.queries.push(query("UPDATE cb_direct_stays SET data = json_remove(data,'$.identity') WHERE json_extract(data,'$.bookingId')=?",id))}
 export async function verificationDue(env:Bindings){
- for(const snapshot of (await loadVerifications(env.DB)).filter(v=>v.status==='erased'?!!v.provider:Date.parse(v.retainUntil)<=Date.now()||!!v.provider&&!['verified','approved','rejected','manual_requested'].includes(v.status)).slice(0,100))try{
+ for(const snapshot of (await loadVerifications(env.DB)).filter(v=>!v.restorePaused).filter(v=>v.status==='erased'?!!v.provider:Date.parse(v.retainUntil)<=Date.now()||!!v.provider&&!['verified','approved','rejected','manual_requested'].includes(v.status)).slice(0,100))try{
   await mutate(env.DB,SYSTEM,'verification.reconciled',async c=>{
    const v=cases(c.data).find(v=>v.id===snapshot.id);if(!v)return
    const booking=c.data.bookings.find(b=>b.id===v.bookingId)

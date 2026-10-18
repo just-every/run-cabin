@@ -89,7 +89,8 @@
     {
       "id": "backup-and-restore",
       "clauses": [
-        "CABIN-13"
+        "CABIN-13",
+        "DATA-001"
       ]
     },
     {

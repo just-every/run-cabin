@@ -1,3 +1,5 @@
+import { approvedStatement } from './statements'
+import { restoreCommand } from './archive/review'
 import { sharingCommand } from './connections/store'
 import { load } from './storage'
 import { documentDownload } from './agreements/ui'
@@ -46,7 +48,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
@@ -57,6 +59,8 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name==='restore.review')return 'Restored records reviewed. Reconnect each provider separately; historical effects stay retired.'
+ if(name==='restore.booking')return 'Reservation service restarted with fresh access. Historical payment operations stay in Stripe.'
  if(name==='provider.sharing')return result.enabled?'Provider sharing reconnected after your review.':'Provider sharing disconnected. New provider requests are stopped.'
  if(name.startsWith('readiness.'))return 'Readiness evidence saved. Review the current arrival status below.'
  if(name==='recovery.ai.test')return result.message
@@ -181,6 +185,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(agreement){manager(who);await assertLive(env.DB,who);const s=await stay(env.DB,agreement[1]),a=agreementOf(await load(env.DB),s.bookingId);if(a){const version=url.searchParams.get('version'),d=version?a.documents.find(d=>d.id===version):[...a.documents].reverse().find(d=>d.signature);need(d,'Signed document not found',404);return documentDownload(a,d)}return signedAgreement(s)}
    const rental=path.match(/^\/api\/cabin\/agreements\/([\w-]+)\/([\w-]+)$/)
    if(rental){manager(who);await assertLive(env.DB,who);const a=(await load(env.DB)).rentalAgreements.find(a=>a.id===rental[1]),d=a?.documents.find(d=>d.id===rental[2]);need(a&&d,'Agreement not found',404);await assertLive(env.DB,who);return documentDownload(a,d)}
+   const pdf=path.match(/^\/api\/cabin\/statements\/([\w-]+)\.pdf$/)
+   if(pdf){const {statementPdf}=await import('./archive/statement-pdf');return new Response(new Uint8Array(await statementPdf(await approvedStatement(env.DB,who,pdf[1]))).buffer,{headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="cabin-statement-${pdf[1]}.pdf"`}})}
    const csv=path.match(/^\/api\/cabin\/statements\/([\w-]+)\.csv$/)
    if(csv)return new Response(await statementCsv(env.DB,who,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
    const photo=path.match(/^\/api\/cabin\/turnovers\/([\w-]+)\/photo$/),direct=path.match(/^\/api\/cabin\/photos\/([\w-]+)$/)

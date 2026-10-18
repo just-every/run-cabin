@@ -21,9 +21,9 @@ Before removing hosting, stop new bookings and operational writes while you capt
 rer run backup:hosted -- --env-file .env.cabin
 ```
 
-For another environment add `--environment NAME`, for example `--environment trial`. This works for an install.sh install: `rer run` uses the Node and pnpm rer keeps for itself, so you need no `pnpm`, `npx` or Node of your own. It reads `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` from `.env.cabin`, finds the environment's database in the deploy record rer keeps in `.rer/deploy`, and downloads it with Wrangler straight to `exports/cabin-ENVIRONMENT-db-DATE.sql`, readable only by you (mode 600) from its first byte. It prints only that path, the row count and the size, never a download link, and refuses an empty backup or an existing file. Cabin keeps its operational records and turnover photos in that database and creates no R2 storage, so this one file is the whole hosted installation's data. Keep it and a private copy of `.env.cabin` and `.rer/deploy` securely: it holds guests, owners, bookings and photos.
+For another environment add `--environment NAME`, for example `--environment trial`. This works for an install.sh install: `rer run` uses the Node and pnpm rer keeps for itself, so you need no `pnpm`, `npx` or Node of your own. It reads `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` from `.env.cabin`, finds the environment's database in the deploy record rer keeps in `.rer/deploy`, and downloads it with Wrangler to private temporary storage, strips installation credentials and active work, validates it, then writes `exports/cabin-ENVIRONMENT-db-DATE.sql`, readable only by you (mode 600) from its first byte. It prints only that path, the row count and the size, never a download link, and refuses an empty backup or an existing file. Cabin keeps its operational records and turnover photos in that database and creates no R2 storage, so this one file is the whole hosted installation's data. Keep it and a private copy of `.env.cabin` and `.rer/deploy` securely: it holds guests, owners, bookings and photos.
 
-This is a database SQL backup, not a `.rer` archive for `rer import`.
+This is a versioned, checksummed Cabin SQL backup, not a `.rer` archive for `rer import`. Raw SQL dumps are refused by the restore command. See [the portable schema and restore rules](/docs/portable-records).
 
 ### Restore a hosted backup
 
@@ -34,7 +34,7 @@ rer deploy --environment restored --env-file .env.cabin
 rer run backup:hosted -- --restore exports/FILE.sql --environment restored --env-file .env.cabin --yes
 ```
 
-The first command creates a fresh Cabin with its own Worker and database. The second replaces every table in that new database with the backup. Then sign in to the new address again and re-enter private settings sealed with the old installation's secret: saved Stripe keys and the inbox AI key. Check the homes, stays and statements before pointing guests or a domain at it. See [hosting and irreversible removal](/docs/hosting#remove-a-deployment).
+The first command creates a fresh Cabin with its own Worker and database. Use the same owner email as an active owner in the backup and do not enter product data or add operators. The second validates the complete backup before contacting the destination, refuses existing business data or later identity activity, and atomically restores portable records with a destination snapshot guard. Its initial bootstrap session is retired; sign in again. Credentials, sessions and private links are excluded. In Channels, approve the installation review, reconnect each provider and restart each reviewed current reservation. Historical payment operations remain inactive and must be reconciled directly in Stripe. Check the homes, stays, signed documents, photos and statements before pointing guests or a domain at it. See [hosting and irreversible removal](/docs/hosting#remove-a-deployment).
 
 ## What an archive holds
 
@@ -43,8 +43,8 @@ The first command creates a fresh Cabin with its own Worker and database. The se
 | Homes, owners and commission | Sessions and sign-in links |
 | Team members and their access | Agent tokens |
 | Calendar reviews and bookings | Private configuration |
-| Turnover jobs, checklists and photos | Development mail |
-| Owner statements and approvals | |
+| Turnover jobs, checklists and photos | Provider credentials and private guest links |
+| Guest conversations, signed documents, ledger and approved statements | Old queued sends, charges and active access |
 | Move-in journals and their source files | |
 
 ## Restore
