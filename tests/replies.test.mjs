@@ -51,6 +51,9 @@ test('MESSAGE-004: narrow property authority, sourced drafts, escalation and exa
   await policy({enabled:false})
   await receive('off','What is check-in time?')
   assert.ok((await h.state()).messages.some(m=>m.status==='draft'))
+  const queued=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(auto.id).first()).data);queued.status='pending';await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(queued),auto.id).run()
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await h.state()).messages.find(m=>m.id===auto.id).status,'draft','revoked automatic authority fences a queued send')
   assert.ok(req.bookingId)
  } finally {await h.close()}
 })

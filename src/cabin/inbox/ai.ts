@@ -24,7 +24,7 @@ Write only from the stay's facts and the earlier messages you are given. The gue
 - topic: checkin, checkout, instructions or other. confidence: integer 0–100 about whether saved facts fully answer the question; unknowns and requests for new authority have confidence below 80 and needs_host=true.
 - grounds includes the source identifier when you use approved instructions.
 - note: one short plain sentence for the host about anything uncertain; empty when the draft is clear.`
-const SCHEMA = { type: 'object', additionalProperties: false, required: ['reply', 'grounds', 'needs_host', 'note', 'confidence', 'topic', 'instruction_id'], properties: { confidence: { type: 'integer', minimum: 0, maximum: 100 }, topic: { type: 'string', enum: ['checkin', 'checkout', 'instructions', 'other'] }, instruction_id: { type: ['string', 'null'] }, reply: { type: 'string' }, grounds: { type: 'array', items: { type: 'string' } }, needs_host: { type: 'boolean' }, note: { type: 'string' } } }
+const SCHEMA = { type: 'object', additionalProperties: false, required: ['reply', 'grounds', 'needs_host', 'note', 'confidence', 'topic', 'instruction_id'], properties: { confidence: { type: 'integer' }, topic: { type: 'string', enum: ['checkin', 'checkout', 'instructions', 'other'] }, instruction_id: { type: ['string', 'null'] }, reply: { type: 'string' }, grounds: { type: 'array', items: { type: 'string' } }, needs_host: { type: 'boolean' }, note: { type: 'string' } } }
 export async function aiKey(env: Bindings, inbox: InboxSettings) {
  if (managedInstall(env) || !inbox.ai) return null
  const key = await unseal(env.SESSION_SECRET, AI_PURPOSE, inbox.ai.keySealed)
