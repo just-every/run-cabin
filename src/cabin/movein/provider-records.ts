@@ -1,3 +1,4 @@
+import { captureManagement } from '../properties/terms'
 import { syncGuests } from '../guests/sync'
 import { type Context, type Booking, type Connection, kinds, query, need, newId } from '../model'
 import { dispatch } from '../dispatch'
@@ -29,7 +30,7 @@ export function installRecords(c:Context,id:string,plan:Normalized):Inventory{
   c.data.bookings.push(booking)
  }
  // Include the same automatic operations as a reservation created through any other public door.
- syncGuests(c);dispatch(c);scheduleMessages(c)
+ captureManagement(c);syncGuests(c);dispatch(c);scheduleMessages(c)
  const inventory=capture(c,ids)
  for(const guest of plan.guests){
   const row={id:`${id}:guest:${guest.externalId}`,source_id:guest.externalId,data:JSON.stringify(guest)}

@@ -11,10 +11,11 @@ export function managementFor(data: Pick<Data, 'properties' | 'managementTerms'>
  return [...data.managementTerms.filter(t => t.propertyId === propertyId && t.effectiveFrom <= date)].reverse().sort((a,b) => b.effectiveFrom.localeCompare(a.effectiveFrom) || b.recordedAt.localeCompare(a.recordedAt))[0] ?? initial(p)
 }
 /** Freeze once. Later owner, date or commission edits never rewrite a stay's allocation. */
-export function captureManagement(c: Context) {
- for (const p of c.before.properties) if (!c.data.managementTerms.some(t => t.propertyId === p.id)) c.data.managementTerms.push(initial(p))
+export function captureManagement(c: Context, existingPropertyId?:string) {
+ if(existingPropertyId)for (const p of c.before.properties) if (p.id===existingPropertyId&&!c.data.managementTerms.some(t => t.propertyId === p.id)) c.data.managementTerms.push(initial(p))
  for (const b of c.data.bookings) if (!b.managementTerms) {
   const previous = c.before.bookings.find(old => old.id === b.id)
+  if(previous&&b.propertyId!==existingPropertyId)continue
   b.managementTerms = structuredClone(previous ? previous.managementTerms ?? managementFor(c.before, b.propertyId, b.start.slice(0,10)) : managementFor(c.data, b.propertyId, b.start.slice(0,10)))
  }
 }
@@ -28,6 +29,6 @@ export function managementCommand(c: Context, name: string, p: Record<string,unk
  if (name !== 'property.terms') return undefined
  manager(c.actor); const prop=c.data.properties.find(v=>v.id===p.propertyId); need(prop,'Property not found',404)
  need(Number(p.propertyRevision)===prop.revision,'Property changed. Reload before saving terms.',409)
- captureManagement(c); c.entityId=prop.id; return saveManagement(c,prop,p)
+ captureManagement(c,prop.id); c.entityId=prop.id; return saveManagement(c,prop,p)
 }
 export const allocationTerms = (data: Data, b: Booking) => b.managementTerms ?? managementFor(data,b.propertyId,b.start.slice(0,10))
