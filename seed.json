@@ -117,6 +117,12 @@
       "clauses": [
         "GUEST-001"
       ]
+    },
+    {
+      "id": "controlled-guest-replies",
+      "clauses": [
+        "MESSAGE-004"
+      ]
     }
   ],
   "nonGoals": [
