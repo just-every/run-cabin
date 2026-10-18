@@ -568,14 +568,14 @@
       "source": "modules/operator-auth/accounts/schema/owner-signin.sql"
     },
     "package.json": {
-      "sha256": "66e8ea9d0c83ce4df9403e94f34e1e39c0ea612423af7b7edb794b0e4e02b617",
+      "sha256": "db9436b9be92d73ad5cf496d23b68af57899c3b89d34120d305cd12c99fde537",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
       "source": "editions/cabin/package.json"
     },
     "pnpm-lock.yaml": {
-      "sha256": "4887c67609a2aca77394a7ba8fe45c3dc898cca090cfd72d5f5ac4996bd5b9bc",
+      "sha256": "aca89b59d6f5b091121295d1c778aeae66789de0f3c5c5527536e614c139ff8d",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "3fbb2c8fe85e51ec0a2f4cf3173b02049129162da9ab22ad3c1fa15eb0c419c0",
+      "sha256": "162e6bcb66fd8755c089fd3d44f518bccdafe1258b99dd47a574424a9da2b92a",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
