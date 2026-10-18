@@ -36,7 +36,7 @@ export async function receiveGuest(env: Bindings, m: Incoming) {
   if (seen) return seen
   const b = m.ref ? c.data.bookings.find(r => r.channel === m.channel && r.channelRef === m.ref) ?? null : stayFor(c.data, { email: m.email, phone: m.phone })
   const row: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? null, email: m.email ?? b?.guestEmail ?? null, phone: m.phone ?? null, ref: b ? null : m.ref ?? null, channel: m.channel, direction: 'in', source: 'guest', status: 'received', subject: m.subject.slice(0, 300), text: m.text, detail: null, replyTo: null, headerId: m.headerId ?? null, sentBy: null, approvalId: null, scheduledId: null, providerId: m.providerId ?? null, grounds: [], createdAt: c.now, sentAt: null }
-  c.data.messages.push(row); startDraft(c, env.AUTH_ORIGIN, row, ai); c.entityId = row.id; return row
+  c.data.messages.push(row); startDraft(c, env.AUTH_ORIGIN, row, ai, env.OWNER_EMAIL ?? ''); c.entityId = row.id; return row
  })
  await finishDrafts(env)
  await escalateReplies(env)

@@ -12,12 +12,12 @@ export { templateDraft } from './templates'
 // person: from the install's AI key when one is saved, else from a template
 // picked by what the guest asked. Nothing is sent until someone sends it.
 /** Writes the waiting draft for a guest message in the same commit; an AI draft starts as 'drafting' and is filled in after it. */
-export function startDraft(c: Context, origin: string, inbound: GuestMessage, ai: boolean) {
+export function startDraft(c: Context, origin: string, inbound: GuestMessage, ai: boolean, ownerEmail = '') {
  const b = inbound.bookingId ? c.data.bookings.find(r => r.id === inbound.bookingId) : null, f = b ? facts(c.data, origin, b) : null
  const base = templateDraft(f, inbound.text)
  for (const old of c.data.messages) if (old.status === 'draft' && messageKey(c.data, old) === messageKey(c.data, inbound)) Object.assign(old, { status: 'discarded', detail: 'Replaced by a draft for the newer message', revision: newId() })
  const draft: GuestMessage = { ...inbound, id: newId(), revision: newId(), direction: 'out', source: ai ? 'ai' : 'template', status: ai ? 'drafting' : 'draft', subject: inbound.subject ? (/^re:/i.test(inbound.subject) ? inbound.subject : `Re: ${inbound.subject}`) : `Your stay at ${f?.home ?? 'our home'}`, text: ai ? '' : base.text, detail: ai ? null : base.detail, replyTo: inbound.id, headerId: null, sentBy: null, approvalId: null, scheduledId: null, providerId: null, grounds: ai ? [] : base.grounds, createdAt: c.now, sentAt: null }
- attachControl(c, origin, draft); c.data.messages.push(draft); return draft
+ attachControl(c, origin, draft, ownerEmail); c.data.messages.push(draft); return draft
 }
 /** Fills AI drafts after their commit. A failed call leaves a visible failure and an empty reply for the host. */
 export async function finishDrafts(env: Bindings) {

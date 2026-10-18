@@ -30,10 +30,10 @@ export function policyCommand(c: Context, name: string, input: Record<string, un
  row.replyPolicies = [...(row.replyPolicies ?? []).filter(p => p.propertyId !== home.id), policy]
  return policy
 }
-export function attachControl(c: Context, origin: string, m: GuestMessage) {
+export function attachControl(c: Context, origin: string, m: GuestMessage, ownerEmail = '') {
  const b = c.data.bookings.find(b => b.id === m.bookingId), p = replyPolicy(c.data, m.propertyId)
- if (!b || !p) return
- m.control = { topic: 'other', confidence: 0, needsHost: true, instructionId: null, baseline: JSON.stringify(replySources(c.data, origin, b)), assignedEmail: p.managerEmail, dueAt: new Date(Date.parse(c.now) + p.replyMinutes * 60_000).toISOString() }
+ if (!b || !(p?.managerEmail || ownerEmail)) return
+ m.control = { topic: 'other', confidence: 0, needsHost: true, instructionId: null, baseline: JSON.stringify(replySources(c.data, origin, b)), assignedEmail: p?.managerEmail || ownerEmail, dueAt: new Date(Date.parse(c.now) + (p?.replyMinutes ?? 30) * 60_000).toISOString() }
 }
 /** Automatic authority covers source-rendered facts only, never an AI-created promise. */
 export function automaticReply(c: Context, origin: string, m: GuestMessage) {
