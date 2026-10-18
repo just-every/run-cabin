@@ -196,6 +196,8 @@ export interface OperatorAuth<R extends string = Role> {
   confirmOwnerSignIn?(request: Request, input: { token: string }): Promise<CompletedSession<R>>;
   /** The signed-in operator's own sign-in email; needs a fresh step-up proof. */
   changeEmail?(request: Request, input: { email: string }): Promise<Operator<R>>;
+  /** The signed-in operator's own display name (1-120 characters, trimmed). Absent with native accounts. */
+  changeDisplayName?(request: Request, input: { displayName: string }): Promise<Operator<R>>;
   listDomainRules(request: Request): Promise<DomainRule[]>;
   /** provider null lifts the rule. Needs a fresh step-up proof. */
   setDomainRule(request: Request, input: { domain: string; provider: string | null }): Promise<DomainRule[]>;
@@ -226,7 +228,7 @@ export interface DevGate {
   admits(request: Request): Promise<boolean>;
   setCookie(): Promise<string>;
   /** Handles GET/POST /__dev/key; null for every other path. */
-  exchange(request: Request): Promise<Response | null>;
+  exchange(request: Request, branding?: AuthBranding): Promise<Response | null>;
 }
 export const DEV_KEY_HEADER: 'x-rer-dev-key';
 export function devGate(input: DevGateInput): DevGate | null;

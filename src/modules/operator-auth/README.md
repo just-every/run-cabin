@@ -133,6 +133,7 @@ version), domain rules in `oa_domain_rules`. `auth.accounts` exposes it and
 | `/auth/owner-signin?token=…` | GET/HEAD | 200 owner sign-in confirmation for a live `rer signin` link, or 400 invalid/used/expired; **no writes** |
 | `/auth/owner-signin` | POST | token; consume once for the active owner it names, 303 with cookie; see "Owner sign-in without mail" |
 | `/auth/email` | POST | email; the signed-in operator's own sign-in email; fresh step-up proof; 409 `email_in_use` |
+| `/auth/display-name` | POST | displayName; the signed-in operator's own name (1-120 characters); no step-up |
 
 Unknown `/auth/*` paths return 404. Unsupported methods return 405. Except for invalid/expired confirmation GET/HEAD documents, known public
 errors are JSON `{error:code}`: invalid input 400, unauthenticated 401, policy/host/
@@ -476,6 +477,10 @@ link). It revokes unused links sent to the old address and keeps sessions and
 provider bindings. An address another operator holds is refused with
 `email_in_use`. `STEP_UP_ACTIONS` gains `email:change`.
 
+A name is corrected the same way, without a step-up: `POST /auth/display-name
+{displayName}`. First-run `/setup` shows the owner's name as an editable field
+that saves through it. Native accounts do not mount this route.
+
 ## Local dev identity and the key gate
 
 `dev-gate.mjs` (exported as `devGate`, production-safe) is the per-checkout key
@@ -488,9 +493,12 @@ the gate is the key, not the network. `devGate({key, origin, local})` returns
 null unless the key is present and the origin is an explicit loopback origin in
 local mode. `admits(request)` accepts the `rer_dev_gate_<port>` cookie (an HMAC of the
 key, so a reset key refuses old cookies) or the key in `x-rer-dev-key` (the rer
-CLI and test harnesses). `exchange(request)` serves `GET /__dev/key` and trades
+CLI and test harnesses). `exchange(request, branding)` serves `GET /__dev/key` and trades
 the key from the URL fragment, through a same-origin POST, for a host-only
-`HttpOnly; SameSite=Strict; Path=/` cookie.
+`HttpOnly; SameSite=Strict; Path=/` cookie. Given the seed's `branding`
+(`productName`, `theme`), the page between `rer dev` and the app shows the seed's own
+mark, the `--rer-logo` its theme declares, as an `<img>` with the product name as its
+alt text; a seed whose theme declares no logo shows the product name as text.
 
 `dev/` is the dev layer: **server-only and local-only**. Import it only from a
 local-only Worker entry (a Vite-serve or local `wrangler dev` entry), never
