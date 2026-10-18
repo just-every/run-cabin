@@ -1,3 +1,4 @@
+import { promotionPanel } from '../promotions/ui'
 import { websiteEditor } from '../website/ui'
 import { verificationPolicyFields,verificationQueue } from '../verification/ui'
 import { agreementPanel } from '../agreements/ui'
@@ -111,6 +112,7 @@ export function direct(state: any) {
   const stays = [...state.direct.stays].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt))
   return heading('Direct bookings', 'Your homes, booked directly', 'Publish booking rules, review guest agreements and payment status, and manage damage deposits and tax filing evidence.')
     + websiteEditor(state.direct.site??null,state)
+    + promotionPanel(state)
     + stripeSetup(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
     + agreementPanel(state)

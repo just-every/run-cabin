@@ -9,7 +9,7 @@ export type Facts = Record<'guest' | 'home' | 'checkin' | 'checkout' | 'address'
 /** With no origin the stay link is its path alone: what statement() compares. */
 export function facts(data: Pick<Data, 'properties' | 'homeSettings' | 'codes'> & Partial<Pick<Data,'rentalAgreements'|'verifications'>>, origin: string | null, b: Booking): Facts {
  const s = homeSettings({ data }, b.propertyId), code = accessBlocked(data,b.id) ? undefined : data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')
- const first = `${b.start.slice(0, 10)}T${b.arrivalTime ?? s.checkInTime}`, last = `${b.end.slice(0, 10)}T${s.checkOutTime}`
+ const first = `${b.start.slice(0, 10)}T${b.arrivalTime ?? s.checkInTime}`, last = `${b.end.slice(0, 10)}T${b.departureTime ?? s.checkOutTime}`
  return {
   action_link: 'Reply to your host for the required next step',
   guest: (b.guestName ?? '').split(/\s+/)[0] || 'there',

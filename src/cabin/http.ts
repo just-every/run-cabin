@@ -1,3 +1,8 @@
+import { promotionRows } from './promotions/store'
+import { unseal } from './seal'
+import type { PromotionOffer } from './promotions/types'
+import { promotionCommand } from './promotions/commands'
+import { promotionGuestResponse } from './promotions/guest'
 import { lifecyclePreferences } from './inbox/preferences'
 import { ordinaryOutput } from './connections/redaction'
 import { accessSecrets,ordinaryState,accessDetails } from './connections/access'
@@ -52,7 +57,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  if(name==='privacy.review'||name==='privacy.hold.read')return result
  await settle(env);return result
 }
@@ -165,6 +170,7 @@ async function signInSettings(request:Request,env:Bindings){
 }
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
+ if(path.startsWith('/offers/'))return promotionGuestResponse(request,runtimeBindings(original))
  const preferences=await lifecyclePreferences(request,runtimeBindings(original));if(preferences)return preferences
  if(path==='/owners'||path.startsWith('/owners/'))return ownersResponse(request,original)
  if(path==='/book'||path.startsWith('/book/'))return bookingResponse(request,runtimeBindings(original))
@@ -182,6 +188,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   who=await principal(request,env,isAgent)
   if(request.method==='GET'){
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
+   const preview=path.match(/^\/api\/cabin\/promotions\/([\w-]+)\/preview$/)
+   if(preview){manager(who);need(!who.isAgent,'Human access required',403);const row=(await promotionRows<PromotionOffer>(env.DB,'promotionOffers')).find(o=>o.id===preview[1]);need(row&&!row.restorePaused,'Offer not found',404);const token=await unseal(env.SESSION_SECRET,'promotion-offer',row.tokenSealed);need(token,'Offer link unavailable',410);await record(env.DB,who,'human.promotion.link',{kind:'promotionOffers',id:row.id,propertyId:row.propertyId,bookingId:row.bookingId,result:'released'});await assertLive(env.DB,who);return new Response(null,{status:303,headers:{...headers,location:'/offers/'+token}})}
    const tax=path.match(/^\/api\/cabin\/taxes\/([\w-]+)\.json$/)
    if(tax)return new Response(await taxExport(env.DB,who,tax[1]),{headers:{...headers,'content-type':'application/json; charset=utf-8','content-disposition':`attachment; filename="cabin-tax-${tax[1]}.json"`}})
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
@@ -210,7 +218,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    const result=await execute(request,env,who,body.name,body.input as Record<string,unknown>)
-   return json({result:['agent.create','export.publish'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
+   return json({result:['agent.create','export.publish','promotion.create'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
   }
   return json({error:'Not found'},404)
  }catch(error){

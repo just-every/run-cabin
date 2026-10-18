@@ -1,3 +1,4 @@
+import { promotionDue } from './cabin/promotions/payments'
 import { withDemo } from './modules/demo/index.mjs'
 import { rejectedResponse } from './base/rejected-response'
 import start from '@tanstack/react-start/server-entry'
@@ -51,7 +52,7 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
   // then sends turnover emails, pushes door codes the new stays made (OPS-001, OPS-005)
   // and sends the guest messages that have fallen due (MESSAGE-003).
   async scheduled(_controller, env, execution) {
-    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env)),pollChannels(runtimeBindings(env)).catch(error => console.error('Cabin channel messages', error.message))]).then(() => settle(runtimeBindings(env))))
+    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env)),pollChannels(runtimeBindings(env)).catch(error => console.error('Cabin channel messages', error.message))]).then(async () => { await promotionDue(runtimeBindings(env)); await settle(runtimeBindings(env)) }))
   },
   // Cloudflare Email Routing delivers the inbox address here: guest email and replies (MESSAGE-001).
   async email(message, env) {

@@ -51,7 +51,7 @@ export async function agreementCommand(env:Bindings,actor:Actor,name:string,inpu
   // Adopt the current template only when the manager explicitly requests it.
   const previous=currentDocument(a),selected=input.useCurrentTemplate==='yes'?t:{...t,currentVersion:previous.templateVersion,versions:[{id:previous.templateVersion,required:a.required,blockAccess:a.blockAccess,title:previous.title,state:previous.state,text:previous.templateText,at:previous.at,by:previous.by}]}
   await addDocument(c,a,b,selected,reason,extra,direct)
-  if(direct){const s=homeSettings(c,b.propertyId);Object.assign(direct,{start,end,timeZone:s.timeZone,arrivalAt:new Date(instant(start+'T'+(b.arrivalTime??s.checkInTime),s.timeZone)).toISOString(),departureAt:new Date(instant(end+'T'+s.checkOutTime,s.timeZone)).toISOString()});direct.depositDueAt=new Date(Date.parse(direct.arrivalAt!)-48*3_600_000).toISOString();saveStay(c,direct)}
+  if(direct){const s=homeSettings(c,b.propertyId);Object.assign(direct,{start,end,timeZone:s.timeZone,arrivalAt:new Date(instant(start+'T'+(b.arrivalTime??s.checkInTime),s.timeZone)).toISOString(),departureAt:new Date(instant(end+'T'+(b.departureTime??s.checkOutTime),s.timeZone)).toISOString()});direct.depositDueAt=new Date(Date.parse(direct.arrivalAt!)-48*3_600_000).toISOString();saveStay(c,direct)}
   return a
  })
 }

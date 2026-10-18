@@ -72,7 +72,7 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
   Object.assign(b,next,details(p),{summary:text(p.guestName,'guest name',120),revision:newId(),approvedAt:c.now})
   if(p.rentCents!==undefined||p.rentDollars!==undefined)l.price=price(p)
   need(oldTotal===l.price?.totalCents||!!text(p.reason,'price amendment reason',2000),'Explain a price change')
-  if(direct){const s=homeSettings(c,b.propertyId);direct.propertyId=b.propertyId;direct.start=b.start;direct.end=b.end;direct.guestName=b.guestName!;direct.email=b.guestEmail??direct.email;direct.timeZone=s.timeZone;direct.arrivalAt=new Date(instant(`${b.start}T${b.arrivalTime??s.checkInTime}`,s.timeZone)).toISOString();direct.departureAt=new Date(instant(`${b.end}T${s.checkOutTime}`,s.timeZone)).toISOString();saveStay(c,direct)}
+  if(direct){const s=homeSettings(c,b.propertyId);direct.propertyId=b.propertyId;direct.start=b.start;direct.end=b.end;direct.guestName=b.guestName!;direct.email=b.guestEmail??direct.email;direct.timeZone=s.timeZone;direct.arrivalAt=new Date(instant(`${b.start}T${b.arrivalTime??s.checkInTime}`,s.timeZone)).toISOString();direct.departureAt=new Date(instant(`${b.end}T${b.departureTime??s.checkOutTime}`,s.timeZone)).toISOString();saveStay(c,direct)}
   l.cancellationReason=undefined
  }
  if(eventId)l.events.push({id:eventId,fingerprint,revision:b.revision})

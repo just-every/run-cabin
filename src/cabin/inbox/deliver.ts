@@ -1,3 +1,4 @@
+import { promotionMailAllowed } from '../promotions/mail'
 import { secureAccount } from '../connections/credentials'
 import { messageAccessBlocked } from '../agreements/access'
 import { accessBlocked } from '../agreements/records'
@@ -54,6 +55,7 @@ const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, '
 export async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ status: GuestMessage['status']; detail: string | null; providerId: string | null }> {
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {
+  if(m.promotionOfferId)try{await promotionMailAllowed(env,data,m)}catch(error){return {status:'discarded',detail:(error as Error).message,providerId:null}}
   if (m.source==='scheduled' && b && lifecycleOptout(data,b)) return {status:'discarded',detail:'Guest opted out of automatic lifecycle messages',providerId:null}
   if (m.scheduledId) {
    const row=data.scheduled.find(r=>r.id===m.scheduledId)

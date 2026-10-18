@@ -1,6 +1,6 @@
 // Portable business history has no live installation or guest capabilities.
 const pause = 'Restored history: review and reconnect before creating new work. Old effects are never replayed.'
-const privateLink = /https?:\/\/[^\s<>"']*\/(?:stay\/|ical\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/g
+const privateLink = /https?:\/\/[^\s<>"']*\/(?:stay\/|offers\/|ical\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/g
 function text(value) {
  return value.replace(privateLink, '[private link removed on export]')
   .replace(/\/stay\/[a-f0-9]{48}\b/g, '[private link removed on export]')
@@ -18,7 +18,7 @@ function scrub(value) {
  if (!value || typeof value !== 'object') return value
  const result = {}
  for (const [key, item] of Object.entries(value)) {
-  if (['keySealed','bookingLinkSealed','paymentMethod','customerId','checkoutUrl'].includes(key)) continue
+  if (['keySealed','bookingLinkSealed','tokenSealed','paymentMethod','customerId','checkoutUrl'].includes(key)) continue
   if (key === 'link' && 'holder' in value) { result[key] = null; continue }
   if (['token','tokenHash'].includes(key)) { result[key] = null; continue }
   result[key] = key === 'code' && typeof item === 'string' && /^\d{4}$/.test(item) ? '' : scrub(item)
@@ -59,6 +59,8 @@ export function exportRow(table, row) {
  if (kind === 'exports') data.token = ''
  if (kind === 'codes') { data.code = ''; data.link = null; data.status = 'revoked'; data.reason = pause; data.lock = {...data.lock,state:'manual',providerId:null,error:null} }
  if (kind === 'inbox') data.ai = null
+ if (kind === 'promotionOffers') { data.restorePaused=true; data.tokenHash=null; delete data.tokenSealed; delete data.checkoutUrl }
+ if (kind === 'promotionPolicies') data.enabled=false
  if (kind === 'guestOffers') { data.status = 'revoked'; data.tokenHash = 'restored:'+data.id }
  if (kind === 'recoveries') { data.restorePaused = true; data.offerUrl = undefined; data.proposal = undefined }
  if (kind === 'scheduled' && typeof data.content === 'string') data.content = text(data.content)

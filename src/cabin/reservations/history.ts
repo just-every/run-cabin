@@ -7,7 +7,7 @@ export function lifecycle(b:Booking):ReservationLifecycle {
 }
 function version(b:Booking):Omit<ReservationVersion,'at'|'by'|'reason'> {
  const l=lifecycle(b)
- return {revision:b.revision,propertyId:b.propertyId,start:b.start,end:b.end,guestName:b.guestName??b.summary,guestEmail:b.guestEmail,guestPhone:b.guestPhone,arrivalTime:b.arrivalTime,status:l.outcome??b.status,channel:b.channel,sourceId:l.sourceId,price:l.price,policy:l.policy,managementTerms:b.managementTerms}
+ return {revision:b.revision,propertyId:b.propertyId,start:b.start,end:b.end,guestName:b.guestName??b.summary,guestEmail:b.guestEmail,guestPhone:b.guestPhone,arrivalTime:b.arrivalTime,departureTime:b.departureTime,status:l.outcome??b.status,channel:b.channel,sourceId:l.sourceId,price:l.price,policy:l.policy,managementTerms:b.managementTerms}
 }
 /** Record actual semantic changes once, including imported amendments and cancellations. */
 export async function recordReservations(c:Context,name:string) {

@@ -38,7 +38,7 @@ export function availability(s: any, propertyId: string, now = Date.now()) {
 export function bookingMoment(s: any, b: any, side: 'arrival' | 'departure') {
   const settings = homeSettings(s, b.propertyId), d = directStay(s, b), zone = d?.timeZone ?? settings.timeZone
   const raw = side === 'arrival' ? b.start : b.end
-  const override = side === 'arrival' ? b.arrivalTime : null
+  const override = side === 'arrival' ? b.arrivalTime : b.departureTime
   const saved = side === 'arrival' ? d?.arrivalAt : d?.departureAt
   let local: string, ms: number
   if (!override && (saved || /T.*(?:Z|[+-]\d\d:\d\d)$/.test(raw))) {

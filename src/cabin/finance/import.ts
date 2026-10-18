@@ -1,3 +1,4 @@
+import { promotionPayments } from '../promotions/settlement'
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
 import { type Actor, type Booking, manager, need, text, newId } from '../model'
@@ -10,11 +11,11 @@ export function candidates(line:SourceLine,bookings:Booking[],propertyId?:string
  return bookings.filter(b=>(!propertyId||b.propertyId===propertyId)&&b.channel===(line.source==='stripe'?'direct':line.source)&&(b.kind??'stay')==='stay'&&(
  sameRef(b.uid,line.reference)||!!(b.lifecycle?.sourceId&&sameRef(b.lifecycle.sourceId,line.reference))||!!(b.channelRef&&sameRef(b.channelRef,line.reference))||!!(line.start&&line.end&&b.start.slice(0,10)===line.start&&b.end.slice(0,10)===line.end)))
 }
-function matches(line:SourceLine,bookings:Booking[],direct:{paymentId?:string;bookingId:string}[],propertyId?:string|null){
+function matches(line:SourceLine,bookings:Booking[],direct:{paymentId?:string;bookingId:string;promotion?:boolean}[],propertyId?:string|null){
  const paid=line.source==='stripe'&&line.paymentId?direct.filter(s=>s.paymentId===line.paymentId):[]
  if(!paid.length)return candidates(line,bookings,propertyId)
  const linked=bookings.filter(b=>paid.some(s=>s.bookingId===b.id))
- need(linked.every(b=>(!propertyId||b.propertyId===propertyId)&&b.channel==='direct'&&(b.kind??'stay')==='stay'),'The Stripe payment intent belongs to a different home or is not linked to a direct stay',409)
+ need(linked.every(b=>(!propertyId||b.propertyId===propertyId)&&(b.channel==='direct'||paid.some(s=>s.bookingId===b.id&&s.promotion))&&(b.kind??'stay')==='stay'),'The Stripe payment intent belongs to a different home or is not linked to a direct stay',409)
  return linked
 }
 function unchanged(old:Payout,line:SourceLine){
@@ -30,7 +31,7 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
  if(name==='payout.match')return mutate(env.DB,actor,name,async c=>{
   const row=c.data.payouts.find(r=>r.id===text(input.id,'payout line'));need(row,'Payout line not found',404);need(!row.statementId,'A frozen statement already contains this line',409)
   const b=c.data.bookings.find(b=>b.id===text(input.bookingId,'stay'));need(b,'Stay not found',404)
-  const allowed=matches(row,c.data.bookings,await stays(c.db),row.propertyId)
+  const allowed=matches(row,c.data.bookings,[...await stays(c.db),...await promotionPayments(c.db)],row.propertyId)
   need(allowed.some(candidate=>candidate.id===b.id),'The stay must have the same channel and reservation reference or exact dates, or the linked Stripe payment intent')
   need(row.bookingId===b.id||!await c.db.prepare('SELECT 1 FROM cb_ledger_journals WHERE source_key=?').bind('payout:'+row.id).first(),'This payout has a posted trust journal. Preserve its match; reverse the journal and import a separately identified provider correction.',409)
   row.bookingId=b.id;row.propertyId=b.propertyId;row.match='matched';row.revision=newId();c.entityId=row.id;return row
@@ -50,7 +51,7 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
   const evidence=input.source==='booking.com'||input.source==='stripe'?text(input.evidenceReference,'provider settlement evidence reference',500):undefined
   lines=parsePayoutCsv(input.source,text(input.csv,'payout CSV',2_000_000),evidence)
  }
- const direct=await stays(env.DB)
+ const direct=[...await stays(env.DB),...await promotionPayments(env.DB)]
  return mutate(env.DB,actor,name,c=>{
   if(propertyId)need(c.data.properties.some(p=>p.id===propertyId),'Home not found',404)
   const imported:Payout[]=[],duplicates:string[]=[]

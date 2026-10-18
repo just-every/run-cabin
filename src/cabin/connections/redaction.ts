@@ -3,7 +3,7 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
  let result = value
  for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.split(secret).join('[restricted]')
  return result
-  .replace(/https?:\/\/[^\s<>"']*\/(?:stay\/|ical\/|message-preferences\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
+  .replace(/https?:\/\/[^\s<>"']*\/(?:offers\/|stay\/|ical\/|message-preferences\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
   .replace(/\/message-preferences\/[a-z0-9_-]+\/[a-f0-9]{64}/gi, '[private link]')
   .replace(/\/(?:stay\/|book\/stay\/|book\/return\/)[a-z0-9_-]{20,}/gi, '[private link]')
   .replace(/\b(?:sk_(?:test|live)_[a-z0-9]+|sk-ant-[a-z0-9_-]+|Bearer\s+[a-z0-9._~-]+)/gi, '[credential]')
@@ -12,7 +12,7 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
   .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[tax ID]')
   .replace(/\b(?:\d[ -]?){13,19}\b/g, '[restricted number]')
 }
-const PRIVATE_KEYS = new Set(['keySealed','bookingLinkSealed','credential_sealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
+const PRIVATE_KEYS = new Set(['keySealed','bookingLinkSealed','credential_sealed','tokenSealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
 /** Ordinary API/export/agent representations carry references, never active capabilities. */
 const REFERENCES=new Set(['id','revision','uid','code','sourceKey','sourceId','sourceRevision','channelRef','start','end','at','date','month','timeZone','first','checkout'])
 export function ordinaryOutput(value: unknown, secrets: readonly string[] = [],field=''): any {

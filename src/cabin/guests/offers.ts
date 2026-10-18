@@ -10,7 +10,7 @@ export function completedStay(data:Data,bookingId:string,now=Date.now()) {
  const b=data.bookings.find(b=>b.id===bookingId)
  if(!b||b.status!=='confirmed'||(b.kind??'stay')!=='stay'||b.guestErasedAt)return undefined
  const settings=homeSettings(data,b.propertyId)
- return instant(`${b.end.slice(0,10)}T${settings.checkOutTime}`,settings.timeZone)<=now?b:undefined
+ return instant(`${b.end.slice(0,10)}T${b.departureTime ?? settings.checkOutTime}`,settings.timeZone)<=now?b:undefined
 }
 function eligible(data:Data&GuestData,offer:GuestOffer,home:DirectHome,now:number) {
  const recovery=offer.recoveryId?data.recoveries.find(r=>r.id===offer.recoveryId&&r.bookingId===offer.priorBookingId&&r.approvalId&&r.status!=='undone'):undefined

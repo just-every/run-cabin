@@ -1,3 +1,4 @@
+import { applyBookingCoupon } from '../promotions/booking-coupons'
 import { managementFor } from '../properties/terms'
 import { bookingAgreement } from './agreement-text'
 import { recordCheckout,templateVersion } from '../agreements/records'
@@ -23,6 +24,7 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   const home=(await homes(env.DB)).find(h=>h.enabled&&h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
   const price=quote(home,c.data.bookings,input,undefined,offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
+  await applyBookingCoupon(c.db,c.data,home,price,input)
   need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate')
   const owner=await c.db.prepare("SELECT id,email FROM oa_operators WHERE status='active' AND role='owner' LIMIT 1").first<{id:string;email:string}>();need(owner,'Installation owner unavailable',409)
   const identityPolicy=policyFor(home,owner,env.AUTH_ORIGIN),identityReasons=riskReasons(identityPolicy,{start:price.start,createdAt:c.now},price.totalCents,price.guests,Date.parse(c.now)),requiresIdentity=identityReasons.length>0
@@ -45,7 +47,7 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
 /** Creates the Stripe Checkout for a held stay; a failure is stored for the host and the guest returns to their stay page. */
 async function startPayment(env:Bindings,row:DirectStay,token:string,attempt?:string){
  try{
-  const q=row.quote,lines=[{name:`${q.nights} nights${q.returningGuest?' · returning guest 10% rate':''}`,amountCents:q.rentCents},...(q.cleaningCents?[{name:'Cleaning fee',amountCents:q.cleaningCents}]:[]),...(q.extraGuestCents?[{name:'Extra guest fee',amountCents:q.extraGuestCents}]:[]),...q.taxes.map(t=>({name:`${t.label} (${t.bps/100}%)`,amountCents:t.amountCents}))]
+  const q=row.quote,lines=[{name:`${q.nights} nights${q.returningGuest?' · returning guest 10% rate':q.coupon?' · coupon '+q.coupon.code:''}`,amountCents:q.rentCents},...(q.cleaningCents?[{name:'Cleaning fee',amountCents:q.cleaningCents}]:[]),...(q.extraGuestCents?[{name:'Extra guest fee',amountCents:q.extraGuestCents}]:[]),...q.taxes.map(t=>({name:`${t.label} (${t.bps/100}%)`,amountCents:t.amountCents}))]
   const session=await createCheckout({...env,DIRECT_STRIPE_MODE:row.paymentMode},{id:row.id,attempt,token,origin:env.AUTH_ORIGIN,email:row.email,amountCents:q.totalCents,description:'Cabin direct stay',lines})
   await mutate(env.DB,DIRECT_SYSTEM,'direct.checkout.ready',async c=>{const current=await stay(env.DB,row.id);current.checkoutId=session.id;current.checkoutUrl=session.url;delete current.error;saveStay(c,current)})
   return session.url as string

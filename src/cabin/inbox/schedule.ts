@@ -9,7 +9,7 @@ import type { DirectStay } from '../direct/types'
 const HOUR = 3_600_000
 export function times(c: Pick<Context, 'data'>, b: Booking) {
  const s = homeSettings(c, b.propertyId)
- return { checkin: instant(`${b.start.slice(0, 10)}T${b.arrivalTime ?? s.checkInTime}`, s.timeZone), checkout: instant(`${b.end.slice(0, 10)}T${s.checkOutTime}`, s.timeZone) }
+ return { checkin: instant(`${b.start.slice(0, 10)}T${b.arrivalTime ?? s.checkInTime}`, s.timeZone), checkout: instant(`${b.end.slice(0, 10)}T${b.departureTime ?? s.checkOutTime}`, s.timeZone) }
 }
 const codeWindow = (c: Pick<Context, 'data'>, b: Booking) => { const r = c.data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued'); return r ? `${r.id}|${r.validFrom}|${r.validUntil}` : '' }
 function cancel(row: Scheduled, reason: string) { if (['scheduled', 'failed', 'unavailable'].includes(row.status)) Object.assign(row, { status: 'cancelled', reason, revision: newId() }) }

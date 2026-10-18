@@ -1,3 +1,4 @@
+import { promotionDue } from '../src/cabin/promotions/payments'
 import { authResponse, type Bindings } from '../src/auth.server'
 import { cabinResponse } from '../src/cabin/http'
 import { directDue } from '../src/cabin/direct/payments'
@@ -10,6 +11,7 @@ export default {
   },
   async scheduled(_controller: ScheduledController, env: Bindings) {
     await Promise.all([syncDue(env),directDue(env),pollChannels(env)])
+    await promotionDue(env)
     await settle(env)
   },
   async email(message: ForwardableEmailMessage, env: Bindings) { await emailHandler(message, env) },

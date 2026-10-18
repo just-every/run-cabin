@@ -8,6 +8,7 @@ export interface DirectHome {
  taxLabel:string; taxBps:number; countyTaxLabel:string; countyTaxBps:number; agreement:string; requireIdentity:boolean;
 }
 export interface Quote {
+ coupon?:{code:string;discountCents:number;policyRevision:string};
  cancellationPolicy?:import('../reservations/types').CancellationPolicy;
  managementVersion?:string;
  start:string; end:string; guests:number; nights:number; nightlyCents:number; rentCents:number;

@@ -2,7 +2,7 @@ import type { Booking, HomeSettings, Turnover } from './model'
 import { instant, wall } from './clock'
 
 /** Checkout is a wall time at the home, never the server's midnight. */
-export const checkoutTime = (s: HomeSettings, b: Booking) => `${b.end.slice(0, 10)}T${s.checkOutTime}`
+export const checkoutTime = (s: HomeSettings, b: Booking) => `${b.end.slice(0, 10)}T${b.departureTime ?? s.checkOutTime}`
 export const checkoutInstant = (s: HomeSettings, b: Booking) => instant(checkoutTime(s, b), s.timeZone)
 
 /** A completed cleaning belongs to the preceding stay and must follow it. */

@@ -1,3 +1,4 @@
+import { promotionPayout } from '../promotions/settlement'
 import { type Context, sha } from '../model'
 import { post, contextJournals } from './store'
 import { debit as dr, credit as cr } from './types'
@@ -21,6 +22,7 @@ export async function syncLedger(c:Context) {
  for(const s of c.data.statements.filter(s=>s.source==='recovery'&&s.status==='approved'))await postRecovery(c,s)
  for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&!postedKeys.has('payout:'+p.id))){
   if(!p.grossCents)continue
+  if(await promotionPayout(c,p))continue
   const signed=(account:Parameters<typeof dr>[0],n:number,side:'dr'|'cr')=>n===0?[]:[(n>0===(side==='dr')?dr:cr)(account,Math.abs(n))]
   const processor=p.source==='stripe'&&direct.some(s=>s.bookingId===p.bookingId&&s.paymentId===p.paymentId)
   const lines=[...signed('cash',p.netCents,'dr'),...signed('channelFees',p.feeCents,'dr'),...signed(processor?'processorFunds':'ownerLiability',p.grossCents,'cr'),...signed('ownerLiability',p.feeCents,'dr'),...signed('channelFees',p.feeCents,'cr')]

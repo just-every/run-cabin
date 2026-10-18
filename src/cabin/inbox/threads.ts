@@ -20,7 +20,7 @@ export function stayFor(data: Pick<Data, 'bookings' | 'homeSettings'> & Partial<
  const mine = data.bookings.filter(b => isStay(b) && ((who.email && b.guestEmail === who.email) || (who.phone && b.guestPhone === who.phone)))
  const roots=new Set(mine.map(b=>guestKey(b,data)));if(roots.size>1)return null
  const live = mine.filter(b => b.status === 'confirmed'), pool = live.length ? live : mine
- const checkout = (b: Booking) => { const s = homeSettings(data, b.propertyId); return instant(`${b.end.slice(0, 10)}T${s.checkOutTime}`, s.timeZone) }
+ const checkout = (b: Booking) => { const s = homeSettings(data, b.propertyId); return instant(`${b.end.slice(0, 10)}T${b.departureTime ?? s.checkOutTime}`, s.timeZone) }
  const ahead = pool.filter(b => checkout(b) > now).sort((a, b) => a.start.localeCompare(b.start))
  return ahead[0] ?? pool.sort((a, b) => b.end.localeCompare(a.end))[0] ?? null
 }

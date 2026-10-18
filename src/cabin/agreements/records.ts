@@ -19,7 +19,7 @@ export function newAgreement(c:Context,b:Booking,t:RentalTemplate):RentalAgreeme
 export async function addDocument(c:Context,a:RentalAgreement,b:Booking,t:RentalTemplate,reason:string,extraTerms='',direct?:DirectStay){
  need(!c.data.messages.some(m=>m.bookingId===b.id&&m.status==='sending'&&accessMessage(c.data,m)),'Guest access instructions are being sent. Wait before changing agreement terms.',409)
  const v=templateVersion(t),s=homeSettings(c,b.propertyId),home=c.data.properties.find(p=>p.id===b.propertyId)
- const arrivalTime=b.arrivalTime??s.checkInTime,departureTime=s.checkOutTime
+ const arrivalTime=b.arrivalTime??s.checkInTime,departureTime=b.departureTime??s.checkOutTime
  const text=[v.title,`US rental agreement · ${v.state}`,v.text,`Reservation: ${b.id}`,`Home: ${home?.name??b.propertyId}`,s.address?`Address: ${s.address}`:'',`Guest: ${b.guestName??b.summary}`,b.guestEmail?`Guest email: ${b.guestEmail}`:'',`Stay: ${b.start.slice(0,10)} to ${b.end.slice(0,10)} (checkout).`,`Check-in: ${arrivalTime}; checkout: ${departureTime}; time zone: ${s.timeZone}.`,direct?`Guests: ${direct.quote.guests}. Rent, fees and taxes: USD ${(direct.quote.totalCents/100).toFixed(2)}. Separate damage authorization: USD ${(direct.quote.depositCents/100).toFixed(2)}. The paid booking price is unchanged by this amendment.`:'',extraTerms?`Reservation amendment: ${extraTerms}`:''].filter(Boolean).join('\n\n')
  const d:RentalDocument={id:newId(),templateVersion:v.id,templateText:v.text,reservationTerms:extraTerms,title:v.title,state:v.state,text,sha256:await sha(text),at:c.now,by:c.actor.id,reason,start:b.start,end:b.end,guestName:b.guestName??b.summary,arrivalTime,departureTime,timeZone:s.timeZone}
  a.documents.push(d);a.currentVersion=d.id;a.revision=newId();c.entityId=a.id
@@ -51,7 +51,7 @@ export async function synchronizeAgreements(c:Context){
   const reinstated=!a.token
   if(reinstated){a.token=newId()+newId();a.revision=newId()}
   const d=currentDocument(a),s=homeSettings(c,b.propertyId),old=c.before.bookings.find(old=>old.id===b.id),newPrice=JSON.stringify(b.lifecycle?.price),oldPrice=JSON.stringify(old?.lifecycle?.price)
-  if(!reinstated&&a.propertyId===b.propertyId&&newPrice===oldPrice&&d.start===b.start&&d.end===b.end&&d.guestName===(b.guestName??b.summary)&&d.arrivalTime===(b.arrivalTime??s.checkInTime)&&d.departureTime===s.checkOutTime&&d.timeZone===s.timeZone)continue
+  if(!reinstated&&a.propertyId===b.propertyId&&newPrice===oldPrice&&d.start===b.start&&d.end===b.end&&d.guestName===(b.guestName??b.summary)&&d.arrivalTime===(b.arrivalTime??s.checkInTime)&&d.departureTime===(b.departureTime??s.checkOutTime)&&d.timeZone===s.timeZone)continue
   need(!c.data.messages.some(m=>m.bookingId===b.id&&m.status==='sending'),'A guest message is being sent. Wait before amending this stay.',409)
   // A template edit does not alter an existing reservation. Automatic date changes retain its template text.
   const retained:RentalTemplate={id:'retained',revision:'',propertyId:b.propertyId,origin:a.origin,required:a.required,blockAccess:a.blockAccess,currentVersion:d.templateVersion,versions:[{id:d.templateVersion,required:a.required,blockAccess:a.blockAccess,title:d.title,state:d.state,text:d.templateText,at:d.at,by:d.by}]}

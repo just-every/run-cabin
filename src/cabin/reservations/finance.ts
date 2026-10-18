@@ -1,3 +1,4 @@
+import { promotionPaidCents } from '../promotions/settlement'
 import { type Booking, type Context, integer, need } from '../model'
 import { modelFor,percent,splitCents } from '../finance/allocation-calculation'
 import { allocationTerms } from '../properties/terms'
@@ -25,7 +26,7 @@ export async function paymentBalance(c:Pick<Context,'db'|'data'>,b:Booking){
  const received=rows.filter(j=>family(j)==='payment').reduce((n,j)=>n+j.lines.filter(l=>l.account==='receivable').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
  const refunded=rows.filter(j=>family(j)==='refund').reduce((n,j)=>n+j.lines.filter(l=>l.account==='cash').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
  const directRefunded=d?.refunds?.filter((r:any)=>r.status==='succeeded'&&r.kind!=='deposit').reduce((n:number,r:any)=>n+r.amounts.totalCents,0)??0
- const paidCents=received+(d?.paymentId?d.quote.totalCents:0)-refunded-directRefunded
+ const paidCents=await promotionPaidCents(c.db,b.id)+received+(d?.paymentId?d.quote.totalCents:0)-refunded-directRefunded
  const totalCents=b.lifecycle?.price?charge(b):d?.quote?.totalCents
  return {paidCents,totalCents:totalCents??null,balanceCents:totalCents===undefined?null:totalCents-paidCents}
 }
