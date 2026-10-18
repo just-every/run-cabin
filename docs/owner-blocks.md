@@ -1,0 +1,9 @@
+# Owner stays and maintenance blocks
+
+In Reservations, choose the home, block purpose, nights and a reason. Owner stays and maintenance blocks reserve the same end-exclusive nights as a guest reservation. An overlap is refused with its source. Every published channel calendar link immediately lists the block; the channel reads it on its own polling schedule.
+
+In Statements → Owner agreement and permissions, enable personal stays, set the notice and maximum nights, and agree an owner-use cleaning charge. A rental owner can request either purpose from their portal. The manager must approve the exact request against current inventory and permission before it reserves nights. The owner can then change the dates/reason within the current agreement or cancel. Another owner cannot act on it. Managers can edit or cancel from Reservations; a work-order block instead follows its completion and inspection controls.
+
+Each explicit block creates the home's normal cleaning job, checklist, evidence and cleaner access. Moving dates updates that job; cancelling cancels unfinished work and revokes cleaner access. Cleaning before the next guest includes these blocks when determining readiness. Blocks never create guest messages, guest access codes, rent, management commission or payment receipts.
+
+The agreed owner-use cleaning amount and owner are frozen on creation. After the assigned cleaner completes the checklist and photo evidence, Cabin records the amount once as owner funds owed to the cleaning vendor in the configured trust ledger. An incomplete or cancelled job creates no charge. This is a payable, not a bank transfer. Completed cleaning and its allocation are retained; editing it into new work is refused. The owner portal and records CSV show the agreement amount and completion state. A later agreement does not rewrite an earlier cost.

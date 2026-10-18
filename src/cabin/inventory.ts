@@ -72,6 +72,7 @@ export async function reservationCommand(c: Context, name: string, p: Record<str
  if (name === 'reservation.move') {
   // New dates for a stay Cabin holds itself; its turnover, door code and scheduled messages follow it.
   manager(c.actor); const b = c.data.bookings.find(r => r.id === text(p.id, 'booking ID')); need(b && b.status === 'confirmed', 'Booking not found', 404); property(c, b.propertyId);need(!c.data.tasks.some(t=>t.work?.blockId===b.id),'This inventory belongs to a maintenance work order. Complete and inspect the work before reopening it.',409)
+  need(!b.blockUse,'Use the block editor to change blocked nights and its reason.',409)
   need(b.source === 'request', 'Change a channel stay on the channel; its next sync moves it here.', 409)
   need(!await c.db.prepare("SELECT 1 FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first(), 'This is a Stripe checkout. Its dates are part of the signed agreement.', 409)
   const start = day(p.start, 'arrival date'), end = day(p.end, 'checkout date'); need(start < end, 'Checkout must follow arrival')

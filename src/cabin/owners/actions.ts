@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { need, text, newId, query, guard, exact } from '../model'
+import { need, text, newId, query, guard, exact, sha } from '../model'
 import { load, mutate, SYSTEM } from '../storage'
 import { changeBlock, cancelBlock } from '../blocks'
 import { settle } from '../settle'
@@ -14,7 +14,7 @@ export async function ownerAction(env:Bindings,email:string,name:string,input:Re
  if(name==='stay.edit'||name==='stay.cancel'){
   const r=rows.stayRequests.find(r=>r.id===text(input.id,'stay request ID')&&sameEmail(r.email,email));need(r,'Stay request not found',404);const home=current(r.propertyId);exact(r,input.revision)
   if(r.status==='approved'&&r.bookingId){
-   const result=await mutate(env.DB,{...SYSTEM,id:'rental-owner:'+await crypto.subtle.digest('SHA-256',new TextEncoder().encode(email)).then(b=>Array.from(new Uint8Array(b),n=>n.toString(16).padStart(2,'0')).join(''))},'owner.'+name,c=>{
+   const result=await mutate(env.DB,{...SYSTEM,id:'rental-owner:'+await sha(email.toLowerCase())},'owner.'+name,c=>{
     need(c.data.version===data.version,'Records changed. Reload your portal.',409);const b=c.data.bookings.find(b=>b.id===r.bookingId);need(b,'Block not found',404)
     if(name==='stay.edit'){stayDates(c.data,policyFor(rows.policies,home),{start:input.start,end:input.end});changeBlock(c,b,{...input,revision:b.revision})}else cancelBlock(c,b,{revision:b.revision})
     const revision=newId();c.queries.push(guard('EXISTS(SELECT 1 FROM cb_properties WHERE id=? AND owner_email=? COLLATE NOCASE)',home.id,email),query('UPDATE cb_owner_stay_requests SET start=?,end=?,note=?,status=?,revision=?,decided_at=? WHERE id=?',b.start,b.end,b.blockUse?.reason??r.note,name==='stay.cancel'?'cancelled':'approved',revision,c.now,r.id));return {id:r.id,status:name==='stay.cancel'?'cancelled':'approved',revision}
