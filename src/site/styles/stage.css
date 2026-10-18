@@ -63,10 +63,11 @@
   .side .side-row > :not(.stage-head) { justify-self: center; width: 100%; }
 }
 
-/* Phones (390 drawn): the rail scrolls sideways with the current stage in view; headings wrap. */
+/* Phones (390 drawn): the rail scrolls sideways with the current stage in view; headings wrap by phrase.
+   11.4vw keeps the longest drawn phrase ("she books direct.", 7.7em) on one line in the 90vw column. */
 @media (max-width: 760px) {
   .stage-eyebrow { --sep-w: 1.215em; font-size: 12.5px; letter-spacing: .18em; }
-  .landing .stage h2 { font-size: clamp(38px, 12.4vw, 50px); }
+  .landing .stage h2 { font-size: clamp(38px, 11.4vw, 50px); }
   .stage-head h2, .side .stage-head h2 { margin-top: 14px; line-height: .98; }
   .stage-head, .side .stage-head { --parts-inline: 0; text-align: left; }
   .stage-head .stage-lede, .side .stage-head .stage-lede { margin: 16px 0 0; font-size: 18px; line-height: 1.45; }
