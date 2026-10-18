@@ -1,3 +1,4 @@
+import { queueChannelClosures } from './channel-agent/queue'
 import { synchronizePromotions } from './promotions/inventory'
 import { synchronizeIssues } from './issues/records'
 import { recordReservations } from './reservations/history'
@@ -30,7 +31,7 @@ export async function assertLive(db: D1Database, actor: Actor) { const a = autho
 export async function load(db: D1Database): Promise<Data> {
  const results = await db.batch<any>([
   db.prepare('SELECT version FROM cb_meta WHERE id=1'), db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
-  db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare('SELECT kind,data FROM cb_records ORDER BY rowid'),
+  db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare(`SELECT kind,data FROM cb_records WHERE kind IN (${kinds.map(()=>'?').join(',')}) ORDER BY rowid`).bind(...kinds),
   db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
   db.prepare('SELECT e.id,COALESCE(a.anonymous_id,e.actor_id) AS actorId,e.actor_role AS actorRole,e.action,COALESCE(x.anonymous_id,e.entity_id) AS entityId,e.at FROM cb_events e LEFT JOIN cb_audit_redactions a ON a.subject_id=e.actor_id LEFT JOIN cb_audit_redactions x ON x.subject_id=e.entity_id ORDER BY e.rowid DESC LIMIT 100'),
  ])
@@ -53,7 +54,7 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c)
+ await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c); await queueChannelClosures(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

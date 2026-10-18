@@ -12,7 +12,7 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
   .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[tax ID]')
   .replace(/\b(?:\d[ -]?){13,19}\b/g, '[restricted number]')
 }
-const PRIVATE_KEYS = new Set(['keySealed','bookingLinkSealed','credential_sealed','tokenSealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
+const PRIVATE_KEYS = new Set(['bodySealed','stateSealed','beforeSealed','afterSealed','storageState','keySealed','bookingLinkSealed','credential_sealed','tokenSealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
 /** Ordinary API/export/agent representations carry references, never active capabilities. */
 const REFERENCES=new Set(['id','revision','uid','code','sourceKey','sourceId','sourceRevision','channelRef','start','end','at','date','month','timeZone','first','checkout'])
 export function ordinaryOutput(value: unknown, secrets: readonly string[] = [],field=''): any {

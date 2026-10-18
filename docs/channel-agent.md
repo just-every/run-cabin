@@ -1,0 +1,35 @@
+# Channel browser agent
+
+19 October 2026. The owner selected computer use in the host’s own channel accounts. The homepage stays unchanged. This round implements the calendar module core; no real channel account has been entered or proved.
+
+## Use the core
+
+1. Open **Channels → Channel agent** as the installation owner. Create a runner credential and save the shown JSON in a file readable only by you: `chmod 600 /absolute/path/private-runner.json`. It expires after 24 hours; replacing it revokes the previous credential.
+2. For calendar automation, add `modelEndpoint`, `modelKey` and `model` to that private JSON. The endpoint must be an HTTPS vision-capable Responses (`/responses`) or Chat Completions (`/chat/completions`) service. The runner sends redacted operational screenshots and page text to that service; choose a provider you authorize to process this data. Missing model configuration stops with **Needs you**.
+3. In the installed checkout, run `node scripts/channel-agent/index.mjs --config /absolute/path/private-runner.json`. Keep it running on the host’s computer. The existing Playwright dependency needs its current Chromium headless shell installed (`pnpm exec playwright install chromium`); system Chrome is never used.
+4. Connect the home, channel and host listing URL without query parameters. This first module maps **one listing per channel**, with one isolated session per installation/channel. The three mappings may represent the same physical home.
+5. Open the localhost address printed by the runner. Click/type in this ephemeral profile viewer, complete sign-in yourself, open the host calendar, then choose **Finished**. Session state goes directly to Cabin encrypted with the installation’s existing session-secret sealing. Passwords/session state never enter the action log, model requests or evidence.
+
+All confirmed booking commits—including iCal reads, direct checkout and host-entered stays—queue a close for the same home on every other mapped channel. The runner uses observed DOM references, at most 20 steps at human pace, and verifies each night after reloading before reporting success. Before/after screenshots and outcomes appear in the owner’s **Channel action log**; screenshots are encrypted at rest and served only through an authenticated owner door.
+
+CAPTCHA, two-factor sign-in and bot checks stop automation and mark the profile **Needs you**. Choose **Resume sign-in**, finish the check yourself in the same profile viewer, then resume a stopped action. Security/sign-in images are ephemeral and never retained. Safe pre-write failures allow three attempts with backoff; ambiguous writes and expired leases become **uncertain**, require the host to check the channel, and are never replayed automatically. Disconnect forgets the saved session and cancels queued work; a running action must finish first.
+
+**Undo: reopen nights** is offered only for a confirmed closure with a previously open baseline and an observed reopen control. Cabin refuses while any reservation/block still holds those nights. Reopening is itself logged and verified. Sign-in, security failures and uncertain writes have no undo.
+
+## Channel maps and terms risks
+
+These are human navigation maps, not proof of current authenticated selectors. Reservation/message/payout automation is planned, not implemented by this calendar core.
+
+| Channel | Host flow map | Terms position: recorded risk, owner-selected route |
+| --- | --- | --- |
+| Airbnb | Sign in → Hosting; Calendar → listing → dates → Available/Blocked; Today/Upcoming reservations; Messages → guest thread; Earnings → report CSV. [Calendar](https://www.airbnb.com/help/article/447), [reservations](https://www.airbnb.com/help/article/3037), [messages](https://www.airbnb.com/help/article/145), [earnings](https://www.airbnb.com/help/article/3632). | [Terms](https://www.airbnb.com/help/article/2908) restrict automated access. Session reuse, calendar writes, reservation/message reads, replies and financial exports each carry this risk; host authorization alone does not grant provider permission. |
+| Vrbo | Owner Dashboard; Calendar → Bookings and blocks → Add block / delete own block; Inbox → reservation/conversation; Payments → Statements and reports → Payout summary. [Block](https://help.vrbo.com/articles/How-do-I-block-my-calendar-for-days-my-listing-is-not-available-to-rent), [reopen](https://help.vrbo.com/articles/Delete-a-calendar-block), [payouts](https://help.vrbo.com/articles/How-do-I-view-my-payout-summary). | [US host terms](https://www.vrbo.com/lp/b/host-terms-of-service) restrict automated access/monitoring, including communications. Every flow carries access/privacy risk; replies must concern genuine bookings. Recheck the [29 October replacement](https://www.vrbo.com/lp/b/host-terms-notice). Help warns calendar changes can take up to 24 hours. |
+| Booking.com | Extranet sign-in; candidate paths: Rates & Availability → Calendar; Reservations → detail; Inbox → reservation messages; Finance → payout reports. Property/unit/every sellable rate plan must be mapped. | [Public terms](https://www.booking.com/content/terms.html) restrict browser assistants. These are customer terms, a risk signal rather than a verified host agreement. Host terms and authenticated controls could not be verified; sign-in/session, close/open, reservation reads, message reads/replies and payout reads remain separate permission/data risks. |
+
+## Proof and remaining claims
+
+`tests/channel-agent.test.mjs` exercises public Cabin doors and real Playwright browsers against clearly labeled synthetic local channel HTML replays. No synthetic channel implementation is used at runtime. Local fixtures prove core behavior, not a current OTA DOM, actual channel acceptance, external guest availability or closure latency. Three added integration tests keep the suite below its 200-test cap.
+
+The next live proof needs **Airbnb host, Vrbo Owner Dashboard and Booking.com Extranet accounts**, one authorized listing each for the same real property, listing IDs/time zone/currency and Booking.com unit/rate-plan IDs. The owner signs in locally and supplies narrow authorized future nights. Close, reload, independently check traveler availability, release the Cabin hold and safely reopen. Later reservation/message/payout proofs need a permitted genuine reservation, consenting guest participants, exact-approved replies with guest-side receipt, actual payout reports and bank evidence. Empty listings cannot prove these flows. No partner API credentials are requested.
+
+Claims 1/12/13/42 and clauses SYNC-002–004/006 gain a local browser-closure path; claim 15/SYNC-007 gains action evidence, bounded attempts and uncertainty handling. They remain **partial** until live proof and the rest of each clause are met. Claims 16/17/31/46 and MESSAGE-001/004, FIN-002 and MIGRATE-007 remain partial: reservation extraction, channel inbox/replies, payout extraction, multi-account/co-hosting and full cutover are future work. No status row or homepage copy is promoted by a synthetic page test.

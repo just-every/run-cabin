@@ -56,6 +56,14 @@
         "pnpm run build",
         "pnpm run test:runtime"
       ]
+    },
+    {
+      "name": "channel-agent",
+      "browser": true,
+      "hosted": false,
+      "commands": [
+        "node --test --test-concurrency=1 tests/channel-agent.test.mjs"
+      ]
     }
   ],
   "nightly": [

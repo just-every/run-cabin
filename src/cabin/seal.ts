@@ -7,7 +7,7 @@ async function key(secret: string, purpose: string) {
   return crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: encoder.encode('cabin-seal-v1'), info: encoder.encode(purpose) }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
 }
 
-const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes))
+const b64 = (bytes: Uint8Array) => { let value=''; for(let i=0;i<bytes.length;i+=8192)value+=String.fromCharCode(...bytes.subarray(i,i+8192)); return btoa(value) }
 const unb64 = (text: string) => Uint8Array.from(atob(text), c => c.charCodeAt(0))
 
 export async function seal(secret: string, purpose: string, value: string) {

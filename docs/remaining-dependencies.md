@@ -1,5 +1,7 @@
 # Remaining contract dependencies after sd-cabin-c17
 
+19 October owner redirect: the host-account browser agent replaces the partner-application route for channel work. The calendar module core is implemented and locally exercised; live proof needs authorized Airbnb, Vrbo and Booking.com host accounts/listings. Reservation/message/payout extraction remains subsequent work. Earlier API-only dependencies below describe the pre-redirect plan, not a new partner-account ask; see [channel-agent.md](channel-agent.md). No live-provider status is promoted by local pages.
+
 19 October 2026. WEB-001 was selected because a complete host website and portable domain can be proven using the supplied Cloudflare, Stripe test and mail accounts. WEB-005 was next because paid extensions and arrival changes affect the original reservation, operations and owner balance. Its implemented flows are documented in [promotions.md](promotions.md), but its complete hosted financial acceptance remains partial.
 
 Homepage rows 5 and 31 require eligible USD payout evidence; 12, 15, 16, 42 and 46 require OTA partner accounts; 17 requires channel messaging, US A2P and WhatsApp access; 26 requires live locks and channel recovery; 33 requires QBO; 35 requires an authorized filing partner; and 14 requires pricing-provider access. None changed status. The expanded brief therefore selected CONTRACT clauses beyond those rows.

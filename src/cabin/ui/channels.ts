@@ -1,3 +1,4 @@
+import { channelAgentPanel } from '../channel-agent/ui'
 import { connections } from '../connections/ui'
 import { h, badge, form, hidden, heading, panel, empty, select, area, approve, propertyName, dateRange } from './shared'
 import { chip, atHome } from './ops'
@@ -55,8 +56,8 @@ function reviews(s: any) {
   const upload = form('calendar.prepare','channels',select('propertyId','Home',s.properties.map((p: any) => [p.id,p.name])) + select('channel','Channel',[['airbnb','Airbnb'],['vrbo','Vrbo'],['booking.com','Booking.com']]) + area('calendar','Calendar file (.ics) contents','','placeholder="BEGIN:VCALENDAR…"') + '<p class="muted">For moving in or checking a feed by hand: paste a channel’s .ics file, review the changes, then approve.</p>','Prepare calendar review')
   return (drafts ? panel('Calendar reviews',drafts) : '') + `<div class="columns">${panel('Review a calendar file',upload)}${panel('Approved calendar files',feeds || empty('No calendar files approved yet.'))}</div>`
 }
-export function channelPage(s: any) {
-  const lead = heading('Vacation rental operations', 'Channel calendars', s.managed ? MANAGED_LINE : 'Cabin reads each channel’s calendar link on a schedule and publishes its own link for each channel, so availability flows both ways. Airbnb, Vrbo and Booking.com partner APIs come later.') + connections(s)
+export function channelPage(s: any,result?:any) {
+  const lead = heading('Vacation rental operations', 'Channel calendars', s.managed ? MANAGED_LINE : 'Cabin reads each channel’s calendar link on a schedule and publishes its own link for each channel, so availability flows both ways. The channel agent can also use your own isolated host profiles.') + connections(s)
   if (!s.properties.length) return lead + panel('Homes', empty('Add a home in Properties & people, or use Move in, to begin.'))
-  return lead + '<p class="notice">iCal is polled every 15 to 60 minutes and cannot guarantee against double bookings. Cabin keeps existing blocks when a feed fails; only an acknowledged API connection can guarantee channel closure.</p>' + `<section class="panel" id="channels"><h2>Homes</h2>${homes(s)}</section>` + reviews(s)
+  return lead + channelAgentPanel(s,result) + '<p class="notice">iCal is polled every 15 to 60 minutes and cannot guarantee against double bookings. Cabin keeps existing blocks when a feed fails; browser closures appear separately in the action log and require channel confirmation.</p>' + `<section class="panel" id="channels"><h2>Homes</h2>${homes(s)}</section>` + reviews(s)
 }

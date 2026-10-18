@@ -1,3 +1,5 @@
+import { channelAgentCommand } from './channel-agent/commands'
+import { runnerOperation,evidence } from './channel-agent/runner'
 import { promotionRows } from './promotions/store'
 import { unseal } from './seal'
 import type { PromotionOffer } from './promotions/types'
@@ -57,7 +59,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  if(name==='privacy.review'||name==='privacy.hold.read')return result
  await settle(env);return result
 }
@@ -184,6 +186,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   need(request.method==='GET'||request.method==='POST','Method not allowed',405)
   // Origin is the CSRF boundary for ambient human sessions, including all
   // urlencoded and multipart forms. Bearer routes never accept a session alone.
+  if(path==='/api/cabin/channel-agent/runner'){need(request.method==='POST','POST required',405);return json(await runnerOperation(env,request,await inputBody(request)))}
   if(request.method==='POST'&&!isAgent)need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   who=await principal(request,env,isAgent)
   if(request.method==='GET'){
@@ -194,6 +197,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(tax)return new Response(await taxExport(env.DB,who,tax[1]),{headers:{...headers,'content-type':'application/json; charset=utf-8','content-disposition':`attachment; filename="cabin-tax-${tax[1]}.json"`}})
    const books=path.match(/^\/api\/cabin\/books\/([\w-]+)\.(csv|iif)$/)
    if(books)return new Response(await exportBooks(env.DB,who,books[1],books[2] as 'csv'|'iif'),{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-books-${books[1]}.${books[2]}"`}})
+   if(path==='/api/cabin/channel-agent/evidence')return new Response(await evidence(env,who,url.searchParams.get('id')??'',url.searchParams.get('side')??''),{headers:{...headers,'content-type':'image/png','content-security-policy':"default-src 'none'; sandbox"}})
    if(path==='/api/cabin/activity')return json(await history(env.DB,who,url.searchParams))
    if(path==='/api/cabin/activity.jsonl'){manager(who);need(!who.isAgent,'Human access required',403);await assertLive(env.DB,who);return new Response(exportHistory(env.DB,who,url.searchParams),{headers:{...headers,'content-type':'application/x-ndjson; charset=utf-8','content-disposition':'attachment; filename="cabin-activity.jsonl"'}})}
    if(path==='/api/cabin/ledger.csv'){manager(who);need(!who.isAgent,'Human access required',403);const ledger=await ledgerState(env.DB,who);const rows=[['Journal','Entity','Property','Owner reference','Reservation','Effective','Posted','Actor','Source type','Source','Revision','Reversal','Correction','Account','Debit USD cents','Credit USD cents'],...ledger.journals.flatMap(j=>j.lines.map(l=>[j.id,j.legalEntity,j.propertyId,j.ownerKey,j.bookingId,j.effectiveDate,j.postedAt,j.actorId,j.sourceType,j.sourceId,j.sourceRevision,j.reversalOf??'',j.correctionOf??'',l.account,l.debitCents,l.creditCents]))];return new Response(rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="cabin-ledger.csv"'}})}
@@ -218,7 +222,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    const result=await execute(request,env,who,body.name,body.input as Record<string,unknown>)
-   return json({result:['agent.create','export.publish','promotion.create'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
+   return json({result:['agent.create','export.publish','promotion.create','channelAgent.runner.create'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
   }
   return json({error:'Not found'},404)
  }catch(error){
