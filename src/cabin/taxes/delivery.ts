@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { operatorMail } from '../../mail.server.mjs'
+import { operatorMail } from '../connections/mail'
 import { mutate, SYSTEM } from '../storage'
 import { h } from '../ui/shared'
 import { taxData, saveDelivery } from './store'

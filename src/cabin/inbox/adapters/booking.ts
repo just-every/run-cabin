@@ -1,3 +1,4 @@
+import { sharingAllowed } from '../../connections/guard'
 import type { Bindings } from '../../../auth.server'
 import { managedInstall } from '../../channels'
 // Booking.com guest messages through its Connectivity Messaging API, for a
@@ -10,6 +11,7 @@ export const CHANNEL_LINE = 'Airbnb, Vrbo and Booking.com messages connect later
 const BASE = 'https://supply-xml.booking.com/messaging'
 export const bookingAccount = (env: Bindings) => !!(env.BOOKING_MESSAGING_USER && env.BOOKING_MESSAGING_PASSWORD) && !managedInstall(env)
 async function call(env: Bindings, method: string, path: string, body?: unknown) {
+ await sharingAllowed(env.DB, 'booking')
  const response = await fetch(BASE + path, { method, headers: { authorization: `Basic ${btoa(`${env.BOOKING_MESSAGING_USER}:${env.BOOKING_MESSAGING_PASSWORD}`)}`, accept: 'application/json', 'accept-version': '1.2', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20_000) })
  let value: any = null; try { value = await response.json() } catch { /* the status explains it */ }
  const error = value?.errors?.[0]

@@ -73,3 +73,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 ## Build priorities the page creates (nearest first)
 
 Channel partner APIs for Airbnb, Vrbo and Booking.com (SYNC-002–004), which close nights in seconds, log every push with its retry and bring reservation codes and messages (SYNC-006, SYNC-007, MESSAGE-001); the PriceLabs connection (PRICE-001); remaining promotions, extras and recovery-issued returning offers (WEB-005); QuickBooks Online sync (FIN-007); owner-portal view records (FIN-005, AUDIT-001); monthly lodging-tax filing with channel-collected tax separated (FIN-008); broader recovery orchestration and early-arrival promises (AGENT-001, AGENT-003); the owner's smart-lock account for live code push (OPS-005).
+
+## Contract progress beyond the homepage
+
+DATA-003 is done: installation-owned booking, guest/thread, payout/ledger and media custody, declared provider sharing and immediate owner-controlled disconnection (`src/cabin/connections/`, `tests/data-custody.test.mjs`, `docs/data-custody.md`). This clause has no separate homepage claim row; the account-gated homepage statuses above are unchanged.

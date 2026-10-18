@@ -1,3 +1,4 @@
+import { sharingAllowed } from './connections/guard'
 import type { Bindings } from '../auth.server'
 import { type Actor, type Connection, need, fail, text, newId, manager, property, exact } from './model'
 import { load, mutate, SYSTEM } from './storage'
@@ -26,7 +27,7 @@ export function feedUrl(value: unknown) {
 const later = (at: string, minutes: number) => new Date(Date.parse(at) + minutes * 60_000).toISOString()
 async function fetchFeed(url: string): Promise<string> {
  let response: Response
- try { response = await fetch(url, { headers: { accept: 'text/calendar, text/plain;q=0.8', 'user-agent': 'Cabin calendar sync' }, redirect: 'follow', signal: AbortSignal.timeout(FETCH_MS) }) }
+ try { response = await fetch(url, { headers: { accept: 'text/calendar, text/plain;q=0.8', 'user-agent': 'Cabin calendar sync' }, redirect: 'manual', signal: AbortSignal.timeout(FETCH_MS) }) }
  catch (error) { return fail((error as Error)?.name === 'TimeoutError' ? `The channel did not answer within ${FETCH_MS / 1000} seconds` : 'Could not reach the channel. Check the link, then sync again.', 502) }
  need(response.ok, `The channel answered ${response.status}${response.status === 404 || response.status === 403 ? ': copy a fresh link from the channel' : ''}`, 502)
  need(Number(response.headers.get('content-length') ?? 0) <= MAX_BYTES, 'The calendar is larger than 1 MB', 502)
@@ -39,7 +40,7 @@ async function fetchFeed(url: string): Promise<string> {
 export async function syncConnection(env: Bindings, actor: Actor, id: string) {
  const found = (await load(env.DB)).connections.find(r => r.id === id); need(found, 'Calendar link not found', 404)
  let body: string | null = null, error: string | null = null
- try { body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
+ try { await sharingAllowed(env.DB, 'calendars'); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
  return mutate(env.DB, actor, 'channel.sync', async c => {
   const row = c.data.connections.find(r => r.id === id); need(row, 'Calendar link not found', 404); property(c, row.propertyId)
   need(row.revision === found.revision, 'Calendar link changed while syncing. Sync the current link again.', 409)

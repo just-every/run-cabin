@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { operatorMail } from '../../mail.server.mjs'
+import { operatorMail } from '../connections/mail'
 import { need, text, sha, newId } from '../model'
 import { authorizedStatement } from './state'
 export { portalState } from './state'

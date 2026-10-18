@@ -1,6 +1,6 @@
 import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
-import { operatorMail } from '../mail.server.mjs'
+import { operatorMail } from './connections/mail'
 import { load, mutate, SYSTEM } from './storage'
 // Sends the notices dispatch wrote, after their commit: each is claimed first
 // (pending → sending) so two runs never send it twice, then recorded as sent,

@@ -1,3 +1,4 @@
+import { sharingCommand } from './connections/store'
 import { load } from './storage'
 import { documentDownload } from './agreements/ui'
 import { agreementOf } from './agreements/records'
@@ -45,7 +46,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  await settle(env);return result
 }
 /** Photo forms save through the command API in the browser, then return here with ?done=NAME: say what was saved and where it shows. */
@@ -56,6 +57,7 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name==='provider.sharing')return result.enabled?'Provider sharing reconnected after your review.':'Provider sharing disconnected. New provider requests are stopped.'
  if(name.startsWith('readiness.'))return 'Readiness evidence saved. Review the current arrival status below.'
  if(name==='recovery.ai.test')return result.message
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'

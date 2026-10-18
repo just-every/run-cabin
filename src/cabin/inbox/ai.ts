@@ -1,3 +1,4 @@
+import { sharingAllowed } from '../connections/guard'
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
 import { managedInstall } from '../channels'
@@ -39,6 +40,7 @@ export async function aiDraft(config: { key: string; model: string; workspace: s
  const thread = history.slice(-12).map(m => `<${m.from}>\n${m.text.slice(0, 4000)}\n</${m.from}>`).join('\n')
  let response: Response
  try {
+  await sharingAllowed(db, 'anthropic')
   response = await fetch('https://api.anthropic.com/v1/messages', {
    method: 'POST', signal: AbortSignal.timeout(60_000),
    headers: { 'x-api-key': config.key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', ...(config.workspace ? { 'anthropic-workspace-id': config.workspace } : {}) },

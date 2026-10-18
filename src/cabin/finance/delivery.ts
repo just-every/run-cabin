@@ -1,6 +1,6 @@
 import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
-import { operatorMail } from '../../mail.server.mjs'
+import { operatorMail } from '../connections/mail'
 import { load, mutate, SYSTEM } from '../storage'
 import { manager, need, text, newId, type Actor } from '../model'
 import { h } from '../ui/shared'

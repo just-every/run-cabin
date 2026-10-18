@@ -1,3 +1,4 @@
+import { sharingAllowed } from '../../connections/guard'
 import type { Bindings } from '../../../auth.server'
 import { managedInstall } from '../../channels'
 // Texts through Twilio's Messages API. US texting from an app needs the owner's
@@ -8,6 +9,7 @@ export const SMS_LINE = 'Texts are not connected. You need your own Twilio texti
 export const SMS_MANAGED = 'Texts are not available on RER Managed hosting yet because it cannot connect to Twilio. Use guest email for now.'
 export const smsAccount = (env: Bindings) => !!(env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && env.TWILIO_FROM) && !managedInstall(env)
 export async function sendSms(env: Bindings, to: string, body: string) {
+ await sharingAllowed(env.DB, 'twilio')
  const sid = env.TWILIO_ACCOUNT_SID!, response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
   method: 'POST', headers: { authorization: `Basic ${btoa(`${sid}:${env.TWILIO_AUTH_TOKEN}`)}`, 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
   body: new URLSearchParams({ To: to, From: env.TWILIO_FROM!, Body: body.slice(0, 1600) }), signal: AbortSignal.timeout(20_000),

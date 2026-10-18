@@ -1,3 +1,4 @@
+import { connections } from '../connections/ui'
 import { h, badge, form, hidden, heading, panel, empty, select, area, approve, propertyName, dateRange } from './shared'
 import { chip, atHome } from './ops'
 import { channelName, span } from '../inventory'
@@ -54,7 +55,7 @@ function reviews(s: any) {
   return (drafts ? panel('Calendar reviews',drafts) : '') + `<div class="columns">${panel('Review a calendar file',upload)}${panel('Approved calendar files',feeds || empty('No calendar files approved yet.'))}</div>`
 }
 export function channelPage(s: any) {
-  const lead = heading('Vacation rental operations', 'Channel calendars', s.managed ? MANAGED_LINE : 'Cabin reads each channel’s calendar link on a schedule and publishes its own link for each channel, so availability flows both ways. Airbnb, Vrbo and Booking.com partner APIs come later.')
+  const lead = heading('Vacation rental operations', 'Channel calendars', s.managed ? MANAGED_LINE : 'Cabin reads each channel’s calendar link on a schedule and publishes its own link for each channel, so availability flows both ways. Airbnb, Vrbo and Booking.com partner APIs come later.') + connections(s)
   if (!s.properties.length) return lead + panel('Homes', empty('Add a home in Properties & people, or use Move in, to begin.'))
   return lead + '<p class="notice">iCal is polled every 15 to 60 minutes and cannot guarantee against double bookings. Cabin keeps existing blocks when a feed fails; only an acknowledged API connection can guarantee channel closure.</p>' + `<section class="panel" id="channels"><h2>Homes</h2>${homes(s)}</section>` + reviews(s)
 }

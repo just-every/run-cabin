@@ -1,3 +1,4 @@
+import { sharingAllowed } from './connections/guard'
 import { event, record } from './audit/write'
 import { operatorAuth, type Bindings } from '../auth.server'
 import { type Actor, need, fail, text, newId, sha, owner, guard, query } from './model'
@@ -18,6 +19,7 @@ export async function agentKeys(env:Bindings,actor:Actor){if(actor.role!=='owner
 export async function credentialCommand(request:Request,env:Bindings,actor:Actor,name:string,p:Record<string,unknown>){
  owner(actor);await assertLive(env.DB,actor);const a=authority(actor),at=Date.now(),id=newId()
  if(name==='member.invite'){
+  await sharingAllowed(env.DB, 'mail')
   const member=await env.DB.prepare('SELECT * FROM cb_members WHERE id=? AND active=1').bind(text(p.id,'member ID')).first<any>();need(member,'Activate a member before inviting them',409)
   await record(env.DB,actor,'member.invite.requested',{kind:'member',id:member.id,revision:String(member.version),result:'requested'})
   try{await operatorAuth(env).invite(request,{email:member.email,displayName:member.name,role:'member',returnTo:'/app'})}catch(error){await record(env.DB,actor,'member.invite.result',{kind:'member',id:member.id,revision:String(member.version),result:'failed-or-uncertain'});throw error}

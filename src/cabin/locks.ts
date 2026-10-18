@@ -1,3 +1,4 @@
+import { sharingAllowed } from './connections/guard'
 import { verificationAccessBlocked } from './verification/records'
 import { revoke } from './codes'
 import { record } from './audit/write'
@@ -22,6 +23,7 @@ export const lockAccount = (env: Bindings) => !!env.SEAM_API_KEY && !managedInst
 
 const SEAM = 'https://connect.getseam.com'
 async function seam(env: Bindings, path: string, body: Record<string, unknown>) {
+ await sharingAllowed(env.DB, 'seam')
  const response = await fetch(SEAM + path, { method: 'POST', headers: { authorization: `Bearer ${env.SEAM_API_KEY}`, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(20_000) })
  let value: any = null; try { value = await response.json() } catch { /* the status explains it */ }
  if (!response.ok || value?.ok === false) throw Error(value?.error?.message ?? `Seam answered ${response.status}`)

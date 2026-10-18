@@ -1,3 +1,4 @@
+import { sharingAllowed } from './connections/guard'
 import type { Bindings } from '../auth.server'
 import { type Booking, type Context, type ExportFeed, manager, newId, property } from './model'
 import { nights } from './inventory'
@@ -32,6 +33,7 @@ export async function icalExportResponse(request: Request, env: Bindings): Promi
  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405, headers: { ...headers, allow: 'GET, HEAD' } })
  const feed = await env.DB.prepare("SELECT data FROM cb_records WHERE kind='exports' AND json_extract(data,'$.token')=?").bind(match[1]).first<{ data: string }>()
  if (!feed) return new Response('Not found', { status: 404, headers })
+ try { await sharingAllowed(env.DB, 'calendars') } catch { return new Response('Calendar sharing is disconnected', { status: 503, headers }) }
  const { propertyId } = JSON.parse(feed.data) as ExportFeed, skip = FROM_SLUG[match[2]]
  const rows = (await env.DB.prepare("SELECT data FROM cb_records WHERE kind='bookings' AND json_extract(data,'$.propertyId')=?").bind(propertyId).all<{ data: string }>()).results
  const held = rows.map(r => JSON.parse(r.data) as Booking).filter(b => b.status === 'confirmed' && b.channel !== skip).sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id))

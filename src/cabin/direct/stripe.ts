@@ -1,3 +1,4 @@
+import { sharingAllowed } from '../connections/guard'
 import { fail, integer, need } from '../model'
 import { savedKey,type StripeMode } from './provider-store'
 
@@ -47,6 +48,7 @@ async function credentials(env:StripeEnv){
 export const stripe = (env: StripeEnv, path: string, method = 'GET', fields?: Record<string, string>, idempotencyKey?: string): Promise<any> => hostSide(() => call(env, path, method, fields, idempotencyKey))
 async function call(env: StripeEnv, path: string, method: string, fields?: Record<string, string>, idempotencyKey?: string): Promise<any> {
  need(!managedInstall(env), MANAGED_STRIPE_LINE, 409)
+ await sharingAllowed(env.DB, 'stripe')
  const {key,mode}=await credentials(env)
  need(/^\/[a-z_]+(?:\/[A-Za-z0-9_]+)*$/.test(path), 'Invalid Stripe API path')
  const url = new URL(`https://api.stripe.com/v1${path}`), verb = method.toUpperCase()

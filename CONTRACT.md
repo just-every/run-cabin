@@ -700,10 +700,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 22 | 38 | 29 | 89 |
-| All | 35 | 38 | 29 | 102 |
+| Target and push further | 23 | 37 | 29 | 89 |
+| All | 36 | 37 | 29 | 102 |
 
-**102 clauses: 35 done, 38 partial, 29 missing.**
+**102 clauses: 36 done, 37 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -795,7 +795,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `src/cabin/ui/index.ts`; `src/cabin/ui/calendar.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/statements.ts`; `public/cabin.css`; `tests/cabin.test.mjs` | Responsive forms and server errors exist. Full browser accessibility, the 40-property/three-year scale proof, native workflows and paid-provider cost disclosure are not established. |
 | `DATA-001` | Complete portable product records and safe restore | target | partial | `src/cabin/archive-policy.mjs`; `scripts/installer/local.mjs`; `tests/archive.test.mjs` (line 27) | Current operational records/photos, approvals and move-in custody round-trip with excluded bearer keys. Future PMS records and inactive provider-job restore are not implemented. |
 | `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/movein/targets.ts`; `src/cabin/archive-policy.mjs`; `tests/archive.test.mjs`; `tests/audit.test.mjs` | Property/source retirement and later-journal refusal, operational guest identity/message erasure, revoked stay links and anonymous audit references ship. Full vendor/ID retention, legal holds, operator erasure and completion receipts need work. |
-| `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | partial | `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/archive.test.mjs` (line 27) | Today’s properties, calendar bookings, turnovers, photos and statements live in the installation’s own D1 storage; guest, message and payout records do not exist yet, and no test records outbound requests to show nothing else leaves. |
+| `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | done | `src/cabin/connections/`; `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/data-custody.test.mjs`; `docs/data-custody.md` | Installation-owned records and media, declared provider destinations/data, owner-only durable sharing revocation at every provider and product-mail boundary, blocked calendar exports and explicit reconnection. Populated route journey records outbound requests and proves disconnection stops manual and Cron effects while retaining history. |
 | `AUDIT-001` | Permanent attributable business and automation history | target | done | `src/cabin/audit/`; `src/cabin/ui/activity.ts`; `migrations/core/0023_audit.sql`; `tests/audit.test.mjs`; `docs/activity.md` | Append-only events retain safe actor/agent/authority, scope, source revision and controlled outcomes for domain changes, approvals, guest access, providers, money, imports and erasures. Search and full paginated export include legacy native history without its value field. Guest erasure preserves stable anonymous action references and necessary accounting; broader retention controls remain DATA-002. |
 | `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (lines 17, 109) | Hashed revocable draft keys and private cleaner data exist; OTA/payment/lock custody, signed provider events and broader sensitive-data policies are missing. |
 | `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |

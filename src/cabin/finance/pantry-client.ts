@@ -1,3 +1,4 @@
+import { sharingAllowed } from '../connections/guard'
 import type { Bindings } from '../../auth.server'
 import { need, text } from '../model'
 import { managedInstall } from '../channels'
@@ -58,6 +59,7 @@ export class PantryError extends Error {
 /** Never expose a credential, upstream body or redirected URL in a failure. */
 export async function pantry<T>(env: Bindings, conn: Connection, path: string, body?: unknown, key?: string): Promise<T> {
  pantryAvailable(env)
+ await sharingAllowed(env.DB, 'pantry')
  let response: Response
  try {
   response = await fetch(conn.origin + '/api/pantry/integration/v1' + path, {
