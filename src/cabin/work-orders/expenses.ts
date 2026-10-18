@@ -1,3 +1,4 @@
+import { costParts } from '../finance/allocation-calculation'
 import { type Context, type Task, need, newId, sha } from '../model'
 import { post } from '../ledger/store'
 import { debit, credit } from '../ledger/types'
@@ -5,7 +6,7 @@ import { managementFor } from '../properties/terms'
 
 export interface WorkExpense {
  id:string; revision:string; propertyId:string; taskId:string; bookingId:string; ownerEmail:string; ownerName:string;
- agreementId:string; amountCents:number; invoiceReference:string; photoIds:string[]; period:string; approvedBy:string; approvedAt:string
+ ownerAllocations?:ReturnType<typeof costParts>; agreementId:string; amountCents:number; invoiceReference:string; photoIds:string[]; period:string; approvedBy:string; approvedAt:string
 }
 /** Approval creates a vendor payable, never a bank payment. Exact invoice evidence posts once. */
 export async function postWorkExpense(c:Context,task:Task):Promise<string> {
@@ -16,6 +17,7 @@ export async function postWorkExpense(c:Context,task:Task):Promise<string> {
  const terms=work.ownerTerms??booking?.managementTerms??managementFor(c.data,task.propertyId,work.dueDate)
  need(c.data.ledgerSettings.some(s=>s.propertyId===task.propertyId),'Configure this home’s legal entity in Trust ledger before approving an invoice.',409)
  const row:WorkExpense={id:newId(),revision:newId(),propertyId:task.propertyId,taskId:task.id,bookingId:booking?.id??'',ownerEmail:terms.ownerEmail,ownerName:terms.ownerName,agreementId:terms.id,amountCents:invoice.amountCents,invoiceReference:invoice.reference,photoIds:invoice.photos.map(p=>p.id),period:c.now.slice(0,7),approvedBy:c.actor.id,approvedAt:c.now}
- await post(c,{sourceKey:'maintenance:'+task.id,propertyId:task.propertyId,bookingId:row.bookingId,effectiveDate:c.now.slice(0,10),ownerKey:await sha(terms.ownerEmail),sourceType:'maintenance-expense',sourceId:task.id,sourceRevision:task.revision,lines:[debit('ownerLiability',row.amountCents),credit('vendorPayable',row.amountCents)]})
+ row.ownerAllocations=costParts(terms,row.amountCents)
+ for(const [i,part] of row.ownerAllocations.entries())if(part.expenseCents)await post(c,{sourceKey:'maintenance:'+task.id+(i?':'+i:''),propertyId:task.propertyId,bookingId:row.bookingId,effectiveDate:c.now.slice(0,10),ownerKey:await sha(part.ownerEmail),sourceType:'maintenance-expense',sourceId:task.id,sourceRevision:task.revision,lines:[debit('ownerLiability',part.expenseCents),credit('vendorPayable',part.expenseCents)]})
  c.data.workExpenses.push(row);return row.id
 }

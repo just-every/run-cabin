@@ -15,7 +15,7 @@ export async function postRecovery(c:Context,statement:{id:string;revision:strin
 export async function syncLedger(c:Context) {
  const configured=new Set(c.data.ledgerSettings.map(s=>s.propertyId))
  for(const s of c.data.statements.filter(s=>s.source==='recovery'&&s.status==='approved'))await postRecovery(c,s)
- for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&p.source!=='stripe'&&(!c.before.payouts.some(old=>old.id===p.id&&old.match===p.match&&old.bookingId===p.bookingId)))){
+ for(const p of c.data.payouts.filter(p=>p.match==='matched'&&p.bookingId&&p.propertyId&&configured.has(p.propertyId)&&(!c.before.payouts.some(old=>old.id===p.id&&old.match===p.match&&old.bookingId===p.bookingId)))){
   if(!p.grossCents)continue
   const signed=(account:Parameters<typeof dr>[0],n:number,side:'dr'|'cr')=>n===0?[]:[(n>0===(side==='dr')?dr:cr)(account,Math.abs(n))]
   const lines=[...signed('cash',p.netCents,'dr'),...signed('channelFees',p.feeCents,'dr'),...signed('ownerLiability',p.grossCents,'cr'),...signed('ownerLiability',p.feeCents,'dr'),...signed('channelFees',p.feeCents,'cr')]

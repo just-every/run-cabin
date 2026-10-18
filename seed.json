@@ -140,6 +140,12 @@
       "clauses": [
         "DATA-003"
       ]
+    },
+    {
+      "id": "management-allocations",
+      "clauses": [
+        "FIN-003"
+      ]
     }
   ],
   "nonGoals": [

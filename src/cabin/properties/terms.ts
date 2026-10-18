@@ -1,8 +1,10 @@
 import { type Context, type Data, type Property, type Booking, need, text, integer, newId, manager } from '../model'
+import { allocationModel } from '../finance/allocation-calculation'
+import type { AllocationModel } from '../finance/allocation-types'
 import { day } from '../direct/rules'
 
 export interface ManagementTerms {
- id: string; revision: string; propertyId: string; effectiveFrom: string;
+ allocation?: AllocationModel; id: string; revision: string; propertyId: string; effectiveFrom: string;
  ownerName: string; ownerEmail: string; commissionBps: number; terms: string; recordedAt: string; recordedBy: string
 }
 const initial = (p: Property): ManagementTerms => ({ id: p.id + ':initial', revision: String(p.revision), propertyId: p.id, effectiveFrom: '0001-01-01', ownerName: p.ownerName, ownerEmail: p.ownerEmail, commissionBps: p.commissionBps, terms: 'Commission on gross rent. Other costs require separate approval.', recordedAt: '', recordedBy: 'legacy' })
@@ -22,7 +24,7 @@ export function captureManagement(c: Context, existingPropertyId?:string) {
 export function saveManagement(c: Context, p: Property, input: Record<string, unknown>) {
  const effectiveFrom = day(input.effectiveFrom ?? c.now.slice(0,10))
  const email = text(input.ownerEmail, 'owner email', 254).toLowerCase(); need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), 'Enter a valid owner email')
- const row: ManagementTerms = { id:newId(),revision:newId(),propertyId:p.id,effectiveFrom,ownerName:text(input.ownerName,'owner name',160),ownerEmail:email,commissionBps:integer(input.commissionBps,'commissionBps',0,10000),terms:text(input.terms ?? 'Commission on gross rent. Other costs require separate approval.','management agreement',10000),recordedAt:c.now,recordedBy:c.actor.id }
+ const row: ManagementTerms = { id:newId(),revision:newId(),propertyId:p.id,effectiveFrom,ownerName:text(input.ownerName,'owner name',160),ownerEmail:email,commissionBps:integer(input.commissionBps,'commissionBps',0,10000),terms:text(input.terms ?? 'Commission on gross rent. Other costs require separate approval.','management agreement',10000),recordedAt:c.now,recordedBy:c.actor.id,allocation:allocationModel(input) }
  c.data.managementTerms.push(row); return row
 }
 export function managementCommand(c: Context, name: string, p: Record<string,unknown>) {

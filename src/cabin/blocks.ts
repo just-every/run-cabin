@@ -1,3 +1,5 @@
+import { managementFor } from './properties/terms'
+import { costParts } from './finance/allocation-calculation'
 import { type Context, type Booking, type Property, type BlockUse, need, text, exact, newId, sha, query } from './model'
 import { held, overlaps, describe } from './inventory'
 import { day } from './direct/rules'
@@ -10,7 +12,8 @@ export const occupancy = (b: Booking) => (b.kind ?? 'stay') === 'stay' || !!b.bl
 export async function blockUse(c:Context,p:Property,input:Record<string,unknown>,reason:string):Promise<BlockUse> {
  const purpose=input.purpose==='owner'?'owner':'maintenance'
  const policy=policyFor((await ownerRecords(c.db)).policies,p)
- const cleaningCents=purpose==='owner'?policy.cleaningCents:0
+ const agreement=managementFor(c.data,p.id,String(input.start??c.now).slice(0,10))
+ const cleaningCents=purpose==='owner'?(agreement.allocation?.ownerUseCleaningCents??policy.cleaningCents):0
  need(!cleaningCents||c.data.ledgerSettings.some(s=>s.propertyId===p.id),'Configure this home’s Trust ledger before accepting billable owner use.',409)
  return {purpose,reason:text(reason,'block reason',300),cleaningCents,policyRevision:policy.revision,ownerEmail:p.ownerEmail,ownerName:p.ownerName}
 }
@@ -32,6 +35,7 @@ export async function allocateBlockCleaning(c:Context){
  for(const t of c.data.turnovers.filter(t=>t.status==='completed')){
   const b=c.data.bookings.find(b=>b.id===t.bookingId),use=b?.blockUse
   if(!b||!use?.cleaningCents||c.before.turnovers.some(old=>old.id===t.id&&old.status==='completed'))continue
-  await post(c,{sourceKey:'owner-use-cleaning:'+t.id,propertyId:b.propertyId,bookingId:b.id,effectiveDate:c.now.slice(0,10),ownerKey:await sha(use.ownerEmail.toLowerCase()),sourceType:'owner-use-cleaning',sourceId:t.id,sourceRevision:t.revision,lines:[debit('ownerLiability',use.cleaningCents),credit('vendorPayable',use.cleaningCents)]})
+  const terms=b.managementTerms??managementFor(c.data,b.propertyId,b.start.slice(0,10))
+  for(const [i,part] of costParts(terms,use.cleaningCents).entries())if(part.expenseCents)await post(c,{sourceKey:'owner-use-cleaning:'+t.id+(i?':'+i:''),propertyId:b.propertyId,bookingId:b.id,effectiveDate:c.now.slice(0,10),ownerKey:await sha(part.ownerEmail),sourceType:'owner-use-cleaning',sourceId:t.id,sourceRevision:t.revision,lines:[debit('ownerLiability',part.expenseCents),credit('vendorPayable',part.expenseCents)]})
  }
 }

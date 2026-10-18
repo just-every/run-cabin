@@ -1,4 +1,5 @@
 export const accounts = {
+ allocationClearing:'Agreement allocation clearing', ownerReserves:'Owner reserve payable', managerExpenses:'Manager expenses',
  cash:'Trust cash', receivable:'Guest receivables', advances:'Advance deposits',
  damageAuthorization:'Damage authorizations (non-cash)', damageHolds:'Damage holds (non-cash)',
  ownerLiability:'Owner funds payable', managerRevenue:'Manager revenue', channelFees:'Channel / processor fees clearing',
