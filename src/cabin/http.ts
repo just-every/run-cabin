@@ -55,6 +55,7 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
  if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
  if(name==='recovery.close')return 'Readiness checked. The case closes when the guest confirmation is accepted.'
+ if(name==='recovery.approve'&&state.turnovers.find((t:any)=>t.id===result.turnoverId)?.status==='unassigned')return 'Recovery approved. The replacement cleaner has an offer and must accept after capacity and travel checks. The guest update and owner adjustment are recorded.'
  if(name==='recovery.approve')return 'Approved and applied. The replacement cleaner is assigned and emailed, the guest has a new door code and the update, and the owner adjustment is frozen.'
  if(name==='recovery.reject')return 'Proposal rejected. Nothing was applied; the case is open for a new plan.'
  if(name==='recovery.plan'||name==='recovery.propose')return result.status==='escalated'?'No backup cleaner is free in this window. The case needs the owner.':result.status==='active'?'Applied within the owner’s limits.':'Plan drafted. Review the replacement, credit and guest message, then approve or reject.'
@@ -70,6 +71,12 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='statement.deliver')return 'Owner email requested. Check delivery status below.'
  if(name==='turnover.complete')return readyMessage(state,result.id)
  if(name==='turnover.checkout')return 'Check-out recorded.'
+ if(name==='turnover.accept')return 'Accepted. Your current window, instructions and door code are shown below.'
+ if(name==='turnover.decline')return 'Response saved. Cabin is asking eligible backups and your manager sees any work still at risk.'
+ if(name==='turnover.offers')return 'Offers reopened. Eligible cleaners are emailed; the first eligible acceptance gets this job.'
+ if(name==='cleaner.capacity')return 'Capacity and home base saved. Open assignments are checked against them.'
+ if(name==='home.drive')return 'Drive time saved for these addresses. Changed addresses require a new drive time.'
+ if(name==='turnover.assign'&&result.status==='unassigned')return 'Offer sent. The cleaner must accept before being assigned or receiving door access.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
  if(name==='turnover.approve')return 'Approved and assigned. The cleaner is emailed the window, address and door code.'
  if(name==='home.settings')return 'Turnover settings saved. Unfinished jobs now use this checklist and photo requirement.'
@@ -112,8 +119,9 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
    else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }
- }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('cleanerIds'))input.cleanerIds=form.getAll('cleanerIds').filter(Boolean);if(form.has('expenseDescription')){input.expenseDescription=form.getAll('expenseDescription');input.expenseAmount=form.getAll('expenseAmount')}if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
+ }else if(type.includes('application/x-www-form-urlencoded')){const form=new URLSearchParams(new TextDecoder().decode(bytes));input=Object.fromEntries(form);if(form.has('cleanerIds'))input.cleanerIds=form.getAll('cleanerIds').filter(Boolean);if(form.has('approvedCleanerIds'))input.approvedCleanerIds=form.getAll('approvedCleanerIds').filter(Boolean);if(form.has('expenseDescription')){input.expenseDescription=form.getAll('expenseDescription');input.expenseAmount=form.getAll('expenseAmount')}if(form.has('lineDescription')){input.lineDescription=form.getAll('lineDescription');input.lineAmount=form.getAll('lineAmount')}}
  else return fail('Use JSON, a form, or a photo upload',415)
+ if(input.dispatchEnabled==='on')input.dispatch={templateName:input.dispatchTemplateName,instructions:input.dispatchInstructions,durationMinutes:Number(input.dispatchDurationMinutes),rateCents:Math.round(Number(input.dispatchRateDollars)*100),startOffsetMinutes:Number(input.dispatchStartOffsetMinutes),finishBeforeMinutes:Number(input.dispatchFinishBeforeMinutes),approvedCleanerIds:Array.isArray(input.approvedCleanerIds)?input.approvedCleanerIds:[input.approvedCleanerIds].filter(Boolean),offerCount:Number(input.dispatchOfferCount),responseMinutes:Number(input.dispatchResponseMinutes),reminderMinutes:Number(input.dispatchReminderMinutes),escalationMinutes:Number(input.dispatchEscalationMinutes)}
  if('commissionPercent' in input){const amount=String(input.commissionPercent);need(/^\d+(?:\.\d{1,2})?$/.test(amount),'Enter a commission percentage with at most two decimal places');input.commissionBps=Math.round(Number(amount)*100);delete input.commissionPercent}
  for(const key of ['commissionBps','managementFeeCents'])if(key in input&&input[key]!=='')input[key]=Number(input[key]);else if(input[key]==='')delete input[key]
  if(typeof input.revision==='string'&&/^\d+$/.test(input.revision))input.revision=Number(input.revision)

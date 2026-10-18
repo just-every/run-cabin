@@ -688,10 +688,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 8 | 51 | 30 | 89 |
-| All | 21 | 51 | 30 | 102 |
+| Target and push further | 9 | 50 | 30 | 89 |
+| All | 22 | 50 | 30 | 102 |
 
-**102 clauses: 21 done, 51 partial, 30 missing.**
+**102 clauses: 22 done, 50 partial, 30 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -751,7 +751,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `GUEST-002` | Guest check-in and stay portal | target | missing |  | No implementing flow in the audited tree. |
 | `GUEST-003` | Reviews and consented repeat-guest marketing | target | missing |  | No implementing flow in the audited tree. |
 | `GUEST-004` | Automated host reviews of Airbnb guests | target | missing |  | No implementing flow in the audited tree. |
-| `OPS-001` | Reservation-triggered turnover dispatch | target | partial | `src/cabin/dispatch.ts`; `src/cabin/turnovers.ts`; `src/cabin/homes.ts`; `src/cabin/notices.ts`; `src/cabin/notify.ts`; `tests/turnovers.test.mjs` (line 15); `tests/cabin.test.mjs` (line 67) | Every confirmed stay from any channel or a direct request gets exactly one turnover between its check-out and the next check-in, assigned to the home's default cleaner and emailed with window, address and code; moved and cancelled stays move or cancel it, and reassignment re-notifies with history kept. Cleaner accept/decline, reminders, overdue escalation, rates, daily capacity and travel-time routing are absent. |
+| `OPS-001` | Reservation-triggered turnover dispatch | target | done | `src/cabin/dispatch.ts`; `src/cabin/dispatch/`; `src/cabin/turnovers.ts`; `src/cabin/homes.ts`; `src/cabin/settle.ts`; `tests/dispatch.test.mjs`; `tests/turnovers.test.mjs`; `docs/turnover-dispatch.md` | Reservation revisions keep one cleaning/inspection job with saved work, rate, timing and approved team. Configured jobs require cleaner acceptance; decline/cancellation seeks eligible backups, including three simultaneous offers ranked by saved home-base drive time. Capacity counts jobs, work and driving; unknown or changed address routes and infeasible windows stay explicit manager tasks. Five-minute Cron advances deduplicated reminders, expiry and pre-arrival escalation. Recovery uses the same guarded acceptance. Hosted invitation, offer, assignment/access and reassignment mail received in the QA inbox; manager and cleaner paths exercised at 1440 and 390. |
 | `EVIDENCE-001` | Private immutable cleaner completion evidence | target | done | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 67); `tests/turnovers.test.mjs` (line 15) |  |
 | `OPS-002` | Cleaner mobile work with reliable uploads | target | partial | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `src/cabin/maintenance.ts`; `public/cabin.js`; `public/ops.css`; `tests/turnovers.test.mjs` (line 15) | The phone view shows each job's window, address with directions and the cleaner's own door code; the cleaner ticks the checklist, adds the home's required photos (up to 12, shrunk in the browser) and reports problems with photos. Explicit job acceptance, offline drafts and reconnect reconciliation are missing. |
 | `OPS-003` | Readiness is verified before arrival | target | partial | `src/cabin/readiness.ts`; `src/cabin/ui/readiness.ts`; `src/cabin/maintenance.ts`; `tests/turnovers.test.mjs` (line 15) | Per-arrival readiness combines the preceding turnover's completion and required photos with open blocking maintenance tasks and the stay's door code, and never shows unknown state as ready. Supply/restock items, inspections, lock verification, attestation and approved exceptions are absent. |

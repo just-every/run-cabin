@@ -1,5 +1,7 @@
 import { type Context, text, integer, need, owner, query, newId, sha } from './model'
+import { capacityCommand } from './dispatch/settings'
 export async function peopleCommand(c:Context,name:string,p:Record<string,unknown>){
+ const capacity = capacityCommand(c,name,p); if(capacity !== undefined)return capacity
  if(name==='property.save'){
   owner(c.actor);const old=p.id?c.data.properties.find(r=>r.id===text(p.id,'property ID')):undefined
   need(!p.id||old,'Property not found',404);if(old)need(integer(p.revision,'revision',1)===old.revision,'Property changed; reload',409)

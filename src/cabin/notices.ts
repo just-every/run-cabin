@@ -1,6 +1,7 @@
 import { type AccessCode, type Context, type HomeSettings, type Notice, type Notified, type Task, type Turnover, newId } from './model'
 import { between, time12, ZONES } from './clock'
 import { homeSettings } from './homes'
+import { directions } from './dispatch/planner'
 // The emails a cleaner or maintenance person gets, written into the same commit
 // as the change that causes them and sent after it (notify.ts). Each turnover
 // keeps what its cleaner was last told; any difference sends exactly one email.
@@ -12,7 +13,8 @@ function push(c: Context, memberId: string, propertyId: string, kind: Notice['ki
 }
 function details(c: Context, s: HomeSettings, t: Turnover, code: AccessCode) {
  const next = t.nextBookingId ? `The next guests arrive at ${time12(t.windowEnd!.slice(11, 16))}.` : 'No next arrival is booked yet.'
- return [`When: ${between(t.windowStart!, t.windowEnd!)} (${zoneName(s.timeZone)}), after the guests check out. ${next}`, `Address: ${s.address || 'not entered yet; ask your manager'}`, `Door code: ${code.code} (works ${between(code.validFrom, code.validUntil)})`, '', 'Checklist:', ...t.checklist.map(i => `- ${i}`), '', `When the home is ready, mark it ready in Cabin with at least ${t.photosRequired ?? 1} photo${(t.photosRequired ?? 1) === 1 ? '' : 's'}. Report anything broken from the job.`].join('\n')
+ const base = c.data.cleanerProfiles.find(p => p.id === t.cleanerId)?.homeBase
+ return [`When: ${between(t.windowStart!, t.windowEnd!)} (${zoneName(s.timeZone)}), after the guests check out. ${next}`, `Address: ${s.address || 'not entered yet; ask your manager'}`, base && s.address ? `Directions: ${directions(base, s.address)}` : '', `Door code: ${code.code} (works ${between(code.validFrom, code.validUntil)})`, ...(t.dispatch ? [`Accepted template: ${t.dispatch.templateName}`, `${t.dispatch.durationMinutes} work minutes; USD ${(t.dispatch.rateCents / 100).toFixed(2)} per completed turnover.`, t.dispatch.instructions] : []), '', 'Checklist:', ...t.checklist.map(i => `- ${i}`), '', `When the home is ready, mark it ready in Cabin with at least ${t.photosRequired ?? 1} photo${(t.photosRequired ?? 1) === 1 ? '' : 's'}. Report anything broken from the job.`].filter(Boolean).join('\n')
 }
 export function assignmentNotice(c: Context, s: HomeSettings, t: Turnover, code: AccessCode | null) {
  const now: Notified | null = t.status === 'approved' && t.cleanerId && code ? { cleanerId: t.cleanerId, windowStart: t.windowStart!, windowEnd: t.windowEnd!, code: code.code } : null, before = t.notified ?? null

@@ -1,5 +1,6 @@
 import { type Context, type HomeSettings, need, text, integer, newId, manager, property } from './model'
 import { ZONES } from './clock'
+import { propertyDispatch, driveCommand } from './dispatch/settings'
 // What each home's turnovers need: the address the cleaner drives to, check-in
 // and check-out times in the home's own time zone, the default cleaner and
 // maintenance person, the checklist, how many photos make it ready, and the
@@ -11,6 +12,7 @@ const clock = (value: unknown, label: string) => { const v = text(value, label, 
 export function checklist(value: unknown) { need(Array.isArray(value) && value.length > 0 && value.length <= 50, 'Use a checklist of 1 to 50 items'); const items = value.map(v => text(v, 'checklist item', 250)); need(new Set(items).size === items.length, 'Checklist items must be unique'); return items }
 const optionalId = (value: unknown) => value === undefined || value === null || value === '' ? null : text(value, 'member ID')
 export async function homeCommand(c: Context, name: string, p: Record<string, unknown>) {
+ if (name === 'home.drive') { const prop = property(c, p.propertyId); return driveCommand(c, name, p, homeSettings(c, prop.id)) }
  if (name !== 'home.settings') return undefined
  manager(c.actor); const prop = property(c, p.propertyId), old = c.data.homeSettings.find(s => s.propertyId === prop.id)
  if (old) need(p.revision === old.revision, 'These settings changed. Reload before saving.', 409)
@@ -20,6 +22,8 @@ export async function homeCommand(c: Context, name: string, p: Record<string, un
  need(!maintenanceId || c.data.members.some(m => m.id === maintenanceId && m.active), 'Choose an active person for maintenance')
  const lock = p.lockDeviceId === undefined || p.lockDeviceId === null || String(p.lockDeviceId).trim() === '' ? null : text(p.lockDeviceId, 'lock device ID', 120)
  const row: HomeSettings = { id: prop.id, revision: newId(), propertyId: prop.id, address: text(p.address, 'home address', 300), timeZone, checkInTime: clock(p.checkInTime ?? '16:00', 'check-in time'), checkOutTime: clock(p.checkOutTime ?? '10:00', 'check-out time'), cleanerId, maintenanceId, checklist: checklist(p.checklist), photosRequired: integer(Number(p.photosRequired ?? 1), 'Photos required', 1, 12), lockDeviceId: lock }
+ row.dispatch = propertyDispatch(c, p, old?.dispatch)
+ need(!row.dispatch || !cleanerId || row.dispatch.approvedCleanerIds.includes(cleanerId), 'The default cleaner must be in this home’s approved team')
  need(row.checkOutTime <= row.checkInTime, 'Check-out must be no later than check-in so a same-day turnover fits')
  if (old) Object.assign(old, row); else c.data.homeSettings.push(row)
  for (const job of c.data.turnovers) {

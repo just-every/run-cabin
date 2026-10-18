@@ -32,7 +32,7 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 | 22 | Turnover day | Luis's phone: today's job with its window, "Ready 2:41 pm", the ticked checklist, "Photos 12 / 12" and his next job | code | The cleaner's own responsive job list; every checklist item must be ticked and the home's required photos (up to 12) uploaded to mark it ready (`src/cabin/ui/turnovers.ts`, `src/cabin/turnovers.ts`, `src/cabin/photos.ts`). OPS-002, EVIDENCE-001. |
 | 23 | Turnover day | "Desert Casita · front door": Luis's code for his window, the next guest's code for theirs | code | A cleaner code for each assigned turnover's window and a guest code per stay, with no two overlapping codes sharing digits (`src/cabin/codes.ts`). Pushing codes to a lock goes through the Seam adapter once the owner connects an account (`src/cabin/locks.ts`); until then they are set on the keypad by hand. OPS-005. |
 | 24 | Turnover day | "Patio light out · task added for Dale" | code | A cleaner reports a broken thing with photos; it becomes a maintenance task for the home's maintenance person, emailed to them (`src/cabin/maintenance.ts`, `src/cabin/ui/maintenance.ts`). OPS-004. |
-| 25 | Stay recovery | "Cabin finds a new cleaner"; "Asked 3 nearby cleaners · Ana Diaz accepted, arrives 1:30 pm" | partial | Stay recovery proposes an available backup from the home's allowed list, binds approval or the owner's automatic limits, reassigns the turnover and emails the new cleaner, who accepts in the case (`src/cabin/recovery/commands.ts`, `actions.ts`; `tests/recovery.test.mjs`). Asking several nearby cleaners at once is contract: AGENT-001, OPS-001. |
+| 25 | Stay recovery | "Cabin finds a new cleaner"; "Asked 3 nearby cleaners · Ana Diaz accepted, arrives 1:30 pm" | code | A cancelling accepted cleaner triggers offers to up to three eligible approved backups, ranked by manager-entered home-base drive minutes. First eligible acceptance wins after rechecking daily jobs/hours, travel and work windows; the planned arrival is shown. Old access is revoked and assignment/withdrawal mail follows the result (`src/cabin/dispatch/`, `src/cabin/dispatch.ts`, `tests/dispatch.test.mjs`, `docs/turnover-dispatch.md`). Hosted Luis cancellation → three offers → Ana acceptance and 1:30 pm arrival proven at 1440 and 390 with received cleaner mail. OPS-001. Broader recovery remains AGENT-001. |
 | 26 | Stay recovery | "resets the door codes"; "Code 7102 for Ana · 1:30 – 4:00 pm"; "code 4417 live at 4:00 pm" | partial | Recovery issues the new cleaner's code for the window and rotates or moves the guest code (`src/cabin/recovery/actions.ts`, `src/cabin/codes.ts`). The host confirms the keypad; live lock verification needs the owner's lock account (OPS-005). |
 | 27 | Stay recovery | "settles it with the guest before she arrives": "Megan's 2 pm early check-in no longer fits", "Offered 10% off her next stay", her reply | partial | Recovery messages the guest through the inbox and records offers within the owner's limits (`src/cabin/recovery/limits.ts`, `commands.ts`, `src/cabin/inbox/schedule.ts`). An offer redeemed as a discount on her next direct stay is contract: AGENT-003, WEB-005, GUEST-001. |
 | 28 | Stay recovery | "Checklist 18 / 18 · photos 14 / 14"; "Lake Loft ready"; "Resolved 3:32 pm" | code | The case closes only after the replacement cleaner's completed checklist, required photos, confirmed access and accepted guest email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). AGENT-001, EVIDENCE-001, OPS-003. |
@@ -63,12 +63,12 @@ Status key: **code** = exists and runs today; **partial** = a narrower version e
 
 | Status | Rows | Count |
 |---|---|---|
-| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 18, 19, 21, 22, 23, 24, 28, 29, 30, 32, 36, 37, 38, 39, 40, 43, 44, 45, 47, 49 | 31 |
-| partial | 5, 12, 15, 16, 17, 20, 25, 26, 27, 31, 33, 34, 35, 42, 46 | 15 |
+| code | 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 18, 19, 21, 22, 23, 24, 25, 28, 29, 30, 32, 36, 37, 38, 39, 40, 43, 44, 45, 47, 49 | 32 |
+| partial | 5, 12, 15, 16, 17, 20, 26, 27, 31, 33, 34, 35, 42, 46 | 14 |
 | contract | 14, 41 | 2 |
 | not a claim | 48, 50 | 2 |
 
-48 claims: 31 code, 15 partial, 2 contract. Every partial and contract row names a clause in `CONTRACT.md`; nothing on the page is outside the contract.
+48 claims: 32 code, 14 partial, 2 contract. Every partial and contract row names a clause in `CONTRACT.md`; nothing on the page is outside the contract.
 
 ## Build priorities the page creates (nearest first)
 

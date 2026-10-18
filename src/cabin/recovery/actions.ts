@@ -1,3 +1,4 @@
+import { requestCleaner, withdrawOffers } from '../dispatch/offers'
 import { type Context, need, newId } from '../model'
 import { issue, revoke } from '../codes'
 import { context, baseline, note } from './cases'
@@ -21,7 +22,8 @@ export function applyRecovery(c: Context, row: Recovery, automatic = false) {
  row.previous = { turnover: structuredClone(t), code: structuredClone(old) }
  const approval = { id: newId(), kind: 'recovery', recordId: row.id, revision: row.revision, actorId: c.actor.id, actorName: c.actor.email, at: c.now }
  c.data.approvals.push(approval); row.approvalId = approval.id
- Object.assign(t, { cleanerId: p.cleanerId, status: 'approved', revision: newId() }); delete t.completion
+ if (settings.dispatch) requestCleaner(c, t, p.cleanerId)
+ else Object.assign(t, { cleanerId: p.cleanerId, status: 'approved', revision: newId() }); delete t.completion
  t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'recovery reassignment', cleanerId: p.cleanerId }]
  // Issue before revoking: the replacement is guaranteed different from the old code.
  const code = issue(c, settings, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, validFrom: old.validFrom, validUntil: old.validUntil })
@@ -38,7 +40,9 @@ export function undoRecovery(c: Context, row: Recovery, why: string) {
  need(row.previous && row.proposal && ['active', 'ready', 'closed', 'escalated'].includes(row.status), 'No applied action to undo', 409)
  const { b, t, settings } = context(c, row)
  need(row.appliedBaseline === JSON.stringify({ booking: b.revision, recipient: b.guestEmail, cleanerId: t.cleanerId }), 'Stay or assignee changed. Review it before compensating this action.', 409)
- if (t.status !== 'completed') { Object.assign(t, { cleanerId: row.previous.turnover.cleanerId, status: row.previous.turnover.status, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'recovery assignment undone', cleanerId: t.cleanerId }] }
+ if (t.status !== 'completed') {
+  if (settings.dispatch) { withdrawOffers(c,t,'Recovery undone; previous cleaner must accept again'); if (row.previous.turnover.cleanerId) requestCleaner(c,t,row.previous.turnover.cleanerId); else { t.cleanerId=null; t.status='unassigned'; if(t.dispatch){delete t.dispatch.acceptedBy;delete t.dispatch.acceptedAt;t.dispatch.generation=newId()} } }
+  else Object.assign(t, { cleanerId: row.previous.turnover.cleanerId, status: row.previous.turnover.status, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'recovery assignment undone', cleanerId: t.cleanerId }] }
  const current = c.data.codes.find(r => r.id === row.codeId)!;
  const code = issue(c, settings, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, validFrom: row.previous.code.validFrom, validUntil: row.previous.code.validUntil })
  code.link = current.link; current.link = null; revoke(current, 'Recovery undone; new replacement code issued')

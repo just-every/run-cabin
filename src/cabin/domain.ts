@@ -33,12 +33,13 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  await assertLive(env.DB,actor);const data=await load(env.DB)
  if(actor.role==='cleaner'){
   // A cleaner sees their own turnovers and codes, and tasks they raised or were given; never guest codes or other homes.
-  data.turnovers=data.turnovers.filter(t=>t.cleanerId===actor.memberId&&t.status!=='draft')
+  data.turnovers=data.turnovers.filter(t=>t.status!=='draft'&&(t.cleanerId===actor.memberId||t.dispatch?.offers.some(o=>o.memberId===actor.memberId&&o.status==='pending'&&o.generation===t.dispatch?.generation))).map(t=>({...t,dispatch:t.dispatch?{...t.dispatch,offers:t.dispatch.offers.filter(o=>o.memberId===actor.memberId),reasons:[]}:undefined}))
+  data.cleanerProfiles=data.cleanerProfiles.filter(p=>p.id===actor.memberId)
   data.tasks=data.tasks.filter(t=>t.assigneeId===actor.memberId||t.raisedBy===actor.id)
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
-  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
-  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({guestName:_,...b})=>({...b,summary:'Reserved'}))
+  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
+  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
   data.properties=data.properties.filter(p=>propertyIds.has(p.id)).map(p=>({...p,ownerName:'',ownerEmail:'',commissionBps:0}))
   data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=data.recoveries.filter(r=>turnoverIds.has(r.turnoverId)).map(r=>({...r,proposal:r.proposal?{...r.proposal,creditCents:0,extraCleaningCents:0,guestText:'',baseline:''}:undefined,previous:undefined,balanceCents:undefined,appliedBaseline:undefined}))
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]

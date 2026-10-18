@@ -4,6 +4,7 @@ import { checklist, homeSettings } from './homes'
 import { liveTurnover } from './dispatch'
 import { checkoutInstant, checkoutTime } from './turnover-window'
 import { when } from './clock'
+import { offerCommand, requestCleaner } from './dispatch/offers'
 // Cabin dispatches each stay's turnover itself (dispatch.ts). People and agents
 // can still prepare one by hand for review; approving it replaces the stay's
 // dispatched turnover unless that one is already done. A manager reassigns; the
@@ -16,6 +17,7 @@ const afterCheckout = (c: Context, row: Turnover) => {
  need(Date.parse(c.now) >= checkoutInstant(s, b), `Guests have not checked out yet. Record departure and mark ready after ${when(checkoutTime(s, b))} (${s.timeZone}).`, 409)
 }
 export async function turnoverCommand(c:Context,name:string,p:Record<string,unknown>){
+ const offered = offerCommand(c,name,p); if(offered !== undefined)return offered
  if(name==='turnover.prepare'){
   preparer(c.actor);const booking=c.data.bookings.find(b=>b.id===text(p.bookingId,'booking ID'));need(booking&&booking.status==='confirmed','Choose an approved confirmed booking',409)
   const cleaner=c.data.members.find(m=>m.id===text(p.cleanerId,'cleaner ID'));need(cleaner?.active&&cleaner.role==='cleaner','Choose an active cleaner')
@@ -36,6 +38,7 @@ export async function turnoverCommand(c:Context,name:string,p:Record<string,unkn
   need(row.status==='unassigned'||row.status==='approved','Only an open turnover can be assigned',409)
   const cleaner=c.data.members.find(m=>m.id===text(p.cleanerId,'cleaner ID'));need(cleaner?.active&&cleaner.role==='cleaner','Choose an active cleaner')
   need(cleaner.id!==row.cleanerId,`${cleaner.name} already has this turnover`,409)
+  if(row.dispatch){requestCleaner(c,row,cleaner.id);c.entityId=row.id;return row}
   Object.assign(row,{cleanerId:cleaner.id,status:'approved',revision:newId()});history(c,row,'assigned');c.entityId=row.id;return row
  }
  if(name==='turnover.checkout'){
@@ -49,6 +52,7 @@ export async function turnoverCommand(c:Context,name:string,p:Record<string,unkn
   need(c.actor.role==='cleaner','Only the assigned cleaner can complete a turnover',403)
   const row=c.data.turnovers.find(t=>t.id===text(p.id,'turnover ID'));need(row&&row.cleanerId===c.actor.memberId,'Turnover not found',404);exact(row,p.revision)
   need(row.status==='approved','Only an approved turnover can be completed once',409)
+  need(!row.dispatch || row.dispatch.acceptedBy === c.actor.memberId, 'Accept the current turnover offer before completing this job', 409)
   afterCheckout(c,row)
   const checks=checklist(p.checks);need(checks.length===row.checklist.length&&row.checklist.every(item=>checks.includes(item)),'Complete every item from the approved checklist')
   const photos=photoList(p,row.photosRequired??1),caption=text(p.caption,'photo caption',300),stored=await storePhotos(c,row.id,photos,caption)

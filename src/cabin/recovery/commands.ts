@@ -1,3 +1,6 @@
+import { offerCommand } from '../dispatch/offers'
+import { planAssignment } from '../dispatch/planner'
+import { homeSettings } from '../homes'
 import { type Context, need, text, integer, newId, manager, owner, exact } from '../model'
 import { context, openReported, baseline, note } from './cases'
 import { withinLimits } from './limits'
@@ -24,16 +27,20 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
  if (name === 'recovery.plan') {
   manager(c.actor); const row = c.data.recoveries.find(r => r.id === p.id); need(row, 'Recovery case not found', 404); exact(row, p.revision)
   const { t, policy } = context(c, row)
-  const cleaner = policy?.cleanerIds.map(id => c.data.members.find(m => m.id === id)).find(m => m?.active && m.role === 'cleaner' && m.id !== t.cleanerId && !c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === m.id && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!))
+  const cleaner = policy?.cleanerIds.map(id => c.data.members.find(m => m.id === id)).find(m => m?.active && m.role === 'cleaner' && m.id !== t.cleanerId && (!homeSettings(c,t.propertyId).dispatch || planAssignment(c,m.id,t).ok) && !c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === m.id && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!))
   if (!cleaner) { row.status = 'escalated'; note(c, row, 'Owner needed', 'No active backup cleaner is free in this turnover window. Reschedule with the cleaner and review the stay.'); return row }
   return recoveryCommand(c, 'recovery.propose', { ...p, cleanerId: cleaner.id, creditCents: Math.min(7500, policy!.creditLimitCents), extraCleaningCents: 0, why: 'Active backup from the home’s list with no overlapping assigned turnover. Credit follows the owner’s saved limit.' })
  }
  const row = c.data.recoveries.find(r => r.id === text(p.id, 'case')); need(row, 'Recovery case not found', 404); exact(row, p.revision)
  const { b, t, policy } = context(c, row)
  if (name === 'recovery.accept') {
+  if(t.dispatch && row.proposal?.cleanerId===c.actor.memberId) {
+   const offer=t.dispatch.offers.find(o=>o.memberId===c.actor.memberId&&o.status==='pending'&&o.generation===t.dispatch?.generation)
+   if(offer)offerCommand(c,'turnover.accept',{id:t.id,revision:t.revision,offerId:offer.id})
+  }
   need(c.actor.role === 'cleaner' && t.cleanerId === c.actor.memberId, 'Only the assigned cleaner can accept this recovery', 403)
   need(row.status === 'active' && !row.acceptedAt, 'This job is not awaiting acceptance', 409)
-  row.acceptedAt = c.now; note(c, row, 'Replacement cleaner accepted', 'The assigned cleaner accepted the recovery turnover'); return row
+  row.appliedBaseline=JSON.stringify({booking:b.revision,recipient:b.guestEmail,cleanerId:t.cleanerId}); row.acceptedAt = c.now; note(c, row, 'Replacement cleaner accepted', 'The assigned cleaner accepted the recovery turnover'); return row
  }
  manager(c.actor)
  if (name === 'recovery.propose') {
@@ -76,6 +83,13 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
 /** A sent confirmation is part of closure; a failed or unavailable email leaves the case open. */
 export function finishRecoveries(c: Context) {
  for (const row of c.data.recoveries) {
+  if(row.status==='active'){
+   const t=c.data.turnovers.find(t=>t.id===row.turnoverId),b=c.data.bookings.find(b=>b.id===row.bookingId)
+   if(t?.dispatch&&b){
+    if(t.dispatch.acceptedBy===row.proposal?.cleanerId&&!row.acceptedAt){row.acceptedAt=t.dispatch.acceptedAt;row.appliedBaseline=JSON.stringify({booking:b.revision,recipient:b.guestEmail,cleanerId:t.cleanerId});note(c,row,'Replacement cleaner accepted','Accepted current offer after capacity and drive checks')}
+    if(t.dispatch.acceptedBy!==row.proposal?.cleanerId)delete row.acceptedAt
+   }
+  }
   if (row.status !== 'ready') continue
   const m = c.data.messages.find(m => m.id === row.confirmationMessageId)
   if (m?.status !== 'sent' && m?.status !== 'suppressed') continue

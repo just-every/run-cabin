@@ -5,6 +5,8 @@ import { localDay } from './clock'
 import { assignmentNotice, taskNotice } from './notices'
 import { checkoutTime, cleaningAccess, staleCompletion } from './turnover-window'
 import { instant } from './clock'
+import { wall } from './clock'
+import { synchronizeDispatch, reconcileAccepted, offerEligible } from './dispatch/offers'
 // Run inside every commit (storage.commit), after the command changed the data:
 // each confirmed stay, from any channel or a direct booking, gets exactly one
 // turnover between its check-out and the next check-in, its guest door code for
@@ -19,7 +21,8 @@ const activeCleaner = (c: Context, id: string | null) => id ? c.data.members.fin
 function windowOf(c: Context, s: HomeSettings, b: Booking) {
  const checkout = nights(b).checkout
  const next = c.data.bookings.filter(n => n.propertyId === b.propertyId && n.id !== b.id && n.status === 'confirmed' && isStay(n) && nights(n).first >= checkout).sort((x, y) => x.start.localeCompare(y.start))[0]
- return { windowStart: checkoutTime(s, b), windowEnd: `${next ? nights(next).first : checkout}T${next?.arrivalTime ?? s.checkInTime}`, nextBookingId: next?.id ?? null }
+ const start = checkoutTime(s, b), end = `${next ? nights(next).first : checkout}T${next?.arrivalTime ?? s.checkInTime}`
+ return { windowStart: s.dispatch ? wall(instant(start, s.timeZone) + s.dispatch.startOffsetMinutes * 60000, s.timeZone) : start, windowEnd: s.dispatch ? wall(instant(end, s.timeZone) - s.dispatch.finishBeforeMinutes * 60000, s.timeZone) : end, nextBookingId: next?.id ?? null }
 }
 
 function cancel(c: Context, t: Turnover, reason: string) {
@@ -54,7 +57,7 @@ export function dispatch(c: Context) {
   if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
   const w = windowOf(c, s, b)
   if (!t) {
-   const cleaner = activeCleaner(c, s.cleanerId)
+   const cleaner = s.dispatch ? null : activeCleaner(c, s.cleanerId)
    const row: Turnover = { id: newId(), revision: newId(), bookingId: b.id, bookingRevision: b.revision, propertyId: b.propertyId, cleanerId: cleaner?.id ?? null, checklist: [...s.checklist], photosRequired: s.photosRequired, dueDate: w.windowEnd.slice(0, 10), ...w, source: 'auto', status: cleaner ? 'approved' : 'unassigned', preparedBy: c.actor.id, preparedAt: c.now, notified: null, history: [{ at: c.now, by: c.actor.id, action: 'created', cleanerId: cleaner?.id ?? null }] }
    c.data.turnovers.push(row)
   } else {
@@ -77,9 +80,13 @@ export function dispatch(c: Context) {
    if (t.windowStart !== w.windowStart || t.windowEnd !== w.windowEnd || t.nextBookingId !== w.nextBookingId) Object.assign(t, w, { dueDate: w.windowEnd.slice(0, 10) }, t.windowStart ? { revision: newId() } : {})
    if (t.status !== 'completed' && t.checkedOut && Date.parse(t.checkedOut.at) < instant(w.windowStart, s.timeZone)) delete t.checkedOut
    t.bookingRevision = b.revision
-   if (t.status === 'unassigned') { const cleaner = activeCleaner(c, s.cleanerId); if (cleaner) { Object.assign(t, { status: 'approved', cleanerId: cleaner.id, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'assigned', cleanerId: cleaner.id }] } }
+   if (t.status === 'unassigned' && !s.dispatch) { const cleaner = activeCleaner(c, s.cleanerId); if (cleaner) { Object.assign(t, { status: 'approved', cleanerId: cleaner.id, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'assigned', cleanerId: cleaner.id }] } }
   }
  }
+ // Bring all windows and work revisions current before evaluating any route.
+ for (const t of c.data.turnovers) synchronizeDispatch(c, t)
+ for (const t of c.data.turnovers) reconcileAccepted(c, t)
+ for (const t of c.data.turnovers) offerEligible(c, t)
  for (const t of c.data.turnovers) {
   if (t.status === 'draft' || !t.windowStart) continue
   const s = homeSettings(c, t.propertyId)
