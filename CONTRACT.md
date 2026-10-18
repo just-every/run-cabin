@@ -666,10 +666,9 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
+Judged from the code and tests at commit `5a6937917692a1bd924bf0b2af6d3c160ac28271` (19 October 2026).
+
 19 October 2026, AGENT-003: source-grounded service cases, exact bounded field dispatch, inspected evidence, explicit guest confirmation and delayed recurrence checks are implemented. Hosted desktop/phone journeys and authenticated assignment, inspection, guest follow-up and emergency mail were exercised. See `docs/guest-issues.md`.
-
-
-Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
 19 October 2026, SECURITY-001: encrypted owner-managed credentials, explicit action/home grants, signed inbound fencing, sensitive-output minimization and scoped AI context are implemented and exercised through public routes and provider settings at 1440 and 390. See `docs/provider-security.md`.
 
