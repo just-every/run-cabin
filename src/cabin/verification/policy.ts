@@ -22,7 +22,7 @@ export function riskReasons(p:VerificationPolicy,b:{start:string;createdAt?:stri
  if(p.mode==='all')return ['Required for every reservation']
  const reasons:string[]=[]
  if(p.shortLeadDays&&Date.parse(b.start.slice(0,10)+'T00:00:00Z')-Date.parse(b.createdAt??new Date(now).toISOString())<=p.shortLeadDays*86400000)reasons.push('Booked within the saved lead-time threshold')
- if(p.minGuests&&(guests===undefined||guests>=p.minGuests))reasons.push(guests===undefined?'Party size unavailable: manual review required':'Party size meets the saved threshold')
- if(p.minTotalCents&&(amount===undefined||amount>=p.minTotalCents))reasons.push(amount===undefined?'Reservation value unavailable: manual review required':'Reservation value meets the saved threshold')
+ if(p.minGuests&&(guests===undefined||guests>=p.minGuests))reasons.push(guests===undefined?'Party size unavailable: identity check required':'Party size meets the saved threshold')
+ if(p.minTotalCents&&(amount===undefined||amount>=p.minTotalCents))reasons.push(amount===undefined?'Reservation value unavailable: identity check required':'Reservation value meets the saved threshold')
  return reasons
 }

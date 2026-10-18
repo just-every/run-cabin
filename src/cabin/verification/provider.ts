@@ -13,6 +13,7 @@ export async function startVerification(env:Bindings,v:VerificationCase){
 export async function reconcileVerification(env:Bindings,c:Context,v:VerificationCase){
  if(!v.provider||v.status==='erased'||v.redaction||v.status==='approved'||v.status==='rejected'||v.status==='manual_requested')return
  const result=await readIdentity({...env,DIRECT_STRIPE_MODE:v.provider.mode},v.provider.id),status=['verified','processing','requires_input'].includes(result.status)?result.status:'requires_input'
- if(v.provider.status===result.status&&v.status===status)return
- v.provider.status=String(result.status);v.status=status;delete v.error;v.history.push({at:c.now,by:'cabin:identity',action:'Stripe verification '+status});saveVerification(c,v)
+ const error=typeof result.last_error?.code==='string'&&/^[a-z_]{1,100}$/.test(result.last_error.code)?'Stripe could not verify the submitted identity: '+result.last_error.code.replaceAll('_',' '):undefined
+ if(v.provider.status===result.status&&v.status===status&&v.error===error)return
+ v.provider.status=String(result.status);v.status=status;if(error)v.error=error;else delete v.error;v.history.push({at:c.now,by:'cabin:identity',action:'Stripe verification '+status});saveVerification(c,v)
 }
