@@ -20,7 +20,7 @@ const policy=(home,extra={})=>({propertyId:home.id,calendarVisibility:'availabil
 async function action(h,cookie,input,status=200){const r=await h.send('/owners/action',input,cookie);assert.equal(r.status,status,r.text);return r.value.result??r.value}
 async function state(h,cookie,month){const r=await h.send('/owners/api/state'+(month?'?month='+month:''),undefined,cookie);assert.equal(r.status,200,r.text);return r.value}
 
-test('rental owners see scoped performance, records and statement views; authorize exact expenses and request inventory-checked personal stays',()=>run(async h=>{
+test('FIN-005: rental owners see scoped performance, records and statement views; authorize exact expenses and request inventory-checked personal stays',()=>run(async h=>{
  const month=nextMonth(),home=await h.cmd('property.save',{name:'Lake Loft',ownerName:'Karen Morgan',ownerEmail:'karen@stay.example',commissionBps:2000}),other=await h.cmd('property.save',{name:'Private Other Home',ownerName:'Other Owner',ownerEmail:'other@stay.example',commissionBps:1500})
  const guest=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',start:month+'-01',end:month+'-04',guestName:'Private Guest Identity',guestEmail:'private-guest@stay.example'})
  await h.cmd('reservation.request',{propertyId:home.id,kind:'block',start:month+'-05',end:month+'-07',note:'Manager-only private note'})
@@ -85,7 +85,7 @@ test('rental owners see scoped performance, records and statement views; authori
  await h.cmd('owner.document.withdraw',{id:invoice.id});assert.equal((await h.send('/owners/documents/'+invoice.id+'.txt',undefined,a)).status,404)
 }))
 
-test('ownership transfer grants exactly selected historical statements and revocation immediately removes historical access',()=>run(async h=>{
+test('FIN-005: ownership transfer grants exactly selected historical statements and revocation immediately removes historical access',()=>run(async h=>{
  const month=nextMonth(),old=await h.cmd('property.save',{name:'Transferred Cabin',ownerName:'Departing Owner',ownerEmail:'departing@stay.example',commissionBps:2000}),unrelated=await h.cmd('property.save',{name:'Unrelated Home',ownerName:'Other Owner',ownerEmail:'unrelated@stay.example',commissionBps:1000})
  const retained=await statement(h,old,month),notGranted=await statement(h,old,'2026-01',50000),foreign=await statement(h,unrelated,month)
  const doc=await h.cmd('owner.document.add',{propertyId:old.id,kind:'invoice',title:'Old invoice',content:'Old owner only'})
