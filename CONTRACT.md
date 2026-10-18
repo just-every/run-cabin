@@ -666,7 +666,9 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
-Judged from the code and tests at commit `5a6937917692a1bd924bf0b2af6d3c160ac28271` (19 October 2026).
+Judged from the code and tests at commit `30d0d176838457405eb72a0a0f121131171e399b` (19 October 2026).
+
+19 October 2026, PAY-003: exact human-approved rent and captured-damage refunds, saved cancellation/change settlements, separate authorization accounting, stable interrupted-operation reconciliation and itemized guest receipts are implemented. Hosted Stripe test-card partial capture/remainder release, partial/full refunds, policy cancellation, automatic unclaimed releases and pre-expiry warnings were exercised with real authenticated mailbox receipts and desktop/phone screens. See `docs/direct-bookings.md`.
 
 19 October 2026, AGENT-003: source-grounded service cases, exact bounded field dispatch, inspected evidence, explicit guest confirmation and delayed recurrence checks are implemented. Hosted desktop/phone journeys and authenticated assignment, inspection, guest follow-up and emergency mail were exercised. See `docs/guest-issues.md`.
 
@@ -708,10 +710,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 31 | 29 | 29 | 89 |
-| All | 44 | 29 | 29 | 102 |
+| Target and push further | 32 | 28 | 29 | 89 |
+| All | 45 | 28 | 29 | 102 |
 
-**102 clauses: 44 done, 29 partial, 29 missing.**
+**102 clauses: 45 done, 28 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -759,7 +761,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `WEB-005` | Promotions, upsells and gap-night offers | target | partial | `src/cabin/guests/offers.ts`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/guests.test.mjs`; `tests/direct.test.mjs`; `docs/guests.md`; `docs/direct-bookings.md` | Private, home-scoped, expiring one-use returning-guest 10% rent offers require a completed stay, verified contact, explicit consent and home permission. Server reprices tax and guards redemption with the inventory hold; the real Stripe test charge, agreement and receipt preserve the discount. Existing gap restrictions and fees remain. Recovery now issues that private one-use future-stay rate for a confirmed impacted stay under owner policy, exact approval, verified contact and explicit consent; an unused offer is revoked on recovery undo. `src/cabin/recovery/settlement.ts`, `tests/recovery.test.mjs`. General coupons, upsells, paid early/late access and gap-night extensions with their capacity/contribution/payment/allocation workflows remain open. |
 | `PAY-001` | Processor-backed USD checkout and manual payments | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Stripe-hosted USD test-card checkout, server reconciliation, saved mandate and distinct holds/paid/confirmed states. Real test-card browser acceptance plus network-edge route test. Live mode, ACH and manual receipts remain open. |
 | `PAY-002` | Scheduled collection and payment follow-up | target | missing |  | No implementing flow in the audited tree. |
-| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Separate test-card authorization, actual expiry, expiry alerts, scheduled post-checkout release and evidenced human partial capture; idempotent provider effects. Refunds, cancellation settlement, renewed holds and guest receipt delivery remain open. |
+| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | done | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/ledger/`; `src/cabin/reservations/finance.ts`; `src/cabin/taxes/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Separate Stripe authorization, actual expiry and long-stay warning; evidenced human partial capture and remainder release; automatic post-checkout and cancellation release. Exact approved partial/full rent and captured-damage refunds use frozen levy amounts and saved cancellation/change terms, with durable provider reconciliation, nonduplicating owner/tax/processor journals and itemized real guest receipts. Hosted Stripe test-card and mailbox journeys at 1440 and 390 plus repeated public-route operations exercise provider totals and balanced liabilities once. |
 | `PAY-004` | Protection partners and chargeback casework | target | missing |  | No implementing flow in the audited tree. |
 | `PAY-005` | Booking.com virtual credit cards | target | missing |  | No implementing flow in the audited tree. |
 | `PAY-006` | Booking.com property-collect guest cards | target | missing |  | No implementing flow in the audited tree. |
