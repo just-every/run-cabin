@@ -1,3 +1,4 @@
+import { automaticStillAllowed } from './reply-policy'
 import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../../mail.server.mjs'
@@ -36,7 +37,7 @@ function claimDue(env: Bindings, id: string) {
   Object.assign(row, { status: 'sending', messageId: m.id, revision: newId() }); return { ...m }
  }, () => false).catch(() => null)
 }
-const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => { const m = c.data.messages.find(r => r.id === id); if (!m || m.status !== 'pending') return null; Object.assign(m, { status: 'sending', revision: newId() }); return { ...m } }, () => false).catch(() => null)
+const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => { const m = c.data.messages.find(r => r.id === id); if (!m || m.status !== 'pending') return null; if (m.control?.automatic && !automaticStillAllowed(c.data, env.AUTH_ORIGIN, m)) { m.status = 'draft'; m.control.automatic = false; m.control.needsHost = true; m.detail = 'Automatic authority or sources changed before sending. Review this reply.'; m.revision = newId(); return null } Object.assign(m, { status: 'sending', revision: newId() }); return { ...m } }, () => false).catch(() => null)
 async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ status: GuestMessage['status']; detail: string | null; providerId: string | null }> {
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {

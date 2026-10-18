@@ -36,6 +36,12 @@ export function attachControl(c: Context, origin: string, m: GuestMessage, owner
  m.control = { topic: 'other', confidence: 0, needsHost: true, instructionId: null, baseline: JSON.stringify(replySources(c.data, origin, b)), assignedEmail: p?.managerEmail || ownerEmail, dueAt: new Date(Date.parse(c.now) + (p?.replyMinutes ?? 30) * 60_000).toISOString() }
 }
 /** Automatic authority covers source-rendered facts only, never an AI-created promise. */
+export function automaticStillAllowed(data: Data, origin: string, m: GuestMessage, now = Date.now()) {
+ const control = m.control, b = data.bookings.find(b => b.id === m.bookingId), p = replyPolicy(data, m.propertyId)
+ if (!control || !b || b.status !== 'confirmed' || b.guestErasedAt || !p?.enabled || control.needsHost || control.confidence < p.minConfidence || !p.topics.includes(control.topic)) return false
+ const local = wall(now, homeSettings(data, b.propertyId).timeZone).slice(11)
+ return local >= p.from && local < p.until && control.baseline === JSON.stringify(replySources(data, origin, b))
+}
 export function automaticReply(c: Context, origin: string, m: GuestMessage) {
  const control = m.control, b = c.data.bookings.find(b => b.id === m.bookingId), p = replyPolicy(c.data, m.propertyId)
  if (!control || !b || b.status !== 'confirmed' || b.guestErasedAt || !p?.enabled || m.source !== 'ai' || control.needsHost || control.confidence < p.minConfidence || !p.topics.includes(control.topic)) return
