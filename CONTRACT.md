@@ -682,7 +682,7 @@ Judged from the code and tests at commit `5a6937917692a1bd924bf0b2af6d3c160ac282
 
 18 October 2026, FIN-008: source-led monthly state/county/city tax reviews, channel-remitted separation, documented exemptions/refunds, frozen accountant packets and human-recorded filing/payment evidence are implemented. The clause remains partial: no authorized statutory filing partner acceptance/payment proof, differing taxable bases or nonmonthly filing periods. See `docs/taxes.md`.
 
-18 October 2026, recovery guest arrangements: exact approval withdraws early arrival to the normal time and issues the consented private future-stay rate; the guest accepts on the stay page. Hosted operator and guest screens at 1440 and 390 and received DMARC-passing guest mail exercised. AGENT-003 and WEB-005 remain partial for their broader targets.
+18 October 2026, recovery guest arrangements: exact approval withdraws early arrival to the normal time and issues the consented private future-stay rate; the guest accepts on the stay page. Hosted operator and guest screens at 1440 and 390 and received DMARC-passing guest mail exercised. WEB-005 remains partial for its broader promotions target. AGENT-003 is completed by the later guest-issue implementation noted above.
 
 
 
