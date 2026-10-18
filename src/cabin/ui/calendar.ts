@@ -37,5 +37,5 @@ export function calendar(s: any, extras: Extras = {}) {
   const previous = mode === DAYS ? addDays(from, -1).slice(0, 7) + '-01' : addDays(from, -days)
   const next = addDays(from, days)
   const side = extras.reservation ? reservationPanel(s, extras.reservation, h(link({ reservation: null }))) : stayPanel(s, today, homes)
-  return top + filters + alert + stale + `<div class="cal-layout${mode === DAYS ? ' month' : ''}">${grid(s, { from, today, days, homes, channel, previous, next, link })}${side}</div><p class="muted cal-note">Calendar links are polled every 15 to 60 minutes, so a channel can still sell a night before it hears; any such collision shows here at once. Cabin never accepts an overlapping request.${channel ? ' Channel filters hide other stays; they do not make their nights available.' : ''}</p>`
+  return top + filters + alert + stale + `<div class="cal-layout${extras.reservation?' reservation-record':''}${mode === DAYS ? ' month' : ''}">${grid(s, { from, today, days, homes, channel, previous, next, link })}${side}</div><p class="muted cal-note">Calendar links are polled every 15 to 60 minutes, so a channel can still sell a night before it hears; any such collision shows here at once. Cabin never accepts an overlapping request.${channel ? ' Channel filters hide other stays; they do not make their nights available.' : ''}</p>`
 }

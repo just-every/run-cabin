@@ -1,0 +1,15 @@
+# Reservation lifecycle
+
+Reservations → Create a priced reservation records a direct, phone, manual or channel stay with an original source reference, agreed USD rent/fees/tax and an immutable cancellation policy. Existing calendar/request imports remain available; absent source prices are shown as unknown until a person records agreed terms.
+
+Every saved reservation links to its authoritative calendar record. Amend guest/contact/arrival, dates, home and agreed price there. The submitted revision must still be current. A stable source-event reference makes an exact replay harmless; reusing the reference with different terms is refused. Imported channel amendments retain revisions too. If a source changes after a native edit, its incoming dates/cancellation wait for an explicit reviewed reconciliation. A manual record or amendment does not claim a channel API acknowledgement.
+
+The same guarded commit recomputes inventory, accepted cleaning windows, messages and guest/cleaner access. Moving homes retires the old home's codes and work, captures the destination's management agreement, and creates the destination work and access. Required signed agreements renew for guest, date, home and price changes. Queued messages made obsolete by an amendment are withdrawn for review, and in-flight deliveries prevent an unsafe amendment.
+
+Saved terms are contractual charges, never receipts. The record shows actual receipt/refund evidence from the trust ledger and processor-confirmed direct payments separately, including additional collection or refund due. When a property's trust ledger is configured, charge changes post balanced receivable/advance deltas, and a home transfer reverses the original scope before recording the new one. Owner allocations show the applicable frozen agreement; previously sent statements and actual cash records are never rewritten. Processor refunds and damage holds still use the separate payment review; ending a reservation does not claim to have moved money.
+
+Cancellation computes the charge from the saved free-cancellation deadline and retained percentage. A no-show uses its separate saved percentage and is refused before the property's local arrival time. Both release inventory, revoke access and stop queued messages. Full revision history retains actor, time, source, guest, dates, property, price, policy and management terms; operational erasure anonymizes guest snapshots as well.
+
+`tests/reservations.test.mjs` exercises the public command and document doors for extension, exact replay, stale reconciliation, home transfer, actual receipt, refund due, cancellation, no-show and repeated channel amendments. Existing direct/turnover/inbox/erasure tests exercise their connected flows.
+
+Direct booking settings save the cancellation and no-show percentages, disclose them in the reviewed/signed quote and preserve them on the stay. A legacy home without recorded terms must be reviewed before selling new quotes, and a legacy reservation with unknown terms cannot be settled until its source policy is recorded in an exact amendment.

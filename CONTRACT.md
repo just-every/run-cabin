@@ -666,7 +666,10 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
+
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
+
+19 October 2026, RES-002: priced native reservations, exact lifecycle amendments, complete source-linked revisions, unit transfer, policy-based cancellation/no-show and connected operational/financial reconciliation are implemented. Product creation, amendment and cancellation were exercised at 1440 and 390; see `docs/reservation-lifecycle.md`.
 
 19 October 2026, FIN-003 and DATA-002: frozen agreement-based financial allocations and reviewed erasure with explicit retention custody are implemented and exercised through public routes and product screens at 1440 and 390. See `docs/management-allocations.md` and `docs/erasure.md`. Provider-gated clauses remain unchanged.
 
@@ -702,10 +705,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 26 | 34 | 29 | 89 |
-| All | 39 | 34 | 29 | 102 |
+| Target and push further | 27 | 33 | 29 | 89 |
+| All | 40 | 33 | 29 | 102 |
 
-**102 clauses: 39 done, 34 partial, 29 missing.**
+**102 clauses: 40 done, 33 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -738,7 +741,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `SYNC-009` | Automatic iCal sync for channels without an API | target | done | `src/cabin/channels.ts`; `src/cabin/calendars.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/channels.ts`; `tests/calendars-sync.test.mjs`; `docs/channel-calendars.md` | |
 | `SYNC-010` | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
 | `RES-001` | Portfolio calendar with operational context | target | done | `src/cabin/ui/calendar.ts`; `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar-state.ts`; `src/cabin/ui/calendar-detail.ts`; `public/calendar.css`; `tests/calendar.test.mjs`; `docs/portfolio-calendar.md` | |
-| `RES-002` | Complete reservation lifecycle | target | partial | `src/cabin/calendars.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (lines 31, 55) | Only approved snapshot changes/cancellations exist; native selling and connected downstream lifecycle are absent. |
+| `RES-002` | Complete reservation lifecycle | target | done | `src/cabin/reservations/`; `src/cabin/calendars.ts`; `src/cabin/agreements/records.ts`; `tests/reservations.test.mjs`; `tests/direct.test.mjs`; `tests/turnovers.test.mjs`; `docs/reservation-lifecycle.md` | Priced direct/phone/manual/channel records retain source references, saved cancellation/no-show policy and attributable revisions. Exact amendments and source-event deduplication reconcile guest/date/home/price changes with inventory, contractual balances, frozen agreement allocations, messages, work, renewed consent and access. Source changes after native edits wait for reconciliation; actual receipts/refunds remain distinct from charges and refund due. Desktop and phone creation, extension/home transfer and cancellation exercised; paid direct cancellation withdraws tasks without claiming a processor refund. Live channel acknowledgement, processor refund execution and physical lock outcomes remain their separately partial SYNC/PAY/OPS clauses. |
 | `RES-003` | Owner stays and maintenance blocks | target | done | `src/cabin/blocks.ts`; `src/cabin/inventory.ts`; `src/cabin/owners/`; `src/cabin/dispatch.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/blocks.ts`; `migrations/core/0030_owner_blocks.sql`; `tests/owners.test.mjs`; `docs/owner-blocks.md` | Managers and permitted rental owners create, revise and cancel reasoned personal-use and maintenance blocks against current inventory and exact revisions. Channel calendar exports, cleaning/checklists/photos and cleaner access follow the block; readiness includes its use. The frozen owner-use cleaning agreement posts one completed-work payable, never guest revenue or cash. Hosted owner mail sign-in, manager approval, overlap refusal, owner edit/cancel, all-channel export readback and cleaner completion with owner payable exercised at 1440 and 390; received owner and cleaner mail passed SPF/DKIM/DMARC. |
 | `RES-004` | Stay rules, fees and cancellation policies | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Per-home min/max nights, orphan gaps, occupancy, cleaning/extra-guest fees and tax-inclusive totals enforced through direct quote and checkout. Seasonal rates, buffers, cancellation policies and OTA restriction publication remain open. |
 | `RES-005` | Linked rooms and whole-property inventory | target | missing |  | No implementing flow in the audited tree. |

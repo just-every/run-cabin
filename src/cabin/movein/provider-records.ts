@@ -1,3 +1,4 @@
+import { recordReservations } from '../reservations/history'
 import { captureManagement } from '../properties/terms'
 import { syncGuests } from '../guests/sync'
 import { type Context, type Booking, type Connection, kinds, query, need, newId } from '../model'
@@ -10,7 +11,7 @@ export function capture(c:Context,ids:Set<string>):Inventory{
  const bookings=new Set(c.data.bookings.filter(b=>ids.has(b.propertyId)).map(b=>b.id)),guests=new Set(c.data.guests.filter(g=>bookings.has(g.bookingId)).map(g=>g.id))
  return {properties:c.data.properties.filter(p=>ids.has(p.id)),records:kinds.flatMap(kind=>c.data[kind].filter(r=>'propertyId' in r&&ids.has(String(r.propertyId))||kind==='guests'&&'bookingId' in r&&bookings.has(String(r.bookingId))||kind==='guestMerges'&&'fromId' in r&&'intoId' in r&&(guests.has(String(r.fromId))||guests.has(String(r.intoId)))).map(r=>({kind,id:r.id,data:JSON.stringify(r)}))),guests:[],balances:[]}
 }
-export function installRecords(c:Context,id:string,plan:Normalized):Inventory{
+export async function installRecords(c:Context,id:string,plan:Normalized):Promise<Inventory>{
  const ids=new Set<string>()
  for(const home of plan.homes){
   const propertyId=listingId(plan.provider,home.externalId);ids.add(propertyId)
@@ -30,7 +31,7 @@ export function installRecords(c:Context,id:string,plan:Normalized):Inventory{
   c.data.bookings.push(booking)
  }
  // Include the same automatic operations as a reservation created through any other public door.
- captureManagement(c);syncGuests(c);dispatch(c);scheduleMessages(c)
+ captureManagement(c);syncGuests(c);await recordReservations(c,'import.provider.apply');dispatch(c);scheduleMessages(c)
  const inventory=capture(c,ids)
  for(const guest of plan.guests){
   const row={id:`${id}:guest:${guest.externalId}`,source_id:guest.externalId,data:JSON.stringify(guest)}

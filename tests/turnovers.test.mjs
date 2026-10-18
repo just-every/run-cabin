@@ -85,7 +85,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // Complete a stay that has actually checked out, using the home's local day.
     // Changing requirements after dispatch reaches the same unfinished job.
     const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/New_York' })
-    await h.cmd('reservation.move', { id: ana.id, start: day(-2), end: today })
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
     await h.cmd('home.settings', { ...settings, revision: settings.revision, checkOutTime: '00:00', checklist: ['Beds made', 'Kitchen clean', 'Fresh towels'], photosRequired: 3 })
     s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
     assert.deepEqual(first.checklist, ['Beds made', 'Kitchen clean', 'Fresh towels'])
@@ -141,7 +141,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(first.windowEnd, `${day(2)}T16:00`)
     await attestArrival(h,inserted.bookingId)
     assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready ready"/)
-    await h.cmd('reservation.move', { id: ana.id, start: day(-2), end: day(1) })
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: day(1) })
     s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
     assert.equal(first.status, 'approved')
     assert.equal(first.completion, undefined)
@@ -151,7 +151,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // Casey is told why. Once that stay has checked out, the reopened job is marked
     // ready again: the photos it already holds are reused, and only a new one is stored.
     assert.match((await h.send('/app/turnovers', undefined, casey.cookie)).text, /Reopened [^<]*<\/strong>: the stay before it changed/)
-    await h.cmd('reservation.move', { id: ana.id, start: day(-2), end: today })
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
     s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
     const again = await h.cmd('turnover.complete', { ...ready, revision: first.revision, checks: first.checklist, photos: [...ready.photos, ready.photos[0]] }, casey.cookie)
     assert.equal(again.status, 'completed')
@@ -180,7 +180,7 @@ test('departure and ready are refused until the preceding booking checks out in 
     // A valid checklist and photo cannot finish a stay that has not happened.
     await h.cmd('turnover.checkout', { id: job.id }, cleaner.cookie, 409)
     await h.cmd('turnover.complete', complete(), cleaner.cookie, 409)
-    await h.cmd('reservation.move', { id: request.bookingId, start: yesterday, end: today })
+    await h.cmd('reservation.move', { id: request.bookingId,revision:(await h.state()).bookings.find(row=>row.id===request.bookingId).revision, start: yesterday, end: today })
     s = await h.state(); job = s.turnovers.find(t => t.id === job.id)
     // Checkout day alone is insufficient: 23:59 at the home has not happened.
     await h.cmd('turnover.checkout', { id: job.id }, cleaner.cookie, 409)

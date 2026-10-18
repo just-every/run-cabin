@@ -37,7 +37,7 @@ test('OPS-002: offline cleaner photos and issue survive a changed job and requir
     await issue.locator('[name=photoFiles]').setInputFiles({name:'light.png',mimeType:'image/png',buffer:photo})
     await issue.locator('.local-draft img').waitFor()
     // A manager changes requirements while the cleaner has no connectivity.
-    await h.cmd('reservation.move',{id:reservation.bookingId,start:date(-4),end:date(0)})
+    await h.cmd('reservation.move',{id:reservation.bookingId,revision:(await h.state()).bookings.find(row=>row.id===reservation.bookingId).revision,start:date(-4),end:date(0)})
     settings = await h.cmd('home.settings',{...settings,checklist:['Beds made','Kitchen clean','Fresh towels']})
     await context.setOffline(false)
     await ready.getByRole('button',{name:'Mark ready',exact:true}).click()

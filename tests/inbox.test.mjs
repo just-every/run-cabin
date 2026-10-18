@@ -60,7 +60,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
 
     // The stay moves four days later: every message moves with it, and the check-in details already sent go out again at the new time.
     const before = row('checkout').dueAt, sentFor = row('checkin').dueAt
-    await h.cmd('reservation.move', { id: stay.id, start: day(5), end: day(7) })
+    await h.cmd('reservation.move', { id: stay.id,revision:(await h.state()).bookings.find(row=>row.id===stay.id).revision, start: day(5), end: day(7) })
     s = await h.state()
     assert.equal(Date.parse(row('checkout').dueAt) - Date.parse(before), 4 * 86_400_000)
     assert.deepEqual([row('checkin').status, Date.parse(row('checkin').dueAt) - Date.parse(sentFor)], ['scheduled', 4 * 86_400_000])
@@ -91,7 +91,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
     await h.cmd('message.send', { id: draft.id, revision: draft.revision }, h.owner, 409)
 
     // A text from Ana's phone joins the same thread, and the reply goes back as a text through Twilio.
-    await h.cmd('booking.details', { id: stay.id, guestName: 'Ana Ruiz', guestEmail: 'ana@guest.example', guestPhone: '(828) 555-0142' })
+    await h.cmd('booking.details', { id: stay.id,revision:(await h.state()).bookings.find(row=>row.id===stay.id).revision, guestName: 'Ana Ruiz', guestEmail: 'ana@guest.example', guestPhone: '(828) 555-0142' })
     const fields = { ...await fixture('twilio/incoming'), From: '+18285550142', Body: 'Running an hour late, sorry!' }, url = `${h.origin}/inbound/sms`
     const signature = createHmac('sha1', TWILIO).update(url + Object.keys(fields).sort().map(k => k + fields[k]).join('')).digest('base64')
     assert.equal((await h.mf.dispatchFetch(url, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'x-twilio-signature': 'forged' }, body: new URLSearchParams(fields) })).status, 403)
@@ -123,7 +123,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
     await h.cmd('calendar.approve', { id: draftFeed.id, revision: draftFeed.revision })
     s = await h.state()
     const lena = s.bookings.find(b => b.uid === 'bdc-1')
-    await h.cmd('booking.details', { id: lena.id, guestName: 'Lena Park', channelRef: '3812391309' })
+    await h.cmd('booking.details', { id: lena.id,revision:(await h.state()).bookings.find(row=>row.id===lena.id).revision, guestName: 'Lena Park', channelRef: '3812391309' })
     await (await h.mf.getWorker()).scheduled({ cron: '*/5 * * * *' })
     s = await h.state()
     const parking = s.messages.find(m => m.channel === 'booking.com' && m.direction === 'in')
@@ -142,7 +142,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
     assert.equal(quiet.status, 'unavailable'); assert.match(quiet.reason, /connect later/)
 
     // Cancelling Ana's stay cancels the messages still waiting; the cleaner sees no guest messages at all.
-    await h.cmd('reservation.cancel', { id: stay.id })
+    await h.cmd('reservation.cancel', { id: stay.id ,revision:(await h.state()).bookings.find(row=>row.id===stay.id).revision})
     s = await h.state()
     assert.deepEqual([row('checkin').status, row('checkout').status, row('review').status], ['cancelled', 'cancelled', 'cancelled'])
     const cleaner = await h.person('Taylor')

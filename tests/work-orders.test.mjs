@@ -24,7 +24,7 @@ test('OPS-004: a guest appliance report becomes accepted, approved, inspected wo
   await act('work.configure',{asset:'Kitchen dishwasher DW-04',priority:'urgent',dueDate:'2026-11-05',checklist:['Replace inlet seal','Run a leak test'],requiresInspection:true,inspectorId:inspector.id,recurrenceDays:30,spendLimitCents:10000,unavailableStart:'2026-11-05',unavailableEnd:'2026-11-07'})
   const blockId=task.work.blockId
   assert.equal((await h.cmd('reservation.request',{propertyId:home.id,channel:'vrbo',start:'2026-11-05',end:'2026-11-06',guestName:'Overlapping request'})).status,'declined')
-  await h.cmd('reservation.cancel',{id:blockId},h.owner,409)
+  await h.cmd('reservation.cancel',{id:blockId,revision:(await h.state()).bookings.find(row=>row.id===blockId).revision},h.owner,409)
   await act('work.accept',{},vendor.cookie)
   await h.cmd('task.assign',{id:task.id,revision:task.revision,assigneeId:other.id},h.owner,409)
   await act('work.quote',{description:'Replace seal and test',amountCents:15000,photos:[photo]},vendor.cookie)

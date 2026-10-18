@@ -1,3 +1,5 @@
+import { paymentBalance } from './reservations/finance'
+import { lifecycleCommand } from './reservations/commands'
 import { allocationCommand } from './finance/allocation-commands'
 import { restoreState } from './archive/review'
 import { sharingState } from './connections/store'
@@ -39,7 +41,7 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  await assertLive(db,actor);need(!actor.isAgent||['calendar.prepare','turnover.prepare','statement.prepare'].includes(name),'Agents may only prepare drafts',403)
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
 if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
- for(const handler of [allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
@@ -55,7 +57,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
   data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
-  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({blockUse:_use,guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
+  data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({lifecycle:_life,blockUse:_use,guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
   data.properties=data.properties.filter(p=>propertyIds.has(p.id)).map(p=>({...p,ownerName:'',ownerEmail:'',commissionBps:0}))
   data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=data.recoveries.filter(r=>turnoverIds.has(r.turnoverId)).map(r=>({...r,proposal:r.proposal?{...r.proposal,creditCents:0,extraCleaningCents:0,guestText:'',baseline:''}:undefined,previous:undefined,offerUrl:undefined,offerId:undefined,guestAcceptedAt:undefined,balanceCents:undefined,appliedBaseline:undefined}))
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
@@ -63,10 +65,11 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  }
  if(actor.isAgent){data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
- if(actor.isAgent){data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
+ if(actor.isAgent){data.bookings=data.bookings.map(({lifecycle:_l,...b})=>b);data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
  data.verifications=verificationState(data,actor) as typeof data.verifications
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
+ if(['owner','manager'].includes(actor.role)&&!actor.isAgent)for(const b of data.bookings)if(b.lifecycle?.price)(b as any).reservationBalance=await paymentBalance({db:env.DB,data},b)
  const state={...data,privacy:await privacyState(env.DB,actor),restore:await restoreState(env.DB,actor),sharing:await sharingState(env,actor),taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }

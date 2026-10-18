@@ -50,12 +50,13 @@ export async function synchronizeAgreements(c:Context){
   if(!a){if(!t?.required||c.before.bookings.some(old=>old.id===b.id))continue;a=newAgreement(c,b,t);await addDocument(c,a,b,t,'Required for this reservation');continue}
   const reinstated=!a.token
   if(reinstated){a.token=newId()+newId();a.revision=newId()}
-  const d=currentDocument(a),s=homeSettings(c,b.propertyId)
-  if(!reinstated&&d.start===b.start&&d.end===b.end&&d.guestName===(b.guestName??b.summary)&&d.arrivalTime===(b.arrivalTime??s.checkInTime)&&d.departureTime===s.checkOutTime&&d.timeZone===s.timeZone)continue
+  const d=currentDocument(a),s=homeSettings(c,b.propertyId),old=c.before.bookings.find(old=>old.id===b.id),newPrice=JSON.stringify(b.lifecycle?.price),oldPrice=JSON.stringify(old?.lifecycle?.price)
+  if(!reinstated&&a.propertyId===b.propertyId&&newPrice===oldPrice&&d.start===b.start&&d.end===b.end&&d.guestName===(b.guestName??b.summary)&&d.arrivalTime===(b.arrivalTime??s.checkInTime)&&d.departureTime===s.checkOutTime&&d.timeZone===s.timeZone)continue
   need(!c.data.messages.some(m=>m.bookingId===b.id&&m.status==='sending'),'A guest message is being sent. Wait before amending this stay.',409)
   // A template edit does not alter an existing reservation. Automatic date changes retain its template text.
   const retained:RentalTemplate={id:'retained',revision:'',propertyId:b.propertyId,origin:a.origin,required:a.required,blockAccess:a.blockAccess,currentVersion:d.templateVersion,versions:[{id:d.templateVersion,required:a.required,blockAccess:a.blockAccess,title:d.title,state:d.state,text:d.templateText,at:d.at,by:d.by}]}
-  await addDocument(c,a,b,retained,reinstated?'Reservation reinstated after cancellation':'Reservation dates, guest or check-in terms changed',d.reservationTerms)
+  a.propertyId=b.propertyId
+  await addDocument(c,a,b,retained,reinstated?'Reservation reinstated after cancellation':'Reservation dates, guest, home or agreed price changed',b.lifecycle?.price?`Agreed rent, fees and taxes: USD ${(b.lifecycle.price.totalCents/100).toFixed(2)}. Any additional payment or refund is separate from your earlier receipt.`:d.reservationTerms)
  }
  for(const a of c.data.rentalAgreements){const b=c.data.bookings.find(b=>b.id===a.bookingId);if(a.token!==null&&(!b||b.guestErasedAt||b.status!=='confirmed')){a.token=null;a.revision=newId()}}
 }

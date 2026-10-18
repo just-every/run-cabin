@@ -56,6 +56,14 @@ test('a signed direct checkout receives Stripe test payment, verifies identity, 
   const arrive=async ms=>(await h.mf.getD1Database('DB')).prepare("UPDATE cb_direct_stays SET data=json_set(data,'$.arrivalAt',?) WHERE id=?").bind(new Date(ms).toISOString(),id).run()
   await arrive(Date.now()+3_600_000);await h.cmd('direct.checkout.complete',{id},h.owner,409)
   await arrive(Date.now()-3_600_000);await h.cmd('direct.checkout.complete',{id});await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await h.state()).direct.stays[0].deposit.status,'canceled');assert.equal(releaseRequests,1)
+  let booked=(await h.state()).bookings.find(b=>b.id===state.direct.stays[0].bookingId)
+  await h.cmd('reservation.amend',{id:booked.id,revision:booked.revision,propertyId:cfg.propertyId,start:day(1),end:day(4),guestName:'Alex Example',guestEmail:'alex@stay.example',rentCents:64000,feesCents:7500,taxCents:6750,reason:'Guest accepted revised dates and price'})
+  booked=(await h.state()).bookings.find(b=>b.id===booked.id);assert.equal(booked.lifecycle.price.totalCents,78250);assert.equal(booked.reservationBalance.balanceCents,4000)
+  await h.cmd('reservation.end',{id:booked.id,revision:booked.revision,outcome:'cancelled',reason:'Guest cancelled the amended stay'})
+  const cancelled=await h.send(`/book/stay/${token}`);assert.match(cancelled.text,/Your reservation was cancelled/);assert.doesNotMatch(cancelled.text,/Verify ID with Stripe|Authorize damage deposit/)
+  assert.equal((await h.send(`/book/stay/${token}/identity`,{})).status,409)
+  assert.equal((await h.send(`/book/stay/${token}/refresh`,{})).value.stay.phase,'cancelled')
+
  }finally{await h.close()}
 })
 
@@ -97,7 +105,7 @@ test('rental agreements work without outside accounts: versioned property terms,
   const newCode=state.codes.find(c=>c.bookingId===stay.bookingId&&c.status==='issued'&&c.holder==='guest');assert.ok(newCode);assert.notEqual(newCode.id,code.id)
   await h.cmd('inbox.schedule',{checkinEnabled:true,checkinHours:720,checkoutEnabled:false,reviewEnabled:false,revision:state.inbox[0].revision})
   state=await h.state();assert.ok(state.messages.some(m=>m.bookingId===stay.bookingId&&m.scheduledId&&m.text.includes(newCode.code)))
-  await h.cmd('reservation.move',{id:stay.bookingId,start:day(9),end:day(12)})
+  await h.cmd('reservation.move',{id:stay.bookingId,revision:(await h.state()).bookings.find(row=>row.id===stay.bookingId).revision,start:day(9),end:day(12)})
   state=await h.state();a=state.rentalAgreements.find(a=>a.bookingId===stay.bookingId);assert.equal(a.documents.length,3);assert.equal(a.documents.at(-1).signature,undefined,'moving through the ordinary reservation command also requests renewed consent')
   const b=state.bookings.find(b=>b.id===stay.bookingId);await erase(h,{entity:'guest',id:b.id,revision:b.revision})
   assert.equal((await h.send(link)).status,404);assert.equal((await h.send(`/api/cabin/agreements/${a.id}/${d.id}`,undefined,h.owner)).status,404);const held=(await h.state()).privacy.holds.find(v=>v.sourceTable==='cb_records:rentalAgreements'&&v.sourceId===a.id);const retained=await h.cmd('privacy.hold.read',{id:held.id});assert.equal((await h.send(`/api/cabin/privacy/holds/${held.id}/document/${d.id}`,undefined,h.owner)).text,original.text,'owner retains the exact signed legal record in an isolated hold')

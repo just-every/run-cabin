@@ -1,5 +1,6 @@
 import type { VerificationPolicy } from '../verification/types'
 export interface DirectHome {
+ cancellationPolicy?:import('../reservations/types').CancellationPolicy;
  verificationPolicy?:VerificationPolicy;
  propertyId:string; revision:string; enabled:boolean; slug:string; description:string;
  nightlyCents:number; cleaningCents:number; extraGuestCents:number; includedGuests:number; maxGuests:number;
@@ -7,6 +8,7 @@ export interface DirectHome {
  taxLabel:string; taxBps:number; countyTaxLabel:string; countyTaxBps:number; agreement:string; requireIdentity:boolean;
 }
 export interface Quote {
+ cancellationPolicy?:import('../reservations/types').CancellationPolicy;
  managementVersion?:string;
  start:string; end:string; guests:number; nights:number; nightlyCents:number; rentCents:number;
  cleaningCents:number; extraGuestCents:number; taxes:{label:string; bps:number; amountCents:number; jurisdiction:'state'|'county'}[];
@@ -15,7 +17,7 @@ export interface Quote {
 }
 export interface DirectStay {
  restored?:boolean;
- id:string; propertyId:string; bookingId:string; revision:string; homeRevision:string; phase:'held'|'paid'|'confirmed'|'expired';
+ id:string; propertyId:string; bookingId:string; revision:string; homeRevision:string; phase:'held'|'paid'|'confirmed'|'expired'|'cancelled';
  start:string; end:string; guestName:string; email:string; quote:Quote; createdAt:string; holdUntil:string;
  signature:{name:string; at:string; version:string; text:string; sha256:string; consent:string};
  requireIdentity:boolean; identity?:{id:string; status:string}; checkoutId?:string; checkoutUrl?:string;

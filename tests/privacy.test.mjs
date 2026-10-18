@@ -31,7 +31,7 @@ test('DATA-002: reviewed guest erasure removes photos, threads and legal read li
  assert.ok(!s.bookings.find(b=>b.id===booking.id).guestEmail);assert.ok(s.messages.filter(m=>m.bookingId===booking.id).every(m=>!m.text&&!m.email));assert.ok(s.scheduled.filter(v=>v.bookingId===booking.id).every(v=>v.status!=='scheduled'))
  const audit=await h.send('/api/cabin/activity.jsonl',undefined,h.owner);assert.ok(audit.text.includes('erased:'));assert.ok(!audit.text.includes('ana@stay.example'))
  // An ordinary command and Cron cannot revive the erased identity or its work.
- await h.cmd('booking.details',{id:booking.id,guestName:'Ana Ruiz',guestEmail:'ana@stay.example'},h.owner,409)
+ await h.cmd('booking.details',{id:booking.id,revision:(await h.state()).bookings.find(row=>row.id===booking.id).revision,guestName:'Ana Ruiz',guestEmail:'ana@stay.example'},h.owner,409)
  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
  assert.ok((await h.state()).messages.filter(m=>m.bookingId===booking.id).every(m=>m.status!=='pending'&&m.status!=='sending'))
  // A new source record with the erased contact still cannot get past the final mail boundary.
@@ -51,7 +51,7 @@ test('DATA-002: invited operators can be erased with historical assignments; sta
  const stay=await h.cmd('reservation.request',{propertyId:p.id,channel:'airbnb',start:day(8),end:day(11),guestName:'Future guest'})
  const t=await h.cmd('turnover.prepare',{bookingId:stay.bookingId,cleanerId:cleaner.id,checklist:['Beds made']});await h.cmd('turnover.approve',{id:t.id,revision:t.revision})
  const member=(await h.state()).members.find(m=>m.id===cleaner.id),input={entity:'member',id:member.id,revision:member.revision},review=await h.cmd('privacy.review',input)
- await h.cmd('booking.details',{id:stay.bookingId,guestName:'Changed guest'})
+ await h.cmd('booking.details',{id:stay.bookingId,revision:(await h.state()).bookings.find(row=>row.id===stay.bookingId).revision,guestName:'Changed guest'})
  await h.cmd('privacy.erase',{...input,reviewId:review.reviewId},h.owner,409)
  const erased=await erase(h,input);assert.ok(erased.receiptId)
  assert.equal((await h.send('/api/cabin/state',undefined,cleaner.cookie)).status,401)

@@ -23,7 +23,7 @@ test('AUDIT-001: a stay has portable attributable history past the view window a
  const get=async path=>{const r=await h.send(path,undefined,h.owner);assert.equal(r.status,200,r.text);return r.value}
  const first=(await get('/api/cabin/activity')).events.at(-1)
  let moved=false
- for(let n=0;n<150;n++){await h.cmd('booking.details',{id:bookingId,guestName:'Ana Ruiz '+n,guestEmail:'ana@stay.example'});if(!(await get('/api/cabin/activity')).events.some(e=>e.id===first.id)){moved=true;break}}
+ for(let n=0;n<150;n++){await h.cmd('booking.details',{id:bookingId,revision:(await h.state()).bookings.find(row=>row.id===bookingId).revision,guestName:'Ana Ruiz '+n,guestEmail:'ana@stay.example'});if(!(await get('/api/cabin/activity')).events.some(e=>e.id===first.id)){moved=true;break}}
  assert.ok(moved,'history extends beyond one displayed page')
  const exported=await h.send('/api/cabin/activity.jsonl',undefined,h.owner);assert.equal(exported.status,200)
  const events=exported.text.trim().split('\n').map(JSON.parse);assert.ok(events.some(e=>e.id===first.id));assert.ok(events.some(e=>e.actorKind==='agent'&&e.actorKeyId===key.id));assert.ok(events.some(e=>e.action==='guest.access.release'&&e.bookingId===bookingId));assert.ok(events.some(e=>e.entityKind==='ledger-journal'&&e.bookingId===bookingId));assert.ok(events.some(e=>e.action==='statement.provider.result'&&e.bookingId===bookingId&&e.result==='sent'));assert.ok(events.some(e=>e.action==='task.raise'&&e.bookingId===bookingId&&e.result===maintenance.status),'history must retain the unfinished task state')
@@ -32,7 +32,7 @@ test('AUDIT-001: a stay has portable attributable history past the view window a
  await erase(h,{entity:'guest',id:bookingId,revision:current.revision})
  assert.equal((await h.send('/stay/'+code.link)).status,404)
  const erasedState=await h.state();assert.ok(!erasedState.bookings.find(b=>b.id===bookingId).guestEmail);assert.ok(erasedState.messages.filter(m=>m.bookingId===bookingId).every(m=>!m.text&&!m.email))
- await h.cmd('booking.details',{id:bookingId,guestName:'Ana Ruiz',guestEmail:'ana@stay.example'},h.owner,409)
+ await h.cmd('booking.details',{id:bookingId,revision:(await h.state()).bookings.find(row=>row.id===bookingId).revision,guestName:'Ana Ruiz',guestEmail:'ana@stay.example'},h.owner,409)
  const after=await h.send('/api/cabin/activity.jsonl',undefined,h.owner),history=after.text.trim().split('\n').map(JSON.parse),old=history.find(e=>e.id===events.find(e=>e.action==='guest.access.release').id)
  assert.match(old.bookingId,/^erased:/);assert.equal(old.action,'guest.access.release');assert.equal(old.at,events.find(e=>e.id===old.id).at);assert.ok(!after.text.includes('ana@stay.example')&&!after.text.includes('Private guest discussion'))
  assert.ok((await get('/api/cabin/activity?booking='+encodeURIComponent(old.bookingId))).events.length)

@@ -99,7 +99,7 @@ test('an unused offer stops working after consent withdrawal, identity separatio
   const expiring=await issue();await h.db.prepare("UPDATE cb_records SET data=json_set(data,'$.expiresAt',?) WHERE kind='guestOffers' AND id=?").bind(new Date(Date.now()-1000).toISOString(),expiring.id).run()
   assert.equal((await h.send(expiring.url)).status,409)
   const corrected=await issue()
-  await h.cmd('booking.details',{id:prior.bookingId,guestName:'Corrected guest',guestEmail:'corrected@stay.example'})
+  await h.cmd('booking.details',{id:prior.bookingId,revision:(await h.state()).bookings.find(row=>row.id===prior.bookingId).revision,guestName:'Corrected guest',guestEmail:'corrected@stay.example'})
   assert.equal((await h.send(corrected.url)).status,409,'correcting the prior guest contact invalidates an issued offer')
   const beforeErasure=await h.state(),booking=beforeErasure.bookings.find(b=>b.id===prior.bookingId)
   await erase(h,{entity:'guest',id:booking.id,revision:booking.revision})

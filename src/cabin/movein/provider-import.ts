@@ -41,7 +41,7 @@ export async function providerCommand(db:D1Database,actor:Actor,name:string,inpu
     // Erasure can happen between preview and approval; check it in the same write batch.
     c.queries.push(guard("NOT EXISTS(SELECT 1 FROM cb_erasure_fences WHERE entity='property' AND id_hash IN (?,?))",await sha(listingId(plan.provider,home.externalId)),await sha(home.ownerEmail)))
    }
-   const inventory=installRecords(c,id,plan)
+   const inventory=await installRecords(c,id,plan)
    c.queries.push(query("UPDATE cb_provider_moveins SET status='imported',imported_at=?,inventory=? WHERE id=?",c.now,JSON.stringify(inventory),id),query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)',newId(),'provider-import',id,row.fingerprint,actor.id,c.now))
   })
  }else if(name==='import.provider.signoff'){

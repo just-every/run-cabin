@@ -249,3 +249,5 @@
 .cabin .availability-stale,.cabin .availability-unknown{color:var(--muted);font-size:11px;line-height:1.35}
 .cabin .stay-panel .pop-facts{overflow-wrap:anywhere}
 @media(max-width:700px){.rer-themed .cabin form.cal-filters{display:grid;grid-template-columns:1fr;margin:0 0 18px}.cabin .segmented a{padding:0 10px}.cabin .cal-tools{gap:8px}}
+
+@media(min-width:1101px){.cabin .cal-layout.reservation-record{grid-template-columns:minmax(0,1fr) minmax(480px,.95fr)}}

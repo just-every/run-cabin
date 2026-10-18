@@ -47,6 +47,9 @@ function homeSettings(state: any, property: any) {
     + integer('maxGuests', 'Maximum guests', home.maxGuests, 1)
     + `<div class="pair">${integer('minNights', 'Minimum nights', home.minNights, 1)}${integer('maxNights', 'Maximum nights', home.maxNights, 1)}</div>`
     + integer('minGapNights', 'Minimum gap between stays (nights)', home.minGapNights)
+    + '<h3>Cancellation policy</h3><p class="muted">Saved with every new quote and signed agreement. Existing stays retain their original terms.</p>'
+    + field('policyName','Cancellation policy description','text',home.cancellationPolicy?.name??'No cancellation or no-show charge. Refunds are reviewed by the host.','maxlength="300"')
+    + `<div class="pair">${percent('retainedBps','Cancellation charge',home.cancellationPolicy?.retainedBps??0)}${percent('noShowBps','No-show charge',home.cancellationPolicy?.noShowBps??0)}</div>`
     + '<h3>Damage deposit</h3>'
     + `<div class="pair">${dollars('depositCents', 'Deposit authorization', home.depositCents)}${integer('releaseHours', 'Release after checkout (hours)', home.releaseHours)}</div>`
     + '<h3>Lodging taxes</h3><p class="muted">Enter percentages, for example 9 for 9%. Recording a filing below stores your evidence; it does not file or remit taxes.</p>'

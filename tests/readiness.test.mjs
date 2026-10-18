@@ -56,7 +56,7 @@ test('OPS-003: arrival stays unready until physical supplies, access, maintenanc
   await attest('inspection','passed','Restock inspected',inspector.cookie)
   assert.match(await board(),/home-ready ready/)
   const s=await h.state(), b=s.bookings.find(b=>b.id===arrival.bookingId)
-  await h.cmd('reservation.move',{id:b.id,start:day(2),end:day(5)})
+  await h.cmd('reservation.move',{id:b.id,revision:(await h.state()).bookings.find(row=>row.id===b.id).revision,start:day(2),end:day(5)})
   assert.match((await h.send('/app/readiness?from='+day(2),undefined,h.owner)).text,/home-ready not-ready/)
   // Draft-only agents cannot write readiness, and physical history survives in local records.
   assert.equal((await h.state(cleaner.cookie)).readinessRecords.length,0)

@@ -84,7 +84,7 @@ test('a host moves native provider exports into reconciled listings, guests and 
     assert.equal(adopted.find(b=>b.id===booking.id).guestName,booking.guestName)
     feedText='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n'
    }
-   await h.cmd('booking.details',{id:booking.id,guestName:'A native correction'})
+   await h.cmd('booking.details',{id:booking.id,revision:(await h.state()).bookings.find(row=>row.id===booking.id).revision,guestName:'A native correction'})
    await h.cmd('import.provider.undo',{id:again.id},h.owner,409)
    // Erasure retires all personal source custody and the opening balance.
    for(const p of (await h.state()).properties)await erase(h,{entity:'property',id:p.id,revision:p.revision})

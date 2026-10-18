@@ -17,7 +17,7 @@ export async function populateArchive(h,p,cleaner) {
  await h.cmd('channel.connect',{propertyId:p.id,channel:'ical',name:'Partner inventory',url:'https://calendar.stay.example/secret-calendar.ics'})
  await h.cmd('export.publish',{propertyId:p.id})
  const booking=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Megan Ortiz',start:day(10),end:day(13)})
- await h.cmd('booking.details',{id:booking.bookingId,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
+ await h.cmd('booking.details',{id:booking.bookingId,revision:(await h.state()).bookings.find(row=>row.id===booking.bookingId).revision,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
  await h.cmd('inbox.address',{address:'guests@stay.example',revision:''})
  await h.cmd('inbox.try',{source:'From: Megan <megan@stay.example>\r\nTo: guests@stay.example\r\nSubject: Parking\r\nMessage-ID: <archive@stay.example>\r\nContent-Type: text/plain\r\n\r\nWhere can I park?'})
  await h.cmd('direct.stripe.save',{mode:'test',key:'sk_test_fake'})

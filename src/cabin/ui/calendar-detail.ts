@@ -1,3 +1,4 @@
+import { reservationEditor } from '../reservations/ui'
 import { h, propertyName, memberName } from './shared'
 import { homeSettings } from '../homes'
 import { channelName, overlaps } from '../inventory'
@@ -29,7 +30,7 @@ export function reservationBody(s: any, b: any) {
   const problems = [...issues.map((t: any) => `<li><a href="/app/maintenance#task-${h(t.id)}">${h(t.title)}</a>${t.blocking ? ' · blocks arrival' : ''}</li>`), ...cases.map((r: any) => `<li><a href="/app/recovery#recovery-${h(r.id)}">${h(r.reason)}</a> · ${h(r.status)}</li>`)]
   const collisions = clash.length ? `<section><h3>Overlapping inventory</h3><ul>${clash.map((other: any) => `<li><a href="/app/calendar?reservation=${encodeURIComponent(other.id)}">${h(other.guestName || other.summary || bookingKind(s, other))}</a> · ${h(channelName(other.channel))}</li>`).join('')}</ul></section>` : ''
   const freshness = `<section><h3>Sync freshness</h3>${allLinks.length ? allLinks.map((c: any) => `<p><a href="/app/channels">${h(connectionName(c))}</a> · ${h(c.status)}${c.error ? ` · ${h(c.error)}` : ''}</p>${facts([['Last successful read', syncTime(c.lastSuccessAt, settings.timeZone)], ['Last applied change', syncTime(c.lastChangeAt, settings.timeZone)], ['Next poll', syncTime(c.nextPollAt, settings.timeZone)], ['Open sync exception', c.exception && !c.exception.resolvedAt ? `Assigned to ${c.exception.assignedName || c.exception.assignedTo}` : '']])}`).join('') : '<p>Unknown · no live channel calendar connected.</p>'}</section>`
-  return row + collisions + turnovers + `<section><h3>Open issues</h3>${problems.length ? `<ul>${problems.join('')}</ul>` : '<p>No open maintenance or recovery issues recorded.</p>'}</section>` + freshness
+  return row + reservationEditor(s,b) + collisions + turnovers + `<section><h3>Open issues</h3>${problems.length ? `<ul>${problems.join('')}</ul>` : '<p>No open maintenance or recovery issues recorded.</p>'}</section>` + freshness
 }
 
 /** A source record stays addressable for any date, including blocks and past stays. */

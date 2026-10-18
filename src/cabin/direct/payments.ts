@@ -17,7 +17,7 @@ import { startVerification,reconcileVerification } from '../verification/provide
 const update=async(env:Bindings,id:string,action:string,change:(s:DirectStay)=>void,actor=DIRECT_SYSTEM)=>mutate(env.DB,actor,action,async c=>{const s=await stay(env.DB,id);change(s);saveStay(c,s);return s})
 export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYSTEM) {
  let s=await stay(env.DB,id)
- if(s.restored||s.phase==='expired')return s
+ if(s.restored||s.phase==='expired'||s.phase==='cancelled')return s
  if(s.checkoutId&&!s.paymentId){
   const session=await readCheckout(paymentEnv(env,s),s.checkoutId)
   if(session.payment_status==='paid'){

@@ -24,7 +24,7 @@ export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[
  const messages=c.data.messages.filter(m=>m.bookingId&&ids.has(m.bookingId)||email&&m.email?.toLowerCase()===email||phone&&m.phone===phone)
  need(!messages.some(m=>m.status==='sending'),'A guest message is being sent. Wait for its result before erasing.',409)
  const subjects=new Set<string>(ids),homeIds=new Set(matched.map(b=>b.propertyId))
- for(const b of matched){Object.assign(b,{guestName:'Erased guest',summary:'Reserved',revision:newId(),guestErasedAt:c.now});delete b.guestEmail;delete b.guestPhone}
+ for(const b of matched){Object.assign(b,{guestName:'Erased guest',summary:'Reserved',revision:newId(),guestErasedAt:c.now});delete b.guestEmail;delete b.guestPhone;if(b.lifecycle){b.lifecycle.sourceId='Erased source';b.lifecycle.events=[];b.lifecycle.history=b.lifecycle.history.map(v=>({...v,guestName:'Erased guest',guestEmail:undefined,guestPhone:undefined,sourceId:'Erased source',reason:'Retained reservation revision'}))}}
  for(const m of messages){subjects.add(m.id);Object.assign(m,{control:undefined,email:null,phone:null,ref:null,subject:'Erased guest message',text:'',grounds:[],detail:null,headerId:null,revision:newId()});if(['pending','draft','drafting'].includes(m.status))m.status='discarded'}
  for(const r of c.data.requests.filter(r=>r.bookingId&&ids.has(r.bookingId))){r.guestName='Erased guest';r.note='';r.revision=newId();subjects.add(r.id)}
  for(const r of c.data.scheduled.filter(r=>ids.has(r.bookingId))){need(r.status!=='sending','A scheduled message is being sent. Wait for its result.',409);r.status='cancelled';r.reason='Guest identity erased';r.content=undefined;r.code=undefined;r.revision=newId();subjects.add(r.id)}

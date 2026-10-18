@@ -8,6 +8,7 @@ export const directStay = (s: any, b: any) => s.direct?.stays?.find((d: any) => 
 export const connectionName = (c: any) => c.name || channelName(String(c.channel))
 export function bookingKind(s: any, b: any) {
   const direct = directStay(s, b)
+  if(direct?.phase==='cancelled')return 'Cancelled stay'
   if (direct && direct.phase !== 'confirmed') return 'Checkout hold'
   if ((b.kind ?? 'stay') !== 'block') return 'Stay'
   if (b.channel !== 'direct') return 'Channel block'
@@ -15,6 +16,8 @@ export function bookingKind(s: any, b: any) {
   return /maintenance/i.test(b.summary) ? 'Maintenance block' : 'Block'
 }
 export function paymentState(s: any, b: any) {
+  const balance=b.reservationBalance
+  if(balance?.totalCents!=null)return {label:`${money(balance.paidCents)} received · ${money(Math.abs(balance.balanceCents))} ${balance.balanceCents<0?'refund due':'balance due'}`,short:balance.balanceCents<0?'Refund due':balance.balanceCents>0?'Balance due':'Paid'}
   const d = directStay(s, b)
   if (!d) return { label: (b.kind ?? 'stay') === 'block' ? 'Not applicable · no guest revenue' : b.channel === 'direct' ? 'Unknown · no payment recorded' : 'Unknown · not supplied by the channel calendar', short: (b.kind ?? 'stay') === 'block' ? '' : 'Payment unknown' }
   if (!d.paymentId) return { label: d.phase === 'expired' ? 'Checkout expired · no payment recorded' : 'Unpaid · checkout payment pending', short: 'Unpaid' }
@@ -49,7 +52,7 @@ export function bookingMoment(s: any, b: any, side: 'arrival' | 'departure') {
 }
 /** Readiness belongs to this arrival, rather than whichever stay is next today. */
 export function bookingReadiness(s: any, b: any) {
-  if ((b.kind ?? 'stay') === 'block') return null
+  if (b.status!=='confirmed'||(b.kind ?? 'stay') === 'block') return null
   const p = s.properties.find((p: any) => p.id === b.propertyId)
   const readiness = homeReadiness(s, p, b.start.slice(0, 10))
   if (readiness.arrival?.id !== b.id) return { ...readiness, state: 'unknown', reasons: ['Another arrival holds this date; resolve the overlap before confirming readiness'] }

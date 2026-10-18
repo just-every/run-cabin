@@ -37,7 +37,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   assert.equal((await h.state()).statements.length, 0)
   await h.cmd('recovery.approve', { id: recovery.id, revision: recovery.revision }, replacement.cookie, 403)
   // Recipients are part of the approval, even if booking.details keeps its revision.
-  await h.cmd('booking.details', { id: stay.bookingId, guestName: 'Ana Ruiz', guestEmail: 'ana-new@stay.example' })
+  await h.cmd('booking.details', { id: stay.bookingId,revision:(await h.state()).bookings.find(row=>row.id===stay.bookingId).revision, guestName: 'Ana Ruiz', guestEmail: 'ana-new@stay.example' })
   await h.cmd('recovery.approve', { id: recovery.id, revision: recovery.revision }, h.owner, 409)
   recovery = await propose(15_000)
   await h.cmd('recovery.approve', { id: recovery.id, revision: recovery.revision }, manager.cookie, 403)
