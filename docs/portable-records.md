@@ -1,5 +1,3 @@
-# Portable records and safe restore
-
 From the installation folder, `rer export --output exports/cabin.rer` produces a
 versioned structured archive. `rer import --input exports/cabin.rer --yes`
 restores into empty product data. These commands operate on the local copy;
