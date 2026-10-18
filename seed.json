@@ -123,6 +123,12 @@
       "clauses": [
         "MESSAGE-004"
       ]
+    },
+    {
+      "id": "rental-owner-operations",
+      "clauses": [
+        "FIN-005"
+      ]
     }
   ],
   "nonGoals": [
