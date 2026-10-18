@@ -9,7 +9,7 @@ import { load, mutate, SYSTEM } from './storage'
 const PER_RUN = 20
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 export async function deliverNotices(env: Bindings) {
- const pending = (await load(env.DB)).notices.filter(n => n.status === 'pending').slice(0, PER_RUN)
+ const pending = (await load(env.DB)).notices.filter(n => n.status === 'pending').sort((a,b)=>Number(b.priority==='urgent')-Number(a.priority==='urgent')).slice(0, PER_RUN)
  if (!pending.length) return []
  const results = []
  for (const { id } of pending) {
@@ -20,7 +20,7 @@ export async function deliverNotices(env: Bindings) {
   if (!sender || !env.MAIL_FROM) { status = 'unavailable'; detail = 'No mail provider is set up for this install, so this email was not sent. The job is in Cabin.' }
   else {
    try {
-    const text = `${claimed.text}\n\nOpen your jobs: ${new URL(claimed.kind === 'inbox' ? '/app/inbox' : claimed.kind === 'task' ? '/app/maintenance' : '/app/turnovers', env.AUTH_ORIGIN).href}\n`
+    const text = `${claimed.text}\n\nOpen your jobs: ${new URL(claimed.kind === 'issue' ? '/app/recovery#issue-'+claimed.recordId : claimed.kind === 'inbox' ? '/app/inbox' : claimed.kind === 'task' ? '/app/maintenance' : '/app/turnovers', env.AUTH_ORIGIN).href}\n`
     const result = await sender.send({ deliveryId: claimed.id, from: env.MAIL_FROM, to: [claimed.email], subject: claimed.subject, text, html: `<div style="font:15px/1.5 system-ui,sans-serif;white-space:pre-wrap">${escape(text)}</div>`, headers: { 'Auto-Submitted': 'auto-generated' } })
     status = result?.status === 'accepted' ? 'sent' : result?.status === 'development' ? 'suppressed' : 'failed'
     if (status === 'suppressed') detail = 'Development mode does not send email; a hosted install sends it.'

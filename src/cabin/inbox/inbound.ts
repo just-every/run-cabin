@@ -1,3 +1,4 @@
+import { incomingIssue } from '../issues/records'
 import { secureAccount } from '../connections/credentials'
 import { sharingAllowed } from '../connections/guard'
 import { managedInstall } from '../channels'
@@ -40,8 +41,10 @@ export async function receiveGuest(env: Bindings, m: Incoming) {
   const b = m.ref ? c.data.bookings.find(r => r.channel === m.channel && r.channelRef === m.ref) ?? null : stayFor(c.data, { email: m.email, phone: m.phone })
   if(m.channel==='sms'||m.channel==='booking.com')await sharingAllowed(c.db,m.channel==='sms'?'twilio':'booking','message:receive',b?.propertyId)
   const row: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? null, email: m.email ?? b?.guestEmail ?? null, phone: m.phone ?? null, ref: b ? null : m.ref ?? null, channel: m.channel, direction: 'in', source: 'guest', status: 'received', subject: m.subject.slice(0, 300), text: m.text, detail: null, replyTo: null, headerId: m.headerId ?? null, sentBy: null, approvalId: null, scheduledId: null, providerId: m.providerId ?? null, grounds: [], createdAt: c.now, sentAt: null }
-  c.data.messages.push(row); startDraft(c, env.AUTH_ORIGIN, row, ai, env.OWNER_EMAIL ?? ''); c.entityId = row.id; return row
+  c.data.messages.push(row); const issue=incomingIssue(c,b,row,env.OWNER_EMAIL??''); const draft=startDraft(c, env.AUTH_ORIGIN, row, issue?.issue?.category==='emergency'?false:ai, env.OWNER_EMAIL ?? ''); if(issue?.issue?.category==='emergency'){draft.text=issue.issue.emergencyInstructions!;draft.detail='Emergency escalated immediately to '+issue.issue.assignedName+'; requires a human.'} if(issue&&draft.control)draft.control.needsHost=true; c.entityId = row.id; return row
  })
+ // Urgent named-host notices must leave before any unrelated AI draft can block.
+ await deliverNotices(env)
  await finishDrafts(env)
  await escalateReplies(env)
  await deliverNotices(env)

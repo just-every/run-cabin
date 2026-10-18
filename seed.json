@@ -159,6 +159,12 @@
       "clauses": [
         "SECURITY-001"
       ]
+    },
+    {
+      "id": "guest-issue-resolution",
+      "clauses": [
+        "AGENT-003"
+      ]
     }
   ],
   "nonGoals": [

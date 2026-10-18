@@ -666,6 +666,8 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
+19 October 2026, AGENT-003: source-grounded service cases, exact bounded field dispatch, inspected evidence, explicit guest confirmation and delayed recurrence checks are implemented. Hosted desktop/phone journeys and authenticated assignment, inspection, guest follow-up and emergency mail were exercised. See `docs/guest-issues.md`.
+
 
 Judged from the code and tests at commit `48e5f7527e888bd259929b3cb42d868164ec23cd` (17 October 2026).
 
@@ -707,10 +709,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 30 | 30 | 29 | 89 |
-| All | 43 | 30 | 29 | 102 |
+| Target and push further | 31 | 29 | 29 | 89 |
+| All | 44 | 29 | 29 | 102 |
 
-**102 clauses: 43 done, 30 partial, 29 missing.**
+**102 clauses: 44 done, 29 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -809,7 +811,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `scripts/installer/local.mjs`; `OPERATIONS.json`; `SEED-COMMAND-CONTRACT.md`; `tests/launch.test.mjs` (line 10); `tests/runtime.mjs`; `tests/archive.test.mjs` (line 27) | Local lifecycle/health and operational archive paths exist; external product jobs and remote/provider acceptance are unimplemented. CI is not proof of hosted connectivity. |
 | `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `src/cabin/recovery/`; `src/cabin/ui/recovery.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs`; `docs/stay-recovery.md` | Cleaner/host reports and the guest stay page open durable recovery cases. Proposals select an available allowed backup, exact approvals or owner limits authorize reassignment, code rotation and credit, then accepted cleaning, photos, confirmed keypad/access, guest email and owner adjustment gate closure. No automatic rescheduling, relocation, collision cases, recurrence checks or live smart-lock account proof. |
 | `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/statements.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 90, 109) | Agents can prepare manual statement drafts for exact human approval; settlement matching, record pursuit, correcting postings and payout closure are absent. |
-| `AGENT-003` | Resolve guest issues through accepted field work | push-further | partial | `src/cabin/recovery/commands.ts`; `src/cabin/guest.ts`; `tests/recovery.test.mjs` | Reported guest problems dispatch approved replacement cleaning and track acceptance/photos/readiness. Exact recovery approval can withdraw an early-arrival promise to normal check-in and offer a consented one-use 10% future rent rate. The guest accepts or requests a person on the private stay page; unresolved arrangements block closure. `src/cabin/recovery/settlement.ts`, `src/cabin/recovery/guest.ts`, `tests/recovery.test.mjs`. Automatic issue classification, named emergency triage, maintenance troubleshooting and recurrence confirmation remain open. |
+| `AGENT-003` | Resolve guest issues through accepted field work | push-further | done | `src/cabin/issues/`; `src/cabin/work-orders/`; `src/cabin/inbox/inbound.ts`; `src/cabin/guest.ts`; `tests/issues.test.mjs`; `tests/work-orders.test.mjs`; `tests/recovery.test.mjs`; `docs/guest-issues.md` | Source-linked portal/inbox cases classify access, maintenance, cleaning and emergency reports against owner-approved instructions and current stay facts. Exact proposals bind active field staff, inspection and spending policy; declines retain history and require a reviewed replacement. Accepted work, photo evidence, named inspection, guest confirmation and a separately delayed recurrence check gate closure. Emergency reports prioritize immediate named-host notice with 911 instructions, without safety assurances or AI delay. Hosted appliance report, decline/replacement, inspected completion, actual delayed guest checks and emergency handover exercised at 1440 and 390; assignment, inspection, guest follow-up and emergency mail received with SPF/DKIM/DMARC passing. |
 | `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | missing |  | No implementing flow in the audited tree. |
 | `AGENT-006` | Bounded action authority and durable agent cases | push-further | done | `src/cabin/recovery/`; `src/cabin/connections/mail.ts`; `src/cabin/locks.ts`; `src/cabin/ui/recovery.ts`; `tests/recovery-authority.test.mjs`; `tests/recovery.test.mjs`; `docs/recovery-authority.md` | Separate owner-granted per-home action/provider scopes, time windows and cumulative compensation/cleaning ceilings fence the native recovery agent. Exact plans bind current stay, recipient, inventory, cleaner and terms; changed grants require reviewed continuation. Durable queued/started/acknowledged/uncertain effects stop at pause/revoke and reconcile provider evidence across restart without blind resend. A $75 credit under $100 posts a balanced owner adjustment automatically; $150 waits unsent for a person. Native grant, automatic credit, actual authenticated guest mail, provider outcomes and pause/resume/revoke used at 1440 and 390. Uncertain lock responses are isolated at the network edge; no live-lock acceptance is claimed. Bearer keys stay draft-only and human signature, payout and readiness doors remain separate. |

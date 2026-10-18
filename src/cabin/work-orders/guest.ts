@@ -1,3 +1,4 @@
+import { openGuestIssue, issuePolicy } from '../issues/records'
 import type { Bindings } from '../../auth.server'
 import { need, type AccessCode, type Booking } from '../model'
 import { mutate, SYSTEM } from '../storage'
@@ -26,7 +27,10 @@ export async function guestWorkReport(request:Request,env:Bindings,token:string,
    const current=c.data.codes.find(r=>r.link===token&&r.status==='issued'),b=current&&c.data.bookings.find(b=>b.id===current.bookingId&&b.status==='confirmed')
    need(b&&b.id===booking.id,'Your stay changed. Reload before reporting.',409)
    const t=c.data.turnovers.find(t=>t.bookingId===b.id&&t.status!=='cancelled')
-   await createMaintenanceTask(c,b.propertyId,t?.id??null,{title:data.get('title'),note:data.get('note'),photos},'Guest · '+(b.guestName||'private stay'))
+   const issue=openGuestIssue(c,b,String(data.get('title')??'')+' '+String(data.get('note')??''),'portal',env.OWNER_EMAIL,'maintenance')
+   const task=await createMaintenanceTask(c,b.propertyId,t?.id??null,{title:data.get('title'),note:data.get('note'),photos},'Guest · '+(b.guestName||'private stay'))
+   issue.issue!.taskId=task.id
+   if(issuePolicy(c,b.propertyId))task.assigneeId=null
   })
   await settle(env)
   return new Response(null,{status:303,headers:{...headers,location:'/stay/'+token+'?maintenance=reported'}})

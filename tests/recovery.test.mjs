@@ -92,7 +92,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   assert.equal((await h.send('/app/recovery/setup', undefined, h.owner)).status, 200)
   const guestReport = await h.mf.dispatchFetch(h.origin + '/stay/' + oldCode.link, { method: 'POST', headers: { origin: h.origin, 'content-type': 'application/x-www-form-urlencoded' }, body: 'reason=The+door+still+needs+attention' })
   assert.equal(guestReport.status, 200)
-  assert.ok((await h.accessState()).recoveries.some(r => r.trigger === 'guest_problem' && r.status === 'open'))
+  assert.ok((await h.accessState()).recoveries.some(r => r.trigger === 'guest_problem' && r.status === 'escalated' && r.issue?.assignedEmail === h.auth.OWNER_EMAIL))
  } finally { await h.close() }
 })
 

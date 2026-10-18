@@ -34,12 +34,14 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
  }
  if (name === 'recovery.plan') {
   manager(c.actor); const row = c.data.recoveries.find(r => r.id === p.id); need(row, 'Recovery case not found', 404); exact(row, p.revision)
+  need(!row.issue,'Use the guest issue actions for this service case',409)
   const { t, policy } = context(c, row)
   const cleaner = policy?.cleanerIds.map(id => c.data.members.find(m => m.id === id)).find(m => m?.active && m.role === 'cleaner' && m.id !== t.cleanerId && (!homeSettings(c,t.propertyId).dispatch || planAssignment(c,m.id,t).ok) && !c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === m.id && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!))
   if (!cleaner) { row.status = 'escalated'; note(c, row, 'Owner needed', 'No active backup cleaner is free in this turnover window. Reschedule with the cleaner and review the stay.'); return row }
   return recoveryCommand(c, 'recovery.propose', { ...p, cleanerId: cleaner.id, creditCents: Math.min(7500, policy!.creditLimitCents), extraCleaningCents: 0, why: 'Active backup from the home’s list with no overlapping assigned turnover. Credit follows the owner’s saved limit.' })
  }
  const row = c.data.recoveries.find(r => r.id === text(p.id, 'case')); need(row, 'Recovery case not found', 404); exact(row, p.revision)
+ need(!row.issue,'Use the guest issue actions for this service case',409)
  const { b, t, policy } = context(c, row)
  if (name === 'recovery.accept') {
   if(t.dispatch && row.proposal?.cleanerId===c.actor.memberId) {
@@ -101,7 +103,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
 export async function finishRecoveries(c: Context) {
  await captureRecoveryEffects(c)
  for (const row of c.data.recoveries) {
-  if(row.restorePaused)continue
+  if(row.restorePaused||row.issue)continue
   if(row.status==='active'){
    const t=c.data.turnovers.find(t=>t.id===row.turnoverId),b=c.data.bookings.find(b=>b.id===row.bookingId)
    if(t?.dispatch&&b){

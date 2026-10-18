@@ -1,0 +1,15 @@
+# Guest issue follow-up
+
+Open **Stay recovery → Guest issue authority by home** as the installation owner. Choose the named responsible host, approved field staff, independent inspector, dispatch ceiling and the delay before checking that a fix has stayed resolved. Save an approved troubleshooting instruction for an issue category. Instructions and dispatch proposals retain their policy and reservation sources; a changed stay, policy, person or open work invalidates a waiting proposal.
+
+Guest reports from the private stay page and matched incoming inbox messages create service cases. Access, maintenance and cleaning reports use the home’s approved instructions and current reservation and operational records. Unrecognized reports stay with the named host. Without a configured policy, the installation owner receives an escalated case; Cabin does not invent troubleshooting or dispatch authority.
+
+The host accepts responsibility, reviews the exact troubleshooting wording and approves a field assignment within the owner’s saved limit. The estimate does not pay anyone. The existing maintenance workflow still requires exact quote/invoice approvals, checklist and photo evidence. A vendor decline remains in the issue history and asks the host to approve another vendor. Every case links to its source reservation, inbox and work order.
+
+After accepted work and named inspection, Cabin asks the guest to check the result on their private stay page. The first positive response schedules a separate recurrence check. Only the guest’s later positive response closes the issue. An unresolved or recurring problem escalates to the host and can receive a new corrective order; previous work and declines stay attributable. Changed work invalidates earlier confirmations. Email acceptance alone never closes an issue. Missing contact or private access leaves an explicit human follow-up rather than a completed case.
+
+Emergency reports immediately notify the named host and show US emergency-service instructions, including calling 911 for immediate danger. They bypass AI drafting and automated service dispatch, remain escalated and require human handling. Cabin never assesses structural or physical safety.
+
+`tests/issues.test.mjs` exercises the public guest, inbox, command and scheduled doors: stale authority, spending refusal, vendor decline and replacement, inspection, separate guest checks and emergency escalation. `tests/work-orders.test.mjs` covers photographed appliance reports, exact invoices and inspected completion. `tests/recovery.test.mjs` keeps the distinct replacement-cleaner and guest-arrangement workflow covered.
+
+The hosted Lake Loft journey at 1440 and 390 covered an appliance leak, exact dispatch, vendor decline and approved replacement, photo-backed work, named inspection, the guest’s own first confirmation and a later recurrence confirmation. A separate gas report remained escalated and was accepted by the responsible host. Assignment, inspection, both guest checks and emergency notices reached the QA recipient with SPF, DKIM and DMARC passing.

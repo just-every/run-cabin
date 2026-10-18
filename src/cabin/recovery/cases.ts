@@ -8,7 +8,7 @@ export function note(c: Context, row: Recovery, action: string, why: string) {
  row.history.push({ at: c.now, by: c.actor.email || c.actor.id, action, why }); row.revision = newId(); c.entityId = row.id
 }
 export function openCase(c: Context, b: Booking, t: Turnover, trigger: Trigger, reason: string) {
- const existing = c.data.recoveries.find(r => r.bookingId === b.id && !['closed', 'undone'].includes(r.status))
+ const existing = c.data.recoveries.find(r => r.bookingId === b.id && !r.issue && !['closed', 'undone'].includes(r.status))
  if (existing) { note(c, existing, 'Problem reported', reason); return existing }
  const row: Recovery = { id: newId(), revision: newId(), bookingId: b.id, turnoverId: t.id, propertyId: b.propertyId, trigger, reason, status: 'open', createdAt: c.now, createdBy: c.actor.id, history: [] }
  c.data.recoveries.push(row); note(c, row, 'Case opened', reason); return row

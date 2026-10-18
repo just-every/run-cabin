@@ -6,7 +6,7 @@ export interface RecoveryAuthority {
  id: string; revision: string; state: 'active' | 'paused' | 'revoked'; actions: RecoveryAction[]; providers: RecoveryProvider[]
  startsAt: string; endsAt: string; grantedBy: string; grantedAt: string
 }
-export interface RecoveryPolicy { id: string; revision: string; propertyId: string; cleanerIds: string[]; auto: boolean; creditLimitCents: number; cleaningLimitCents: number; savedBy: string; futureDiscountBps?: number; authority?: RecoveryAuthority }
+export interface RecoveryPolicy { id: string; revision: string; propertyId: string; cleanerIds: string[]; auto: boolean; creditLimitCents: number; cleaningLimitCents: number; savedBy: string; futureDiscountBps?: number; authority?: RecoveryAuthority; issuePolicy?: import('../issues/types').IssuePolicy }
 export interface RecoveryEffect {
  id: string; kind: 'mail' | 'lock'; sourceId: string; sourceRevision: string; sourceHash: string; action: RecoveryAction; provider: RecoveryProvider
  state: 'queued' | 'started' | 'acknowledged' | 'uncertain' | 'not_applied' | 'blocked'
@@ -21,6 +21,7 @@ export interface RecoveryExecution {
 export type Trigger = 'cleaner_cancelled' | 'not_ready' | 'late_checkout' | 'guest_problem'
 export interface Proposal { cleanerId: string; creditCents: number; extraCleaningCents: number; why: string; baseline: string; guestText: string; arrivalTime?: string; futureRate?: { guestId: string; expiresAt: string; baseline: string } }
 export interface Recovery {
+ issue?: import('../issues/types').ServiceIssue;
  restorePaused?:boolean;
  id: string; revision: string; propertyId: string; bookingId: string; turnoverId: string; trigger: Trigger; reason: string
  status: 'open' | 'proposed' | 'active' | 'ready' | 'closed' | 'undone' | 'escalated'; createdAt: string; createdBy: string
