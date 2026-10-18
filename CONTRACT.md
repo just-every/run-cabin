@@ -700,10 +700,10 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 18 | 42 | 29 | 89 |
-| All | 31 | 42 | 29 | 102 |
+| Target and push further | 19 | 41 | 29 | 89 |
+| All | 32 | 41 | 29 | 102 |
 
-**102 clauses: 31 done, 42 partial, 29 missing.**
+**102 clauses: 32 done, 41 partial, 29 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -720,7 +720,7 @@ Implementation baseline: `bc79d0df17cc606fb939b4cdaeb18d26643ab442`, inspected 1
 | `CABIN-11` | Move-in with preview, reconciliation and undo | published | done | `src/cabin/movein/`; `tests/movein.test.mjs` (line 9); `tests/cabin.test.mjs` (line 125) |  |
 | `CABIN-12` | Agent access prepares, people approve | published | done | `src/cabin/credentials.ts`; `tests/cabin.test.mjs` (line 109) |  |
 | `CABIN-13` | Backup and restore | published | done | `src/cabin/archive-policy.mjs`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs` (line 27) |  |
-| `PROPERTY-001` | A usable vacation-rental property register | target | partial | `src/cabin/people.ts`; `src/cabin/model.ts`; `tests/cabin.test.mjs` (line 17) | Only names, owner contact and a fixed commission are implemented; property content, time zones and versioned management agreements are absent. |
+| `PROPERTY-001` | A usable vacation-rental property register | target | done | `src/cabin/properties/`; `src/cabin/homes.ts`; `src/cabin/direct/`; `src/cabin/statements.ts`; `src/cabin/ledger/store.ts`; `tests/property-register.test.mjs`; `docs/properties.md` | Independently rentable homes/units retain addresses, local times, occupancy, amenities, private photos, house rules, emergency contacts and channel IDs. Immutable effective-dated management terms are captured on each reservation and selected by new quotes; later amendments preserve earlier owner/commission allocations in statements and journals. Two US homes, editor uploads, amendment, source record and statement draft exercised at 1440 and 390. |
 | `AUTH-001` | Current native authority on every private door | target | done | `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 17, 67) |  |
 | `AUTH-002` | PMS roles and property-specific permissions | target | missing |  | No implementing flow in the audited tree. |
 | `CONTROL-001` | Exact human approval and immutable publication | target | done | `src/cabin/model.ts`; `src/cabin/storage.ts`; `src/cabin/calendars.ts`; `src/cabin/turnovers.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (lines 31, 55, 67, 90) |  |

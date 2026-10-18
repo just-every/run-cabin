@@ -5,6 +5,7 @@ export interface DirectHome {
  taxLabel:string; taxBps:number; countyTaxLabel:string; countyTaxBps:number; agreement:string; requireIdentity:boolean;
 }
 export interface Quote {
+ managementVersion?:string;
  start:string; end:string; guests:number; nights:number; nightlyCents:number; rentCents:number;
  cleaningCents:number; extraGuestCents:number; taxes:{label:string; bps:number; amountCents:number; jurisdiction:'state'|'county'}[];
  totalCents:number; depositCents:number; baseRentCents?:number; discountCents?:number;

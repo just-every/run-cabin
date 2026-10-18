@@ -19,7 +19,7 @@ export async function post(c:Context,input:{sourceKey:string;propertyId:string;b
  need(lines.length>=2&&lines.every(l=>Object.hasOwn(accounts,l.account)&&Number.isSafeInteger(l.debitCents)&&Number.isSafeInteger(l.creditCents)&&l.debitCents>=0&&l.creditCents>=0&&!(l.debitCents&&l.creditCents)),'Use positive integer USD cents on one side of each ledger line')
  const dr=lines.reduce((n,l)=>n+l.debitCents,0),cr=lines.reduce((n,l)=>n+l.creditCents,0)
  need(Number.isSafeInteger(dr)&&Number.isSafeInteger(cr)&&dr===cr,'Debits must equal credits')
- const row:Journal={...input,lines,id:newId(),legalEntity:input.legalEntity??setting!.legalEntity,ownerKey:input.ownerKey??await sha(p!.ownerEmail.trim().toLowerCase()),postedAt:c.now,actorId:c.actor.id}
+ const row:Journal={...input,lines,id:newId(),legalEntity:input.legalEntity??setting!.legalEntity,ownerKey:input.ownerKey??await sha((c.data.bookings.find(b=>b.id===input.bookingId)?.managementTerms?.ownerEmail??p!.ownerEmail).trim().toLowerCase()),postedAt:c.now,actorId:c.actor.id}
  c.queries.push(query('INSERT INTO cb_ledger_journals(id,source_key,property_id,booking_id,owner_key,legal_entity,effective_date,posted_at,actor_id,source_type,source_id,source_revision,reversal_of,data) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',row.id,row.sourceKey,row.propertyId,row.bookingId,row.ownerKey,row.legalEntity,row.effectiveDate,row.postedAt,row.actorId,row.sourceType,row.sourceId,row.sourceRevision,row.reversalOf??null,JSON.stringify(row)))
  rows.push(row);return row
 }

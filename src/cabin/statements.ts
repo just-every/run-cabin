@@ -1,3 +1,4 @@
+import { allocationTerms } from './properties/terms'
 import { type Context, type Statement, type StatementLine, type Actor, need, text, integer, newId, preparer, manager, property, approve } from './model'
 import { sha } from './model'
 import { assertLive, load } from './storage'
@@ -6,7 +7,12 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  if(name==='statement.prepare'){
   preparer(c.actor);const prop=property(c,p.propertyId),month=text(p.month,'statement month',7);need(/^\d{4}-(0[1-9]|1[0-2])$/.test(month),'Use a YYYY-MM month')
   if(p.lines===undefined){
-   const payouts=c.data.payouts.filter(r=>r.propertyId===prop.id&&r.date.startsWith(month)&&!r.statementId)
+   const allPayouts=c.data.payouts.filter(r=>r.propertyId===prop.id&&r.date.startsWith(month)&&!r.statementId)
+   need(allPayouts.every(r=>r.match==='matched'&&r.bookingId),'Match every imported payout in this home and month before preparing a statement',409)
+   const termsOf=(r:typeof allPayouts[number])=>allocationTerms(c.data,c.data.bookings.find(b=>b.id===r.bookingId)!)
+   const owners=[...new Set(allPayouts.map(r=>termsOf(r).ownerEmail))],selected=String(p.statementOwnerEmail??'').trim().toLowerCase()
+   need(owners.length<=1||selected,'This month has stays for different owners. Enter the statement owner email to prepare each separately.',409)
+   const payouts=allPayouts.filter(r=>!selected||termsOf(r).ownerEmail===selected)
    need(payouts.length>0,'Import payouts for this home and month first')
    need(payouts.every(r=>r.match==='matched'&&r.bookingId),'Match every imported payout in this home and month before preparing a statement',409)
    need(p.expenses===undefined||Array.isArray(p.expenses)&&p.expenses.length<=100,'Provide up to 100 paid owner expenses')
@@ -16,8 +22,11 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
    lines.push(...expenses)
    const grossCents=payouts.reduce((n,r)=>n+r.grossCents,0),channelFeeCents=payouts.reduce((n,r)=>n+r.feeCents,0),settlementCents=payouts.reduce((n,r)=>n+r.netCents,0)
    need(grossCents>=0&&grossCents-channelFeeCents===settlementCents,'Imported payouts do not reconcile to gross less channel fees',409)
-   const managementFeeCents=Number((BigInt(grossCents)*BigInt(prop.commissionBps)+5000n)/10000n)
-   const row:Statement={id:newId(),revision:newId(),propertyId:prop.id,propertyRevision:prop.revision,propertyName:prop.name,ownerName:prop.ownerName,ownerEmail:prop.ownerEmail,month,lines,source:'imported',payoutIds:payouts.map(r=>r.id),sourceBaseline:await sha(JSON.stringify(payouts)),channelFeeCents,settlementCents,expenseCents,commissionBps:prop.commissionBps,grossCents,managementFeeCents,netCents:settlementCents-managementFeeCents-expenseCents,status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
+   const firstTerms=termsOf(payouts[0]),byBooking=new Map<string,number>()
+   for(const payout of payouts)byBooking.set(payout.bookingId!, (byBooking.get(payout.bookingId!)??0)+payout.grossCents)
+   const managementFeeCents=[...byBooking].reduce((sum,[id,gross])=>sum+Number((BigInt(gross)*BigInt(allocationTerms(c.data,c.data.bookings.find(b=>b.id===id)!).commissionBps)+5000n)/10000n),0)
+   for(const line of lines.filter(l=>l.category==='gross')){const terms=allocationTerms(c.data,c.data.bookings.find(b=>b.id===line.bookingId)!);line.managementAgreementId=terms.id;line.commissionBps=terms.commissionBps}
+   const row:Statement={id:newId(),revision:newId(),propertyId:prop.id,propertyRevision:prop.revision,propertyName:prop.name,ownerName:firstTerms.ownerName,ownerEmail:firstTerms.ownerEmail,month,lines,source:'imported',payoutIds:payouts.map(r=>r.id),sourceBaseline:await sha(JSON.stringify(payouts)),channelFeeCents,settlementCents,expenseCents,commissionBps:firstTerms.commissionBps,grossCents,managementFeeCents,netCents:settlementCents-managementFeeCents-expenseCents,status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
    c.data.statements.push(row);c.entityId=row.id;return row
   }
   need(Array.isArray(p.lines)&&p.lines.length>0&&p.lines.length<=100,'Provide 1 to 100 statement lines')
@@ -31,9 +40,9 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  if(name==='statement.approve'){
   manager(c.actor);const row=c.data.statements.find(s=>s.id===text(p.id,'statement ID'));need(row,'Statement not found',404)
   need(property(c,row.propertyId).revision===row.propertyRevision,'Property or fee terms changed. Prepare the statement again.',409)
-  need(!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.status==='approved'),'This property month already has an approved statement',409)
+  need(!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.ownerEmail===row.ownerEmail&&s.status==='approved'),'This property month already has an approved statement',409)
   if(row.source==='imported'){
-   const payouts=c.data.payouts.filter(r=>r.propertyId===row.propertyId&&r.date.startsWith(row.month)&&!r.statementId)
+   const payouts=c.data.payouts.filter(r=>r.propertyId===row.propertyId&&r.date.startsWith(row.month)&&!r.statementId&&r.bookingId&&allocationTerms(c.data,c.data.bookings.find(b=>b.id===r.bookingId)!).ownerEmail===row.ownerEmail)
    need(await sha(JSON.stringify(payouts))===row.sourceBaseline,'Imported payouts changed. Prepare and review a new statement.',409)
    need(payouts.every(r=>r.match==='matched'),'Match every imported payout before approval',409)
    for(const payout of payouts)payout.statementId=row.id
@@ -56,7 +65,7 @@ export function approvedStatementCsv(s:Statement){
   const rows:unknown[][]=[['Cabin recovery adjustment'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Recovery case',s.recoveryId],['Revision',s.revision],...(s.reversalOf?[['Reversal of statement',s.reversalOf]]:[]),['Description','Owner balance adjustment (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Owner balance adjustment total (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or refund is sent by this statement. The configured trust ledger records the owner and guest payables.']]
   return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
  }
- const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission',`${(s.commissionBps/100).toFixed(2)}%`],['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or owner distribution is sent by this statement.']]
+ const rows:unknown[][]=[['Cabin owner statement'],['Property',s.propertyName],['Owner',s.ownerName,s.ownerEmail],['Month',statementMonth(s.month)],['Revision',s.revision],['Description','Amount (USD)'],...s.lines.map(l=>[l.description,usd(l.amountCents)]),['Gross (USD)',usd(s.grossCents)],['Imported channel fees (USD)',usd(s.channelFeeCents??0)],['Paid owner expenses (USD)',usd(s.expenseCents??0)],['Management commission','Per reservation agreement (see source lines)'],...s.lines.filter(l=>l.managementAgreementId).map(l=>['Agreement',l.bookingId,l.managementAgreementId,`${(l.commissionBps!/100).toFixed(2)}%`]),['Management fee (USD)',usd(s.managementFeeCents)],['Owner payout (USD)',usd(s.netCents)],['Approved by',s.approval!.actorName??'Name not recorded on this earlier approval',s.approval!.at],['No payment or owner distribution is sent by this statement.']]
  return rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'
 }
 export async function statementCsv(db:D1Database,actor:Actor,id:string){
