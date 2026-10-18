@@ -1,0 +1,13 @@
+import { h, heading, form, hidden, empty } from '../ui/shared'
+import { profilePanel } from './ui-profile'
+import type { GuestProfile } from './types'
+export function guests(s:any,result?:any) {
+ if(s.actor.isAgent||!['owner','manager'].includes(s.actor.role))return '<h1>Page unavailable</h1>'
+ const unindexed=s.bookings.filter((b:any)=>(b.kind??'stay')==='stay'&&!b.guestErasedAt&&!s.guests.some((g:GuestProfile)=>g.bookingId===b.id)).length
+ const index=unindexed?`<section class="panel"><h2>Existing reservations</h2><p>${unindexed} reservations need a guest identity origin. This keeps every reservation separate until you review a merge.</p>${form('guest.sync','guests','','Create guest profiles from existing reservations')}</section>`:''
+ const policies=s.properties.map((p:any)=>{const rule=s.guestPolicies.find((r:any)=>r.propertyId===p.id);return `<section class="panel"><h3>${h(p.name)}</h3>${form('guest.policy','guests',hidden('propertyId',p.id)+(rule?hidden('revision',rule.revision):'')+`<label class="check"><input type="checkbox" name="allowPreferences" value="yes"${rule?.allowPreferences?' checked':''}>Permit consented saved preferences at this home</label><label class="check"><input type="checkbox" name="allowRepeatOffers" value="yes"${rule?.allowRepeatOffers?' checked':''}>Permit consented returning-guest 10% rent offers at this home</label>`,'Save guest policy')}</section>`}).join('')
+ const issued=result?.url&&typeof result.url==='string'&&/^\/book\/[a-z0-9-]+\?offer=[a-f0-9-]{72}$/.test(result.url)?`<section class="notice"><h2>Private returning-guest offer</h2><p>This link is shown once. Share it only with the verified guest. Expires ${h(result.expiresAt)}.</p><a href="${h(result.url)}">${h(s.origin+result.url)}</a></section>`:''
+ const offers=s.guestOffers.filter((o:any)=>o.status==='issued').map((o:any)=>`<li>Offer ${h(o.id)} · ${h(s.properties.find((p:any)=>p.id===o.propertyId)?.name)} · expires ${h(o.expiresAt)}${form('guest.offer.revoke','guests',hidden('id',o.id)+hidden('revision',o.revision),'Revoke unused offer')}</li>`).join('')
+ const roots=s.guests.filter((g:GuestProfile)=>!g.erasedAt&&!g.mergedInto)
+ return heading('Guests','Know the guest who returns','Review reservation identities before joining histories. Keep each fact’s source, guest consent and home policy with it.')+index+issued+`<details><summary>Home policies for preferences and returning rates</summary>${policies}</details>`+(offers?`<details><summary>Unused returning-guest offers</summary><ul>${offers}</ul></details>`:'')+(roots.map((g:GuestProfile)=>profilePanel(s,g)).join('')||empty('Guest profiles appear with saved reservations. Each reservation starts with a separate identity origin.'))
+}

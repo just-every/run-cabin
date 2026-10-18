@@ -5,7 +5,7 @@ const revision=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)?String(
 /** Only application identifiers, revisions and controlled outcomes. Never accepts a business record as event data. */
 export type AuditActor=Pick<Actor,'id'|'isAgent'|'operatorVersion'|'keyId'>&{role:string}
 export function event(actor:AuditActor,action:string,at:string,scope:Scope={}):Query {
- const actorKind=actor.isAgent?'agent':actor.role==='guest'||action.startsWith('guest.')||action.startsWith('recovery.guest.')?'guest':actor.role==='system'?'automation':'human'
+ const actorKind=actor.isAgent?'agent':actor.role==='guest'||(action.startsWith('guest.')&&actor.role==='system')||action.startsWith('recovery.guest.')?'guest':actor.role==='system'?'automation':'human'
  return query('INSERT INTO cb_events(id,actor_id,actor_role,action,entity_id,at,actor_kind,actor_key_id,entity_kind,property_id,booking_id,source_revision,result,actor_version,facts,source_version) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',newId(),actor.id,actor.role,action,scope.id??null,at,actorKind,actor.keyId??null,scope.kind??null,scope.propertyId??null,scope.bookingId??null,revision(scope.revision),scope.result??'completed',actor.operatorVersion,JSON.stringify(scope.facts??{}),scope.sourceVersion??null)
 }
 const state=(row:any,action:string)=>action.startsWith('privacy.')?'erased':action.startsWith('lock.')&&results.has(row.lock?.state)?row.lock.state:results.has(row.status)?row.status:results.has(row.phase)?row.phase:results.has(row.match)?row.match:'completed'

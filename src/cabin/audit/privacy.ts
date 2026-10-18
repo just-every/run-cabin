@@ -1,3 +1,5 @@
+import { eraseProfiles } from '../guests/erase'
+import { guestGroup } from '../guests/resolve'
 import { type Context, type Query, need, text, query, newId, sha } from '../model'
 import { commit } from '../storage'
 import { stays, saveStay } from '../direct/store'
@@ -6,7 +8,9 @@ export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[
  const booking=c.data.bookings.find(b=>b.id===text(p.id,'reservation'));need(booking,'Reservation not found',404)
  need(booking.revision===p.revision,'Reservation changed. Review it again before erasing',409)
  const email=booking.guestEmail?.toLowerCase(),phone=booking.guestPhone
- const matched=c.data.bookings.filter(b=>b.id===booking.id||email&&b.guestEmail?.toLowerCase()===email||phone&&b.guestPhone===phone),ids=new Set(matched.map(b=>b.id))
+ const group=booking.guestId?guestGroup(c.data,booking.guestId):[],profileIds=new Set(group.map(g=>g.id))
+ const matched=c.data.bookings.filter(b=>b.id===booking.id||(group.length?!!b.guestId&&profileIds.has(b.guestId):email&&b.guestEmail?.toLowerCase()===email||phone&&b.guestPhone===phone)),ids=new Set(matched.map(b=>b.id))
+ eraseProfiles(c,profileIds)
  const messages=c.data.messages.filter(m=>m.bookingId&&ids.has(m.bookingId)||email&&m.email?.toLowerCase()===email||phone&&m.phone===phone)
  need(!messages.some(m=>m.status==='sending'),'A guest message is being sent. Wait for its result before erasing.',409)
  const subjects=new Set<string>(ids),homeIds=new Set(matched.map(b=>b.propertyId))

@@ -1,3 +1,4 @@
+import { eraseProfiles } from './guests/erase'
 import { eraseGuest } from './audit/privacy'
 import { eraseProviderSource } from './movein/provider-erasure'
 import { createPortability } from '@runeditrun/rer/modules/portability'
@@ -25,6 +26,8 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>){
  const revision=integer(p.revision,'revision',1)
  if(entity==='property'){
   const prop=c.data.properties.find(v=>v.id===id);need(prop,'Property not found',404);need(prop.revision===revision,'Property changed; reload before erasing',409)
+  const bookingIds=new Set(c.data.bookings.filter(b=>b.propertyId===id).map(b=>b.id));eraseProfiles(c,new Set(c.data.guests.filter(g=>bookingIds.has(g.bookingId)).map(g=>g.id)))
+  for(const g of c.data.guests){g.facts=g.facts.filter(f=>!f.propertyIds.includes(id));g.consents=g.consents.filter(v=>v.propertyId!==id)}
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
   await eraseProviderSource(c,id)

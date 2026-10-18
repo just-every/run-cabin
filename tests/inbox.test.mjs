@@ -151,7 +151,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
   } finally { await h.close() }
 })
 
-test('a returning guest’s question is answered for their upcoming stay, and a new check-out time re-sends the corrected door-code hours', async () => {
+test('a reviewed returning guest’s question is answered for their upcoming stay, and a new check-out time re-sends the corrected door-code hours', async () => {
   const h = await harness({})
   try {
     // The home's own date: its first stay checked out at midnight there today, so it is over whatever the hour.
@@ -166,9 +166,12 @@ test('a returning guest’s question is answered for their upcoming stay, and a 
     await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Rowan Price', guestEmail: 'rowan@guest.example', start: local(-6), end: local(-2) })
     const thanks = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('rowan@guest.example') && m.subject.includes('Thank you for staying'))
     assert.equal((await thanks()).length, 1)
-    const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-3), end: local(0) })
+    const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-2), end: local(0) })
     const next = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(1), end: local(3) })
+    assert.equal(past.status, 'accepted'); assert.equal(next.status, 'accepted')
     assert.notEqual(past.bookingId, next.bookingId)
+    const profiles = (await h.state()).guests, previousGuest = profiles.find(g => g.bookingId === past.bookingId), returningGuest = profiles.find(g => g.bookingId === next.bookingId)
+    await h.cmd('guest.merge', { id: previousGuest.id, revision: previousGuest.revision, intoId: returningGuest.id, intoRevision: returningGuest.revision, reason: 'Guest confirmed both reservation references in the conversation.', confirm: 'yes' })
     const [first] = (await mail()).filter(m => m.subject.startsWith('Check-in details'))
     assert.ok(first, 'check-in details for the upcoming stay went out')
 

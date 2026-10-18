@@ -111,6 +111,12 @@
       "clauses": [
         "OPS-001"
       ]
+    },
+    {
+      "id": "guest-profiles",
+      "clauses": [
+        "GUEST-001"
+      ]
     }
   ],
   "nonGoals": [

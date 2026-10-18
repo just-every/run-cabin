@@ -50,7 +50,7 @@ export function stayBar(s: any, v: View, b: any, clash: Set<string>, arrivalsUnt
   const guest = !block && !!knownGuest(b)
   const first = guest ? [...new Set([name, ...firstAndInitial(name), ...nameForms(name, [initials(name), initials(name)[0]])])] : [name, '']
   const turnover = s.turnovers?.find((t: any) => t.bookingId === b.id && !['draft', 'cancelled'].includes(t.status))
-  const thread = !block && (b.guestEmail || b.guestPhone || s.messages?.some((m: any) => m.bookingId === b.id)) ? threadId(guestKey(b)) : null
+  const thread = !block && (b.guestEmail || b.guestPhone || s.messages?.some((m: any) => m.bookingId === b.id)) ? threadId(guestKey(b,s)) : null
   const source = block
     ? b.channel === 'booking.com' ? 'Booking.com’s calendar closes these nights (“CLOSED - Not available”) without saying whether a guest booked them, so Cabin keeps them as a block.' : b.channel === 'direct' ? 'Blocked in Cabin.' : `${channel}’s calendar marks these nights not available.`
     : b.source === 'request' ? `Taken in Cabin as a ${channel} ${b.channel === 'direct' ? 'booking' : 'request'}.` : b.source === 'migration' ? 'Moved in from your previous system.' : named ? `From the ${channel} calendar; the guest’s name was added in Cabin.` : `From the ${channel} calendar, which names no guest. Add the guest’s name under Reservations.`

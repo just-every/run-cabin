@@ -7,7 +7,8 @@ export interface DirectHome {
 export interface Quote {
  start:string; end:string; guests:number; nights:number; nightlyCents:number; rentCents:number;
  cleaningCents:number; extraGuestCents:number; taxes:{label:string; bps:number; amountCents:number; jurisdiction:'state'|'county'}[];
- totalCents:number; depositCents:number;
+ totalCents:number; depositCents:number; baseRentCents?:number; discountCents?:number;
+ returningGuest?:{offerId:string; guestId:string; name:string; discountBps:number};
 }
 export interface DirectStay {
  id:string; propertyId:string; bookingId:string; revision:string; homeRevision:string; phase:'held'|'paid'|'confirmed'|'expired';

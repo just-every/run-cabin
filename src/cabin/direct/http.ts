@@ -3,6 +3,7 @@ import { need,sha } from '../model'
 import { load } from '../storage'
 import { homes,byToken } from './store'
 import { quote } from './rules'
+import { offeredRate } from '../guests/offers'
 import { checkout,retryCheckout } from './checkout'
 import { refresh,identity } from './payments'
 import { guestDeposit } from './deposit'
@@ -38,8 +39,8 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
   if(path==='/book'&&request.method==='GET')return shell('Find your stay',`<p class="eyebrow">Book directly</p><h1>Find your next stay</h1>${all.length?all.map(home=>`<section class="panel"><h2><a href="/book/${h(home.slug)}">${h(data.properties.find(p=>p.id===home.propertyId)?.name)}</a></h2><p>${h(home.description)}</p></section>`).join(''):'<p>No homes are accepting direct bookings yet.</p>'}`)
   const match=path.match(/^\/book\/([a-z0-9-]+)(?:\/(quote|checkout))?$/),home=all.find(h=>h.slug===match?.[1]);need(match&&home,'Booking page not found',404)
   const name=data.properties.find(p=>p.id===home.propertyId)?.name??home.slug,settings=homeSettings(data,home.propertyId)
-  if(request.method==='GET'&&!match[2])return homePage(home,name,data.bookings,localDay(Date.now(),settings.timeZone))
-  if(request.method==='POST'&&match[2]==='quote'){const price=quote(home,data.bookings,input);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode,instant(`${price.start}T${settings.checkInTime}`,settings.timeZone)-48*3_600_000<=Date.now())}
+  if(request.method==='GET'&&!match[2]){const offer=await offeredRate(data,home,url.searchParams.get('offer'));return homePage(home,name,data.bookings,localDay(Date.now(),settings.timeZone),'',offer?{token:url.searchParams.get('offer')!,name:offer.guestName}:undefined)}
+  if(request.method==='POST'&&match[2]==='quote'){const offer=await offeredRate(data,home,input.offerToken),price=quote(home,data.bookings,input,undefined,offer);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}return json?Response.json({quote:price,homeRevision:home.revision}):quotePage(home,name,price,mode,instant(`${price.start}T${settings.checkInTime}`,settings.timeZone)-48*3_600_000<=Date.now(),offer?String(input.offerToken):undefined)}
   if(request.method==='POST'&&match[2]==='checkout'){const result=await checkout(env,home.slug,input);return json?Response.json(result):new Response(null,{status:303,headers:{location:result.url,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
   need(false,'Not found',404)
  }catch(error){const stayToken=(error as any)?.stayToken as string|undefined
