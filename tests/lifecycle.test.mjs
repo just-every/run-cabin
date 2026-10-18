@@ -1,0 +1,133 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { harness } from './harness.mjs'
+const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const rules=['confirmation','payment','signature','identity','checkin','arrival','checkout','review','repeat']
+const state=h=>h.accessState()
+const mail=async(h,email)=>(await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r=>JSON.parse(r.message)).filter(m=>m.to.includes(email))
+async function configure(h,home,enabled,extra={}){
+ const s=await state(h),revision=s.inbox[0]?.revision??''
+ return h.cmd('inbox.lifecycle',{propertyId:home.id,revision,managerEmail:'manager@stay.example',email:true,...Object.fromEntries(rules.flatMap(r=>[[r+'Enabled',enabled.includes(r)],[r+'Hours',r==='checkin'?48:0]])),...extra})
+}
+async function home(h,name='Lake Loft',zone='America/New_York'){
+ const p=await h.cmd('property.save',{name,ownerName:'Karen Jones',ownerEmail:'karen@stay.example',commissionBps:2000})
+ await h.cmd('home.settings',{propertyId:p.id,address:'240 Lake Road, Boone, NC',timeZone:zone,checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready'],photosRequired:1})
+ await h.cmd('ledger.configure',{propertyId:p.id,legalEntity:'Cabin trust'})
+ return p
+}
+test('MESSAGE-003: per-home event templates, required-task reminders, secret release and guest opt-out use current facts once',async()=>{
+ const h=await harness()
+ try{
+  const p=await home(h)
+  await h.cmd('direct.agreement.template',{propertyId:p.id,agreement:'Respect the home and return keys at checkout.',agreementRequired:true,agreementBlockAccess:true})
+  await configure(h,p,['confirmation','payment','signature','identity','checkin'],{confirmationSubject:'Reservation for {home}',confirmationTemplate:'Hi {guest}: {checkin} to {checkout}. {code}'})
+  const b=await h.cmd('reservation.create',{propertyId:p.id,method:'phone',channel:'direct',sourceId:'CALL-901',guestName:'Megan Ortiz',guestEmail:'megan@stay.example',start:day(1),end:day(3),rentCents:50000,policyName:'Reviewed flexible terms',retainedBps:0,noShowBps:0})
+  let s=await state(h),messages=await mail(h,'megan@stay.example')
+  assert.equal(messages.filter(m=>m.subject==='Reservation for Lake Loft').length,1)
+  assert.ok(messages.some(m=>m.subject==='Payment due for Lake Loft'))
+  assert.ok(messages.some(m=>m.subject==='Please sign your rental agreement'))
+  assert.ok(!messages.some(m=>m.subject==='Complete your identity check'),'no unnecessary identity reminder')
+  const code=s.codes.find(c=>c.bookingId===b.id&&c.holder==='guest')
+  assert.ok(messages.every(m=>(!code||!m.text.includes(code.code)&&!m.text.includes('/stay/'+code.link))),'payment, unsigned terms and unverified readiness cannot leak access even in another template')
+  await h.cmd('ledger.post',{operation:'payment',propertyId:p.id,bookingId:b.id,amountCents:50000,sourceId:'BANK-RECEIPT',sourceRevision:'1',effectiveDate:day(0)})
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await mail(h,'megan@stay.example')).filter(m=>m.subject==='Reservation for Lake Loft').length,1,'event confirmation deduplicated')
+  const preference=messages.find(m=>m.subject==='Reservation for Lake Loft').text.match(/http:\/\/[^\s]+\/message-preferences\/[^\s]+/)[0]
+  const path=new URL(preference).pathname
+  assert.equal((await h.send(path)).status,200)
+  assert.equal((await h.send(path,{},'',{origin:'https://unrelated.example'})).status,403)
+  assert.equal((await h.send(path,{})).status,200)
+  s=await state(h)
+  assert.ok(s.scheduled.filter(r=>r.bookingId===b.id).every(r=>r.status!=='scheduled'))
+  const before=(await mail(h,'megan@stay.example')).length
+  await h.cmd('reservation.move',{id:b.id,revision:s.bookings.find(row=>row.id===b.id).revision,start:day(4),end:day(6)})
+  assert.equal((await mail(h,'megan@stay.example')).length,before,'opt-out fences changed queued facts too')
+  const cleaner=await h.person('Ana')
+  assert.equal((await h.send('/api/cabin/command',{name:'inbox.lifecycle',input:{propertyId:p.id}},cleaner.cookie)).status,403)
+ }finally{await h.close()}
+})
+test('MESSAGE-003: local quiet hours, restart-due submission, late visibility, cancellation and explicit channel failures',async()=>{
+ const h=await harness()
+ try{
+  const p=await home(h,'Desert Casita','America/Phoenix')
+  const local=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Phoenix',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date())
+  const start=local,until=new Date(Date.now()+3600000).toLocaleTimeString('en-GB',{timeZone:'America/Phoenix',hour:'2-digit',minute:'2-digit',hourCycle:'h23'})
+  await configure(h,p,['confirmation','checkin','checkout','arrival'],{quietFrom:start,quietUntil:until})
+  const result=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',kind:'stay',guestName:'Ana Diaz',guestEmail:'ana@guest.example',start:day(1),end:day(3)})
+  assert.equal((await mail(h,'ana@guest.example')).length,0,'local quiet hours defer submission')
+  let s=await state(h),r=s.scheduled.find(r=>r.bookingId===result.bookingId&&r.rule==='confirmation')
+  assert.equal(r.status,'scheduled')
+  await configure(h,p,['confirmation','checkin','checkout','arrival'],{quietFrom:'',quietUntil:''})
+  assert.equal((await mail(h,'ana@guest.example')).filter(m=>m.subject.includes('Your reservation')).length,1)
+  // Simulate persisted pre-restart due work, keeping the actual Worker and public Cron delivery door.
+  s=await state(h);r=s.scheduled.find(r=>r.bookingId===result.bookingId&&r.rule==='checkout')
+  r.dueAt=new Date(Date.now()-120000).toISOString();r.createdAt=new Date(Date.now()-3600000).toISOString()
+  await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(r),r.id).run()
+  await h.restart()
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  s=await state(h);r=s.scheduled.find(x=>x.id===r.id)
+  assert.equal(r.status,'sent');assert.ok(Date.parse(r.sentAt)-Date.parse(r.createdAt)>0)
+  assert.ok(Date.parse(r.sentAt)-Date.parse(new Date(Date.now()-120000).toISOString())<300000,'persisted due work submitted within five minutes')
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await mail(h,'ana@guest.example')).filter(m=>m.subject.includes('Checkout')).length,1)
+  let late=s.scheduled.find(r=>r.bookingId===result.bookingId&&r.rule==='arrival')
+  late.dueAt=new Date(Date.now()-7*60000).toISOString();late.createdAt=new Date(Date.now()-3600000).toISOString()
+  await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(late),late.id).run()
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  s=await state(h);late=s.scheduled.find(r=>r.id===late.id)
+  assert.equal(late.status,'sent');assert.ok(Date.parse(late.sentAt)-Date.parse(late.dueAt)>5*60000,'late submission delay remains recorded')
+  assert.match((await h.send('/app/inbox',undefined,h.owner)).text,/min late/)
+  await h.cmd('reservation.cancel',{id:result.bookingId,revision:s.bookings.find(b=>b.id===result.bookingId).revision})
+  assert.ok((await state(h)).scheduled.filter(r=>r.bookingId===result.bookingId).every(r=>r.status!=='scheduled'))
+  await configure(h,p,['confirmation'],{email:false,sms:true})
+  const next=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',kind:'stay',guestName:'Rowan Price',guestEmail:'rowan@guest.example',start:day(6),end:day(8)})
+  s=await state(h)
+  assert.equal(s.scheduled.find(r=>r.bookingId===next.bookingId).status,'unavailable')
+  assert.ok(s.notices.some(n=>n.email==='manager@stay.example'&&n.recordId===s.scheduled.find(r=>r.bookingId===next.bookingId).id),'failed chosen channel assigned to a named manager')
+ }finally{await h.close()}
+})
+
+test('MESSAGE-003: verified readiness releases corrected access, follow-up consent and unresolved identity are event conditions',async()=>{
+ const h=await harness()
+ try{
+  const p=await home(h,'Pine Ridge Cabin'),cleaner=await h.person('Luis')
+  await configure(h,p,['checkin','arrival','checkout','review'])
+  await h.cmd('readiness.plan',{propertyId:p.id,revision:'',supplies:['Linens'],inspectorId:'owner'})
+  const prev=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Departed guest',start:day(-4),end:day(-2)})
+  const upcoming=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Megan Ortiz',guestEmail:'returning@guest.example',start:day(1),end:day(4)})
+  let s=await state(h),code=s.codes.find(c=>c.bookingId===upcoming.bookingId&&c.holder==='guest')
+  assert.ok((await mail(h,'returning@guest.example')).every(m=>!m.text.includes(code.code)))
+  let turnover=await h.cmd('turnover.prepare',{bookingId:prev.bookingId,cleanerId:cleaner.id,dueDate:day(1),checklist:['Ready']})
+  await h.cmd('turnover.approve',{id:turnover.id,revision:turnover.revision})
+  turnover=(await state(h)).turnovers.find(t=>t.id===turnover.id)
+  const {readFile}=await import('node:fs/promises')
+  await h.cmd('turnover.complete',{id:turnover.id,revision:turnover.revision,checks:['Ready'],caption:'Physically cleaned and inspected',photos:[{photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png'}]},cleaner.cookie)
+  const {attestArrival}=await import('./readiness-helpers.mjs')
+  await attestArrival(h,upcoming.bookingId)
+  const corrected=(await mail(h,'returning@guest.example')).filter(m=>m.subject.startsWith('Updated:'))
+  assert.equal(corrected.length,1);assert.ok(corrected[0].text.includes(code.code)&&corrected[0].text.includes('/stay/'+code.link),'release only after named readiness checks')
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await mail(h,'returning@guest.example')).filter(m=>m.subject.startsWith('Updated:')).length,1)
+  const past=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Rowan Price',guestEmail:'rowan@guest.example',start:day(-10),end:day(-8)})
+  let profile=(await state(h)).guests.find(g=>g.bookingId===past.bookingId)
+  await h.cmd('guest.policy',{propertyId:p.id,allowRepeatOffers:true})
+  await h.cmd('guest.consent',{id:profile.id,revision:profile.revision,propertyId:p.id,purpose:'offers',allowed:'yes',source:'Guest explicitly requested a returning-stay invitation'})
+  await configure(h,p,['repeat'],{repeatHours:0})
+  assert.equal((await mail(h,'rowan@guest.example')).filter(m=>m.subject==='Visit Pine Ridge Cabin again').length,1)
+  const idHome=await home(h,'Sandy Shores')
+  const ownerId=(await state(h)).actor.id
+  await h.cmd('direct.configure',{propertyId:idHome.id,enabled:false,slug:'sandy-shores',description:'A quiet family beach home',nightlyCents:20000,cleaningCents:0,extraGuestCents:0,includedGuests:2,maxGuests:4,minNights:1,maxNights:20,minGapNights:0,depositCents:0,releaseHours:0,taxBps:0,countyTaxBps:0,agreement:'Respect the home',identityMode:'all',identityReviewerId:ownerId,identityBlockAccess:true,agreementRequired:false})
+  await configure(h,idHome,['identity','arrival'],{identityHours:0,arrivalHours:0})
+  const current=await h.cmd('reservation.request',{propertyId:idHome.id,channel:'direct',guestName:'Ana Diaz',guestEmail:'identity@guest.example',start:day(-1),end:day(2)})
+  const idMail=await mail(h,'identity@guest.example')
+  assert.ok(idMail.some(m=>m.subject==='Complete your identity check'&&m.text.includes('/book/verification/')))
+  assert.ok(idMail.some(m=>m.subject==='Have you settled in at Sandy Shores?'))
+  // A durable, unacknowledged started attempt survives a restart as assigned uncertainty, never a blind duplicate.
+  s=await state(h);const pending=s.scheduled.find(r=>r.bookingId===current.bookingId&&r.rule==='identity')
+  pending.status='sending';pending.attemptedAt=new Date(Date.now()-10*60000).toISOString()
+  await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(pending),pending.id).run()
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  s=await state(h);assert.equal(s.scheduled.find(r=>r.id===pending.id).status,'failed');assert.ok(s.notices.some(n=>n.recordId===pending.id))
+  assert.equal((await mail(h,'identity@guest.example')).filter(m=>m.subject==='Complete your identity check').length,idMail.filter(m=>m.subject==='Complete your identity check').length)
+ }finally{await h.close()}
+})

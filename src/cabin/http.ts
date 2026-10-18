@@ -1,3 +1,4 @@
+import { lifecyclePreferences } from './inbox/preferences'
 import { ordinaryOutput } from './connections/redaction'
 import { accessSecrets,ordinaryState,accessDetails } from './connections/access'
 import { approvedStatement } from './statements'
@@ -163,6 +164,7 @@ async function signInSettings(request:Request,env:Bindings){
 }
 export async function cabinResponse(request:Request,original:Bindings):Promise<Response|null>{
  const url=new URL(request.url),path=url.pathname
+ const preferences=await lifecyclePreferences(request,runtimeBindings(original));if(preferences)return preferences
  if(path==='/owners'||path.startsWith('/owners/'))return ownersResponse(request,original)
  if(path==='/book'||path.startsWith('/book/'))return bookingResponse(request,runtimeBindings(original))
  if(path.startsWith('/ical/'))return icalExportResponse(request,runtimeBindings(original))

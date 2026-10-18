@@ -14,7 +14,7 @@ const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documen
 const ADDRESS = '18 Fernwood Lane, Boone, NC 28607', INBOX = 'guests@cabin.example', TWILIO = 'twilio-fixture-token'
 const mime = ({ from, replyTo, subject, id, text }) => [`From: ${from}`, `To: Fernwood Cabin <${INBOX}>`, ...(replyTo ? [`Reply-To: ${replyTo}`] : []), `Subject: ${subject}`, `Message-ID: <${id}>`, 'Date: Sat, 17 Oct 2026 09:00:00 -0400', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', '', text].join('\r\n')
 
-test('a stay’s check-in message with its door code goes out on time, the guest’s replies by email and text join one thread, and drafted replies wait for the host', async () => {
+test('a stay’s check-in message withholds unverified access and goes out on time, the guest’s replies by email and text join one thread, and drafted replies wait for the host', async () => {
   const calls = []
   const outbound = async request => {
     const url = new URL(request.url), body = await request.text()
@@ -52,7 +52,7 @@ test('a stay’s check-in message with its door code goes out on time, the guest
     await h.cmd('inbox.schedule', { ...schedule(48), revision: (await settings()).revision })
     s = await h.accessState()
     const [sent] = await mail('ana@guest.example')
-    assert.ok(sent.text.includes(code.code) && sent.text.includes(ADDRESS) && sent.text.includes(`/stay/${code.link}`), sent.text)
+    assert.ok(!sent.text.includes(code.code) && sent.text.includes(ADDRESS) && !sent.text.includes(`/stay/${code.link}`), sent.text)
     assert.equal(sent.replyTo, INBOX); assert.equal(sent.headers['Auto-Submitted'], 'auto-generated')
     assert.equal(row('checkin').status, 'sent')
     assert.ok(Date.parse(row('checkin').sentAt) - Math.max(Date.parse(row('checkin').dueAt), Date.parse(row('checkin').createdAt)) < 5 * 60_000, 'submitted within five minutes of falling due')
@@ -191,7 +191,7 @@ test('a reviewed returning guest’s question is answered for their upcoming sta
     const sent = (await mail()).filter(m => m.subject.includes('Check-in details'))
     assert.equal(sent.length, 2)
     assert.match(sent[1].subject, /^Updated: /)
-    assert.ok(sent[1].text.includes(moved.code) && sent[1].text.includes('3 am'), sent[1].text)
+    assert.ok(!sent[1].text.includes(moved.code) && sent[1].text.includes('3 am'), sent[1].text)
     await hours('03:00')
     assert.equal((await mail()).filter(m => m.subject.includes('Check-in details')).length, 2, 'sent once per change')
     assert.equal((await thanks()).length, 1, 'a review request whose words did not change is not sent again')

@@ -9,6 +9,7 @@ import { route } from './deliver'
 import { policyCommand, replySources } from './reply-policy'
 import { arrivalCommand } from './arrival'
 import { receiveEmail } from './inbound'
+import { lifecycleCommand } from './lifecycle-settings'
 import { facts } from './render'
 import { AI_MANAGED, AI_MODEL, AI_PURPOSE, aiDraft, aiKey, DraftError } from './ai'
 // What a person does in the inbox. A draft is sent only by message.send, which
@@ -48,6 +49,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   return outcome
  }
  return mutate(env.DB, who, name, async c => {
+  const lifecycle = lifecycleCommand(c, name, p); if (lifecycle !== undefined) return lifecycle
   const policy = policyCommand(c, name, p); if (policy !== undefined) return policy
   const arrival = arrivalCommand(c, name, p); if (arrival !== undefined) return arrival
   const settled = settingsCommand(c, name, p); if (settled !== undefined) return settled
@@ -65,7 +67,9 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   }
   if (name === 'message.retry') {
    const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Message not found', 404); need(m.status === 'failed', 'Only a failed message can be sent again', 409)
-   Object.assign(m, { status: 'pending', detail: null, revision: newId() }); const s = m.scheduledId && c.data.scheduled.find(r => r.id === m.scheduledId); if (s) Object.assign(s, { status: 'sending', reason: null, revision: newId() })
+   const scheduled=m.scheduledId&&c.data.scheduled.find(r=>r.id===m.scheduledId)
+   if(scheduled){need(p.confirmNoDelivery==='yes','Check the provider history and confirm this attempt was not delivered before sending again',409);const reference=text(p.providerReference,'provider non-delivery evidence reference',300);m.status='discarded';m.detail='Provider non-delivery checked: '+reference;m.revision=newId();Object.assign(scheduled,{status:'scheduled',messageId:null,attemptedAt:undefined,reason:'Human verified no earlier delivery: '+reference,revision:newId()})}
+   else Object.assign(m, { status: 'pending', detail: null, revision: newId() })
    c.entityId = m.id; return m
   }
   if (name === 'message.compose') {

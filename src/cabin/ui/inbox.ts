@@ -1,3 +1,4 @@
+import { lifecyclePreference } from '../inbox/lifecycle-ui'
 import { h, heading, form, hidden, empty, propertyName } from './shared'
 import { chip, atHome } from './ops'
 import { channelName, span } from '../inventory'
@@ -25,7 +26,7 @@ function status(s: any, m: any, t: Thread) {
   const sched = m.scheduledId ? s.scheduled.find((r: any) => r.id === m.scheduledId) : null, late = sched ? lateMinutes(sched) : null
   const who = m.control?.automatic ? 'Automatic reply · property authority' : m.source === 'scheduled' ? (sched ? `Scheduled · ${RULE_NAMES[sched.rule as keyof typeof RULE_NAMES]}` : 'Direct booking · sent automatically') : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
   const state = m.status === 'sent' ? `Sent ${when}${sched ? (late !== null && late <= 5 ? ' · on time' : ` · ${late} min late`) : ''}` : m.status === 'suppressed' ? 'Not sent: development mode sends no email' : m.status === 'unavailable' ? `Not sent: ${(m.detail ?? '').split(/(?<=\.) /)[0]}` : m.status === 'failed' ? `Could not send: ${m.detail ?? ''}` : 'Sending…'
-  const retry = m.status === 'failed' ? form('message.retry', page(t), hidden('id', m.id), 'Send again', 'class="quiet inline"') : ''
+  const retry = m.status === 'failed' ? form('message.retry', page(t), hidden('id', m.id)+(sched?'<label>Provider non-delivery evidence reference<input name="providerReference" maxlength="300" required></label><label class="check"><input type="checkbox" name="confirmNoDelivery" value="yes" required> I verified the provider did not deliver this attempt</label>':''), 'Send again', 'class="quiet inline"') : ''
   return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(who)}</p><p class="state ${m.status === 'sent' ? 'ok' : m.status === 'failed' || m.status === 'unavailable' ? 'bad' : ''}">${h(state)}</p>${retry}`
 }
 function draft(s: any, t: Thread, m: any) {
@@ -37,7 +38,7 @@ function schedule(s: any, t: Thread) {
   const rows = [...t.scheduled].sort((a, b) => a.dueAt.localeCompare(b.dueAt)).map(r => {
     const b = t.stays.find(x => x.id === r.bookingId), late = lateMinutes(r)
     const state = r.status === 'scheduled' ? chip(`Due ${at(s, r.propertyId, dueFrom(r))}`, 'wait') : r.status === 'sent' ? chip(late !== null && late <= 5 ? 'Sent on time' : `Sent ${late} min late`, 'good') : r.status === 'sending' ? chip('Sending…', 'wait') : chip(r.status === 'cancelled' ? 'Cancelled' : r.status === 'skipped' ? 'Skipped' : r.status === 'suppressed' ? 'Not sent (development)' : 'Not sent', r.status === 'cancelled' || r.status === 'skipped' ? '' : 'bad')
-    return `<li><span><strong>${h(RULE_NAMES[r.rule as keyof typeof RULE_NAMES])}</strong> · ${b ? h(span(b)) : ''}</span>${state}${r.reason && ['cancelled', 'skipped', 'failed', 'scheduled'].includes(r.status) ? `<span class="muted">${h(r.reason)}</span>` : ''}</li>`
+    return `<li><span><strong>${h(RULE_NAMES[r.rule as keyof typeof RULE_NAMES])}</strong> · ${b ? h(span(b)) : ''}</span>${state}${r.reason && ['cancelled', 'skipped', 'failed', 'unavailable', 'scheduled'].includes(r.status) ? `<span class="muted">${h(r.reason)}</span>` : ''}</li>`
   }).join('')
   return rows ? `<section class="scheduled"><h3>Scheduled for ${t.stays.length > 1 ? 'these stays' : 'this stay'}</h3><ul>${rows}</ul></section>` : ''
 }
@@ -54,7 +55,7 @@ function conversation(s: any, t: Thread) {
   const lastIn = [...t.messages].reverse().find((m: any) => m.direction === 'in')
   const compose = form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="/app/inbox">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
-  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${schedule(s, t)}`
+  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
 }
 export function inbox(s: any, thread?: string | null) {
   const all = threads(s), open = all.find(t => t.id === thread) ?? (thread ? undefined : all[0])

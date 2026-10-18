@@ -1,20 +1,27 @@
 import { type Context, type InboxSettings, type ScheduleRule, type ScheduleSetting, need, text, integer, newId, manager } from '../model'
 // The inbox's settings: the address the owner routed to this install (guest
-// email lands there and guests' replies come back to it), the three lifecycle
+// email lands there and guests' replies come back to it), the lifecycle
 // messages each stay gets, and the install's own AI key for drafted replies.
-export const RULES: ScheduleRule[] = ['checkin', 'checkout', 'review']
-export const RULE_NAMES: Record<ScheduleRule, string> = { checkin: 'Check-in instructions', checkout: 'Checkout reminder', review: 'Review request' }
+export const RULES: ScheduleRule[] = ['confirmation', 'payment', 'signature', 'identity', 'checkin', 'arrival', 'checkout', 'review', 'repeat']
+export const RULE_NAMES: Record<ScheduleRule, string> = { confirmation: 'Booking confirmation', payment: 'Payment reminder', signature: 'Signature reminder', identity: 'Identity reminder', arrival: 'Arrival check', repeat: 'Repeat-stay follow-up', checkin: 'Check-in instructions', checkout: 'Checkout reminder', review: 'Review request' }
 /** checkin and checkout are sent `hours` before the home's check-in or check-out time; review `hours` after check-out. */
 export const DEFAULT_SCHEDULE: Record<ScheduleRule, ScheduleSetting> = {
+ confirmation: { enabled: false, hours: 0, subject: 'Your reservation at {home}', template: 'Hi {guest},\n\nYour reservation is recorded for {checkin} to {checkout}. Any outstanding payment, signature and identity steps still apply. Reply with questions.' },
+ payment: { enabled: false, hours: 1, subject: 'Payment due for {home}', template: 'Hi {guest},\n\nYour reservation still has an outstanding payment. {action_link}\n\nReply if you need help; do not email card details.' },
+ signature: { enabled: false, hours: 1, subject: 'Please sign your rental agreement', template: 'Hi {guest},\n\nPlease review and sign the current agreement for {home}: {action_link}' },
+ identity: { enabled: false, hours: 1, subject: 'Complete your identity check', template: 'Hi {guest},\n\nYour host requires an identity check for {home}. {action_link}\n\nDo not email identity documents.' },
+ arrival: { enabled: false, hours: 1, subject: 'Have you settled in at {home}?', template: 'Hi {guest},\n\nHave you arrived and settled in? Reply if anything needs our attention.' },
+ repeat: { enabled: false, hours: 168, subject: 'Visit {home} again', template: 'Hi {guest},\n\nWe would love to welcome you back to {home}. Reply if you would like to plan another stay.' },
  checkin: { enabled: true, hours: 24, subject: 'Check-in details for {home}', template: 'Hi {guest},\n\nWelcome to {home}. Check-in is {checkin}.\n\nAddress: {address}\nDoor code: {code}\n\nYour stay page has the code and directions: {stay_link}\n\nReply to this email with any questions.' },
  checkout: { enabled: true, hours: 14, subject: 'Checkout tomorrow at {home}', template: 'Hi {guest},\n\nA reminder that check-out from {home} is {checkout}. Please lock the door behind you; the code stops working then.\n\nThank you for staying with us.' },
  review: { enabled: true, hours: 4, subject: 'Thank you for staying at {home}', template: 'Hi {guest},\n\nThank you for staying at {home}. If you enjoyed it, a review on the site you booked through would mean a lot to us.\n\nIf anything could have been better, reply to this email and tell us.' },
 }
-export const PLACEHOLDERS = ['{guest}', '{home}', '{checkin}', '{checkout}', '{address}', '{code}', '{stay_link}']
-export const inboxSettings = (from: { data: { inbox: InboxSettings[] } } | { inbox: InboxSettings[] }): InboxSettings => ('data' in from ? from.data : from).inbox.find(r => r.id === 'inbox') ?? { id: 'inbox', revision: '', address: null, schedule: DEFAULT_SCHEDULE, ai: null, channelIds: {} }
+export const PLACEHOLDERS = ['{guest}', '{home}', '{checkin}', '{checkout}', '{address}', '{code}', '{stay_link}', '{action_link}']
+const rawSettings = (from: { data: { inbox: InboxSettings[] } } | { inbox: InboxSettings[] }): InboxSettings => ('data' in from ? from.data : from).inbox.find(r => r.id === 'inbox') ?? { id: 'inbox', revision: '', address: null, schedule: DEFAULT_SCHEDULE, ai: null, channelIds: {} }
+export function inboxSettings(from: Parameters<typeof rawSettings>[0]): InboxSettings { const row = rawSettings(from); return { ...row, schedule: { ...DEFAULT_SCHEDULE, ...row.schedule } } }
 /** The settings row to change, after checking the revision the person saw. */
 export function stored(c: Context, revision: unknown) {
- const old = c.data.inbox.find(r => r.id === 'inbox')
+ const old = c.data.inbox.find(r => r.id === 'inbox'); if (old) old.schedule = { ...DEFAULT_SCHEDULE, ...old.schedule }
  if (old) need(revision === old.revision, 'Inbox settings changed. Reload before saving.', 409)
  const row = old ?? { ...inboxSettings(c), schedule: structuredClone(DEFAULT_SCHEDULE) }
  if (!old) c.data.inbox.push(row)
@@ -41,7 +48,7 @@ export function settingsCommand(c: Context, name: string, p: Record<string, unkn
   manager(c.actor); const row = stored(c, p.revision)
   for (const rule of RULES) {
    const on = p[`${rule}Enabled`], hours = Number(p[`${rule}Hours`] ?? row.schedule[rule].hours)
-   row.schedule[rule] = { enabled: on === true || on === 'on' || on === 'true', hours: integer(hours, `${RULE_NAMES[rule]} hours`, 0, 720), subject: text(p[`${rule}Subject`] ?? row.schedule[rule].subject, `${RULE_NAMES[rule]} subject`, 200), template: text(p[`${rule}Template`] ?? row.schedule[rule].template, `${RULE_NAMES[rule]} message`, 4000) }
+   row.schedule[rule] = { enabled: on === true || on === 'on' || on === 'true', hours: integer(hours, `${RULE_NAMES[rule]} hours`, 0, 2160), subject: text(p[`${rule}Subject`] ?? row.schedule[rule].subject, `${RULE_NAMES[rule]} subject`, 200), template: text(p[`${rule}Template`] ?? row.schedule[rule].template, `${RULE_NAMES[rule]} message`, 4000) }
   }
   return row.schedule
  }
