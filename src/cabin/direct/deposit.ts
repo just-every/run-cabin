@@ -7,7 +7,7 @@ import { instant } from '../clock'
 import { stay,saveStay,DIRECT_SYSTEM } from './store'
 import { createDeposit,readPayment,readCheckout,releaseDeposit,createDepositCheckout } from './stripe'
 import type { DirectStay } from './types'
-export const paymentEnv=(env:Bindings,s:DirectStay)=>({...env,DIRECT_STRIPE_MODE:s.paymentMode??'test' as 'test'|'live'})
+export const paymentEnv=(env:Bindings,s:DirectStay)=>({...env,CABIN_PROVIDER_PROPERTY_ID:s.propertyId,DIRECT_STRIPE_MODE:s.paymentMode??'test' as 'test'|'live'})
 export const departure=(s:DirectStay)=>Date.parse(s.checkedOutAt??s.departureAt??s.end+'T23:59:59.999Z')
 const change=(env:Bindings,id:string,name:string,fn:(s:DirectStay)=>void)=>mutate(env.DB,DIRECT_SYSTEM,name,async c=>{const row=await stay(env.DB,id);fn(row);saveStay(c,row);return row})
 export async function depositSchedule(env:Bindings,s:DirectStay){

@@ -68,6 +68,7 @@ async function attachEvidence(env: Bindings, actor: Actor, conn: Connection, row
 
 /** The saved intent is immutable. Replays use its original body and deterministic key. */
 export async function sendPosting(env: Bindings, actor: Actor, conn: Connection, initial: BookPosting) {
+ conn={...conn,propertyId:initial.propertyId}
  let row = initial
  try {
   need(await sha(JSON.stringify({ date: row.date, memo: row.memo, lines: row.lines })) === row.payloadSha256, 'The saved journal payload changed. Reconcile this statement before proceeding.', 409)

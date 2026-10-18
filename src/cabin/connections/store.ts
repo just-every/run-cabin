@@ -2,6 +2,8 @@ import { restorationPaused } from './guard'
 import type { Bindings } from '../../auth.server'
 import { type Actor, owner, need, query, newId } from '../model'
 import { mutate } from '../storage'
+import { securitySummary, securityCommand } from './credentials'
+import { providerPolicy, ACTIONS } from './policy'
 
 export const PROVIDERS = [
  { id: 'calendars', name: 'Calendar providers', destination: 'The calendar hosts you connect below', purpose: 'Read reservations and closed nights', data: 'Calendar URL and request metadata. Cabin export links share unavailable dates with whoever you give the link to.', costs: 'Your channel agreement', source: 'https://www.airbnb.com/help/article/1857' },
@@ -17,10 +19,11 @@ export const PROVIDERS = [
 export async function sharingState(env: Bindings, actor: Actor) {
  if (actor.isAgent || !['owner', 'manager'].includes(actor.role)) return []
  const rows = (await env.DB.prepare('SELECT id,enabled,revision,changed_at AS changedAt FROM cb_provider_sharing').all<{ id: string; enabled: number; revision: string; changedAt: string }>()).results
- return PROVIDERS.map(p => ({ ...p, enabled: rows.find(r => r.id === p.id)?.enabled !== 0, revision: rows.find(r => r.id === p.id)?.revision ?? '', changedAt: rows.find(r => r.id === p.id)?.changedAt ?? null }))
+ return Promise.all(PROVIDERS.map(async p => ({ ...p, allowedActions:ACTIONS[p.id], security:await securitySummary(env,p.id), enabled: rows.find(r => r.id === p.id)?.enabled !== 0, revision: rows.find(r => r.id === p.id)?.revision ?? '', changedAt: rows.find(r => r.id === p.id)?.changedAt ?? null })))
 }
 export async function sharingCommand(env: Bindings, actor: Actor, input: Record<string, unknown>) {
  owner(actor)
+ if(input.operation)return securityCommand(env,actor,input)
  const id = String(input.id), enabled = input.enabled === true || input.enabled === 'true'
  need(PROVIDERS.some(p => p.id === id), 'Unknown provider')
  return mutate(env.DB, actor, 'provider.sharing', async c => {
@@ -28,6 +31,7 @@ export async function sharingCommand(env: Bindings, actor: Actor, input: Record<
   need((old?.revision ?? '') === input.revision, 'Sharing settings changed. Reload before saving.', 409)
   need(!enabled || !await restorationPaused(env.DB), 'Review the restored installation before reconnecting providers.', 409)
   need(!enabled || input.confirm === 'yes', 'Review the destination and data, then confirm reconnection.')
+  need(!enabled || !(await providerPolicy(env.DB,id)), 'Use the scoped authorization form to reconnect this provider.',409)
   const revision = newId()
   c.queries.push(query('INSERT INTO cb_provider_sharing(id,enabled,revision,changed_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,revision=excluded.revision,changed_at=excluded.changed_at', id, enabled ? 1 : 0, revision, c.now))
   c.audit = [{ kind: 'provider-sharing', id, revision, result: enabled ? 'reconnected' : 'disconnected' }]

@@ -14,7 +14,7 @@ export async function deliverTaxes(env:Bindings){
    row.status='sending';row.detail='Mail acceptance is uncertain until the provider returns a result. Check the provider before requesting another send.';saveDelivery(c,row,true);return {row,report,obligation}
   }).catch(()=>null)
   if(!claim)continue
-  const {row,report,obligation}=claim,sender=operatorMail(env)
+  const {row,report,obligation}=claim,sender=operatorMail(env,report.propertyId)
   let status:'sent'|'suppressed'|'failed'|'unavailable'='unavailable',detail:string|null='Configure a mail provider to deliver this reviewed tax packet.'
   if(sender&&env.MAIL_FROM)try{
    const body=`Reviewed ${report.month} lodging-tax obligation: ${obligation.jurisdiction.name}\nPartner: ${row.partner}\nPacket SHA-256: ${row.digest}\n\n${JSON.stringify(packet(report,obligation),null,2)}`

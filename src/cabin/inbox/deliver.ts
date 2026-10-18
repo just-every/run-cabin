@@ -1,3 +1,4 @@
+import { secureAccount } from '../connections/credentials'
 import { messageAccessBlocked } from '../agreements/access'
 import { accessBlocked } from '../agreements/records'
 import { automaticStillAllowed } from './reply-policy'
@@ -9,8 +10,8 @@ import { load, mutate } from '../storage'
 import { facts, fill, statement } from './render'
 import { inboxSettings } from './settings'
 import { INBOX_SYSTEM } from './inbound'
-import { smsAccount, sendSms, SMS_LINE, SMS_MANAGED } from './adapters/twilio'
-import { bookingAccount, sendBooking, CHANNEL_LINE } from './adapters/booking'
+import { sendSms, SMS_LINE, SMS_MANAGED } from './adapters/twilio'
+import { sendBooking, CHANNEL_LINE } from './adapters/booking'
 import { managedInstall } from '../channels'
 // Sends what is due, after every command and on the five-minute Cron: each
 // scheduled message whose time has come (claimed first, so two runs never send
@@ -21,19 +22,19 @@ const PER_RUN = 20
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 type Route = { channel: MessageChannel; email: string | null; phone: string | null } | { unavailable: string }
 /** How a stay's guest can be reached now: email first, then a text, then the channel's own messages. */
-export function route(env: Bindings, inbox: InboxSettings, b: Booking): Route {
+export async function route(env: Bindings, inbox: InboxSettings, b: Booking): Promise<Route> {
  if (b.guestEmail) return { channel: 'email', email: b.guestEmail, phone: null }
- if (b.guestPhone) return smsAccount(env) ? { channel: 'sms', email: null, phone: b.guestPhone } : { unavailable: managedInstall(env) ? SMS_MANAGED : `This guest has only a phone number. ${SMS_LINE}` }
- if (b.channel === 'booking.com' && b.channelRef && inbox.channelIds[b.propertyId] && bookingAccount(env)) return { channel: 'booking.com', email: null, phone: null }
+ if (b.guestPhone) return (!managedInstall(env)&&await secureAccount(env,'twilio')) ? { channel: 'sms', email: null, phone: b.guestPhone } : { unavailable: managedInstall(env) ? SMS_MANAGED : `This guest has only a phone number. ${SMS_LINE}` }
+ if (b.channel === 'booking.com' && b.channelRef && inbox.channelIds[b.propertyId] && !managedInstall(env)&&await secureAccount(env,'booking')) return { channel: 'booking.com', email: null, phone: null }
  return { unavailable: b.channel === 'direct' ? 'No email or phone on this stay: add the guest’s email to the stay and Cabin sends it.' : `No email on this stay. ${CHANNEL_LINE}` }
 }
 function claimDue(env: Bindings, id: string) {
- return mutate(env.DB, INBOX_SYSTEM, 'message.scheduled.claim', c => {
+ return mutate(env.DB, INBOX_SYSTEM, 'message.scheduled.claim', async c => {
   const row = c.data.scheduled.find(r => r.id === id), b = row && c.data.bookings.find(r => r.id === row.bookingId)
   if (!row || !b || row.status !== 'scheduled' || Date.parse(row.dueAt) > Date.now()) return null
   if(row.rule==='checkin'&&accessBlocked(c.data,b.id))return null
   if (Date.now() >= Date.parse(row.deadline)) { Object.assign(row, { status: 'skipped', reason: 'Its moment passed before Cabin could send it', revision: newId() }); return null }
-  const inbox = inboxSettings(c), set = inbox.schedule[row.rule], f = facts(c.data, env.AUTH_ORIGIN, b), r = route(env, inbox, b)
+  const inbox = inboxSettings(c), set = inbox.schedule[row.rule], f = facts(c.data, env.AUTH_ORIGIN, b), r = await route(env, inbox, b)
   const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b.propertyId, bookingId: b.id, email: 'unavailable' in r ? b.guestEmail ?? null : r.email, phone: 'unavailable' in r ? b.guestPhone ?? null : r.phone, ref: null, channel: 'unavailable' in r ? 'email' : r.channel, direction: 'out', source: 'scheduled', status: 'sending', subject: (row.updated ? 'Updated: ' : '') + fill(set.subject, f), text: (row.updated ? 'These details changed. This message replaces the earlier one.\n\n' : '') + fill(set.template, f), detail: null, replyTo: null, headerId: null, sentBy: null, approvalId: null, scheduledId: row.id, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
   c.data.messages.push(m); c.entityId = row.id; row.content = statement(c.data, b, set)
   if ('unavailable' in r) { Object.assign(m, { status: 'unavailable', detail: r.unavailable }); Object.assign(row, { status: 'unavailable', reason: r.unavailable, messageId: m.id, revision: newId() }); return null }
@@ -45,13 +46,13 @@ async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ s
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {
   if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Required agreement and identity tasks must be resolved before guest access instructions can be sent.',providerId:null}
-  if (m.channel === 'sms') { if (!smsAccount(env) || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; const r = await sendSms(env, m.phone, m.text); return { status: 'sent', detail: null, providerId: r.providerId } }
+  if (m.channel === 'sms') { if (managedInstall(env)||!await secureAccount(env,'twilio') || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; const r = await sendSms(env, m.phone, m.text,m.propertyId); return { status: 'sent', detail: null, providerId: r.providerId } }
   if (m.channel !== 'email') {
    const hotel = b ? inbox.channelIds[b.propertyId] : undefined
-   if (m.channel !== 'booking.com' || !bookingAccount(env) || !hotel || !b?.channelRef) return { status: 'unavailable', detail: CHANNEL_LINE, providerId: null }
-   const r = await sendBooking(env, hotel, b.channelRef, m.text); return { status: 'sent', detail: null, providerId: r.providerId }
+   if (m.channel !== 'booking.com' || managedInstall(env)||!await secureAccount(env,'booking') || !hotel || !b?.channelRef) return { status: 'unavailable', detail: CHANNEL_LINE, providerId: null }
+   const r = await sendBooking(env, hotel, b.channelRef, m.text,m.propertyId); return { status: 'sent', detail: null, providerId: r.providerId }
   }
-  const sender = operatorMail(env)
+  const sender = operatorMail(env,m.propertyId)
   if (!m.email) return { status: 'unavailable', detail: 'This guest has no email address yet.', providerId: null }
   if (!sender || !env.MAIL_FROM) return { status: 'unavailable', detail: 'No mail provider is set up for this install, so this message was not sent.', providerId: null }
   const asked = m.replyTo ? data.messages.find(r => r.id === m.replyTo)?.headerId : null

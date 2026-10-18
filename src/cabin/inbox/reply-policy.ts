@@ -5,15 +5,11 @@ import { homeSettings } from '../homes'
 import { wall } from '../clock'
 import { inboxSettings, stored, mailbox } from './settings'
 import { facts } from './render'
-import { homeReadiness } from '../readiness'
+import { replySources } from './reply-sources'
+export { replySources } from './reply-sources'
 
 export const replyPolicy = (data: Pick<Data, 'inbox'>, propertyId: string | null) => inboxSettings(data).replyPolicies?.find(p => p.propertyId === propertyId)
 /** Saved sources include live operational state; a changed source fences a waiting reply. */
-export function replySources(data: Data, origin: string, b: Booking) {
- const p = replyPolicy(data, b.propertyId), home = data.properties.find(p => p.id === b.propertyId)!
- const ready = homeReadiness(data, home, b.start.slice(0, 10))
- return { facts: facts(data, origin, b), instructions: p?.instructions ?? [], operations: { readiness: ready.state, reasons: ready.reasons, arrival: b.arrivalTime ?? homeSettings(data, b.propertyId).checkInTime }, policyRevision: p?.revision ?? '' }
-}
 export function policyCommand(c: Context, name: string, input: Record<string, unknown>) {
  if (name !== 'inbox.reply.policy') return undefined
  const home = property(c, input.propertyId), row = stored(c, input.revision)

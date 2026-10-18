@@ -40,7 +40,7 @@ async function fetchFeed(url: string): Promise<string> {
 export async function syncConnection(env: Bindings, actor: Actor, id: string) {
  const found = (await load(env.DB)).connections.find(r => r.id === id); need(found, 'Calendar link not found', 404)
  let body: string | null = null, error: string | null = null
- try { need(!found.restorePaused, 'Reconnect this restored calendar with a fresh link.', 409); await sharingAllowed(env.DB, 'calendars'); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
+ try { need(!found.restorePaused, 'Reconnect this restored calendar with a fresh link.', 409); await sharingAllowed(env.DB, 'calendars','calendar:read',found.propertyId); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
  return mutate(env.DB, actor, 'channel.sync', async c => {
   const row = c.data.connections.find(r => r.id === id); need(row, 'Calendar link not found', 404); property(c, row.propertyId)
   need(row.revision === found.revision, 'Calendar link changed while syncing. Sync the current link again.', 409)

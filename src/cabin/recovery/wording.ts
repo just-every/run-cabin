@@ -9,8 +9,8 @@ import { managedInstall } from '../channels'
 import { baseline, note } from './cases'
 
 /** The model supplies a courteous opening only. Approved promises are appended verbatim. */
-async function opening(db: D1Database, config: { key: string; model: string; workspace: string }) {
- await sharingAllowed(db, 'anthropic')
+async function opening(db: D1Database, config: { key: string; model: string; workspace: string },propertyId?:string|null) {
+ await sharingAllowed(db, 'anthropic','reply:draft',propertyId)
  const response = await fetch('https://api.anthropic.com/v1/messages', {
   method: 'POST', signal: AbortSignal.timeout(30_000), headers: { 'x-api-key': config.key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', ...(config.workspace ? { 'anthropic-workspace-id': config.workspace } : {}) },
   body: JSON.stringify({ model: config.model, max_tokens: 500, system: 'Write one warm, brief apology for inconvenience during a vacation-rental stay. Do not promise actions, money, timing, access, readiness or safety. Return JSON with opening only.', output_config: { format: { type: 'json_schema', schema: { type: 'object', additionalProperties: false, required: ['opening'], properties: { opening: { type: 'string' } } } } }, messages: [{ role: 'user', content: 'Write the courteous opening of a stay recovery update.' }] }),
@@ -27,7 +27,7 @@ export async function recoveryWording(env: Bindings, actor: Actor, name: string,
  const recovery=data.recoveries.find(r=>r.id===input.id),scope={kind:'recoveries',id:recovery?.id??null,propertyId:recovery?.propertyId??null,bookingId:recovery?.bookingId??null,revision:recovery?.revision??null,sourceVersion:data.version}
  await record(env.DB,actor,'recovery.ai.request',{...scope,result:'requested'})
  try {
-  const words = await opening(env.DB, config)
+  const words = await opening(env.DB, config,recovery?.propertyId)
   await record(env.DB,actor,'recovery.ai.result',{...scope,result:'draft'})
   if (name === 'recovery.ai.test') return { message: 'AI connection works. No stay is needed and nothing was sent to a guest.' }
   return mutate(env.DB, actor, name, c => {

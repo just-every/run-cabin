@@ -16,7 +16,7 @@ export async function deliverStatements(env:Bindings){
  for(const pending of (await load(env.DB)).deliveries.filter(d=>d.status==='pending').slice(0,20)){
   const claimed=await mutate(env.DB,SYSTEM,'statement.delivery.claim',c=>{const d=c.data.deliveries.find(r=>r.id===pending.id);if(!d||d.status!=='pending')return null;d.status='sending';return {delivery:{...d},statement:c.data.statements.find(s=>s.id===d.statementId)}}).catch(()=>null)
   if(!claimed?.statement)continue
-  const {delivery:d,statement:s}=claimed,sender=operatorMail(env)
+  const {delivery:d,statement:s}=claimed,sender=operatorMail(env,s.propertyId)
   let status:'sent'|'suppressed'|'failed'|'unavailable'='unavailable',detail:string|null='Configure a mail provider to deliver this statement.'
   if(sender&&env.MAIL_FROM){try{
    const link=new URL(`/owners?statement=${s.id}`,env.AUTH_ORIGIN).href

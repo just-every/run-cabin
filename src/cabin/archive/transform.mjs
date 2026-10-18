@@ -51,6 +51,7 @@ export function exportRow(table, row) {
  if (table !== 'cb_records') return row
  const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled'].includes(kind) ? redact(stripped) : stripped
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
+ if(kind==='messages'&&data.control)delete data.control.baseline
  if (kind === 'bookings') data.restorePaused = true
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
  if (kind === 'exports') data.token = ''

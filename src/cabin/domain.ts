@@ -1,3 +1,4 @@
+import { secureAccount } from './connections/credentials'
 import { paymentBalance } from './reservations/finance'
 import { lifecycleCommand } from './reservations/commands'
 import { allocationCommand } from './finance/allocation-commands'
@@ -24,9 +25,6 @@ import { calendarCommand } from './calendars'
 import { reservationCommand } from './inventory'
 import { exportCommand } from './ical-export'
 import { managedInstall } from './channels'
-import { lockAccount } from './locks'
-import { smsAccount } from './inbox/adapters/twilio'
-import { bookingAccount } from './inbox/adapters/booking'
 import { turnoverCommand } from './turnovers'
 import { homeCommand } from './homes'
 import { taskCommand } from './maintenance'
@@ -70,7 +68,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  data.verifications=verificationState(data,actor) as typeof data.verifications
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
  if(['owner','manager'].includes(actor.role)&&!actor.isAgent)for(const b of data.bookings)if(b.lifecycle?.price)(b as any).reservationBalance=await paymentBalance({db:env.DB,data},b)
- const state={...data,privacy:await privacyState(env.DB,actor),restore:await restoreState(env.DB,actor),sharing:await sharingState(env,actor),taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:lockAccount(env),messaging:{sms:smsAccount(env),booking:bookingAccount(env)},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ const state={...data,privacy:await privacyState(env.DB,actor),restore:await restoreState(env.DB,actor),sharing:await sharingState(env,actor),taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:!managedInstall(env)&&await secureAccount(env,'seam'),messaging:{sms:!managedInstall(env)&&await secureAccount(env,'twilio'),booking:!managedInstall(env)&&await secureAccount(env,'booking')},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
  await assertLive(env.DB,actor);return state
 }
 /** A completed turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */

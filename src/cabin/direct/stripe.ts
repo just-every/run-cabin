@@ -3,6 +3,7 @@ import { fail, integer, need } from '../model'
 import { savedKey,type StripeMode } from './provider-store'
 
 export interface StripeEnv {
+ CABIN_PROVIDER_PROPERTY_ID?:string
  DB?: D1Database
  SESSION_SECRET?: string
  DIRECT_STRIPE_MODE?: StripeMode
@@ -48,7 +49,9 @@ async function credentials(env:StripeEnv){
 export const stripe = (env: StripeEnv, path: string, method = 'GET', fields?: Record<string, string>, idempotencyKey?: string): Promise<any> => hostSide(() => call(env, path, method, fields, idempotencyKey))
 async function call(env: StripeEnv, path: string, method: string, fields?: Record<string, string>, idempotencyKey?: string): Promise<any> {
  need(!managedInstall(env), MANAGED_STRIPE_LINE, 409)
- await sharingAllowed(env.DB, 'stripe')
+ const action=(path.startsWith('/identity/')?'identity:':'payment:')+(method.toUpperCase()==='GET'?'read':'write')
+ let propertyId=env.CABIN_PROVIDER_PROPERTY_ID
+ if(!propertyId&&env.DB){const reference=fields?.['metadata[stayId]']??fields?.client_reference_id??path.split('/').find(part=>/^(cs_|pi_|vs_)/.test(part))??path.split('/').at(-1);const row=await env.DB.prepare("SELECT property_id FROM cb_direct_stays WHERE id=? OR json_extract(data,'$.checkoutId')=? OR json_extract(data,'$.paymentId')=? OR json_extract(data,'$.deposit.id')=? OR json_extract(data,'$.identity.id')=? LIMIT 1").bind(reference,reference,reference,reference,reference).first<{property_id:string}>();propertyId=row?.property_id;if(!propertyId){const v=await env.DB.prepare("SELECT property_id FROM cb_verifications WHERE id=? OR booking_id=? OR json_extract(data,'$.provider.id')=? LIMIT 1").bind(reference,fields?.['metadata[bookingId]']??reference,reference).first<{property_id:string}>();propertyId=v?.property_id}}
  const {key,mode}=await credentials(env)
  need(/^\/[a-z_]+(?:\/[A-Za-z0-9_]+)*$/.test(path), 'Invalid Stripe API path')
  const url = new URL(`https://api.stripe.com/v1${path}`), verb = method.toUpperCase()
@@ -58,6 +61,7 @@ async function call(env: StripeEnv, path: string, method: string, fields?: Recor
  else headers['Content-Type'] = 'application/x-www-form-urlencoded'
  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
  let response: Response
+ await sharingAllowed(env.DB, 'stripe',action,propertyId)
  try {
   response = await fetch(url, { method: verb, headers, body: verb === 'GET' ? undefined : form.toString(), redirect: 'manual', signal: AbortSignal.timeout(20_000) })
  } catch { return fail('Could not reach Stripe. Check the connection before trying again.', 502) }

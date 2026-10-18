@@ -35,7 +35,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     const direct = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Ana Ruiz', start: day(3), end: day(6) })
     const feed = stay => h.cmd('calendar.prepare', { propertyId: home.id, channel: 'airbnb', calendar: ics([stay]) }).then(d => h.cmd('calendar.approve', { id: d.id, revision: d.revision }))
     await feed({ uid: 'airbnb-fern-1', start: ymd(6), end: ymd(9), summary: 'Reserved - Kai Moana' })
-    let s = await h.state()
+    let s = await h.accessState()
     const ana = s.bookings.find(b => b.id === direct.bookingId), kai = s.bookings.find(b => b.uid === 'airbnb-fern-1')
     const live = b => s.turnovers.filter(t => t.bookingId === b.id && t.status !== 'cancelled')
     assert.equal(live(ana).length, 1); assert.equal(live(kai).length, 1)
@@ -52,7 +52,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     const assigned = sent.find(m => m.text.includes(taylorCode.code))
     assert.ok(assigned && assigned.text.includes(ADDRESS) && assigned.subject.includes('Fernwood Cabin'))
     assert.equal(s.notices.find(n => n.recordId === first.id).status, 'sent')
-    s = await h.state()
+    s = await h.accessState()
     assert.ok(s.codes.every(r => r.lock.state === 'set' && r.lock.providerId))
     assert.ok(lock.every(call => call.auth === 'Bearer seam_test_fixture'))
     const atHome = iso => new Date(iso).toLocaleString('sv-SE', { timeZone: 'America/New_York' }).slice(0, 16).replace(' ', 'T')
@@ -61,7 +61,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
 
     // Reassigning sends the job to Casey with fresh digits and tells Taylor.
     await h.cmd('turnover.assign', { id: first.id, revision: first.revision, cleanerId: casey.id })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     const caseyCode = s.codes.find(r => r.turnoverId === first.id && r.memberId === casey.id && r.status === 'issued')
     assert.equal(s.codes.find(r => r.id === taylorCode.id).status, 'revoked')
     assert.ok((await mail('casey@stay.example')).some(m => m.text.includes(caseyCode.code) && m.text.includes(ADDRESS)))
@@ -70,7 +70,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
 
     // Airbnb moves Kai's stay a day later: the turnover before it, its codes and Casey's email move with it.
     await feed({ uid: 'airbnb-fern-1', start: ymd(7), end: ymd(10), summary: 'Reserved - Kai Moana' })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     assert.equal(first.windowEnd, `${day(7)}T16:00`)
     assert.equal(s.codes.find(r => r.id === caseyCode.id).validUntil, caseyCode.validUntil) // Moving the next arrival never grants days of cleaner access.
     assert.equal(guestCode(kai).validFrom, `${day(7)}T16:00`)
@@ -78,16 +78,16 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(s.turnovers.filter(t => t.bookingId === kai.id && t.status !== 'cancelled').length, 1)
 
     // Casey sees only their own job and code: no guest codes or names.
-    const mine = await h.state(casey.cookie)
+    const mine = await h.accessState(casey.cookie)
     assert.deepEqual(mine.turnovers.map(t => t.id), [first.id]); assert.deepEqual(mine.codes.map(r => r.id), [caseyCode.id])
     assert.ok(mine.bookings.every(b => !b.guestName)); assert.equal(mine.homeSettings[0].address, ADDRESS)
 
     // Complete a stay that has actually checked out, using the home's local day.
     // Changing requirements after dispatch reaches the same unfinished job.
     const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/New_York' })
-    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.accessState()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
     await h.cmd('home.settings', { ...settings, revision: settings.revision, checkOutTime: '00:00', checklist: ['Beds made', 'Kitchen clean', 'Fresh towels'], photosRequired: 3 })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     assert.deepEqual(first.checklist, ['Beds made', 'Kitchen clean', 'Fresh towels'])
     assert.equal(first.photosRequired, 3)
     const cleaningCode = s.codes.find(r => r.id === caseyCode.id)
@@ -115,18 +115,18 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // Casey's job page confirms the report was saved and keeps it on the job.
     const reported = (await h.send('/app/turnovers?done=task.raise', undefined, casey.cookie)).text
     assert.match(reported, /role="status">Reported\./); assert.match(reported, /You reported[\s\S]*Patio light out/)
-    const fixed = await h.cmd('work.accept',{id:task.id,revision:(await h.state(dale.cookie)).tasks.find(t => t.id === task.id).revision},dale.cookie)
+    const fixed = await h.cmd('work.accept',{id:task.id,revision:(await h.accessState(dale.cookie)).tasks.find(t => t.id === task.id).revision},dale.cookie)
     await h.cmd('task.close', { id: fixed.id, revision: fixed.revision, checks:['Verify repair'], note: 'New bulb', photos: [{ photo, mimeType: 'image/png' }] }, dale.cookie)
     await attestArrival(h,kai.id)
     assert.match(await board(), /class="home-ready ready"/)
 
     // The guest's stay page shows their code; cancelling the stay cancels its turnover and code.
-    s = await h.state()
+    s = await h.accessState()
     const page = await h.send(`/stay/${guestCode(kai).link}`, undefined, '')
     assert.equal(page.status, 200); assert.ok(page.text.includes(guestCode(kai).code))
     const later = s.turnovers.find(t => t.bookingId === kai.id && t.status === 'approved')
     await feed({ uid: 'airbnb-fern-other', start: ymd(20), end: ymd(22), summary: 'Reserved' })
-    s = await h.state()
+    s = await h.accessState()
     assert.equal(s.turnovers.find(t => t.id === later.id).status, 'cancelled')
     assert.equal(guestCode(kai).status, 'revoked')
     assert.ok(!(await h.send(`/stay/${guestCode(kai).link}`, undefined, '')).text.includes(`>${guestCode(kai).code}<`))
@@ -135,14 +135,14 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // A newly booked arrival shortens a completed job's gap without losing valid
     // evidence. Moving the preceding stay then requires a fresh cleaning.
     const inserted = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Robin', start: day(2), end: day(3) })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     assert.equal(first.status, 'completed')
     assert.equal(first.nextBookingId, inserted.bookingId)
     assert.equal(first.windowEnd, `${day(2)}T16:00`)
     await attestArrival(h,inserted.bookingId)
     assert.match((await h.send(`/app/readiness?from=${day(2)}`, undefined, h.owner)).text, /class="home-ready ready"/)
-    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: day(1) })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.accessState()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: day(1) })
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     assert.equal(first.status, 'approved')
     assert.equal(first.completion, undefined)
     assert.equal(first.checkedOut, undefined)
@@ -151,8 +151,8 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     // Casey is told why. Once that stay has checked out, the reopened job is marked
     // ready again: the photos it already holds are reused, and only a new one is stored.
     assert.match((await h.send('/app/turnovers', undefined, casey.cookie)).text, /Reopened [^<]*<\/strong>: the stay before it changed/)
-    await h.cmd('reservation.move', { id: ana.id,revision:(await h.state()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
-    s = await h.state(); first = s.turnovers.find(t => t.id === first.id)
+    await h.cmd('reservation.move', { id: ana.id,revision:(await h.accessState()).bookings.find(row=>row.id===ana.id).revision, start: day(-2), end: today })
+    s = await h.accessState(); first = s.turnovers.find(t => t.id === first.id)
     const again = await h.cmd('turnover.complete', { ...ready, revision: first.revision, checks: first.checklist, photos: [...ready.photos, ready.photos[0]] }, casey.cookie)
     assert.equal(again.status, 'completed')
     assert.deepEqual(again.completion.photos.slice(0, 3).map(p => p.id), done.completion.photos.map(p => p.id))
@@ -175,22 +175,22 @@ test('departure and ready are refused until the preceding booking checks out in 
     const settings = await h.cmd('home.settings', { propertyId: home.id, address: ADDRESS, timeZone: zone, checkInTime: '23:59', checkOutTime: '23:59', cleanerId: cleaner.id, checklist: ['Ready for arrival'], photosRequired: 1 })
     const futureDay = n => new Date(Date.parse(today + 'T00:00:00Z') + n * 86_400_000).toISOString().slice(0, 10)
     const request = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Jo', start: futureDay(2), end: futureDay(3) })
-    let s = await h.state(), job = s.turnovers.find(t => t.bookingId === request.bookingId)
+    let s = await h.accessState(), job = s.turnovers.find(t => t.bookingId === request.bookingId)
     const complete = () => ({ id: job.id, revision: job.revision, checks: job.checklist, caption: 'Home ready', photos: [{ photo, mimeType: 'image/png' }] })
     // A valid checklist and photo cannot finish a stay that has not happened.
     await h.cmd('turnover.checkout', { id: job.id }, cleaner.cookie, 409)
     await h.cmd('turnover.complete', complete(), cleaner.cookie, 409)
-    await h.cmd('reservation.move', { id: request.bookingId,revision:(await h.state()).bookings.find(row=>row.id===request.bookingId).revision, start: yesterday, end: today })
-    s = await h.state(); job = s.turnovers.find(t => t.id === job.id)
+    await h.cmd('reservation.move', { id: request.bookingId,revision:(await h.accessState()).bookings.find(row=>row.id===request.bookingId).revision, start: yesterday, end: today })
+    s = await h.accessState(); job = s.turnovers.find(t => t.id === job.id)
     // Checkout day alone is insufficient: 23:59 at the home has not happened.
     await h.cmd('turnover.checkout', { id: job.id }, cleaner.cookie, 409)
     await h.cmd('turnover.checkout', { id: job.id }, h.owner, 409)
     await h.cmd('turnover.complete', complete(), cleaner.cookie, 409)
-    s = await h.state(); assert.equal(s.turnovers.find(t => t.id === job.id).checkedOut, undefined)
+    s = await h.accessState(); assert.equal(s.turnovers.find(t => t.id === job.id).checkedOut, undefined)
     assert.match((await h.send(`/app/readiness?from=${today}`, undefined, h.owner)).text, /class="home-ready not-ready"/)
     // The same public commands succeed once that home's scheduled checkout is past.
     await h.cmd('home.settings', { ...settings, checkOutTime: '00:00' })
-    s = await h.state(); job = s.turnovers.find(t => t.id === job.id)
+    s = await h.accessState(); job = s.turnovers.find(t => t.id === job.id)
     await h.cmd('turnover.checkout', { id: job.id }, cleaner.cookie)
     const done = await h.cmd('turnover.complete', complete(), cleaner.cookie)
     assert.equal(done.status, 'completed')

@@ -153,6 +153,12 @@
       "clauses": [
         "DATA-002"
       ]
+    },
+    {
+      "id": "provider-custody",
+      "clauses": [
+        "SECURITY-001"
+      ]
     }
   ],
   "nonGoals": [

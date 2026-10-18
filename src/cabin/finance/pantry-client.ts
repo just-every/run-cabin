@@ -4,7 +4,7 @@ import { need, text } from '../model'
 import { managedInstall } from '../channels'
 
 export type Account = { id: string; code: string; name: string; type: string; subtype: string; active: number; revision?: string }
-export type Connection = { origin: string; token: string }
+export type Connection = { propertyId?:string; origin: string; token: string }
 export const PANTRY_MANAGED = 'Pantry connections are not available yet on RER Managed hosting.'
 export function pantryAvailable(env: Bindings) { need(!managedInstall(env), PANTRY_MANAGED, 409) }
 
@@ -59,7 +59,7 @@ export class PantryError extends Error {
 /** Never expose a credential, upstream body or redirected URL in a failure. */
 export async function pantry<T>(env: Bindings, conn: Connection, path: string, body?: unknown, key?: string): Promise<T> {
  pantryAvailable(env)
- await sharingAllowed(env.DB, 'pantry')
+ await sharingAllowed(env.DB, 'pantry',body===undefined?'journal:read':'journal:write',conn.propertyId)
  let response: Response
  try {
   response = await fetch(conn.origin + '/api/pantry/integration/v1' + path, {

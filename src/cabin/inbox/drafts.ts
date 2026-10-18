@@ -26,7 +26,7 @@ export async function finishDrafts(env: Bindings) {
  const config = await aiKey(env, inboxSettings(data))
  for (const d of waiting) {
   const b = d.bookingId ? data.bookings.find(r => r.id === d.bookingId) ?? null : null, f = b ? facts(data, env.AUTH_ORIGIN, b) : null
-  const key = messageKey(data, d), history = data.messages.filter(m => m.id !== d.id && (m.direction === 'in' || m.status === 'sent') && messageKey(data, m) === key).sort((x, y) => (x.sentAt ?? x.createdAt).localeCompare(y.sentAt ?? y.createdAt)).map(m => ({ from: m.direction === 'in' ? 'guest' as const : 'host' as const, text: m.text }))
+  const key = messageKey(data, d), history = data.messages.filter(m => m.id !== d.id && (b?m.bookingId===b.id:m.bookingId===null) && (m.direction === 'in' || m.status === 'sent') && messageKey(data, m) === key).sort((x, y) => (x.sentAt ?? x.createdAt).localeCompare(y.sentAt ?? y.createdAt)).map(m => ({ from: m.direction === 'in' ? 'guest' as const : 'host' as const, text: m.text }))
   let result: { text: string; grounds: string[]; detail: string | null; source: GuestMessage['source']; classification?: { confidence: number; topic: 'checkin' | 'checkout' | 'instructions' | 'other'; needsHost: boolean; instructionId: string | null } }
   try {
    if (!config) throw new DraftError('The saved AI key cannot be used on this install.')

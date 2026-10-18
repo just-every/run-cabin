@@ -47,7 +47,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   need(!('refused' in outcome), 'refused' in outcome ? outcome.refused : '', 400)
   return outcome
  }
- return mutate(env.DB, who, name, c => {
+ return mutate(env.DB, who, name, async c => {
   const policy = policyCommand(c, name, p); if (policy !== undefined) return policy
   const arrival = arrivalCommand(c, name, p); if (arrival !== undefined) return arrival
   const settled = settingsCommand(c, name, p); if (settled !== undefined) return settled
@@ -72,7 +72,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
    const t = threads(c.data).find(r => r.id === text(p.thread, 'thread')); need(t, 'Thread not found', 404)
    const today = c.now.slice(0, 10), b = [...t.stays].reverse().find(s => s.status === 'confirmed' && s.end.slice(0, 10) >= today) ?? t.stays[t.stays.length - 1] ?? null
    const last = [...t.messages].reverse().find(m => m.direction === 'in')
-   const r = last && last.channel !== 'email' ? { channel: last.channel, email: null, phone: last.phone } : b ? route(env, inboxSettings(c), b) : t.email ? { channel: 'email' as const, email: t.email, phone: null } : { unavailable: 'Cabin has no way to reach this guest yet.' }
+   const r = last && last.channel !== 'email' ? { channel: last.channel, email: null, phone: last.phone } : b ? await route(env, inboxSettings(c), b) : t.email ? { channel: 'email' as const, email: t.email, phone: null } : { unavailable: 'Cabin has no way to reach this guest yet.' }
    need(!('unavailable' in r), 'unavailable' in r ? r.unavailable : '', 409)
    const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? last?.bookingId ?? null, email: r.email, phone: r.phone, ref: last?.ref ?? null, channel: r.channel, direction: 'out', source: 'host', status: 'pending', subject: optional(p.subject, 'subject', 200) || (last?.subject ? (/^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`) : 'About your stay'), text: text(p.text, 'message', 4000), detail: null, replyTo: last?.id ?? null, headerId: null, sentBy: who.id, approvalId: null, scheduledId: null, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
    c.data.messages.push(m); c.entityId = m.id; return m

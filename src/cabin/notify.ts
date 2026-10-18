@@ -11,10 +11,11 @@ const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;'
 export async function deliverNotices(env: Bindings) {
  const pending = (await load(env.DB)).notices.filter(n => n.status === 'pending').slice(0, PER_RUN)
  if (!pending.length) return []
- const sender = operatorMail(env), results = []
+ const results = []
  for (const { id } of pending) {
   const claimed = await mutate(env.DB, SYSTEM, 'notice.claim', c => { const n = c.data.notices.find(r => r.id === id); if (!n || n.status !== 'pending') return null; n.status = 'sending'; return { ...n } }, () => false).catch(() => null)
   if (!claimed) continue
+  const sender=operatorMail(env,claimed.propertyId)
   let status: 'sent' | 'suppressed' | 'unavailable' | 'failed', detail: string | null = null
   if (!sender || !env.MAIL_FROM) { status = 'unavailable'; detail = 'No mail provider is set up for this install, so this email was not sent. The job is in Cabin.' }
   else {
@@ -24,7 +25,7 @@ export async function deliverNotices(env: Bindings) {
     status = result?.status === 'accepted' ? 'sent' : result?.status === 'development' ? 'suppressed' : 'failed'
     if (status === 'suppressed') detail = 'Development mode does not send email; a hosted install sends it.'
     if (status === 'failed') detail = 'The mail provider did not accept this email.'
-   } catch (error) { status = 'failed'; detail = `The mail provider refused this email: ${(error as Error)?.message || 'unknown error'}` }
+   } catch (error) { status = 'failed'; detail = 'The mail provider refused this email. Check its delivery history before sending again.' }
   }
   await record(env.DB,SYSTEM,'notice.provider.result',{kind:'notices',id:claimed.id,propertyId:claimed.propertyId,revision:claimed.revision,result:status==='failed'?'failed-or-uncertain':status})
   results.push(await mutate(env.DB, SYSTEM, `notice.${status}`, c => { const n = c.data.notices.find(r => r.id === id); if (!n) return null; Object.assign(n, { status, detail, sentAt: c.now }); c.entityId = n.id; return n }))

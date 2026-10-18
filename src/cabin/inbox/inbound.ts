@@ -1,3 +1,6 @@
+import { secureAccount } from '../connections/credentials'
+import { sharingAllowed } from '../connections/guard'
+import { managedInstall } from '../channels'
 import type { Bindings } from '../../auth.server'
 // @ts-expect-error Base's inbound MIME parser ships without type declarations.
 import { parseMime } from '../../modules/mail/src/inbound/mime.mjs'
@@ -12,7 +15,7 @@ import { deliverGuestMessages } from './deliver'
 import { escalateReplies } from './reply-policy'
 import { deliverNotices } from '../notify'
 import { aiKey } from './ai'
-import { bookingAccount, latestBooking } from './adapters/booking'
+import { latestBooking } from './adapters/booking'
 // Guest messages arriving: email routed to the inbox address (the Worker's
 // email handler, through Cloudflare Email Routing on the owner's domain), texts
 // from Twilio's webhook and Booking.com's message queue. Each lands in its
@@ -31,10 +34,11 @@ export function freshText(text: string) {
 export interface Incoming { channel: MessageChannel; email?: string | null; phone?: string | null; ref?: string | null; subject: string; text: string; headerId?: string | null; providerId?: string | null }
 export async function receiveGuest(env: Bindings, m: Incoming) {
  const ai = !!(await aiKey(env, inboxSettings(await load(env.DB))))
- const row = await mutate(env.DB, INBOX_SYSTEM, 'message.received', c => {
+ const row = await mutate(env.DB, INBOX_SYSTEM, 'message.received', async c => {
   const seen = c.data.messages.find(r => r.direction === 'in' && ((m.providerId && r.providerId === m.providerId) || (m.headerId && r.headerId === m.headerId)))
   if (seen) return seen
   const b = m.ref ? c.data.bookings.find(r => r.channel === m.channel && r.channelRef === m.ref) ?? null : stayFor(c.data, { email: m.email, phone: m.phone })
+  if(m.channel==='sms'||m.channel==='booking.com')await sharingAllowed(c.db,m.channel==='sms'?'twilio':'booking','message:receive',b?.propertyId)
   const row: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? null, email: m.email ?? b?.guestEmail ?? null, phone: m.phone ?? null, ref: b ? null : m.ref ?? null, channel: m.channel, direction: 'in', source: 'guest', status: 'received', subject: m.subject.slice(0, 300), text: m.text, detail: null, replyTo: null, headerId: m.headerId ?? null, sentBy: null, approvalId: null, scheduledId: null, providerId: m.providerId ?? null, grounds: [], createdAt: c.now, sentAt: null }
   c.data.messages.push(row); startDraft(c, env.AUTH_ORIGIN, row, ai, env.OWNER_EMAIL ?? ''); c.entityId = row.id; return row
  })
@@ -68,6 +72,6 @@ export async function emailHandler(message: ForwardableEmailMessage, env: Bindin
 }
 /** Booking.com's queue, on the Cron, once its machine account is connected. */
 export async function pollChannels(env: Bindings) {
- if (!bookingAccount(env)) return
+ if(managedInstall(env)||!await secureAccount(env,'booking'))return
  for (const m of await latestBooking(env)) await receiveGuest(env, { channel: 'booking.com', ref: m.reservationId, subject: 'Booking.com message', text: m.text, providerId: `booking:${m.id}` })
 }

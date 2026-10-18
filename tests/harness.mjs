@@ -39,6 +39,9 @@ export async function harness(options = {}) {
       return r.value.result ?? r.value
     }
     const state = async (cookie = owner, status = 200) => { const r = await send('/api/cabin/state', undefined, cookie); assert.equal(r.status, status, JSON.stringify(r.value)); return r.value }
+    const access = async (cookie=owner,status=200) => {const r=await send('/api/cabin/access',undefined,cookie);assert.equal(r.status,status,JSON.stringify(r.value));return r.value}
+    // A human opens the explicit access door in addition to the ordinary state view.
+    const accessState=async(cookie=owner,status=200)=>{const data=await state(cookie,status);if(status!==200)return data;const details=await access(cookie);data.codes=details.codes;data.exports=details.exports;data.connections=details.connections;data.rentalAgreements=data.rentalAgreements.map(a=>({...a,token:details.agreements.find(r=>r.id===a.id)?.token}));data.messages=data.messages.map(m=>details.messages.find(r=>r.id===m.id)??m);return data}
     const confirmMail = async email => {
       const rows = (await db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence DESC').all()).results
       const message = rows.map(r => JSON.parse(r.message)).find(m => m.to.includes(email))
@@ -53,7 +56,7 @@ export async function harness(options = {}) {
       return { ...staff, cookie: await confirmMail(email) }
     }
     const signIn = async email => { const response = await send('/auth/magic-link', {email}); assert.equal(response.status,202,response.text); return confirmMail(email) }
-    return { db, mf, origin, owner, auth, send, cmd, state, person, signIn, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
+    return { db, mf, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
   } catch (error) { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }); throw error }
 }
 

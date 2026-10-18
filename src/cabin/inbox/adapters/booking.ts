@@ -1,4 +1,4 @@
-import { sharingAllowed } from '../../connections/guard'
+import { providerCredentials } from '../../connections/credentials'
 import type { Bindings } from '../../../auth.server'
 import { managedInstall } from '../../channels'
 // Booking.com guest messages through its Connectivity Messaging API, for a
@@ -9,22 +9,21 @@ import { managedInstall } from '../../channels'
 // documented shape (tests/fixtures/booking).
 export const CHANNEL_LINE = 'Airbnb, Vrbo and Booking.com messages connect later, with the owner’s channel partner accounts. Until then those guests’ messages stay in each channel’s own app; a guest with an email on their stay is emailed from here.'
 const BASE = 'https://supply-xml.booking.com/messaging'
-export const bookingAccount = (env: Bindings) => !!(env.BOOKING_MESSAGING_USER && env.BOOKING_MESSAGING_PASSWORD) && !managedInstall(env)
-async function call(env: Bindings, method: string, path: string, body?: unknown) {
- await sharingAllowed(env.DB, 'booking')
- const response = await fetch(BASE + path, { method, headers: { authorization: `Basic ${btoa(`${env.BOOKING_MESSAGING_USER}:${env.BOOKING_MESSAGING_PASSWORD}`)}`, accept: 'application/json', 'accept-version': '1.2', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20_000) })
+async function call(env: Bindings, method: string, path: string, body?: unknown, propertyId?:string|null,action='message:receive') {
+ const credentials=await providerCredentials(env,'booking',action,propertyId)
+ const response = await fetch(BASE + path, { method, redirect:'manual', headers: { authorization: `Basic ${btoa(`${credentials.BOOKING_MESSAGING_USER}:${credentials.BOOKING_MESSAGING_PASSWORD}`)}`, accept: 'application/json', 'accept-version': '1.2', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20_000) })
  let value: any = null; try { value = await response.json() } catch { /* the status explains it */ }
  const error = value?.errors?.[0]
- if (!response.ok || error) throw Error(`Booking.com refused the request: ${String(error?.message ?? response.status).slice(0, 200)}`)
+ if (!response.ok || error) throw Error(`Booking.com refused the request (HTTP ${response.status}). Check its message history.`)
  return value?.data ?? {}
 }
 const segment = (v: string) => { if (!/^[\w-]{1,64}$/.test(v)) throw Error('Invalid Booking.com id'); return v }
 /** Sends into the reservation's conversation: look it up by reservation number, then post. */
-export async function sendBooking(env: Bindings, hotelId: string, reservationId: string, text: string) {
- const found = await call(env, 'GET', `/properties/${segment(hotelId)}/conversations/type/reservation?conversation_reference=${encodeURIComponent(reservationId)}`)
+export async function sendBooking(env: Bindings, hotelId: string, reservationId: string, text: string,propertyId?:string|null) {
+ const found = await call(env, 'GET', `/properties/${segment(hotelId)}/conversations/type/reservation?conversation_reference=${encodeURIComponent(reservationId)}`,undefined,propertyId,'message:send')
  const conversation = found?.conversation?.conversation_id
  if (typeof conversation !== 'string') throw Error('Booking.com has no conversation for this reservation')
- const sent = await call(env, 'POST', `/properties/${segment(hotelId)}/conversations/${segment(conversation)}`, { message: { content: text.slice(0, 5000) } })
+ const sent = await call(env, 'POST', `/properties/${segment(hotelId)}/conversations/${segment(conversation)}`, { message: { content: text.slice(0, 5000) } },propertyId,'message:send')
  if (typeof sent?.message_id !== 'string') throw Error('Booking.com did not return a message id')
  return { providerId: sent.message_id as string }
 }
