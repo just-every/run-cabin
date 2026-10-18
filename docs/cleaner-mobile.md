@@ -1,0 +1,9 @@
+# Cleaner work during connection loss
+
+Open Turnovers while signed in as the assigned cleaner. Accept an offered job, check the current window, directions and entry instructions, then tick the checklist and add notes and photos. Report a problem from the same job.
+
+Checklist selections, notes and reduced photos are saved in this browser’s private, same-origin IndexedDB under the signed-in person and job. Drafts survive losing connectivity and reopening the page after reconnecting. The app does not cache guest details, entry codes or server pages for offline access. Device drafts expire on the next opening after seven days; Delete device draft removes one immediately, and Sign out removes all device drafts. Use your own device.
+
+Reconnect and send explicitly. Cabin reads the current authorized assignment and booking revision before uploading anything. Changed work keeps its draft and opens Review current job; inspect the new window and checklist, then choose Use draft for current job. New checklist items must be checked, and current photo requirements still apply. Reassigned or revoked work cannot upload. Successful completion or reporting deletes that form’s draft. The server independently checks current authority, exact completion revision, checklist, image structure and checkout time.
+
+`tests/cleaner-mobile.test.mjs` drives the real app and assets in Chromium: offline checklist/photos and issue, booking and checklist edits, retained draft, blocked stale send, explicit review, completion, issue reporting, offer acceptance and another cleaner’s restricted view. Screens at 1440 and 390 are generated under ignored `test-results/cleaner-mobile/`. Existing `tests/turnovers.test.mjs` covers malformed images, missing checks, unauthorized or duplicate completion and private retrieval.

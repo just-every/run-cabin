@@ -393,7 +393,7 @@
       "source": "editions/cabin/.gitignore"
     },
     "ACCEPTANCE.md": {
-      "sha256": "3bc373df1bad4b9a8504993a2c4cd675b0a102dd365db16c1f5ee698b971121e",
+      "sha256": "818c82b41d7b0560760c3e9197b69b3298b57c304b8a064b3293a4f908fbe696",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -407,7 +407,7 @@
       "source": "editions/cabin/AGENTS.md"
     },
     "CONTRACT.md": {
-      "sha256": "bddf0b6feed12ce1376b20c25af0c1360c7fd76315bf8900a81a3da6b97b28ba",
+      "sha256": "b5fc4c19bb97b3247e94b180ff1158c767fbeb739f15979ba733e7ed62df2a1f",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -631,7 +631,7 @@
       "source": "editions/cabin/scripts/installer/ui/seed.mjs"
     },
     "seed.json": {
-      "sha256": "a85301ebdd42755f7fa5175c2812461b6aaef9253f2da1ac5479eb93a43b5e43",
+      "sha256": "948a744abba8036224d46bee1cd7c01ab9763066f8e335ab8a7ac7f4a50d066b",
       "mode": 420,
       "component": "cabin",
       "repository": "family",
@@ -736,7 +736,7 @@
       "source": "editions/cabin/tsconfig.json"
     },
     "verification.json": {
-      "sha256": "166288a4d96520379ae6be6f3cabc7e86f4f86add2785711c5c13bad983fd090",
+      "sha256": "e20b86567b03b2dea65dc44909be2be12fea8baa79eda8ccfd49c1aee2178f48",
       "mode": 420,
       "component": "cabin",
       "repository": "family",

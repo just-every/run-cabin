@@ -47,3 +47,9 @@
 .cabin .link-row{padding:16px 0;border-top:1px solid var(--line);margin-top:12px}
 .cabin .link-row details{margin:12px 0}
 .cabin .link-row .actions{margin-top:12px}
+
+.cabin .local-draft{padding:12px;border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--wash)}
+.cabin .local-draft p{margin:0 0 8px;font-size:14px}.cabin .local-draft button{margin:4px 8px 4px 0}
+.cabin .local-draft [hidden]{display:none}
+
+.cabin .job.mine,.cabin .job.mine form,.cabin .local-draft{min-width:0;max-width:100%}.cabin .job.mine input{min-width:0;max-width:100%}.cabin .local-draft button{max-width:100%;white-space:normal}

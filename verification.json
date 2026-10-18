@@ -41,6 +41,14 @@
       ]
     },
     {
+      "name": "cleaner-mobile",
+      "browser": true,
+      "hosted": false,
+      "commands": [
+        "node --test --test-concurrency=1 tests/cleaner-mobile.test.mjs"
+      ]
+    },
+    {
       "name": "runtime",
       "browser": true,
       "hosted": true,

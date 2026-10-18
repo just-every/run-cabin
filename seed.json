@@ -39,7 +39,8 @@
     {
       "id": "cleaner-completion",
       "clauses": [
-        "CABIN-05"
+        "CABIN-05",
+        "OPS-002"
       ]
     },
     {

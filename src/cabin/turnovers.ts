@@ -52,6 +52,7 @@ export async function turnoverCommand(c:Context,name:string,p:Record<string,unkn
   need(c.actor.role==='cleaner','Only the assigned cleaner can complete a turnover',403)
   const row=c.data.turnovers.find(t=>t.id===text(p.id,'turnover ID'));need(row&&row.cleanerId===c.actor.memberId,'Turnover not found',404);exact(row,p.revision)
   need(row.status==='approved','Only an approved turnover can be completed once',409)
+  if(p.bookingRevision!==undefined)need(p.bookingRevision===row.bookingRevision,'Booking changed. Review the current job before uploading.',409)
   need(!row.dispatch || row.dispatch.acceptedBy === c.actor.memberId, 'Accept the current turnover offer before completing this job', 409)
   afterCheckout(c,row)
   const checks=checklist(p.checks);need(checks.length===row.checklist.length&&row.checklist.every(item=>checks.includes(item)),'Complete every item from the approved checklist')

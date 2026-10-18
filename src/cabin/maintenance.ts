@@ -17,6 +17,8 @@ export async function taskCommand(c: Context, name: string, p: Record<string, un
   let propertyId: string, turnoverId: string | null = null
   if (c.actor.role === 'cleaner') {
    const t = c.data.turnovers.find(r => r.id === text(p.turnoverId, 'turnover ID')); need(t && t.cleanerId === c.actor.memberId && (t.status === 'approved' || t.status === 'completed'), 'Turnover not found', 404)
+   if (p.turnoverRevision !== undefined) exact(t, p.turnoverRevision)
+   if (p.bookingRevision !== undefined) need(p.bookingRevision === t.bookingRevision, 'Booking changed. Review the current job before uploading.', 409)
    propertyId = t.propertyId; turnoverId = t.id
   } else {
    manager(c.actor)

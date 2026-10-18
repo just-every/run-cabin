@@ -151,7 +151,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **EVIDENCE-001 — Private immutable cleaner completion evidence · done.** Complete a job through the cleaner command/photo doors; reject missing checks, malformed images, another cleaner and a duplicate completion, then retrieve the original photo only with an authorized session.
   Current evidence: `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs:67`.
 
-- **OPS-002 — Cleaner mobile work with reliable uploads · partial.** On a phone accept an assigned job, capture required checklist photos and an issue, lose connectivity, then reconnect after a booking edit; retain the draft, request review of stale work and complete only the current approved task.
+- **OPS-002 — Cleaner mobile work with reliable uploads · done.** On a phone accept an assigned job, capture required checklist photos and an issue, lose connectivity, then reconnect after a booking edit; retain the draft, request review of stale work and complete only the current approved task.
   Current evidence: `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `public/cabin.css`; `tests/cabin.test.mjs:67`. Remaining: Online checklist/caption and one private photo exist; native/offline capture, multiple required photos and acceptance are missing.
 
 - **OPS-003 — Readiness is verified before arrival · partial.** Open an arrival with completed cleaning but failed lock and maintenance checks and a failed restock item; verify it stays unready, resolve the tasks and restock and attest the item, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
