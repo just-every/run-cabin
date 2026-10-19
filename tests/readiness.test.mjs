@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { harness } from './harness.mjs'
 import { attestArrival } from './readiness-helpers.mjs'
-const day = n => new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+// Days count from the home's own calendar: dispatch starts a turnover for a stay that checks out today there.
+const day = n => { const d = new Date(new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date())+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10) }
 const unescape = v => v.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
 async function input(h,bookingId,item) {
  const b=(await h.state()).bookings.find(b=>b.id===bookingId)
@@ -23,7 +24,7 @@ test('OPS-003: arrival stays unready until physical supplies, access, maintenanc
   const arrival=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',start:day(1),end:day(4)})
   let t=await h.cmd('turnover.prepare',{bookingId:prev.bookingId,cleanerId:cleaner.id,dueDate:day(1),checklist:['Ready']})
   await h.cmd('turnover.approve',{id:t.id,revision:t.revision})
-  t=(await h.state()).turnovers.find(t=>t.bookingId===prev.bookingId)
+  t=(await h.state()).turnovers.find(row=>row.id===t.id)
   await h.cmd('turnover.complete',{id:t.id,revision:t.revision,checks:['Ready'],caption:'Cleaned',photos:[{photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png'}]},cleaner.cookie)
   const task=await h.cmd('task.raise',{propertyId:home.id,title:'Entry latch jammed',blocking:true})
   const attest=async(item,status,note,cookie=h.owner,extra={})=>h.cmd('readiness.attest',{...await input(h,arrival.bookingId,item),status,note,...extra},cookie)

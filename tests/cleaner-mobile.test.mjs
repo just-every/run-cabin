@@ -11,7 +11,8 @@ test('OPS-002: offline cleaner photos and issue survive a changed job and requir
     const cleaner = await h.person('Ana'), other = await h.person('Luis')
     const home = await h.cmd('property.save',{name:'Lake Loft',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:2000})
     let settings = await h.cmd('home.settings',{propertyId:home.id,address:'20 Lake Street, Ithaca, NY',timeZone:'America/New_York',checkOutTime:'00:00',checkInTime:'16:00',cleanerId:cleaner.id,checklist:['Beds made','Kitchen clean'],photosRequired:2})
-    const date = n => new Date(Date.now()+n*86400_000).toISOString().slice(0,10)
+    // Days count from the home's own calendar, so today's 00:00 check-out has always passed there.
+    const date = n => { const d = new Date(new Intl.DateTimeFormat('en-CA',{timeZone:settings.timeZone}).format(new Date())+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10) }
     const reservation = await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',guestName:'Megan Ortiz',start:date(-3),end:date(0)})
     const job = (await h.state()).turnovers.find(t=>t.bookingId===reservation.bookingId)
     const context = await browser.newContext({viewport:{width:390,height:844}})
