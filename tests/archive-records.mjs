@@ -1,5 +1,6 @@
+import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 export async function archiveEdge(request) {
  const u=new URL(request.url)
  if(u.hostname==='calendar.stay.example')return new Response('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n')

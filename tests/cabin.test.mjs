@@ -1,3 +1,4 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -138,7 +139,7 @@ test('property-register move-in previews inertly, records the journal and guards
   assert.equal((await h.state()).properties.find(r=>r.id===p.id).name,'Native correction')
 }))
 
-const day = n => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10), ymd = n => day(n).replace(/-/g, '')
+const day = n => homeDay(n, 'America/New_York'), ymd = n => day(n).replace(/-/g, '')
 const nightsIn = text => [...text.matchAll(/DTSTART;VALUE=DATE:(\d{8})\r\nDTEND;VALUE=DATE:(\d{8})/g)].map(m => `${m[1]}-${m[2]}`)
 
 test('a night booked on any channel closes on every other channel through scheduled iCal sync and export links', async () => {

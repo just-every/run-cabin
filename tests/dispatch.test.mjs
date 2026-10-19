@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { harness } from './harness.mjs'
 
-const day = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10)
+const day = n => homeDay(n, 'America/New_York')
 const live = (s, bookingId) => s.turnovers.find(t => t.bookingId === bookingId && !['draft', 'cancelled'].includes(t.status))
 const pending = t => t.dispatch.offers.filter(o => o.generation === t.dispatch.generation && o.status === 'pending')
 const capacity = (h, m, values = {}) => h.cmd('cleaner.capacity', { memberId: m.id, homeBase: '100 Main Street, Boone, NC 28607', timeZone: 'America/New_York', availableFrom: '06:00', dailyJobs: 4, dailyMinutes: 600, ...values })

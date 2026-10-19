@@ -1,7 +1,8 @@
+import { homeDay } from './home-calendar.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { harness } from './harness.mjs'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 const rules=['confirmation','payment','signature','identity','checkin','arrival','checkout','review','repeat']
 const state=h=>h.accessState()
 const mail=async(h,email)=>(await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r=>JSON.parse(r.message)).filter(m=>m.to.includes(email))
@@ -49,6 +50,7 @@ test('MESSAGE-003: per-home event templates, required-task reminders, secret rel
  }finally{await h.close()}
 })
 test('MESSAGE-003: local quiet hours, restart-due submission, late visibility, cancellation and explicit channel failures',async()=>{
+ const day = n => homeDay(n, 'America/Phoenix')
  const h=await harness()
  try{
   const p=await home(h,'Desert Casita','America/Phoenix')

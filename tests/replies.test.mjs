@@ -1,9 +1,10 @@
+import { homeDay } from './home-calendar.mjs'
 import { attestArrival } from './readiness-helpers.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { harness } from './harness.mjs'
-const day = n => new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day = n => homeDay(n, 'America/New_York')
 const mime = (id, question) => `From: Guest <guest@stay.example>\r\nTo: guests@stay.example\r\nSubject: Arrival\r\nMessage-ID: <${id}@stay.example>\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${question}`
 
 test('MESSAGE-004: narrow property authority, sourced drafts, escalation and exact human sending', async () => {
@@ -60,6 +61,7 @@ test('MESSAGE-004: narrow property authority, sourced drafts, escalation and exa
 })
 
 test('MESSAGE-004 OPS-005: human early-arrival approval follows readiness and changes guest/cleaner access once',async()=>{
+ const day = n => homeDay(n, 'Pacific/Honolulu')
  const h=await harness()
  try{
   const home=await h.cmd('property.save',{name:'Ready Lake Loft',ownerName:'Karen',ownerEmail:'karen@stay.example',commissionBps:2000})

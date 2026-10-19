@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {harness} from './harness.mjs'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 const guestFor=(state,bookingId)=>state.guests.find(g=>g.bookingId===bookingId)
 async function profileCommand(h,name,bookingId,input){const g=guestFor(await h.state(),bookingId);return h.cmd(name,{id:g.id,revision:g.revision,...input})}
 async function property(h,name='Pine Cabin'){return h.cmd('property.save',{name,ownerName:'Morgan',ownerEmail:'morgan@stay.example',commissionBps:2000})}

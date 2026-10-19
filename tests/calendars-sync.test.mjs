@@ -1,7 +1,8 @@
+import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { harness } from './harness.mjs'
-const day = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10)
+const day = n => homeDay(n, 'America/New_York')
 const feed = (start, end) => `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:shared-id\r\nDTSTART;VALUE=DATE:${start.replaceAll('-', '')}\r\nDTEND;VALUE=DATE:${end.replaceAll('-', '')}\r\nSUMMARY:Reserved - Private guest\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`
 
 test('SYNC-009: independent external calendars retain blocks through failure, assign exceptions and recover on Cron', async () => {

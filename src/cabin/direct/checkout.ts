@@ -12,7 +12,7 @@ import { offeredRate,redeemOffer } from '../guests/offers'
 import { createCheckout,stripeCredentials,MANAGED_STRIPE_LINE } from './stripe'
 import { seal } from '../seal'
 import { homeSettings } from '../homes'
-import { instant } from '../clock'
+import { instant,localDay } from '../clock'
 import type { DirectStay } from './types'
 import { policyFor,riskReasons } from '../verification/policy'
 import { createVerification,saveVerification } from '../verification/records'
@@ -23,7 +23,7 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
  const row=await mutate(env.DB,DIRECT_SYSTEM,'direct.checkout',async c=>{
   const home=(await homes(env.DB)).find(h=>h.enabled&&h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
-  const price=quote(home,c.data.bookings,input,undefined,offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
+  const price=quote(home,c.data.bookings,input,localDay(Date.now(),homeSettings(c,home.propertyId).timeZone),offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
   await applyBookingCoupon(c.db,c.data,home,price,input)
   need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate')
   const owner=await c.db.prepare("SELECT id,email FROM oa_operators WHERE status='active' AND role='owner' LIMIT 1").first<{id:string;email:string}>();need(owner,'Installation owner unavailable',409)

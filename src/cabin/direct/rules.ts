@@ -13,7 +13,7 @@ export function configure(p:Record<string,unknown>, propertyId:string):DirectHom
 export function day(value:unknown):string {
  const v=text(value,'date',10);need(/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v,'Use a valid date as YYYY-MM-DD');return v
 }
-export function quote(home:DirectHome,bookings:Booking[],input:Record<string,unknown>,today=new Date().toISOString().slice(0,10),offer?:GuestOffer):Quote {
+export function quote(home:DirectHome,bookings:Booking[],input:Record<string,unknown>,today:string,offer?:GuestOffer):Quote {
  need(home.cancellationPolicy,'The host must review and save the cancellation policy before accepting new reservations.',409)
  const start=day(input.start),end=day(input.end),guests=integer(Number(input.guests),'Guest count',1,home.maxGuests),nights=(Date.parse(end)-Date.parse(start))/86_400_000
  need(start>=today,'Arrival cannot be in the past');need(start<=addDays(today,730),'Choose an arrival within two years');need(end>start,'Checkout must follow arrival');need(nights>=home.minNights,`This home requires at least ${home.minNights} nights`);need(nights<=home.maxNights,`This home allows at most ${home.maxNights} nights`)

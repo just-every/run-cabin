@@ -1,3 +1,4 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
@@ -9,7 +10,7 @@ import { harness } from './harness.mjs'
 // Booking.com's messaging APIs answering in their documented shapes
 // (tests/fixtures/twilio, tests/fixtures/booking).
 const fixture = async path => JSON.parse(await readFile(`tests/fixtures/${path}.json`, 'utf8'))
-const day = n => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10), ymd = n => day(n).replace(/-/g, '')
+const day = n => homeDay(n, 'America/New_York'), ymd = n => day(n).replace(/-/g, '')
 const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documented fixture//EN\r\n' + events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART;VALUE=DATE:${e.start}\r\nDTEND;VALUE=DATE:${e.end}\r\nSUMMARY:${e.summary}\r\nEND:VEVENT\r\n`).join('') + 'END:VCALENDAR\r\n'
 const ADDRESS = '18 Fernwood Lane, Boone, NC 28607', INBOX = 'guests@cabin.example', TWILIO = 'twilio-fixture-token'
 const mime = ({ from, replyTo, subject, id, text }) => [`From: ${from}`, `To: Fernwood Cabin <${INBOX}>`, ...(replyTo ? [`Reply-To: ${replyTo}`] : []), `Subject: ${subject}`, `Message-ID: <${id}>`, 'Date: Sat, 17 Oct 2026 09:00:00 -0400', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', '', text].join('\r\n')

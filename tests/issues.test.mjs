@@ -2,6 +2,7 @@ import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {harness} from './harness.mjs'
+import { homeDay } from './home-calendar.mjs'
 const photo={photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png'}
 
 test('AGENT-003: guest issues bind approved sources, dispatch accepted inspected work, require guest and recurrence confirmation, and escalate emergencies',async()=>{
@@ -10,7 +11,7 @@ test('AGENT-003: guest issues bind approved sources, dispatch accepted inspected
   const home=await h.cmd('property.save',{name:'Lake Loft',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:2000})
   const vendor=await h.person('Dale'),backup=await h.person('Ana'),inspector=await h.person('Lee'),unrelated=await h.person('Other'),host=await h.person('Riley','manager')
   await h.cmd('home.settings',{propertyId:home.id,address:'120 Lake Drive, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',maintenanceId:vendor.id,checklist:['Clean'],photosRequired:1})
-  const start=new Date(Date.now()+86400000).toISOString().slice(0,10),end=new Date(Date.now()+4*86400000).toISOString().slice(0,10)
+  const start=homeDay(1,'America/New_York'),end=homeDay(4,'America/New_York')
   const booked=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',start,end,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
   let policy=await h.cmd('issue.settings',{propertyId:home.id,responsibleId:host.id,inspectorId:inspector.id,vendorIds:[vendor.id,backup.id],spendLimitCents:15000,recurrenceMinutes:1,instructionCategory:'access',instructionTitle:'Check the keypad display',instructionAnswer:'Tell the host whether the keypad display is lit. Do not dismantle it.'})
   const page='/stay/'+(await h.accessState()).codes.find(c=>c.bookingId===booked.bookingId&&c.holder==='guest').link

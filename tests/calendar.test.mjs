@@ -1,3 +1,4 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { harness } from './harness.mjs'
@@ -6,7 +7,7 @@ const property = (h, name) => h.cmd('property.save', { name, ownerName: 'Morgan 
 const calendar = events => `BEGIN:VCALENDAR\r\nVERSION:2.0\r\n${events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART${e.start.includes('T') ? '' : ';VALUE=DATE'}:${e.start}\r\nDTEND${e.end.includes('T') ? '' : ';VALUE=DATE'}:${e.end}\r\nSUMMARY:${e.summary}\r\nEND:VEVENT\r\n`).join('')}END:VCALENDAR\r\n`
 const row = (page, name) => page.split('<div class="tl-row">').slice(1).find(part => part.includes(`<h3>${name}</h3>`))?.split('<p class="tl-legend">')[0]
 const record = page => page.split('aria-label="Reservation record"')[1]
-const day = n => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10)
+const day = n => homeDay(n, 'America/New_York')
 const config = { enabled: true, slug: 'calendar-home', description: 'A home for the calendar flow.', nightlyCents: 18000, cleaningCents: 0, extraGuestCents: 0, includedGuests: 2, maxGuests: 4, minNights: 1, maxNights: 30, minGapNights: 0, depositCents: 0, releaseHours: 0, taxLabel: '', taxBps: 0, countyTaxLabel: '', countyTaxBps: 0, agreement: 'Quiet hours after 10 pm.', requireIdentity: false }
 
 test('staff navigate a twenty-home portfolio, filter inventory and drill into overlapping stays and owner blocks across a DST change', async () => {

@@ -1,9 +1,10 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { run } from './harness.mjs'
 import { erase } from './privacy-flow.mjs'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 
 test('DATA-002: reviewed guest erasure removes photos, threads and legal read links while preserving exact owner-only holds and completion evidence',()=>run(async h=>{
  const p=await h.cmd('property.save',{name:'Cedar Lodge',ownerName:'Morgan Lee',ownerEmail:'morgan@stay.example',commissionBps:2000}),cleaner=await h.person('Taylor'),manager=await h.person('Robin','manager')

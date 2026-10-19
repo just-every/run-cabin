@@ -1,3 +1,4 @@
+import { homeDay } from './home-calendar.mjs'
 import { attestArrival } from './readiness-helpers.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -99,7 +100,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
 test('recovery revises an early arrival and delivers a consented future rate only after exact approval and guest acceptance', async () => {
  const h = await harness()
  try {
-  const day = n => new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+  const day = n => homeDay(n, zone)
   const home = await h.cmd('property.save', {name:'Lake Loft',ownerName:'Karen',ownerEmail:'karen@stay.example',commissionBps:2000})
   const original = await h.person('Luis'), backup = await h.person('Ana')
   await h.cmd('home.settings',{propertyId:home.id,address:'8 Lake Road, Portland, ME',timeZone:zone,checkInTime:'16:00',checkOutTime:'10:00',cleanerId:original.id,checklist:['Kitchen clean'],photosRequired:1})

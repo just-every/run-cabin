@@ -1,9 +1,10 @@
+import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import { createHmac } from 'node:crypto'
 import test from 'node:test'
 import { harness } from './harness.mjs'
 
-const day = n => new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day = n => homeDay(n, 'America/New_York')
 const initial = 'network-edge-initial-auth', rotated = 'network-edge-rotated-auth'
 
 test('SECURITY-001: owner grants, encrypted rotation, forged events, private AI facts and revoked queued sends', async () => {

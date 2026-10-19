@@ -1,3 +1,4 @@
+import { homeDay } from './home-calendar.mjs'
 import { attestArrival } from './readiness-helpers.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -9,7 +10,7 @@ import { harness } from './harness.mjs'
 // with responses in its documented shape (tests/fixtures/seam).
 const photo = (await readFile('tests/fixtures/checklist.png')).toString('base64')
 const seamFixture = async name => JSON.parse(await readFile(`tests/fixtures/seam/access_codes_${name}.json`, 'utf8'))
-const day = n => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10), ymd = n => day(n).replace(/-/g, '')
+const day = n => homeDay(n, 'America/New_York'), ymd = n => day(n).replace(/-/g, '')
 const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documented fixture//EN\r\n' + events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART;VALUE=DATE:${e.start}\r\nDTEND;VALUE=DATE:${e.end}\r\nSUMMARY:${e.summary}\r\nEND:VEVENT\r\n`).join('') + 'END:VCALENDAR\r\n'
 const ADDRESS = '18 Fernwood Lane, Boone, NC 28607'
 

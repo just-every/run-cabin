@@ -2,6 +2,7 @@ import { erase } from './privacy-flow.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
+import { homeDay } from './home-calendar.mjs'
 
 async function ownerLogin(h,email){
  assert.equal((await h.send('/owners/signin',{email})).status,200)
@@ -12,7 +13,7 @@ async function ownerLogin(h,email){
  assert.equal((await h.send('/owners/confirm',{token})).status,401,'sign-in link consumed once')
  return response.cookie
 }
-const nextMonth=()=>{const d=new Date();d.setUTCMonth(d.getUTCMonth()+2,1);return d.toISOString().slice(0,7)}
+const nextMonth=()=>{const d=new Date(homeDay(0,'America/New_York')+'T00:00:00Z');d.setUTCMonth(d.getUTCMonth()+2,1);return d.toISOString().slice(0,7)}
 async function statement(h,home,month,cents=100000){
  const draft=await h.cmd('statement.prepare',{propertyId:home.id,month,lines:[{description:'Approved rental receipts',amountCents:cents}]})
  await h.cmd('statement.approve',{id:draft.id,revision:draft.revision});return draft

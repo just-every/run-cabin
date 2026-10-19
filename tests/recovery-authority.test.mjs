@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { harness } from './harness.mjs'
 
-const day = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10)
+const day = n => homeDay(n, 'America/New_York')
 const actions = ['cleaner:assign', 'credit:post', 'access:write', 'guest:send', 'owner:notify']
 const window = () => ({ startsAt: new Date(Date.now() - 60000).toISOString(), endsAt: new Date(Date.now() + 86400000).toISOString() })
 async function setup(h, { lock = false, auto = true } = {}) {

@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {harness} from './harness.mjs'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 test('WEB-001: host website publishes only chosen media, searches current inventory, remembers analytics consent and verifies/revokes its portable domain',async()=>{
  let domainProof='',reaches=false
  const h=await harness({outbound:async request=>{assert.equal(new URL(request.url).hostname,'stays.example.com');return new Response(reaches?domainProof:'unrelated site')}})

@@ -1,7 +1,8 @@
+import { homeDay } from './home-calendar.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { harness } from './harness.mjs'
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 
 test('RES-002: priced phone stay extends, moves units, reconciles receipts and cancels under frozen policy',async()=>{
  const h=await harness()

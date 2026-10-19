@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { harness } from './harness.mjs'
 
-const day=n=>new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+const day=n=>homeDay(n, 'America/New_York')
 const allocation={commissionBase:'rent',fixedFeeCents:0,reserveBps:1000,ownerUseCleaningCents:0,passThrough:'owner',taxExpense:'owner',owners:[{name:'Morgan',email:'morgan@stay.example',bps:10000}],mapping:{owner:'Owner payable',manager:'Management revenue',reserve:'Owner reserve',tax:'Tax payable',vendor:'Vendor payable',reviewedBy:'Pat Accountant'}}
 async function setup(h,preceding=false){
  const home=await h.cmd('property.save',{name:'Fernwood',ownerName:'Morgan',ownerEmail:'morgan@stay.example',commissionBps:2000}),cleaner=await h.person('Casey')

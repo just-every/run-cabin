@@ -1,8 +1,9 @@
+import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { harness } from './harness.mjs'
-const day = n => new Date(Date.now() + n * 86400000).toISOString().slice(0,10)
+const day = n => homeDay(n, 'America/New_York')
 const feed = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:CUSTODY123\r\nDTSTART;VALUE=DATE:${day(-10).replaceAll('-','')}\r\nDTEND;VALUE=DATE:${day(-7).replaceAll('-','')}\r\nSUMMARY:Reserved - Megan Ortiz\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`
 
 test('DATA-003: populated product records stay in installation storage and disconnected providers receive no further requests', async () => {
