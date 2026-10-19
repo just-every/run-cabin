@@ -1,7 +1,8 @@
 /** Text boundaries supplement structured omission; never use them to store credentials safely. */
 export function redactSensitiveText(value: string, secrets: readonly string[] = []) {
  let result = value
- for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.split(secret).join('[restricted]')
+ // A secret is a whole token: a door code's digits inside a hash or another opaque value are not that code.
+ for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.replace(new RegExp(`(?<![A-Za-z0-9])${secret.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9])`, 'g'), '[restricted]')
  return result
   .replace(/https?:\/\/[^\s<>"']*\/(?:offers\/|stay\/|ical\/|message-preferences\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
   .replace(/\/message-preferences\/[a-z0-9_-]+\/[a-f0-9]{64}/gi, '[private link]')
