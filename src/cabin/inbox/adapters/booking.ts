@@ -7,7 +7,7 @@ import { managedInstall } from '../../channels'
 // their partner programs. None of the three is connected yet: they come with
 // the owner's channel partner accounts. Tested against responses in Booking.com's
 // documented shape (tests/fixtures/booking).
-export const CHANNEL_LINE = 'Airbnb, Vrbo and Booking.com messages connect later, with the owner’s channel partner accounts. Until then those guests’ messages stay in each channel’s own app; a guest with an email on their stay is emailed from here.'
+export const CHANNEL_LINE = 'The channel browser agent can read supported Airbnb, Vrbo and Booking.com guest-message pages into this inbox from Channels. Browser replies still use the channel’s own host inbox. Partner-API sending remains separate and needs its configured account.'
 const BASE = 'https://supply-xml.booking.com/messaging'
 async function call(env: Bindings, method: string, path: string, body?: unknown, propertyId?:string|null,action='message:receive') {
  const credentials=await providerCredentials(env,'booking',action,propertyId)

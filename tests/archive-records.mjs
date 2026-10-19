@@ -1,5 +1,6 @@
 import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 const day=n=>homeDay(n, 'America/New_York')
 export async function archiveEdge(request) {
  const u=new URL(request.url)
@@ -7,6 +8,32 @@ export async function archiveEdge(request) {
  if(u.hostname==='api.stripe.com'&&u.pathname==='/v1/balance')return Response.json({object:'balance',available:[],pending:[],livemode:false})
  if(u.hostname==='api.stripe.com'&&u.pathname==='/v1/checkout/sessions'&&request.method==='POST')return Response.json({id:'cs_archive',url:'https://checkout.stripe.com/c/pay/cs_archive'})
  assert.fail('Unexpected archive test network request')
+}
+async function populateChannelArchive(h,p) {
+ const key=await h.cmd('channelAgent.runner.create',{})
+ const runner=async body=>{const response=await h.send('/api/cabin/channel-agent/runner',body,'',{authorization:'Bearer '+key.token});assert.equal(response.status,200,response.text);return response.value}
+ const profile=await h.cmd('channelAgent.connect',{propertyId:p.id,channel:'vrbo',listingId:'archive-home',listingUrl:'https://www.vrbo.com/hosting/calendar/archive-home',confirm:'yes'})
+ // The channel edge supplies the isolated browser's saved session and screenshots.
+ const storageState={cookies:[{name:'session',value:'archive-channel-session',domain:'.vrbo.com',path:'/',expires:-1,httpOnly:true,secure:true,sameSite:'Lax'}],origins:[]}
+ const connect=async()=>{const {job}=await runner({op:'claim'});assert.equal(job.kind,'connect');await runner({op:'complete',id:job.id,lease:job.lease,outcome:'succeeded',result:'connected',storageState})}
+ await connect()
+ const {job:closure}=await runner({op:'claim'});assert.equal(closure.kind,'close')
+ const image=(await readFile('tests/fixtures/checklist.png')).toString('base64')
+ await runner({op:'complete',id:closure.id,lease:closure.lease,outcome:'succeeded',result:'closed',canUndo:true,before:image,after:image})
+ const claimUntil=async id=>{for(;;){const {job}=await runner({op:'claim'});assert.ok(job);if(job.id===id)return job;assert.equal(job.kind,'close');await runner({op:'complete',id:job.id,lease:job.lease,outcome:'succeeded',result:'closed',before:image,after:image})}}
+ const stopped=await h.cmd('channelAgent.read',{id:profile.id,kind:'read-reservations',readUrl:'https://www.vrbo.com/hosting/reservations/archive-home',confirm:'yes'})
+ const challenge=await claimUntil(stopped.id);assert.equal(challenge.id,stopped.id)
+ await runner({op:'complete',id:challenge.id,lease:challenge.lease,outcome:'needs_you',challenge:'2fa'})
+ await h.cmd('channelAgent.connect',{propertyId:p.id,channel:'vrbo',listingId:'archive-home',listingUrl:'https://www.vrbo.com/hosting/calendar/archive-home',confirm:'yes'})
+ await connect()
+ const running=await h.cmd('channelAgent.read',{id:profile.id,kind:'read-messages',readUrl:'https://www.vrbo.com/hosting/messages/archive-home',confirm:'yes'})
+ const leased=await claimUntil(running.id);assert.equal(leased.id,running.id)
+ await runner({op:'checkpoint',id:leased.id,lease:leased.lease,before:image})
+ const queued=await h.cmd('channelAgent.read',{id:profile.id,kind:'read-payouts',readUrl:'https://www.vrbo.com/hosting/payouts/archive-home',confirm:'yes'})
+ const records=(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
+ const privateValues=[key.token,storageState.cookies[0].value,...records.flatMap(({data})=>[data.stateSealed,data.hash,data.bodySealed,data.lease].filter(Boolean))]
+ const history=records.filter(row=>row.kind==='channelAgentActions'&&row.data.status==='succeeded').map(({data})=>({id:data.id,status:data.status,result:data.result,completedAt:data.completedAt,attempts:data.attempts}))
+ return {profileId:profile.id,runnerToken:key.token,closureId:closure.id,cancelledIds:[stopped.id,running.id,queued.id],history,privateValues}
 }
 export async function populateArchive(h,p,cleaner) {
  const imported=await h.cmd('import.provider.preview',{provider:'guesty',asOf:day(0),files:[{name:'cabin-cutover.csv',text:'Record type,Provider,Listing ID,Listing name,Owner name,Owner email,Commission percent,Channel,iCal URL\n'+'home,guesty,archive-listing,Archive Lodge,Karen Ortiz,karen@stay.example,20,,\n'+'link,guesty,archive-listing,,,,,airbnb,https://calendar.stay.example/private-import-link.ics\n'}]})
@@ -32,7 +59,8 @@ export async function populateArchive(h,p,cleaner) {
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
- return {importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,privateLinks:codes,sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl}
+ const channelAgent=await populateChannelArchive(h,p)
+ return {importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,privateLinks:[...codes,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
  assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_provider_security').first()).n,0,'provider credentials and grants stay installation-local')
@@ -40,6 +68,19 @@ export async function checkRestored(h,owner,proof) {
  const imported=await h.db.prepare('SELECT plan,fingerprint FROM cb_provider_moveins WHERE id=?').bind(proof.importedId).first();assert.equal(JSON.parse(imported.plan).homes[0].links.length,0);await h.cmd('import.provider.apply',{id:proof.importedId,fingerprint:imported.fingerprint},owner,409)
  assert.equal(s.restore.reviewed,0)
  assert.ok(s.sharing.every(p=>!p.enabled))
+ assert.equal(s.channelAgent.profiles.find(p=>p.id===proof.channelAgent.profileId).status,'disconnected')
+ const agentRows=async()=>(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
+ const restoredAgent=await agentRows()
+ for(const {kind,data} of restoredAgent){
+  if(kind==='channelAgentProfiles')assert.ok(!data.stateSealed&&!data.grantedAt&&!data.grantedBy)
+  if(kind==='channelAgentKeys')assert.ok(!data.hash&&Date.parse(data.expiresAt)<Date.now())
+  if(kind==='channelAgentEvidence')assert.ok(!data.bodySealed)
+  if(kind==='channelAgentActions')assert.ok(!data.lease&&!data.leaseUntil&&!data.beforeSealed&&!data.afterSealed&&!data.canUndo)
+ }
+ for(const id of proof.channelAgent.cancelledIds)assert.equal(s.channelAgent.actions.find(a=>a.id===id).status,'cancelled')
+ assert.deepEqual(restoredAgent.filter(row=>row.kind==='channelAgentActions'&&row.data.status==='succeeded').map(({data})=>({id:data.id,status:data.status,result:data.result,completedAt:data.completedAt,attempts:data.attempts})),proof.channelAgent.history)
+ assert.equal((await h.send('/api/cabin/channel-agent/runner',{op:'claim'},'',{authorization:'Bearer '+proof.channelAgent.runnerToken})).status,403)
+ assert.equal((await h.send(`/api/cabin/channel-agent/evidence?id=${encodeURIComponent(proof.channelAgent.closureId)}&side=after`,undefined,owner)).status,404)
  assert.equal(s.inbox[0].ai,null)
  assert.ok(s.codes.every(c=>c.status==='revoked'&&!c.code&&!c.link))
  assert.ok(s.messages.some(m=>m.direction==='in'&&m.text==='Where can I park?'))
@@ -61,6 +102,7 @@ export async function checkRestored(h,owner,proof) {
  assert.ok(s.codes.every(c=>c.status==='revoked'))
  await h.cmd('restore.review',{revision:s.restore.revision,confirm:'yes'},owner)
  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+ assert.deepEqual(await agentRows(),restoredAgent,'restore review and scheduled work never replay channel jobs or reconnect profiles')
  s=await h.accessState(owner)
  assert.ok(s.bookings.find(b=>b.id===proof.bookingId).restorePaused)
  const b=s.bookings.find(b=>b.id===proof.bookingId)

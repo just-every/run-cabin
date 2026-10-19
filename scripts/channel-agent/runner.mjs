@@ -1,6 +1,7 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { createModelDriver } from './model.mjs';
+import { executeRead } from './read-page.mjs';
 import { executeJob } from './executor.mjs';
 import { allowedNavigation } from './policy.mjs';
 import { startSigninViewer } from './viewer.mjs';
@@ -66,7 +67,7 @@ export async function runRunner(configPath, { once = false, signal, log = messag
         const storageState = scopedStorage(job.storageState, job.channel);
         context = await browser.newContext({ ...(storageState ? { storageState } : {}), viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', acceptDownloads: false });
         const page = await context.newPage();
-        completion = await executeJob(page, job, driver, {
+        completion = await (job.kind.startsWith('read-') ? executeRead : executeJob)(page, job, driver, {
           onBefore: async (_job, before) => { await runnerRequest(config, { op: 'checkpoint', id: job.id, lease: job.lease, before }); },
           beforeAction: async () => { await runnerRequest(config, { op: 'authorize', id: job.id, lease: job.lease }); },
           connect: async (page, job, guard) => {

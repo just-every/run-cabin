@@ -1,3 +1,4 @@
+import { erase } from './privacy-flow.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { harness } from './harness.mjs'
@@ -43,7 +44,7 @@ test('a two-factor or CAPTCHA channel page stops before any write, retains no se
  const h=await harness(),edge=await channelEdge()
  try{
   const {home,runner}=await provision(h,edge,['vrbo'])
-  for(const mode of ['2fa','captcha']){
+  for(const mode of ['2fa','captcha','terms']){
    edge.mode=mode
    const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
    const {job}=await runner({op:'claim'});assert.equal(job.kind,'close')
@@ -61,7 +62,7 @@ test('a two-factor or CAPTCHA channel page stops before any write, retains no se
    const booking=state.bookings.find(b=>b.id===request.bookingId)
    await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
    edge.mode=''
-   await h.cmd('channelAgent.connect',{propertyId:home.id,channel:'vrbo',listingUrl:profile.listingUrl})
+   await h.cmd('channelAgent.connect',{propertyId:home.id,channel:'vrbo',confirm:'yes',listingId:'lake-loft',listingUrl:profile.listingUrl})
    const connect=(await runner({op:'claim'})).job,result2=await edge.run(connect,{human:true})
    assert.equal(result2.outcome,'succeeded');await runner({op:'complete',id:connect.id,lease:connect.lease,...result2})
   }
@@ -93,5 +94,74 @@ test('runner and evidence doors enforce owner authority, reject stale completion
   await h.cmd('channelAgent.retry',{id:job.id},h.owner,409)
   await h.cmd('channelAgent.runner.create',{})
   assert.equal((await h.send('/api/cabin/channel-agent/runner',{op:'claim'},'',{authorization:'Bearer '+key.token})).status,403)
+ }finally{await edge.close();await h.close()}
+})
+
+test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into native stays, one guest thread and matched settlements exactly once',async()=>{
+ const h=await harness(),edge=await channelEdge()
+ try{
+  const {home,runner}=await provision(h,edge)
+  const read=async(channel,kind)=>{
+   const profile=(await h.state()).channelAgent.profiles.find(p=>p.channel===channel)
+   await h.cmd('channelAgent.read',{id:profile.id,kind:'read-'+kind,readUrl:`https://www.${channel==='booking.com'?'booking.com':channel+'.com'}/hosting/lake-loft/${kind}`,confirm:'yes'})
+   // Native reservation commits also queue closure work; complete those first.
+   for(;;){const {job}=await runner({op:'claim'});assert.ok(job);const result=await edge.run(job);assert.equal(result.outcome,'succeeded');const receipt=await runner({op:'complete',id:job.id,lease:job.lease,...result});assert.equal(receipt.status,'succeeded');if(job.kind==='read-'+kind)return job}
+  }
+  for(const channel of ['airbnb','vrbo','booking.com']){
+   await read(channel,'reservations');await read(channel,'reservations')
+   await read(channel,'messages');await read(channel,'messages')
+   await read(channel,'payouts');await read(channel,'payouts')
+  }
+  const nativeReplay=await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:'Transaction ID,Payout ID,Confirmation code,Date,Currency,Gross earnings,Host service fee,Amount,Type,Guest name\nTX-100,PAID-100,STAY-100,2026-10-01,USD,1000.00,30.00,970.00,reservation,Megan Ortiz\n'});assert.equal(nativeReplay.imported.length,0);assert.equal(nativeReplay.duplicates.length,1)
+  const s=await h.accessState(),bookings=s.bookings.filter(b=>b.guestName==='Megan Ortiz'),incoming=s.messages.filter(m=>m.direction==='in')
+  assert.equal(bookings.length,3);assert.equal(incoming.length,3);assert.equal(s.payouts.length,3)
+  for(const b of bookings){assert.equal(incoming.filter(m=>m.bookingId===b.id).length,1);assert.equal(s.payouts.filter(p=>p.bookingId===b.id&&p.match==='matched'&&p.netCents===97000).length,1)}
+  assert.ok(s.messages.filter(m=>m.direction==='out').every(m=>m.status==='draft'||m.status==='unavailable'),'reads never send a reply')
+  assert.ok(incoming.every(m=>m.sentAt==='2026-10-01T16:00:00.000Z'))
+  // Equal contact text alone does not collapse identities; the operator reviews
+  // the real source reservation references before joining their guest history.
+  let guests=(await h.state()).guests.filter(g=>bookings.some(b=>b.id===g.bookingId));const root=guests[0].id
+  for(const from of guests.slice(1)){const state=await h.state(),a=state.guests.find(g=>g.id===from.id),b=state.guests.find(g=>g.id===root);await h.cmd('guest.merge',{id:a.id,revision:a.revision,intoId:b.id,intoRevision:b.revision,reason:'Guest confirmed all three source reservation references',confirm:'yes'})}
+
+  const inbox=await h.send('/app/inbox',undefined,h.owner);assert.equal(inbox.status,200);assert.ok(inbox.text.includes('kitchen available'));assert.equal((inbox.text.match(/class="thread-row/g)||[]).length,1)
+  const thread=/href="\/app\/inbox\?thread=([^"]+)/.exec(inbox.text)[1],reply=await h.cmd('message.compose',{thread,text:'Please see the kitchen guide.'});assert.equal((await h.state()).messages.find(m=>m.id===reply.id).status,'unavailable')
+  await h.restart();assert.equal((await h.state()).payouts.length,3)
+  const observations=(await h.db.prepare("SELECT data FROM cb_records WHERE kind='channelAgentReadObservations'").all()).results
+  assert.equal(observations.length,18);assert.ok(!JSON.stringify(observations).includes('kitchen available'));assert.ok(!JSON.stringify(observations).includes('megan@'))
+ }finally{await edge.close();await h.close()}
+})
+
+test('SYNC-011 SYNC-007: changed source identity, future payouts, unavailable pages, terms and stale local revisions stop imports with an assigned exception',async()=>{
+ const h=await harness(),edge=await channelEdge()
+ try{
+  const {home,runner}=await provision(h,edge,['airbnb'])
+  const profileId='channel-profile:airbnb'
+  const read=async(kind,want='succeeded')=>{
+   await h.cmd('channelAgent.read',{id:profileId,kind:'read-'+kind,readUrl:`https://www.airbnb.com/hosting/lake-loft/${kind}`,confirm:'yes'})
+   const {job}=await runner({op:'claim'});assert.equal(job.kind,'read-'+kind)
+   const result=await edge.run(job),receipt=await runner({op:'complete',id:job.id,lease:job.lease,...result});assert.equal(receipt.status,want)
+   return {job,result}
+  }
+  const reconnect=async()=>{
+   edge.mode='';await h.cmd('channelAgent.connect',{propertyId:home.id,channel:'airbnb',listingId:'lake-loft',listingUrl:'https://www.airbnb.com/hosting/calendar/lake-loft',confirm:'yes'})
+   const {job}=await runner({op:'claim'}),result=await edge.run(job,{human:true});assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})
+  }
+  await h.cmd('channelAgent.connect',{propertyId:home.id,channel:'airbnb',listingUrl:'https://www.airbnb.com/hosting/calendar/lake-loft'},h.owner,409)
+  await read('reservations');await read('messages');await read('payouts')
+  edge.sourceEdits={direction:'host',messageId:'HOST-100'};await read('messages');assert.equal((await h.state()).messages.filter(m=>m.direction==='in').length,1)
+  edge.sourceEdits={listingId:'another-listing'};await read('reservations','needs_you');assert.equal((await h.state()).bookings.length,1);await reconnect()
+  edge.sourceEdits={start:'2026-12-11',end:'2026-12-14'};await read('reservations')
+  let s=await h.state(),b=s.bookings[0];assert.equal(b.start,'2026-12-11');assert.equal(b.end,'2026-12-14');assert.equal(s.bookings.length,1)
+  edge.sourceEdits={text:'Different words under the same source message ID'};const changed=await read('messages','needs_you')
+  s=await h.state();assert.equal(s.messages.filter(m=>m.direction==='in').length,1);assert.ok(s.notices.some(n=>n.recordId===changed.job.id&&n.memberId===s.actor.id))
+  await reconnect();edge.sourceEdits={payoutStatus:'upcoming'};await read('payouts','needs_you');assert.equal((await h.state()).payouts.length,1)
+  await reconnect();edge.sourceEdits={};edge.mode='broken';await read('reservations','needs_you');assert.equal((await h.state()).bookings.length,1)
+  await reconnect();edge.mode='terms';const terms=await read('messages','needs_you');assert.equal(terms.result.challenge,'terms');assert.equal(terms.result.before,undefined);assert.equal(terms.result.after,undefined)
+  await reconnect();edge.sourceEdits={start:'2026-12-11',end:'2026-12-14',status:'cancelled'};await read('reservations');assert.equal((await h.state()).bookings[0].status,'cancelled')
+  const latest=(await h.state()).bookings[0];await erase(h,{entity:'guest',id:latest.id,revision:latest.revision});
+  assert.equal((await h.db.prepare("SELECT COUNT(*) n FROM cb_records WHERE kind='channelAgentEvidence'").first()).n,0)
+  // An ended source cannot be resurrected by a later page snapshot.
+  edge.sourceEdits={};await read('reservations','needs_you');assert.equal((await h.state()).bookings[0].status,'cancelled')
+  edge.sourceEdits={reservationId:'STAY-200',guestName:'Taylor Wilson',email:'taylor@stay.example',start:'2026-12-20',end:'2026-12-23'};await read('reservations');const later=(await h.state()).bookings.find(b=>b.channelRef==='STAY-200');await h.cmd('booking.details',{id:later.id,revision:later.revision,guestName:'Taylor Wilson corrected by host'});await read('reservations','needs_you');assert.equal((await h.state()).bookings.find(b=>b.id===later.id).guestName,'Taylor Wilson corrected by host')
  }finally{await edge.close();await h.close()}
 })

@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Synthetic host records · Lake Loft</title>
+<style>body{font:18px system-ui;margin:32px}td,th{border:1px solid #aaa;padding:10px}table{border-collapse:collapse}</style>
+<h1>Lake Loft · synthetic host records</h1><main></main><script>
+const kind=location.pathname.split('/').pop(),channel=location.hostname.includes('airbnb')?'airbnb':location.hostname.includes('vrbo')?'vrbo':'booking.com';
+const start=channel==='airbnb'?'2026-12-10':channel==='vrbo'?'2026-12-20':'2026-12-30',end=channel==='airbnb'?'2026-12-13':channel==='vrbo'?'2026-12-23':'2027-01-02';
+const stored=JSON.parse(localStorage.getItem('sourceEdits')||'{}');
+const reservation=['Reservation ID','Guest','Arrival','Departure','Status','Email'];
+const message=['Reservation ID','Message ID','Message','Sent at'];
+const payout=['Transaction ID','Payout ID','Reservation ID','Settlement date','Currency','Gross','Fee','Net','Type','Guest','Status'];
+const headers=kind==='reservations'?reservation:kind==='messages'?message:payout;
+const values=kind==='reservations'?['STAY-100',stored.guestName||'Megan Ortiz',stored.start||start,stored.end||end,stored.status||'confirmed',stored.email||'megan@stay.example']:kind==='messages'?['STAY-100',stored.messageId||'MSG-100',stored.text||'Is the kitchen available for cooking?','2026-10-01T16:00:00.000Z']:['TX-100','PAID-100','STAY-100','2026-10-01','USD','1000.00','30.00',stored.net||'970.00','payment','Megan Ortiz',stored.payoutStatus||'settled'];
+values[headers.indexOf('Reservation ID')]=stored.reservationId||'STAY-100';headers.unshift('Listing ID');values.unshift(stored.listingId||'lake-loft');if(kind==='messages'){headers.push('Direction');values.push(stored.direction||'guest')}
+const table=document.createElement('table');table.innerHTML='<thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody><tr>'+values.map(v=>'<td></td>').join('')+'</tr></tbody>';table.querySelectorAll('td').forEach((td,i)=>td.textContent=values[i]);document.querySelector('main').append(table);
+</script></html>

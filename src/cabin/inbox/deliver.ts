@@ -69,6 +69,8 @@ export async function transmit(env: Bindings, data: Data, m: GuestMessage): Prom
   if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Required agreement and identity tasks must be resolved before guest access instructions can be sent.',providerId:null}
   if (m.channel === 'sms') { if (managedInstall(env)||!await secureAccount(env,'twilio') || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; const r = await sendSms(env, m.phone, m.text,m.propertyId); return { status: 'sent', detail: null, providerId: r.providerId } }
   if (m.channel !== 'email') {
+   const inbound=m.replyTo?data.messages.find(row=>row.id===m.replyTo):null
+   if(inbound?.providerId?.startsWith('channel-read:'))return {status:'unavailable',detail:'This conversation was read by the channel browser agent. Reply in the channel host inbox; browser sending is not implemented yet.',providerId:null}
    const hotel = b ? inbox.channelIds[b.propertyId] : undefined
    if (m.channel !== 'booking.com' || managedInstall(env)||!await secureAccount(env,'booking') || !hotel || !b?.channelRef) return { status: 'unavailable', detail: CHANNEL_LINE, providerId: null }
    const r = await sendBooking(env, hotel, b.channelRef, m.text,m.propertyId); return { status: 'sent', detail: null, providerId: r.providerId }

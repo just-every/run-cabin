@@ -1,12 +1,12 @@
 # Remaining contract dependencies after sd-cabin-c17
 
-19 October owner redirect: the host-account browser agent replaces the partner-application route for channel work. The calendar module core is implemented and locally exercised; live proof needs authorized Airbnb, Vrbo and Booking.com host accounts/listings. Reservation/message/payout extraction remains subsequent work. Earlier API-only dependencies below describe the pre-redirect plan, not a new partner-account ask; see [channel-agent.md](channel-agent.md). No live-provider status is promoted by local pages.
+19 October owner redirect: the host-account browser agent replaces the partner-application route for channel work. The calendar module core is implemented and locally exercised; live proof needs authorized Airbnb, Vrbo and Booking.com host accounts/listings. Reservation/message/settled-payout source-table extraction is locally exercised in sx-cabin-r2; actual authenticated layouts, browser replies and live acceptance remain subsequent work. Earlier API-only dependencies below describe the pre-redirect plan, not a new partner-account ask; see [channel-agent.md](channel-agent.md). No live-provider status is promoted by local pages.
 
 19 October 2026. WEB-001 was selected because a complete host website and portable domain can be proven using the supplied Cloudflare, Stripe test and mail accounts. WEB-005 was next because paid extensions and arrival changes affect the original reservation, operations and owner balance. Its implemented flows are documented in [promotions.md](promotions.md), but its complete hosted financial acceptance remains partial.
 
 Homepage rows 5 and 31 require eligible USD payout evidence; 12, 15, 16, 42 and 46 require OTA partner accounts; 17 requires channel messaging, US A2P and WhatsApp access; 26 requires live locks and channel recovery; 33 requires QBO; 35 requires an authorized filing partner; and 14 requires pricing-provider access. None changed status. The expanded brief therefore selected CONTRACT clauses beyond those rows.
 
-These are all remaining target/push-further clauses: **25 partial and 29 missing**. A dependency can be unfinished product work, permissioned source evidence, another clause, or an outside account. This table does not imply that every remaining task requires an account. The round selected partial clauses; missing clauses remain separate product work.
+These are all remaining target/push-further clauses: **26 partial and 29 missing** (including the 19 October SYNC-011 launch route). A dependency can be unfinished product work, permissioned source evidence, another clause, or an outside account. This table does not imply that every remaining task requires an account. The round selected partial clauses; missing clauses remain separate product work.
 
 | Clause | Status | Remaining dependency |
 | --- | --- | --- |
@@ -19,6 +19,7 @@ These are all remaining target/push-further clauses: **25 partial and 29 missing
 | SYNC-007 | partial | Live channel APIs/events; durable uncertain-write reconciliation, throttling and assigned exceptions. |
 | SYNC-008 | partial | Channel inquiry/request/alteration APIs and test listings; deadlines, approvals and acknowledged outcomes. |
 | SYNC-010 | missing | Multiple approved host accounts, Airbnb co-host grant and per-account mapping/revocation. |
+| SYNC-011 | partial | Source-table reads, calendar actions, risk/session grants and security/terms handoff are locally exercised. Exact-approved browser replies, actual channel layouts and live host-account acceptance remain. |
 | RES-004 | partial | Seasonal/rule/buffer/fee implementation and OTA restriction publication through approved channel adapters. |
 | RES-005 | missing | Shared physical-capacity model and cross-listing allocation; OTA acknowledgement depends on SYNC-002–004. |
 | RES-006 | missing | Staff quote revisions, expiry, optional holds and conversion through guest checkout. |

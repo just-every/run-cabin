@@ -3,7 +3,8 @@
 <header><h1>Lake Loft</h1><p>Host calendar · Reservations · Listings · Availability</p></header><main id="main"></main>
 <script>
 const params=new URLSearchParams(location.search),mode=params.get('mode'),main=document.getElementById('main');
-if(mode==='captcha')main.innerHTML='<section id="challenge"><h2>Verify you are human</h2><div class="captcha">Complete the CAPTCHA to continue.</div><button>Continue</button></section>';
+if(mode==='terms')main.innerHTML='<section><h2>Review and accept updated terms</h2><label><input type=checkbox name=terms>I agree to the terms</label><button>Accept terms</button></section>';
+else if(mode==='captcha')main.innerHTML='<section id="challenge"><h2>Verify you are human</h2><div class="captcha">Complete the CAPTCHA to continue.</div><button>Continue</button></section>';
 else if(mode==='2fa')main.innerHTML='<section id="challenge"><h2>Two-factor authentication</h2><label>Enter the verification code<input autocomplete="one-time-code"></label><button>Continue</button></section>';
 else if(!document.cookie.includes('host_session=')){
  main.innerHTML='<form><h2>Sign in to manage your account</h2><label>Email<input name="email" type="email"></label><label>Password<input type="password" name="password"></label><button>Sign in</button></form>';

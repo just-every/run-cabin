@@ -56,6 +56,13 @@ export function exportRow(table, row) {
  if (kind === 'statementSchedules') { data.enabled=false; data.error=pause; data.actor={...data.actor,operatorVersion:-1} }
  if (kind === 'bookings') data.restorePaused = true
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
+ if (kind === 'channelAgentProfiles') { delete data.stateSealed; delete data.grantedAt; delete data.grantedBy; delete data.challenge; data.status='disconnected' }
+ if (kind === 'channelAgentKeys') { delete data.hash; data.expiresAt='1970-01-01T00:00:00.000Z' }
+ if (kind === 'channelAgentEvidence') delete data.bodySealed
+ if (kind === 'channelAgentActions') {
+  delete data.lease; delete data.leaseUntil; delete data.beforeSealed; delete data.afterSealed; data.canUndo=false
+  if (['pending','queued','running','needs_you'].includes(data.status)) { data.status='cancelled'; data.detail=pause }
+ }
  if (kind === 'exports') data.token = ''
  if (kind === 'codes') { data.code = ''; data.link = null; data.status = 'revoked'; data.reason = pause; data.lock = {...data.lock,state:'manual',providerId:null,error:null} }
  if (kind === 'inbox') data.ai = null

@@ -135,12 +135,12 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
     const posted = calls.find(c => c.method === 'POST' && c.host === 'supply-xml.booking.com')
     assert.equal(posted.path, '/messaging/properties/8011855/conversations/f3a9c29d-480d-5f5b-a6c0-65451e335353')
     assert.deepEqual(JSON.parse(posted.body), { message: { content: 'Yes, two cars fit in the driveway.' } })
-    // An Airbnb guest with no email: their check-in message says plainly that channel messaging connects later.
+    // An Airbnb guest with no email cannot receive an automatic check-in message through a read-only browser connection.
     const airbnb = await h.cmd('calendar.prepare', { propertyId: home.id, channel: 'airbnb', calendar: ics([{ uid: 'abnb-1', start: ymd(1), end: ymd(2), summary: 'Reserved' }]) })
     await h.cmd('calendar.approve', { id: airbnb.id, revision: airbnb.revision })
     s = await h.accessState()
     const quiet = s.scheduled.find(r => r.bookingId === s.bookings.find(b => b.uid === 'abnb-1').id && r.rule === 'checkin')
-    assert.equal(quiet.status, 'unavailable'); assert.match(quiet.reason, /connect later/)
+    assert.equal(quiet.status, 'unavailable'); const unavailable=s.messages.find(m=>m.scheduledId===quiet.id);assert.equal(unavailable.status,'unavailable');assert.equal(unavailable.providerId,null)
 
     // Cancelling Ana's stay cancels the messages still waiting; the cleaner sees no guest messages at all.
     await h.cmd('reservation.cancel', { id: stay.id ,revision:(await h.accessState()).bookings.find(row=>row.id===stay.id).revision})

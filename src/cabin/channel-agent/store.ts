@@ -12,5 +12,5 @@ export function save(c:Context,kind:string,row:{id:string}){
 }
 export async function agentState(db:D1Database){
  const profiles=await rows<Profile>(db,PROFILE),actions=await rows<Action>(db,ACTION)
- return {profiles:profiles.map(({stateSealed:_,...p})=>p),actions:actions.slice(-100).reverse().map(({lease:_,beforeSealed,afterSealed,...a})=>({...a,before:!!beforeSealed,after:!!afterSealed}))}
+ return {profiles:profiles.map(({stateSealed:_,...p})=>p),actions:actions.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)||b.id.localeCompare(a.id)).slice(0,100).map(({lease:_,beforeSealed,afterSealed,...a})=>({...a,before:!!beforeSealed,after:!!afterSealed}))}
 }

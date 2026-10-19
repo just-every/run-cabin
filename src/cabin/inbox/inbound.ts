@@ -7,7 +7,7 @@ import type { Bindings } from '../../auth.server'
 import { parseMime } from '../../modules/mail/src/inbound/mime.mjs'
 // @ts-expect-error Base's inbound header parser ships without type declarations.
 import { parseHeaders, address } from '../../modules/mail/src/inbound/headers.mjs'
-import { type Actor, type GuestMessage, type MessageChannel, newId } from '../model'
+import { type Actor, type GuestMessage, type MessageChannel, type Context, need, newId } from '../model'
 import { load, mutate } from '../storage'
 import { inboxSettings } from './settings'
 import { emailOf, stayFor } from './threads'
@@ -32,16 +32,20 @@ export function freshText(text: string) {
  const kept = (quoted > 0 ? t.slice(0, quoted) : t).split('\n').filter(l => !l.startsWith('>')).join('\n').trim()
  return (kept || t.trim()).slice(0, 8000)
 }
-export interface Incoming { channel: MessageChannel; email?: string | null; phone?: string | null; ref?: string | null; subject: string; text: string; headerId?: string | null; providerId?: string | null }
+export interface Incoming { channel: MessageChannel; email?: string | null; phone?: string | null; ref?: string | null; subject: string; text: string; headerId?: string | null; providerId?: string | null; bookingId?:string; propertyId?:string; sentAt?:string }
+export async function receiveGuestInContext(c:Context,env:Bindings,m:Incoming,{ai=false,scoped=false}={}){
+  const seen = c.data.messages.find(r => r.direction === 'in' && ((m.providerId && r.providerId === m.providerId) || (m.headerId && r.headerId === m.headerId)))
+  if (seen) return seen
+  const b = m.bookingId ? c.data.bookings.find(r=>r.id===m.bookingId&&r.propertyId===m.propertyId&&r.channel===m.channel)??null : m.ref ? c.data.bookings.find(r => r.channel === m.channel && r.channelRef === m.ref) ?? null : stayFor(c.data, { email: m.email, phone: m.phone })
+  if(m.bookingId)need(b&&!b.guestErasedAt,'The source reservation is missing or erased',409)
+  if(!scoped&&(m.channel==='sms'||m.channel==='booking.com'))await sharingAllowed(c.db,m.channel==='sms'?'twilio':'booking','message:receive',b?.propertyId)
+  const row: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? null, email: m.email ?? b?.guestEmail ?? null, phone: m.phone ?? null, ref: b ? null : m.ref ?? null, channel: m.channel, direction: 'in', source: 'guest', status: 'received', subject: m.subject.slice(0, 300), text: m.text, detail: null, replyTo: null, headerId: m.headerId ?? null, sentBy: null, approvalId: null, scheduledId: null, providerId: m.providerId ?? null, grounds: [], createdAt: c.now, sentAt: m.sentAt??null }
+  c.data.messages.push(row); const issue=incomingIssue(c,b,row,env.OWNER_EMAIL??''); const draft=startDraft(c, env.AUTH_ORIGIN, row, issue?.issue?.category==='emergency'?false:ai, env.OWNER_EMAIL ?? ''); if(issue?.issue?.category==='emergency'){draft.text=issue.issue.emergencyInstructions!;draft.detail='Emergency escalated immediately to '+issue.issue.assignedName+'; requires a human.'} if(issue&&draft.control)draft.control.needsHost=true; c.entityId = row.id; return row
+}
 export async function receiveGuest(env: Bindings, m: Incoming) {
  const ai = !!(await aiKey(env, inboxSettings(await load(env.DB))))
  const row = await mutate(env.DB, INBOX_SYSTEM, 'message.received', async c => {
-  const seen = c.data.messages.find(r => r.direction === 'in' && ((m.providerId && r.providerId === m.providerId) || (m.headerId && r.headerId === m.headerId)))
-  if (seen) return seen
-  const b = m.ref ? c.data.bookings.find(r => r.channel === m.channel && r.channelRef === m.ref) ?? null : stayFor(c.data, { email: m.email, phone: m.phone })
-  if(m.channel==='sms'||m.channel==='booking.com')await sharingAllowed(c.db,m.channel==='sms'?'twilio':'booking','message:receive',b?.propertyId)
-  const row: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? null, email: m.email ?? b?.guestEmail ?? null, phone: m.phone ?? null, ref: b ? null : m.ref ?? null, channel: m.channel, direction: 'in', source: 'guest', status: 'received', subject: m.subject.slice(0, 300), text: m.text, detail: null, replyTo: null, headerId: m.headerId ?? null, sentBy: null, approvalId: null, scheduledId: null, providerId: m.providerId ?? null, grounds: [], createdAt: c.now, sentAt: null }
-  c.data.messages.push(row); const issue=incomingIssue(c,b,row,env.OWNER_EMAIL??''); const draft=startDraft(c, env.AUTH_ORIGIN, row, issue?.issue?.category==='emergency'?false:ai, env.OWNER_EMAIL ?? ''); if(issue?.issue?.category==='emergency'){draft.text=issue.issue.emergencyInstructions!;draft.detail='Emergency escalated immediately to '+issue.issue.assignedName+'; requires a human.'} if(issue&&draft.control)draft.control.needsHost=true; c.entityId = row.id; return row
+  return receiveGuestInContext(c,env,m,{ai})
  })
  // Urgent named-host notices must leave before any unrelated AI draft can block.
  await deliverNotices(env)

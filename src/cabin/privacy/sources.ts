@@ -1,8 +1,10 @@
+import { eraseChannelEvidence } from '../channel-agent/retention'
 import { query, type Context } from '../model'
 import { scrub, type ErasureScope } from './scope'
 /** Vendor reports and undo snapshots are indivisible source files. Withdraw an
  * affected report rather than leave a second restorable copy of its contacts. */
 export async function eraseSources(c:Context,s:ErasureScope){
+ await eraseChannelEvidence(c,s)
  for(const row of (await c.db.prepare('SELECT id,plan,inventory,explanations FROM cb_provider_moveins').all<any>()).results){
   const contents=JSON.stringify(row),match=s.values.some(v=>contents.toLowerCase().includes(v.toLowerCase()))
   if(!match)continue
