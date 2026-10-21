@@ -1,13 +1,14 @@
 import { authorizedRentalInterests } from '../../permissions/interests'
 import { need, sha, type Actor } from '../../model'
-import { assertLive, load } from '../../storage'
+import { assertLive } from '../../storage'
+import { reportDirectory } from './directory'
 import { permitsProperty } from '../../permissions/authority'
 import { reportManager, runtimeScope } from './scope'
 import { rows, row } from './store'
 import type { SavedReport, ReportSchedule, ReportRun, ReportFollowup } from './types'
 export async function reportSharingState(db:D1Database,actor:Actor){
  reportManager(actor);await assertLive(db,actor)
- const [saved,schedules,runs,followups,data]=await Promise.all([rows<SavedReport>(db,'cb_saved_reports'),rows<ReportSchedule>(db,'cb_report_schedules'),rows<ReportRun>(db,'cb_report_runs'),rows<ReportFollowup>(db,'cb_report_followups'),load(db)])
+ const [saved,schedules,runs,followups,data]=await Promise.all([rows<SavedReport>(db,'cb_saved_reports'),rows<ReportSchedule>(db,'cb_report_schedules'),rows<ReportRun>(db,'cb_report_runs'),rows<ReportFollowup>(db,'cb_report_followups'),reportDirectory(db,actor)])
  const visible=(r:{creator:Actor;propertyIds:string[]})=>(actor.role==='owner'||r.creator.id===actor.id)&&r.propertyIds.every(id=>permitsProperty(actor,id))
  const shown=schedules.filter(visible),ids=new Set(shown.map(r=>r.id)),shownRuns=runs.filter(r=>ids.has(r.scheduleId)),runIds=new Set(shownRuns.map(r=>r.id))
  const members=data.members.filter(m=>m.active&&m.role==='manager'&&(!m.scope||m.scope.actions.includes('*')||m.scope.actions.includes('reports:read')&&m.scope.actions.includes('finance:read'))&&(actor.role==='owner'||!actor.scope||actor.scope.propertyIds.some(id=>id==='*'||!m.scope||m.scope.propertyIds.includes('*')||m.scope.propertyIds.includes(id)))).map(m=>({id:m.id,name:m.name,email:m.email}))

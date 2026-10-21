@@ -1,6 +1,7 @@
 import { rentalInterests,authorizedRentalInterests } from '../../permissions/interests'
 import { manager, need, sha, type Actor, type Data } from '../../model'
-import { assertLive, load } from '../../storage'
+import { assertLive } from '../../storage'
+import { reportDirectory } from './directory'
 import { hasAction, memberActor, permitsProperty } from '../../permissions/authority'
 import type { ReportFilters } from '../read'
 import type { Recipient, ReportSchedule, ReportScope } from './types'
@@ -44,7 +45,7 @@ export async function recipientFor(db:D1Database,actor:Actor,input:Record<string
  return {kind:'member',memberId:id,email:member.email,actor:recipient}
 }
 export async function runtimeScope(db:D1Database,s:ReportSchedule):Promise<ReportScope>{
- const creator=await currentActor(db,s.creator),data=await load(db),ids=selectedProperties(data,creator,s.filters)
+ const creator=await currentActor(db,s.creator),data=await reportDirectory(db,creator),ids=selectedProperties(data,creator,s.filters)
  need(sameIds(ids,s.propertyIds),'Selected home access changed; review the schedule again',403)
  let propertyIds=ids,ownerKey:string|null=null
  if(s.recipient.kind==='owner'){
