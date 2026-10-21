@@ -43,3 +43,32 @@ test('OPS-008: desktop and phone day board explain declined requests and open th
   }
  }finally{if(browser)await browser.close();await h.close()}
 })
+
+
+test('REPORT-001: desktop and phone reports filter, explain denominators, drill to sources and download complete totals',{timeout:120000},async()=>{
+ const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true});let browser
+ try{
+  const b=await reportBooks(h),manager=await h.person('ReportViewer','manager');browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+  const evidence=process.env.CABIN_REPORT_SHOTS??'test-results/reports';await mkdir(evidence,{recursive:true})
+  for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000},acceptDownloads:true})
+   try{
+    const [name,value]=manager.cookie.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
+    await page.goto(h.origin+'/app/reports?'+reportMonth);await expect(page.getByRole('heading',{name:'Reports',exact:true})).toBeVisible()
+    await page.getByText('Occupancy denominator',{exact:true}).click();await expect(page.getByText(/Occupancy = distinct confirmed guest nights/)).toBeVisible()
+    await page.getByText('Accounting basis',{exact:true}).click();await expect(page.getByText(/Financial rows use immutable journal effective dates/)).toBeVisible()
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'reports fit the viewport')
+    await page.screenshot({path:join(evidence,`reports-all-${width}.png`),fullPage:true})
+    await page.getByLabel('Property',{exact:true}).selectOption(b.p.id);await page.getByLabel('Channel',{exact:true}).selectOption('vrbo');await page.getByRole('button',{name:'Apply report filters'}).click()
+    await expect(page.locator('#reservations article')).toHaveCount(1);await expect(page.locator('#reservations')).toContainText(b.vrbo.id);await expect(page.locator('#reservations')).not.toContainText(b.air.id)
+    const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Download complete report (CSV)'}).click()]);const stream=await download.createReadStream();const chunks=[];for await(const chunk of stream)chunks.push(chunk);const csv=Buffer.concat(chunks).toString();assert.ok(csv.includes(b.vrbo.id));assert.ok(!csv.includes(b.air.id));assert.ok(csv.includes('"grossCents","60000"'));assert.ok(csv.includes('"netCents","43000"'))
+    await page.screenshot({path:join(evidence,`reports-filtered-${width}.png`),fullPage:true})
+    await page.locator('#reservations a').first().click();await expect(page.getByRole('heading',{name:/Synthetic Cabin Guest/}).first()).toBeVisible();await page.goBack()
+    await page.locator('#journals article').filter({hasText:'earn'}).getByRole('link').first().click();await expect(page.getByRole('heading',{name:'Trust ledger',exact:true})).toBeVisible();await page.goBack()
+    await page.getByLabel('Accounting basis',{exact:true}).selectOption('cash');await page.getByRole('button',{name:'Apply report filters'}).click();await expect(page.getByText('Cash · recorded trust receipts and paid costs · journal effective dates 2026-10-01 to 2026-11-01 (exclusive).',{exact:true})).toBeVisible()
+    await page.getByLabel('Reservation date basis',{exact:true}).selectOption('booking');await page.getByRole('button',{name:'Apply report filters'}).click();assert.ok(page.url().includes('dates=booking'))
+    await page.getByLabel('Rental owner',{exact:true}).selectOption((await b.report()).owners.find(o=>o.name==='Casey Owner').id);await page.getByRole('button',{name:'Apply report filters'}).click();await expect(page.locator('#reservations article')).toHaveCount(0)
+   }finally{await context.close()}
+  }
+ }finally{if(browser)await browser.close();await h.close()}
+})
