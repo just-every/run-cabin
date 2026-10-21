@@ -116,3 +116,41 @@ test('OPS-008: departures share a selected home-local day and retain actual chec
   assert.ok(!cleanerPage.text.includes('Guest at Eastern Cottage'))
  } finally {await h.close()}
 })
+
+test('OPS-008: declined requests retain their day, reason and historical sources across restart',async()=>{
+ const h=await harness()
+ try {
+  const {dayBoardRequests}=await import('./day-board-support.mjs')
+  const {selected,requests,conflicts,date}=await dayBoardRequests(h)
+  for(let i=0;i<11;i++){
+   requests.push(await h.cmd('reservation.request',{propertyId:requests[1].propertyId,channel:'vrbo',guestName:'Additional declined guest '+i,start:selected,end:date(32)}))
+   conflicts.push(conflicts[1])
+  }
+  const staff=await h.person('BoardManager','manager'),cleaner=await h.person('BoardCleaner')
+  await h.restart()
+  const page=await h.send(`/app/readiness?from=${selected}`,undefined,staff.cookie)
+  assert.equal(page.status,200)
+  const panel=page.text.match(/<section class="panel" aria-label="Declined channel requests">([\s\S]*?)<\/section>/)?.[1]
+  assert.ok(panel)
+  const cards=[...panel.matchAll(/<article[^>]*>([\s\S]*?)<\/article>/g)].map(m=>m[1])
+  assert.equal(cards.length,requests.length,'include every request covering this day, excluding direct, block, accepted and adjacent requests')
+  for(const [i,r] of requests.entries()){
+   const card=cards.find(c=>c.includes(`request=${r.id}`));assert.ok(card)
+   assert.ok(card.includes(r.reason));assert.ok(card.includes(r.guestName.replaceAll('<','&lt;').replaceAll('>','&gt;')))
+   const hrefs=[...card.matchAll(/href="([^"]+)"/g)].map(m=>unescape(m[1]))
+   assert.equal(hrefs.length,2)
+   const source=await h.send(hrefs[0],undefined,staff.cookie)
+   assert.equal(source.status,200);assert.ok(source.text.includes(`id="request-${r.id}"`));assert.ok(source.text.includes(r.reason))
+   const overlap=await h.send(hrefs[1],undefined,staff.cookie)
+   assert.equal(overlap.status,200);assert.ok(hrefs[1].includes(conflicts[i].bookingId))
+  }
+  const later=await h.send(`/app/readiness?from=${date(32)}`,undefined,staff.cookie)
+  const laterPanel=later.text.match(/aria-label="Declined channel requests">([\s\S]*?)<\/section>/)?.[1]
+  assert.ok(!requests.some(r=>laterPanel.includes(`request=${r.id}`)),'checkout day is excluded')
+  const unknown=await h.send('/app/reservations?request=absent',undefined,staff.cookie)
+  assert.ok(!unknown.text.includes('id="request-'),'missing source does not substitute another recent request')
+  assert.equal((await h.send(`/app/readiness?from=${selected}`,undefined,cleaner.cookie)).status,403)
+  assert.equal((await h.state(cleaner.cookie)).requests.length,0)
+  assert.ok([302,303,401].includes((await h.send(`/app/readiness?from=${selected}`)).status))
+ }finally{await h.close()}
+})

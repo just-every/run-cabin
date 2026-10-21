@@ -88,6 +88,14 @@
       "commands": [
         "node --test --test-concurrency=1 tests/website-browser.test.mjs"
       ]
+    },
+    {
+      "name": "readiness-browser",
+      "browser": true,
+      "hosted": false,
+      "commands": [
+        "node --test --test-concurrency=1 tests/readiness-browser.test.mjs"
+      ]
     }
   ],
   "nightly": [
