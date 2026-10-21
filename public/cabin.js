@@ -7,6 +7,7 @@ if (new URLSearchParams(location.search).has('done')) { const here = new URL(loc
 
 document.querySelector('[data-signout]')?.addEventListener('click', async () => {
   await clearDrafts()
+  sessionStorage.removeItem('cabin:submitted-form')
   const response = await fetch('/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
   if (response.ok) location.assign('/signin')
 })
@@ -79,3 +80,38 @@ if (document.querySelector('.tl-track [data-fit]')) {
   const again = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(fitLabels) }
   fitLabels(); document.fonts?.ready.then(again); addEventListener('resize', again)
 }
+
+// A native POST still gets the server's complete response. Keep only the
+// submitted, editable values until that response arrives, then discard them.
+// Passwords, one-time codes, files and hidden authority/revision fields stay out.
+const recoveryKey = 'cabin:submitted-form'
+try {
+  const saved = JSON.parse(sessionStorage.getItem(recoveryKey) || 'null')
+  sessionStorage.removeItem(recoveryKey)
+  const error = document.querySelector('main')?.firstElementChild
+  if (saved?.person === document.body.dataset.person && error?.matches('.notice.error[role="alert"]')) {
+    const candidates = [...document.querySelectorAll('form')].filter(form => form.action === saved.action)
+    const form = candidates.find(form => (form.querySelector('input[name="id"]')?.value || '') === saved.record) || candidates[saved.index]
+    if (form) for (const [name, values] of Object.entries(saved.values)) {
+      const controls = [...form.elements].filter(input => input.name === name && !['hidden', 'password', 'file'].includes(input.type))
+      controls.forEach((input, index) => { const value = values[index]; if (!value) return; if (['checkbox', 'radio'].includes(input.type)) input.checked = value.checked; else input.value = value.value })
+      for (const details of form.closest('details') ? [form.closest('details')] : []) details.open = true
+    }
+    error.tabIndex = -1; error.focus()
+  }
+} catch { sessionStorage.removeItem(recoveryKey) }
+document.addEventListener('submit', event => {
+  const form = event.target
+  if (!(form instanceof HTMLFormElement)) return
+  const action = new URL(form.action)
+  const recoverable = /^(message\.(compose|send)|thread\.(note|handover|triage|assign)|reservation\.(request|amend|move|end|cancel)|booking\.details|task\.(raise|close)|work\.(quote|invoice|complete)|turnover\.(complete|checkout))$/
+  if (action.pathname !== '/app/action' || !recoverable.test(action.searchParams.get('name') || '')) return
+  if ([...form.elements].some(input => ['password', 'file', 'url'].includes(input.type) || /(?:key|token|secret|password|credential|signing|authorization)/i.test(input.name || ''))) return
+  const values = {}
+  for (const input of form.elements) {
+    if (!input.name || !['INPUT', 'TEXTAREA', 'SELECT'].includes(input.tagName) || ['hidden', 'password', 'file', 'submit', 'button'].includes(input.type) || ['one-time-code', 'new-password', 'current-password'].includes(input.autocomplete)) continue
+    ;(values[input.name] ||= []).push({ value: input.value, checked: input.checked })
+  }
+  const peers = [...document.querySelectorAll('form')].filter(candidate => candidate.action === form.action)
+  try { sessionStorage.setItem(recoveryKey, JSON.stringify({ person: document.body.dataset.person, action: form.action, record: form.querySelector('input[name="id"]')?.value || '', index: peers.indexOf(form), values })) } catch { /* The server response remains visible if browser storage is disabled. */ }
+})

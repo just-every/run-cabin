@@ -198,3 +198,21 @@ test('a reviewed returning guest’s question is answered for their upcoming sta
     assert.equal((await thanks()).length, 1, 'a review request whose words did not change is not sent again')
   } finally { await h.close() }
 })
+
+test('guest search covers retained message history and explicit guest/message pages without merging shared contacts', async () => {
+ const h=await harness()
+ try {
+  const p=await h.cmd('property.save',{name:'synthetic-cabin-1',ownerName:'Synthetic owner',ownerEmail:'owner@synthetic.example',commissionBps:1500})
+  const put=(kind,row)=>h.db.prepare('INSERT INTO cb_records(kind,id,revision,data) VALUES(?,?,?,?)').bind(kind,row.id,row.revision??row.id,JSON.stringify(row))
+  const bookings=Array.from({length:27},(_,n)=>({id:`synthetic-cabin-booking-${n}`,revision:`synthetic-cabin-revision-${n}`,uid:`synthetic-cabin-event-${n}`,propertyId:p.id,channel:'direct',status:'confirmed',kind:'stay',start:'2026-03-01',end:'2026-03-03',approvedAt:`2026-01-${String(n+1).padStart(2,'0')}T00:00:00Z`,summary:`Synthetic guest ${n}`,guestName:`Synthetic guest ${n}`,guestEmail:'shared@synthetic.example'}))
+  const messages=Array.from({length:55},(_,n)=>({id:`synthetic-cabin-message-${n}`,revision:`synthetic-cabin-message-revision-${n}`,propertyId:p.id,bookingId:bookings[0].id,email:'shared@synthetic.example',phone:null,ref:null,channel:'email',direction:'in',source:'guest',status:'received',subject:'Synthetic stay',text:n===0?'Retained indigo telescope request':`Synthetic message ${n}`,createdAt:new Date(Date.UTC(2026,0,1,0,n)).toISOString(),sentAt:null,detail:null,replyTo:null,headerId:null,sentBy:null,approvalId:null,scheduledId:null,providerId:null,grounds:[]}))
+  await h.db.batch([...bookings.map(b=>put('bookings',b)),...messages.map(m=>put('messages',m))])
+  const first=await h.send('/app/inbox',undefined,h.owner);assert.equal(first.status,200,first.text)
+  assert.match(first.text,/of 27 guests/);assert.equal((first.text.match(/class="thread-row/g)||[]).length,25)
+  const second=await h.send('/app/inbox?page=2',undefined,h.owner);assert.equal(second.status,200,second.text);assert.equal((second.text.match(/class="thread-row/g)||[]).length,2)
+  const search=await h.send('/app/inbox?q=indigo%20telescope',undefined,h.owner);assert.equal(search.status,200,search.text);assert.match(search.text,/of 1 guests/);assert.match(search.text,/of 55 messages/);assert.doesNotMatch(search.text,/Retained indigo telescope request/)
+  const older=search.text.match(/href="([^"]*messages=2[^"]*)"/);assert.ok(older,'older messages are explicitly addressable')
+  const history=await h.send(older[1].replaceAll('&amp;','&'),undefined,h.owner);assert.equal(history.status,200,history.text);assert.match(history.text,/Retained indigo telescope request/);assert.match(history.text,/of 55 messages/)
+  const empty=await h.send('/app/inbox?q=missing-synthetic-value',undefined,h.owner);assert.equal(empty.status,200,empty.text);assert.match(empty.text,/of 0 guests/)
+ } finally {await h.close()}
+})

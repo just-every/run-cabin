@@ -29,7 +29,7 @@ export function availability(s: any, propertyId: string, now = Date.now()) {
   const connections = s.connections.filter((c: any) => c.propertyId === propertyId)
   const stale = connections.filter((c: any) => c.status === 'stale' || (c.status === 'ok' && (!Number.isFinite(Date.parse(c.nextPollAt)) || Date.parse(c.nextPollAt) <= now)))
   const unknown = connections.filter((c: any) => c.status !== 'ok' || !Number.isFinite(Date.parse(c.lastSuccessAt)))
-  const unconnected = [...s.feeds, ...s.bookings.filter((b: any) => b.status === 'confirmed' && b.channel !== 'direct')].some((f: any) => f.propertyId === propertyId && !connections.some((c: any) => c.channel === f.channel && (!f.connectionId || c.id === f.connectionId)))
+  const unconnected = [...s.feeds, ...(s.calendarSources ?? s.bookings.filter((b: any) => b.status === 'confirmed' && b.channel !== 'direct'))].some((f: any) => f.propertyId === propertyId && !connections.some((c: any) => c.channel === f.channel && (!f.connectionId || c.id === f.connectionId)))
   if (stale.length) return { state: 'stale', label: `Availability stale · ${stale.map(connectionName).join(', ')}; last held nights retained` }
   if (!connections.length || unknown.length || unconnected) return { state: 'unknown', label: 'Availability unknown · a channel calendar has no current successful read' }
   return { state: 'fresh', label: 'Calendar reads current · polled iCal does not guarantee against double booking' }

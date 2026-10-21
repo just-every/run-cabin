@@ -24,8 +24,13 @@ export const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{
 export function time12(t?: string | null) { if (!t) return ''; const [hh, mm] = t.split(':').map(Number); return `${hh % 12 || 12}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${hh < 12 ? 'am' : 'pm'}` }
 /** Every pair of confirmed stays on one home whose nights overlap: a channel sold a night before it heard. */
 export function collisions(bookings: any[]) {
-  const stays = bookings.filter(b => b.status === 'confirmed' && (b.kind ?? 'stay') === 'stay'), found: [any, any][] = []
-  for (let i = 0; i < stays.length; i++) for (let j = i + 1; j < stays.length; j++) if (stays[i].propertyId === stays[j].propertyId && overlaps(stays[i], stays[j])) found.push([stays[i], stays[j]])
+  const homes = new Map<string,any[]>(), found: [any,any][] = []
+  for (const b of bookings) if (b.status==='confirmed' && (b.kind??'stay')==='stay') { const rows=homes.get(b.propertyId)??[]; rows.push(b); homes.set(b.propertyId,rows) }
+  for (const rows of homes.values()) {
+    rows.sort((a,b)=>a.start.slice(0,10).localeCompare(b.start.slice(0,10)) || a.id.localeCompare(b.id))
+    let active:any[]=[]
+    for (const b of rows) { active=active.filter(a=>a.end.slice(0,10)>b.start.slice(0,10)); for(const a of active) if(overlaps(a,b))found.push([a,b]); active.push(b) }
+  }
   return found
 }
 /** "Asheville, NC" from "12 Elm St, Asheville, NC 28801". */
@@ -45,10 +50,12 @@ function lanes(items: Item[], first: number) {
   }
   return first + taken.length
 }
-export interface GridView { from: string; today: string; days: number; homes: any[]; channel?: string | null; previous: string; next: string; link: (q: Record<string, string | number | null>) => string }
+export interface GridView { from: string; today: string; days: number; homes: any[]; channel?: string | null; previous: string; next: string; clashes?: Set<string>; link: (q: Record<string, string | number | null>) => string }
+import { calendarHome } from './calendar-view'
 export function grid(s: any, v: GridView) {
+  const state=s
   const { from, today, days } = v, end = addDays(from, days), arrivalsUntil = addDays(today, ARRIVAL_DAYS)
-  const clash = new Set(collisions(s.bookings).flat().map(b => b.id))
+  const clash = v.clashes ?? new Set(collisions(s.bookings).flat().map(b => b.id))
   const dates = Array.from({ length: days }, (_, i) => addDays(from, i)), t = dayIndex(from, today)
   const months: [string, number, number][] = []
   dates.forEach((d, i) => { const m = new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }); if (months.at(-1)?.[0] === m) months.at(-1)![2]++; else months.push([m, i, 1]) })
@@ -56,6 +63,7 @@ export function grid(s: any, v: GridView) {
   const head = `<div class="tl-head"><span class="tl-label">${v.homes.length === s.properties.length ? `All ${s.properties.length} home${s.properties.length === 1 ? '' : 's'}` : h(v.homes[0]?.name ?? '')}</span><div class="tl-grid d${days}">${dates.map((d, i) => { const w = new Date(d + 'T00:00:00Z'); return `<span class="day ${where(i, i + 1)}${d === today ? ' today' : ''}${[0, 6].includes(w.getUTCDay()) ? ' weekend' : ''}"><abbr title="${h(w.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }))}">${h(w.toLocaleDateString('en-US', { weekday: days > 14 ? 'narrow' : 'short', timeZone: 'UTC' }))}</abbr><b>${w.getUTCDate()}</b>${d === today ? '<em>Today</em>' : ''}</span>` }).join('')}</div></div>`
   const pops: string[] = []
   const rows = v.homes.map((p: any) => {
+    const s = calendarHome(state,p.id)
     const current = availability(s, p.id)
     const stays = s.bookings.filter((b: any) => b.propertyId === p.id && b.status === 'confirmed' && (!v.channel || b.channel === v.channel) && overlaps(b, { start: from, end })).sort((a: any, b: any) => a.start.localeCompare(b.start))
     const bars = stays.map((b: any) => stayBar(s, v, b, clash, arrivalsUntil)).filter(Boolean) as Item[]
