@@ -178,7 +178,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **MESSAGE-004 — Source-grounded AI replies with controlled sending · done.** Ask the inbox assistant a supported check-in question, an undocumented amenity question and a compensation request; inspect sources, edit a draft, enable a narrow automatic rule and prove unsupported or unauthorized promises route to a human without being sent. Leave an assistant draft unapproved past the time its reply was due and verify nothing is sent; approve it and verify exactly the approved text is sent once.
   Current evidence: `src/cabin/inbox/`; `tests/replies.test.mjs`; `tests/inbox.test.mjs`; `docs/inbox.md`. Assessment: Replies retain reservation, approved instruction and readiness sources. Exact human edits/send remain default; property/topic/confidence/local-hour policy permits source-rendered automatic answers only, rechecked at send claim. Unknowns, changes, money and safety require a person; uncertain and overdue drafts notify an assigned manager or the installation owner without sending. Source changes fence old drafts. Human early-arrival approval requires completed cleaning/photos and no blockers, moves access and sends one update. Real hosted incoming mail, Anthropic draft, automatic reply, escalation and exact approved reply exercised at 1440 and 390 with received mail.
 
-- **GUEST-002 — Guest check-in and stay portal · missing.** Open a guest link on a phone, finish pre-arrival tasks, view the correctly timed code and report an issue; use another reservation’s ID, an expired link and a canceled stay and confirm private details and access are refused.
+- **GUEST-002 — Guest check-in and stay portal · partial.** Open a guest link on a phone, finish pre-arrival tasks, view the correctly timed code and report an issue; use another reservation’s ID, an expired link and a canceled stay and confirm private details and access are refused. Evidence: `tests/guest-portal.test.mjs` covers tasks, the timed code, versioned guide, another stay's page, a guessed link, a link a week past check-out, checkout and cancellation. Gap: a link before the code exists, phone-browser proof and channel-paid payment state.
   Current evidence: none; the described acceptance journey is missing.
 
 - **GUEST-003 — Reviews and consented repeat-guest marketing · missing.** Complete a stay, deliver one eligible review request, receive a negative response and assign recovery, approve a channel review reply, sync a consented Mailchimp segment and verify an opt-out removes the guest before the next campaign. Schedule an approved review reply and a post-stay thank-you and verify each is posted or sent once at its scheduled time and recorded on acknowledgment.
@@ -342,10 +342,10 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 38 | 26 | 26 | 90 |
-| All | 51 | 26 | 26 | 103 |
+| Target and push further | 38 | 27 | 25 | 90 |
+| All | 51 | 27 | 25 | 103 |
 
-**103 clauses: 51 done, 26 partial, 26 missing.**
+**103 clauses: 51 done, 27 partial, 25 missing.**
 
 
 The current clause totals and authoritative Status cells are in `CONTRACT.md`; this build plan retains each clause’s acceptance journey. No new target capability is treated as accepted merely because a neighboring foundation is done.

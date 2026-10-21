@@ -1,4 +1,5 @@
 import { h, heading, panel, form, select, area, hidden, approve, empty, propertyName, memberName, manager, day } from './shared'
+import { portalPanel } from '../portal/ui'
 import { turnoverChip, codeLine, lockNote, windowText, address, photos, noticeLine, choose, photoInput, zoneName, atHome, checkedOut } from './ops'
 import { homeSettings } from '../homes'
 import { ZONES, time12 } from '../clock'
@@ -92,6 +93,7 @@ export function turnovers(s: any) {
     + (later.length ? `<details class="panel"><summary><strong>Later (${later.length})</strong></summary>${jobs(later.map((t: any) => managerJob(s, t)).join(''))}</details>` : '')
     + (drafts.length ? panel('Waiting for your approval', jobs(drafts.map((t: any) => managerJob(s, t)).join(''))) : '')
     + panel('Turnover settings by home', s.properties.length ? `<p class="muted">Set each home’s address, times and default cleaner. Checklist and photo changes also reach every unfinished job; completed jobs keep their evidence.</p>${s.properties.map((p: any) => settingsForm(s, p)).join('')}` : empty('Add a home under Properties & people first.'))
+    + portalPanel(s)
     + panel('Recently ready', jobs(done.map((t: any) => managerJob(s, t)).join('')) || empty('Turnovers marked ready with their photos appear here.'))
     + (cancelled.length ? `<details class="panel"><summary><strong>Cancelled and replaced (${cancelled.length})</strong></summary>${jobs(cancelled.map((t: any) => managerJob(s, t)).join(''))}</details>` : '')
     + `<details class="panel"><summary><strong>Prepare a turnover by hand</strong></summary><p class="muted">For a stay Cabin did not dispatch, or an agent’s suggestion: a person approves it, and it replaces that stay’s open turnover.</p>${manual}</details>`
