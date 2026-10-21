@@ -91,7 +91,7 @@ try {
   const error = document.querySelector('main')?.firstElementChild
   if (saved?.person === document.body.dataset.person && error?.matches('.notice.error[role="alert"]')) {
     const candidates = [...document.querySelectorAll('form')].filter(form => form.action === saved.action)
-    const form = candidates.find(form => (form.querySelector('input[name="id"]')?.value || '') === saved.record) || candidates[saved.index]
+    const form = saved.record ? candidates.find(form => form.querySelector('input[name="id"]')?.value === saved.record) : candidates[saved.index]
     if (form) for (const [name, values] of Object.entries(saved.values)) {
       const controls = [...form.elements].filter(input => input.name === name && !['hidden', 'password', 'file'].includes(input.type))
       controls.forEach((input, index) => { const value = values[index]; if (!value) return; if (['checkbox', 'radio'].includes(input.type)) input.checked = value.checked; else input.value = value.value })
