@@ -7,7 +7,7 @@ export const empty = (text: string) => `<p class="empty">${h(text)}</p>`
 export const panel = (title: string, body: string) => `<section class="panel"><h2>${h(title)}</h2>${body}</section>`
 export const field = (name: string, label: string, type = 'text', value = '', attrs = '') => `<label>${h(label)}<input name="${h(name)}" type="${h(type)}" value="${h(value)}" ${attrs} required></label>`
 export const hidden = (name: string, value: unknown) => `<input type="hidden" name="${h(name)}" value="${h(value)}">`
-export const select = (name: string, label: string, choices: [string, string][]) => `<label>${h(label)}<select name="${h(name)}" required><option value="">Choose…</option>${choices.map(([id,label]) => `<option value="${h(id)}">${h(label)}</option>`).join('')}</select></label>`
+export const select = (name: string, label: string, choices: [string, string][]) => `<label>${h(label)}<select name="${h(name)}" aria-label="${h(label)}" required><option value="">Choose…</option>${choices.map(([id,label]) => `<option value="${h(id)}">${h(label)}</option>`).join('')}</select></label>`
 export const area = (name: string, label: string, value = '', attrs = '') => `<label>${h(label)}<textarea name="${h(name)}" rows="6" ${attrs} required>${h(value)}</textarea></label>`
 export const form = (name: string, page: string, body: string, button: string, attrs = '') => `<form method="post" action="/app/action?name=${h(name)}&amp;returnTo=${encodeURIComponent('/app/' + page)}" ${attrs}>${body}<button type="submit">${h(button)}</button></form>`
 export const approve = (name: string, page: string, record: any, text: string) => form(name, page, hidden('id', record.id) + hidden('revision', record.revision), text)

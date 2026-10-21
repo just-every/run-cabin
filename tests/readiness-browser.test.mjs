@@ -75,7 +75,7 @@ test('REPORT-001: desktop and phone reports filter, explain denominators, drill 
 
 
 test('REPORT-002: desktop and phone save current filters and explicitly approve visible scoped delivery',{timeout:120000},async()=>{
- const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true});let browser
+ let failMail=false;const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true,auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{const m=await request.json();return failMail&&m.subject.startsWith('Cabin report')?new Response('Provider refused',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-1'})}});let browser
  try{
   const b=await reportBooks(h);browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
   const evidence=process.env.CABIN_SHARING_SHOTS??'test-results/report-sharing';await mkdir(evidence,{recursive:true})
@@ -99,6 +99,11 @@ test('REPORT-002: desktop and phone save current filters and explicitly approve 
     const run=page.locator('[id^="report-run-"]').filter({has:page.getByRole('heading',{name:reportName,exact:true})});await expect(run).toContainText('sent');await expect(run).toContainText('Data cutoff');await run.getByText('Run and delivery history',{exact:true}).click();await expect(run).toContainText('Mail provider accepted')
     const [download]=await Promise.all([page.waitForEvent('download'),run.getByRole('link',{name:'Download frozen report (JSON)',exact:true}).click()]);const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());assert.deepEqual(report.properties.map(p=>p.id),[b.p.id]);assert.ok(report.journals.every(j=>j.ownerKey===report.filters.owner))
     await run.screenshot({path:join(evidence,`report-run-history-${width}.png`)})
+    const failure=await h.cmd('report.schedule',{savedReportId:savedId,savedReportRevision:state.savedReports.find(r=>r.id===savedId).revision,recipientKind:'owner',recipientEmail:b.p.ownerEmail,period:'saved-window',cadence:'once',format:'json',nextRunAt:new Date(Date.now()+86400000).toISOString(),consent:true})
+    failMail=true;const failedAt=new Date(Date.now()-5000).toISOString();await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(failedAt,failedAt,failure.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});failMail=false;await page.reload()
+    const follow=page.locator('[id^=report-followup-]').filter({has:page.getByRole('heading',{name:'Report follow-up needs review',exact:true})});await expect(follow).toContainText('Responsible:');await expect(follow).toContainText('Delivery failed');await follow.screenshot({path:join(evidence,`report-failure-assigned-${width}.png`)})
+    await follow.getByLabel('Resolution and delivery check',{exact:true}).fill('The provider refused this request. No message was accepted; retain the paused schedule.');await follow.getByRole('button',{name:'Record report follow-up resolution',exact:true}).click();const resolved=page.locator('[id^=report-followup-]').filter({has:page.getByRole('heading',{name:'Resolved report follow-up',exact:true})}).last();await resolved.screenshot({path:join(evidence,`report-failure-resolved-${width}.png`)})
+
    }finally{await context.close()}
   }
  }finally{if(browser)await browser.close();await h.close()}

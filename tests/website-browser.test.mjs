@@ -85,21 +85,23 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
 test('GUEST-002: desktop and phone guests verify their own email, finish blocked tasks, read the released guide and report an issue', {timeout:180000},async()=>{
  const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  try{for(const width of [1440,390]){
-  const h=await harness({assets:true}),guest=await browser.newContext({viewport:{width,height:1000}}),g=await guest.newPage();g.setDefaultTimeout(12000)
+  const h=await harness({assets:true,hostname:'localhost'}),guest=await browser.newContext({viewport:{width,height:1000}}),g=await guest.newPage();g.setDefaultTimeout(12000)
   try{
    const evidence=process.env.CABIN_GUEST_SHOTS??'test-results/guest';await mkdir(evidence,{recursive:true})
-   const home=await h.cmd('property.save',{name:'synthetic-cabin-1',ownerName:'Synthetic host',ownerEmail:'synthetic-cabin-host@stay.example',commissionBps:2000})
-   await h.cmd('home.settings',{propertyId:home.id,address:'Private synthetic-cabin-1 address',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready']})
+   const home=await h.cmd('property.save',{name:'Pine Ridge Cabin',ownerName:'Karen Ortiz',ownerEmail:'synthetic-cabin-host@stay.example',commissionBps:2000})
+   await h.cmd('home.settings',{propertyId:home.id,address:'120 Lake Drive, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready']})
    await h.cmd('direct.agreement.template',{propertyId:home.id,agreementTitle:'Synthetic cabin rental terms',agreementState:'ME',agreement:'Quiet hours after 10 pm. No smoking.',agreementRequired:true,agreementBlockAccess:true})
    await h.cmd('portal.guide',{propertyId:home.id,version:0,arrival:'Park beside the green shed. Use the front entrance.',guidebook:'Leave recycling in the blue bin. The walking map is attached.'})
-   const guide=await h.cmd('portal.guide.file.add',{propertyId:home.id,version:1,guideFile:{name:'synthetic-cabin-1.txt',mimeType:'text/plain',base64:Buffer.from('Synthetic cabin walking map\n').toString('base64')}})
-   const stay=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',start:homeDay(3,'America/New_York'),end:homeDay(6,'America/New_York'),guestName:'synthetic-cabin-1 guest',guestEmail:'synthetic-cabin-1@stay.example'})
+   let guide
+   const stay=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',start:homeDay(3,'America/New_York'),end:homeDay(6,'America/New_York'),guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
    let s=await h.accessState();const link=s.guestPortalLinks.find(l=>l.bookingId===stay.bookingId),path='/stay/'+link.token
+   const staff=await browser.newContext({viewport:{width,height:1000}})
+   try{const [name,value]=h.owner.split('=');await staff.addCookies([{name,value,url:h.origin}]);const page=await staff.newPage();await page.goto(h.origin+'/app/turnovers');const panel=page.locator('section.panel').filter({has:page.getByRole('heading',{name:'Guest portal by home',exact:true})});await panel.locator('summary').click();const upload=panel.locator('form').filter({has:page.getByRole('button',{name:'Add guide file',exact:true})});await upload.locator('[name=guideFile]').setInputFiles({name:'Pine Ridge walking guide.txt',mimeType:'text/plain',buffer:Buffer.from('Synthetic cabin walking map\n')});await upload.getByRole('button',{name:'Add guide file',exact:true}).click();await panel.locator('summary').click();await expect(panel).toContainText('guide version 2');await expect(panel.getByRole('link',{name:'Open guest portal',exact:true})).toHaveAttribute('href',path);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'guide editor fits viewport');await panel.screenshot({path:join(evidence,`guest-guide-editor-${width}.png`)});guide=(await h.accessState()).homeSettings.find(h=>h.propertyId===home.id).guide}finally{await staff.close()}
    assert.ok(!s.codes.some(c=>c.bookingId===stay.bookingId&&c.holder==='guest'&&c.status==='issued'))
    await g.goto(h.origin+path)
    await expect(g.getByRole('button',{name:'Send code',exact:true})).toBeVisible()
-   await expect(g.getByText('synthetic-cabin-1 guest',{exact:true})).toHaveCount(0)
-   assert.ok(!(await g.content()).includes('Private synthetic-cabin-1 address'))
+   await expect(g.getByText('Megan Ortiz',{exact:true})).toHaveCount(0)
+   assert.ok(!(await g.content()).includes('120 Lake Drive, Asheville, NC'))
    assert.equal((await guest.request.get(h.origin+path+'/api')).status(),401)
    await g.screenshot({path:join(evidence,`guest-verification-${width}.png`),fullPage:true})
    await g.getByRole('button',{name:'Send code',exact:true}).click()
@@ -114,8 +116,8 @@ test('GUEST-002: desktop and phone guests verify their own email, finish blocked
    const other=await browser.newContext({viewport:{width,height:1000}})
    try{const second=await other.newPage();await second.goto(h.origin+path);await expect(second.getByRole('button',{name:'Send code',exact:true})).toBeVisible();await expect(second.getByRole('heading',{name:'Before you arrive',exact:true})).toHaveCount(0)}finally{await other.close()}
    await g.getByRole('link',{name:'Review and sign',exact:true}).click()
-   await g.getByLabel('Electronic signature (full guest name)',{exact:true}).fill('synthetic-cabin-1 guest')
-   await g.getByLabel('Reservation email',{exact:true}).fill('synthetic-cabin-1@stay.example')
+   await g.getByLabel('Electronic signature (full guest name)',{exact:true}).fill('Megan Ortiz')
+   await g.getByLabel('Reservation email',{exact:true}).fill('megan@stay.example')
    await g.getByLabel('I reviewed this exact agreement and consent to electronic records and my electronic signature. I can download and retain my signed copy.',{exact:true}).check()
    await g.getByRole('button',{name:'Sign this agreement',exact:true}).click()
    await g.getByRole('link',{name:'Open your arrival details',exact:true}).click()
@@ -132,7 +134,7 @@ test('GUEST-002: desktop and phone guests verify their own email, finish blocked
    s=await h.accessState();const booking=s.bookings.find(b=>b.id===stay.bookingId)
    await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
    const cancelled=await g.goto(h.origin+path);assert.equal(cancelled.status(),404)
-   assert.ok(!(await g.content()).includes('synthetic-cabin-1 guest'))
+   assert.ok(!(await g.content()).includes('Megan Ortiz'))
   }finally{await guest.close();await h.close()}
  }}finally{await browser.close()}
 })
