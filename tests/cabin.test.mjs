@@ -251,6 +251,7 @@ test('PMS team invitations enforce each role’s property/actions, private read 
    await h.cmd('agent.create',{label:'Unauthorized key'},cookie,403)
    await h.cmd('provider.sharing',{id:'seam',operation:'credential',SEAM_API_KEY:'synthetic-cabin-2'},cookie,403)
    assert.equal((await h.send('/api/cabin/agent/context',undefined,cookie)).status,401)
+   if(role==='rental_owner'){assert.equal((await h.send('/app/rental-owner/statements/'+statements[0].id+'.csv',undefined,cookie)).status,200);assert.equal((await h.send('/app/rental-owner/statements/'+statements[1].id+'.csv',undefined,cookie)).status,404);const own=await h.send('/app/rental-owner/api/state',undefined,cookie);assert.deepEqual(own.value.properties.map(p=>p.id),[p.id])}
    const humanPage=await h.send(role==='accountant'?'/app/reports':role==='rental_owner'?'/app':'/app/maintenance',undefined,cookie)
    if(role==='accountant'||role==='rental_owner'||role==='manager'||['inspector','cleaner','maintenance'].includes(role))assert.equal(humanPage.status,200,humanPage.text)
   }

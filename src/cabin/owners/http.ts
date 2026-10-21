@@ -1,3 +1,6 @@
+import { type Actor } from '../model'
+import { assertLive } from '../storage'
+import { hasAction,permitsProperty } from '../permissions/policy'
 import { downloadOwnerReportArtifact } from '../reports/sharing'
 import { runtimeBindings,type Bindings } from '../../auth.server'
 import { authorizedStatement } from './state'
@@ -18,7 +21,7 @@ async function inputBody(request:Request){
  else{need(request.headers.get('content-type')?.includes('application/x-www-form-urlencoded'),'Use JSON or a form',415);value=Object.fromEntries(new URLSearchParams(raw))}
  need(value&&typeof value==='object'&&!Array.isArray(value),'Expected an object');return value as Record<string,unknown>
 }
-export async function ownersResponse(request:Request,original:Bindings):Promise<Response|null>{
+export async function ownersResponse(request:Request,original:Bindings,nativeActor?:Actor):Promise<Response|null>{
  const env=runtimeBindings(original),url=new URL(request.url),path=url.pathname
  if(path!=='/owners'&&!path.startsWith('/owners/'))return null
  try{
@@ -31,34 +34,35 @@ export async function ownersResponse(request:Request,original:Bindings):Promise<
    if(path==='/owners/signin'){await requestOwnerLink(env,value);return signInPage(env.AUTH_LOCAL==='true'||env.RER_DEMO==='1'?'Local development does not send email. Ask your manager to preview your owner portal from Statements.':'If this address has owner access, a sign-in link is on its way.')}
    if(path==='/owners/confirm')return new Response(null,{status:303,headers:{...headers,location:'/owners','set-cookie':await confirmOwner(env,value.token)}})
    if(path==='/owners/signout')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin','set-cookie':await signOutOwner(request,env)}})
-   const email=await ownerEmail(request,env)
+   const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env)
    if(path==='/owners/action'){
-    const result=await ownerAction(env,email,String(value.action??''),value)
+    need(!nativeActor||hasAction(nativeActor,'rentalOwner.'+String(value.action??'')),'Action outside your team grant',403)
+    const result=await ownerAction(env,email,String(value.action??''),value,nativeActor)
     if(request.headers.get('content-type')?.includes('application/json'))return Response.json({result},{headers})
     return new Response(null,{status:303,headers:{...headers,location:'/owners?done='+encodeURIComponent(String(value.action))}})
    }
   }else{
    if(path==='/owners/signin')return signInPage()
    if(path==='/owners/confirm')return confirmationPage(url.searchParams.get('token')??'')
-   const email=await ownerEmail(request,env),month=url.searchParams.get('month')??undefined
+   const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env),month=url.searchParams.get('month')??undefined
    if(path==='/owners'){
-    const s=await portalState(env,email,month),selected=url.searchParams.get('statement')
+    const s=await nativeState(env,email,month,nativeActor),selected=url.searchParams.get('statement')
     if(selected)need(s.statements.some(s=>s.id===selected),'Approved statement not found',404)
     const shown=selected?s.statements.filter(s=>s.id===selected):s.statements
     await recordStatementAccess(env,email,shown,'view')
     return portalPage({...s,statements:shown},false,url.searchParams.get('done')??'')
    }
-   if(path==='/owners/api/state')return Response.json(await portalState(env,email,month),{headers})
+   if(path==='/owners/api/state')return Response.json(await nativeState(env,email,month,nativeActor),{headers})
    const reportArtifact=path.match(/^\/owners\/reports\/([\w-]+)$/)
-   if(reportArtifact){const file=await downloadOwnerReportArtifact(env.DB,email,reportArtifact[1]);return new Response(file.content,{headers:{...headers,'content-type':file.contentType,'content-disposition':`attachment; filename="${file.filename}"`}})}
+   if(reportArtifact){const file=await downloadOwnerReportArtifact(env.DB,email,reportArtifact[1],nativeActor);return new Response(file.content,{headers:{...headers,'content-type':file.contentType,'content-disposition':`attachment; filename="${file.filename}"`}})}
    const pdf=path.match(/^\/owners\/statements\/([\w-]+)\.pdf$/)
-   if(pdf){const s=await authorizedStatement(env,email,pdf[1]);await recordStatementAccess(env,email,[s],'download');return new Response(new Uint8Array(await statementPdf(s)).buffer,{headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="cabin-statement-${s.id}.pdf"`}})}
+   if(pdf){const s=await authorizedStatement(env,email,pdf[1],nativeActor);await recordStatementAccess(env,email,[s],'download');return new Response(new Uint8Array(await statementPdf(s)).buffer,{headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="cabin-statement-${s.id}.pdf"`}})}
    const csv=path.match(/^\/owners\/statements\/([\w-]+)\.csv$/)
-   if(csv)return new Response(await ownerCsv(env,email,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
+   if(csv){await authorizedStatement(env,email,csv[1],nativeActor);return new Response(await ownerCsv(env,email,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})}
    const document=path.match(/^\/owners\/documents\/([\w-]+)\.txt$/)
-   if(document){const record=await ownerDocument(env,email,document[1]);return new Response(record.title+'\n\n'+record.content+'\n',{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-record-${document[1]}.txt"`}})}
+   if(document){const record=await ownerDocument(env,email,document[1]);need(!nativeActor||permitsProperty(nativeActor,record.propertyId),'Record not found',404);return new Response(record.title+'\n\n'+record.content+'\n',{headers:{...headers,'content-type':'text/plain; charset=utf-8','content-disposition':`attachment; filename="cabin-record-${document[1]}.txt"`}})}
    const records=path.match(/^\/owners\/properties\/([\w-]+)\/records\.csv$/)
-   if(records)return new Response(await ownerRecordsCsv(env,email,records[1],month),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-owner-records-${records[1]}.csv"`}})
+   if(records){need(!nativeActor||permitsProperty(nativeActor,records[1]),'Record not found',404);return new Response(await ownerRecordsCsv(env,email,records[1],month),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-owner-records-${records[1]}.csv"`}})}
   }
   return Response.json({error:'Not found'},{status:404,headers})
  }catch(error){
@@ -68,4 +72,10 @@ export async function ownersResponse(request:Request,original:Bindings):Promise<
   if(path==='/owners/action'||path==='/owners')return portalErrorPage(message,status)
   return signInPage(message,status)
  }
+}
+
+async function nativeState(env:Bindings,email:string,month:string|undefined,actor:Actor|undefined){
+ const state=await portalState(env,email,month)
+ if(actor)for(const key of ['properties','bookings','statements','performance','documents','expenses','stayRequests','issues','ledgerEntries','ledgerBalances','blockUses'] as const)(state as any)[key]=state[key].filter((row:any)=>permitsProperty(actor,key==='properties'?row.id:row.propertyId))
+ return state
 }

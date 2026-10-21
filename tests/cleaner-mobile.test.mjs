@@ -96,11 +96,13 @@ test('AUTH-002: desktop and phone team invitations enforce a single home and off
     const otherStay = await h.cmd('reservation.request',{propertyId:otherHome.id,channel:'direct',kind:'stay',guestName:'Daniel Ortiz',guestEmail:'daniel@stay.example',start:date(2),end:date(5),arrivalTime:'16:00'})
     const evidence = process.env.CABIN_AUTH_SHOTS ?? 'test-results/auth'
     await mkdir(evidence,{recursive:true})
+    const rental=await h.cmd('member.save',{name:'Morgan Lee',email:home.ownerEmail,pmsRole:'rental_owner',propertyIds:[home.id],actions:['owners:read'],active:true});await h.cmd('member.invite',{id:rental.id});const rentalCookie=await h.signIn(home.ownerEmail)
     browser = await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
     for (const width of [1440,390]) {
       const ownerContext = await browser.newContext({viewport:{width,height:1000}})
       let staffContext
       try {
+        const rentalContext=await browser.newContext({viewport:{width,height:1000}});try{const [name,value]=rentalCookie.split('=');await rentalContext.addCookies([{name,value,url:h.origin}]);const page=await rentalContext.newPage();const opened=await page.goto(h.origin+'/app');assert.equal(opened.status(),200);await expect(page.locator('body')).toContainText(home.name);await expect(page.locator('body')).not.toContainText(otherHome.name);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'rental-owner portal fits viewport');await page.screenshot({path:`${evidence}/rental-owner-${width}.png`,fullPage:true})}finally{await rentalContext.close()}
         const [ownerName,ownerValue] = h.owner.split('=')
         await ownerContext.addCookies([{name:ownerName,value:ownerValue,url:h.origin}])
         const ownerPage = await ownerContext.newPage(); ownerPage.setDefaultTimeout(12000)

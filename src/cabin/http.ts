@@ -1,5 +1,5 @@
 import { reportSharingState,downloadReportArtifact } from './reports/sharing'
-import { rentalOwnerPage } from './permissions/rental-owner'
+import { rentalOwnerResponse } from './permissions/rental-owner'
 import { ownerAction } from './owners/actions'
 import { commandScope } from './permissions/commands'
 import { readScope } from './permissions/reads'
@@ -210,7 +210,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   if(path==='/api/cabin/channel-agent/runner'){need(request.method==='POST','POST required',405);return json(await runnerOperation(env,request,await inputBody(request)))}
   if(request.method==='POST'&&!isAgent)need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   who=await principal(request,env,isAgent)
-  if(path==='/app'&&who.scope?.pmsRole==='rental_owner'&&request.method==='GET')return rentalOwnerPage(env,who)
+  if((path==='/app'||path==='/app/rental-owner'||path.startsWith('/app/rental-owner/'))&&who.scope?.pmsRole==='rental_owner')return rentalOwnerResponse(request,env,who)
   if(path==='/app'&&who.scope&&who.scope.pmsRole!=='rental_owner'){const first=[['calendar:read','calendar'],['inbox:read','inbox'],['reports:read','reports'],['operations:read','maintenance'],['finance:read','statements']].find(([action])=>hasAction(who!,action));if(first)return new Response(null,{status:303,headers:{...headers,location:'/app/'+first[1]}})}
   if(request.method==='GET'){
    await readScope(env.DB,who,url)

@@ -29,10 +29,10 @@ export async function downloadReportArtifact(db:D1Database,actor:Actor,id:string
  need(run.scope!.propertyIds.every(id=>permitsProperty(actor,id)),'Report artifact is outside your current scope',403)
  await runtimeScope(db,schedule);await assertLive(db,actor);return file
 }
-export async function downloadOwnerReportArtifact(db:D1Database,email:string,id:string){
+export async function downloadOwnerReportArtifact(db:D1Database,email:string,id:string,actor?:Actor){
  const {run,schedule,file}=await artifact(db,id)
  need(run.recipient.kind==='owner'&&run.recipient.email.toLowerCase()===email.trim().toLowerCase(),'Report artifact not found',404)
- await runtimeScope(db,schedule);return file
+ need(!actor||run.scope!.propertyIds.every(id=>permitsProperty(actor,id)),'Report artifact not found',404);await runtimeScope(db,schedule);return file
 }
 export async function ownerReportArtifacts(db:D1Database,email:string){
  const selected=(await rows<ReportRun>(db,'cb_report_runs')).filter(r=>r.artifact&&r.recipient.kind==='owner'&&r.recipient.email===email.trim().toLowerCase()),result=[]

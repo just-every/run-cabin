@@ -1,11 +1,16 @@
+import { hasAction } from './policy'
 import type { Bindings } from '../../auth.server'
-import { type Actor, need } from '../model'
-import { portalState } from '../owners/state'
-import { portalPage } from '../owners/ui'
-import { permitsProperty } from './policy'
-export async function rentalOwnerPage(env:Bindings,actor:Actor){
- const state=await portalState(env,actor.email)
- for(const key of ['properties','bookings','statements','performance','documents','expenses','stayRequests','issues','ledgerEntries','ledgerBalances','blockUses'] as const)(state as any)[key]=state[key].filter((row:any)=>permitsProperty(actor,key==='properties'?row.id:row.propertyId))
- const response=await portalPage(state,false),body=await response.text()
- return new Response(body.replaceAll('/owners/action','/app/action?name=rentalOwner.perform&amp;returnTo=%2Fapp').replaceAll('/owners/signout','/auth/signout'),{status:response.status,headers:response.headers})
+import { type Actor,need } from '../model'
+import { ownersResponse } from '../owners/http'
+/** Native rental-owner sessions reuse the owner portal without manufacturing a second session. */
+export async function rentalOwnerResponse(request:Request,env:Bindings,actor:Actor){
+ need(hasAction(actor,'owners:read'),'Owner reads are outside your grant',403)
+ need(actor.scope?.pmsRole==='rental_owner','Rental-owner access required',403)
+ const original=new URL(request.url),url=new URL(request.url)
+ url.pathname=original.pathname==='/app'?'/owners':original.pathname.replace('/app/rental-owner','/owners')
+ const response=await ownersResponse(new Request(url,request),env,actor);need(response,'Not found',404)
+ const headers=new Headers(response.headers),location=headers.get('location')
+ if(location?.startsWith('/owners'))headers.set('location',location.replace('/owners','/app/rental-owner'))
+ if(headers.get('content-type')?.includes('text/html'))return new Response((await response.text()).replaceAll('/owners/signout','/auth/signout').replaceAll('/owners','/app/rental-owner'),{status:response.status,headers})
+ return new Response(response.body,{status:response.status,headers})
 }
