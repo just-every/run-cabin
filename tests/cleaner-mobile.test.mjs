@@ -81,3 +81,97 @@ test('OPS-002: offline cleaner photos and issue survive a changed job and requir
     await context.close()
   } finally {await browser.close();await h.close()}
 })
+
+test('AUTH-002: desktop and phone team invitations enforce a single home and offboarding on the next request', {timeout:120000}, async () => {
+  const h = await harness({assets:true})
+  let browser
+  try {
+    const date = n => new Date(Date.now()+n*86400000).toISOString().slice(0,10)
+    const home = await h.cmd('property.save',{name:'Silver Pine Cabin',ownerName:'Morgan Lee',ownerEmail:'morgan@stay.example',commissionBps:1500})
+    const otherHome = await h.cmd('property.save',{name:'Harbor House',ownerName:'Casey Chen',ownerEmail:'casey@stay.example',commissionBps:1800})
+    for (const [property,address,timeZone] of [[home,'24 Pine Lane, Asheville, NC','America/New_York'],[otherHome,'8 Harbor Avenue, Seattle, WA','America/Los_Angeles']]) {
+      await h.cmd('home.settings',{propertyId:property.id,address,timeZone,checkInTime:'16:00',checkOutTime:'10:00',checklist:['Rooms prepared'],photosRequired:1})
+    }
+    const stay = await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',guestName:'Mira Bennett',guestEmail:'mira@stay.example',start:date(2),end:date(5),arrivalTime:'16:00'})
+    const otherStay = await h.cmd('reservation.request',{propertyId:otherHome.id,channel:'direct',kind:'stay',guestName:'Daniel Ortiz',guestEmail:'daniel@stay.example',start:date(2),end:date(5),arrivalTime:'16:00'})
+    const evidence = process.env.CABIN_AUTH_SHOTS ?? 'test-results/auth'
+    await mkdir(evidence,{recursive:true})
+    browser = await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+    for (const width of [1440,390]) {
+      const ownerContext = await browser.newContext({viewport:{width,height:1000}})
+      let staffContext
+      try {
+        const [ownerName,ownerValue] = h.owner.split('=')
+        await ownerContext.addCookies([{name:ownerName,value:ownerValue,url:h.origin}])
+        const ownerPage = await ownerContext.newPage(); ownerPage.setDefaultTimeout(12000)
+        await ownerPage.goto(h.origin+'/app/people')
+        const add = ownerPage.locator('form').filter({has:ownerPage.getByRole('button',{name:'Save team member',exact:true})})
+        const memberName = `Jamie Reservations ${width}`, email = `jamie-${width}@stay.example`
+        await add.getByLabel('Name',{exact:true}).fill(memberName)
+        await add.getByLabel('Email',{exact:true}).fill(email)
+        await add.getByLabel('PMS role',{exact:true}).selectOption('reservation')
+        await add.getByRole('checkbox',{name:home.name,exact:true}).check()
+        await expect(add.getByRole('checkbox',{name:otherHome.name,exact:true})).not.toBeChecked()
+        await add.getByText('Action scope',{exact:true}).click()
+        for (const action of ['calendar:read','reservations:read','booking.details']) await add.getByRole('checkbox',{name:action,exact:true}).check()
+        assert.ok(await ownerPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'team form fits the viewport')
+        await add.screenshot({path:`${evidence}/team-form-${width}.png`})
+        await add.getByRole('button',{name:'Save team member',exact:true}).click()
+        const member = ownerPage.locator('article.record').filter({has:ownerPage.getByRole('heading',{name:memberName,exact:true})})
+        await expect(member).toContainText('Reservation staff')
+        await expect(member).toContainText(home.name)
+        await expect(member).not.toContainText(otherHome.name)
+        await member.screenshot({path:`${evidence}/saved-member-${width}.png`})
+        await member.getByRole('button',{name:'Send sign-in invitation',exact:true}).click()
+        await expect(member.getByRole('button',{name:'Deactivate access',exact:true})).toBeVisible()
+
+        // The invitation is delivered at the mail edge; confirmation uses the real auth door.
+        const cookie = await h.signIn(email)
+        staffContext = await browser.newContext({viewport:{width,height:1000}})
+        const [staffName,staffValue] = cookie.split('=')
+        await staffContext.addCookies([{name:staffName,value:staffValue,url:h.origin}])
+        const staffPage = await staffContext.newPage(); staffPage.setDefaultTimeout(12000)
+        const calendar = await staffPage.goto(h.origin+'/app/calendar?from='+date(2)+'&days=7')
+        assert.equal(calendar.status(),200)
+        await expect(staffPage.getByLabel('Property',{exact:true})).toContainText(home.name)
+        await expect(staffPage.locator('body')).not.toContainText(otherHome.name)
+        await expect(staffPage.locator('body')).not.toContainText('Daniel Ortiz')
+        const visible = await staffPage.request.get(h.origin+'/api/cabin/state')
+        assert.equal(visible.status(),200)
+        const state = await visible.json()
+        assert.deepEqual(state.properties.map(p=>p.id),[home.id])
+        assert.deepEqual(state.bookings.map(b=>b.id),[stay.bookingId])
+
+        await staffPage.goto(h.origin+'/app/reservations')
+        const arrival = staffPage.locator(`#stay-${stay.bookingId}`)
+        await arrival.getByText('Guest, contact and arrival time',{exact:true}).click()
+        const updatedName = `Mira Bennett · arrival checked ${width}`
+        await arrival.getByLabel('Guest name',{exact:true}).fill(updatedName)
+        await arrival.getByRole('button',{name:'Save guest details',exact:true}).click()
+        await expect(staffPage.locator(`#stay-${stay.bookingId}`).getByLabel('Guest name',{exact:true})).toHaveValue(updatedName)
+        await expect(staffPage.locator('body')).not.toContainText(otherHome.name)
+        assert.ok(await staffPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'scoped reservations fit the viewport')
+        await staffPage.screenshot({path:`${evidence}/scoped-staff-${width}.png`,fullPage:true})
+
+        const foreign = (await h.state()).bookings.find(b=>b.id===otherStay.bookingId)
+        const denied = await staffPage.request.post(h.origin+'/api/cabin/command',{headers:{origin:h.origin},data:{name:'booking.details',input:{id:foreign.id,revision:foreign.revision,propertyId:home.id,guestName:'Changed outside grant'}}})
+        assert.equal(denied.status(),404,'an allowed action cannot target another home, even with a permitted property ID')
+        const credential = await staffPage.request.post(h.origin+'/api/cabin/command',{headers:{origin:h.origin},data:{name:'agent.create',input:{label:'synthetic-cabin-1'}}})
+        assert.equal(credential.status(),403,'reservation staff cannot issue credentials')
+        const access = await staffPage.request.get(h.origin+'/api/cabin/access')
+        assert.equal(access.status(),403,'reservation staff cannot read access credentials')
+        assert.equal((await h.state()).bookings.find(b=>b.id===foreign.id).guestName,'Daniel Ortiz')
+
+        await member.getByRole('button',{name:'Deactivate access',exact:true}).click()
+        await expect(member).toContainText('Inactive')
+        const revoked = await staffPage.goto(h.origin+'/app/calendar')
+        assert.equal(revoked.status(),403,'the existing staff session is refused immediately after offboarding')
+        await expect(staffPage.locator('body')).not.toContainText(home.name)
+        await staffPage.screenshot({path:`${evidence}/revoked-access-${width}.png`,fullPage:true})
+      } finally {
+        if (staffContext) await staffContext.close()
+        await ownerContext.close()
+      }
+    }
+  } finally { if (browser) await browser.close(); await h.close() }
+})

@@ -1,3 +1,5 @@
+import { memberActor } from '../permissions/authority'
+import { queuedAuthority } from '../permissions/commands'
 import { promotionMailAllowed } from '../promotions/mail'
 import { secureAccount } from '../connections/credentials'
 import { messageAccessBlocked } from '../agreements/access'
@@ -53,6 +55,8 @@ function claimDue(env: Bindings, id: string) {
 }
 const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => { const m = c.data.messages.find(r => r.id === id); if (!m || m.status !== 'pending') return null; if(messageAccessBlocked(c.data,m))return null; if (m.control?.automatic && !automaticStillAllowed(c.data, env.AUTH_ORIGIN, m)) { m.status = 'draft'; m.control.automatic = false; m.control.needsHost = true; m.detail = 'Automatic authority or sources changed before sending. Review this reply.'; m.revision = newId(); return null } Object.assign(m, { status: 'sending', revision: newId() }); return { ...m } }, () => false).catch(() => null)
 export async function transmit(env: Bindings, data: Data, m: GuestMessage): Promise<{ status: GuestMessage['status']; detail: string | null; providerId: string | null }> {
+ if(!m.authority&&m.sentBy){const current=await memberActor(env.DB,m.sentBy);if(!current)return {status:'discarded',detail:'The approving operator was offboarded.',providerId:null};m={...m,authority:current}}
+ if(!await queuedAuthority(env.DB,m.authority,m.authorityAction??'message.send',m.propertyId))return {status:'discarded',detail:'The approving team grant expired or changed before execution.',providerId:null}
  const inbox = inboxSettings(data), b = m.bookingId ? data.bookings.find(r => r.id === m.bookingId) : null
  try {
   if(m.promotionOfferId)try{await promotionMailAllowed(env,data,m)}catch(error){return {status:'discarded',detail:(error as Error).message,providerId:null}}

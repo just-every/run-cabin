@@ -1,3 +1,4 @@
+import { memberGrant,saveMemberGrant } from './permissions/grants'
 import { captureManagement, saveManagement } from './properties/terms'
 import { type Context, text, integer, need, owner, query, newId, sha } from './model'
 import { capacityCommand } from './dispatch/settings'
@@ -18,11 +19,11 @@ export async function peopleCommand(c:Context,name:string,p:Record<string,unknow
  if(name==='member.save'){
   owner(c.actor);const old=p.id?c.data.members.find(m=>m.id===text(p.id,'member ID')):undefined
   need(!p.id||old,'Member not found',404);if(old)need(integer(p.revision,'revision',1)===old.revision,'Member changed; reload',409)
-  const email=text(p.email,'email',254).toLowerCase();need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(p.role==='manager'||p.role==='cleaner','Choose manager or cleaner');need(typeof p.active==='boolean','Set active explicitly')
+  const email=text(p.email,'email',254).toLowerCase();need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(typeof p.active==='boolean','Set active explicitly')
   need(!await c.db.prepare("SELECT 1 FROM cb_erasure_fences WHERE entity='member' AND id_hash=?").bind(await sha(email)).first(),'This identity was erased',409)
   need(!c.data.members.some(m=>m.id!==old?.id&&m.email.toLowerCase()===email),'Email already has a grant',409)
-  const row={id:old?.id??newId(),name:text(p.name,'member name',160),email,role:p.role,active:p.active,revision:(old?.revision??0)+1}
-  c.queries.push(query('INSERT INTO cb_members(id,name,email,role,active,version) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,role=excluded.role,active=excluded.active,version=excluded.version',row.id,row.name,row.email,row.role,row.active?1:0,row.revision));c.entityId=row.id;return row
+  const grant=memberGrant(c,p,old),row={id:old?.id??newId(),name:text(p.name,'member name',160),email,...grant,active:p.active,revision:(old?.revision??0)+1}
+  c.queries.push(query('INSERT INTO cb_members(id,name,email,role,active,version) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,role=excluded.role,active=excluded.active,version=excluded.version',row.id,row.name,row.email,row.role,row.active?1:0,row.revision));saveMemberGrant(c,row);c.entityId=row.id;return row
  }
  return undefined
 }

@@ -1,5 +1,5 @@
 import { type Actor, type Context, type Query, newId, query, kinds } from '../model'
-export interface Scope { sourceVersion?:number; kind?:string; id?:string|null; propertyId?:string|null; bookingId?:string|null; revision?:string|null; result?:string; facts?:{ role?:string; active?:boolean; channel?:string; lockState?:string } }
+export interface Scope { sourceVersion?:number; kind?:string; id?:string|null; propertyId?:string|null; bookingId?:string|null; revision?:string|null; result?:string; facts?:{ guestRecipient?:string; role?:string; active?:boolean; channel?:string; lockState?:string } }
 const results=new Set(['removed','draft','pending','sending','sent','suppressed','failed','unavailable','skipped','cancelled','confirmed','approved','completed','closed','revoked','issued','active','undone','set','manual','error','posted','matched','unmatched','accepted','declined','expired','ready','proposed','escalated','open','unassigned','received','drafting','discarded','scheduled','ok','stale','held','paid','uncertain','rejected','exported'])
 const revision=(v:unknown)=>typeof v==='number'&&Number.isSafeInteger(v)?String(v):typeof v==='string'&&/^(?:[\da-f-]{16,80}|\d+)$/.test(v)?v:null
 /** Only application identifiers, revisions and controlled outcomes. Never accepts a business record as event data. */

@@ -41,7 +41,7 @@ export async function harness(options = {}) {
     const state = async (cookie = owner, status = 200) => { const r = await send('/api/cabin/state', undefined, cookie); assert.equal(r.status, status, JSON.stringify(r.value)); return r.value }
     const access = async (cookie=owner,status=200) => {const r=await send('/api/cabin/access',undefined,cookie);assert.equal(r.status,status,JSON.stringify(r.value));return r.value}
     // A human opens the explicit access door in addition to the ordinary state view.
-    const accessState=async(cookie=owner,status=200)=>{const data=await state(cookie,status);if(status!==200)return data;const details=await access(cookie);data.codes=details.codes;data.exports=details.exports;data.connections=details.connections;data.rentalAgreements=data.rentalAgreements.map(a=>({...a,token:details.agreements.find(r=>r.id===a.id)?.token}));data.messages=data.messages.map(m=>details.messages.find(r=>r.id===m.id)??m);return data}
+    const accessState=async(cookie=owner,status=200)=>{const data=await state(cookie,status);if(status!==200)return data;const details=await access(cookie);data.codes=details.codes;data.guestPortalLinks=details.guestPortalLinks;data.exports=details.exports;data.connections=details.connections;data.rentalAgreements=data.rentalAgreements.map(a=>({...a,token:details.agreements.find(r=>r.id===a.id)?.token}));data.messages=data.messages.map(m=>details.messages.find(r=>r.id===m.id)??m);return data}
     const confirmMail = async email => {
       const rows = (await db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence DESC').all()).results
       const message = rows.map(r => JSON.parse(r.message)).find(m => m.to.includes(email))
@@ -56,7 +56,18 @@ export async function harness(options = {}) {
       return { ...staff, cookie: await confirmMail(email) }
     }
     const signIn = async email => { const response = await send('/auth/magic-link', {email}); assert.equal(response.status,202,response.text); return confirmMail(email) }
-    return { get db(){return db}, get mf(){return mf}, restart:async()=>{await mf.dispose();mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')}, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
+    // Explicit public-door guest sign-in, with the only fake at the mail transport.
+    const verifyGuest=async link=>{
+      const path=link.startsWith('/stay/')?link:'/stay/'+link,initial=await send(path)
+      assert.equal(initial.status,200,initial.text);const browser=initial.cookie;assert.ok(browser,'guest browser cookie')
+      const sent=await send(path+'/send-code',{},browser,{accept:'application/json'});assert.equal(sent.status,200,sent.text)
+      assert.equal(sent.value.message,'accepted by the mail provider')
+      const row=await db.prepare("SELECT message FROM rer_mail_development_outbox WHERE json_extract(message,'$.deliveryId')=? ORDER BY sequence DESC LIMIT 1").bind('guest-code:'+sent.value.challengeId).first()
+      const mail=JSON.parse(row.message),code=mail.text.match(/code is (\d{6})/)?.[1];assert.ok(code,'verification code at mail edge')
+      const verified=await send(path+'/verify',{challengeId:sent.value.challengeId,code},browser);assert.equal(verified.status,303,verified.text)
+      return browser+'; '+verified.cookie
+    }
+    return { get db(){return db}, get mf(){return mf}, restart:async()=>{await mf.dispose();mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')}, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, verifyGuest, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
   } catch (error) { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }); throw error }
 }
 

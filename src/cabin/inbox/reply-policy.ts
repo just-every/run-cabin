@@ -21,7 +21,7 @@ export function policyCommand(c: Context, name: string, input: Record<string, un
  need(!!title === !!answer, 'Enter both an instruction title and its approved answer')
  const instructions = title ? [{ id: old?.instructions[0]?.id ?? newId(), title: text(title, 'instruction title', 100), answer: text(answer, 'approved instruction', 2000) }] : []
  const topics = ['checkin', 'checkout', 'instructions'].filter(t => input[t] === true || input[t] === 'on')
- const policy = { propertyId: home.id, revision: newId(), instructions, enabled: input.enabled === true || input.enabled === 'on', topics, minConfidence: integer(Number(input.minConfidence), 'Minimum confidence', 80, 100), from, until, replyMinutes: integer(Number(input.replyMinutes), 'Reply deadline minutes', 5, 1440), managerEmail, approvedBy: c.actor.id, approvedAt: c.now }
+ const policy = { propertyId: home.id, revision: newId(), instructions, enabled: input.enabled === true || input.enabled === 'on', topics, minConfidence: integer(Number(input.minConfidence), 'Minimum confidence', 80, 100), from, until, replyMinutes: integer(Number(input.replyMinutes), 'Reply deadline minutes', 5, 1440), managerEmail, approvedBy: c.actor.id, authority:structuredClone(c.actor), approvedAt: c.now }
  need(!policy.enabled || topics.length, 'Choose at least one automatic reply topic')
  row.replyPolicies = [...(row.replyPolicies ?? []).filter(p => p.propertyId !== home.id), policy]
  return policy
@@ -50,7 +50,7 @@ export function automaticReply(c: Context, origin: string, m: GuestMessage) {
  if (!answer) return
  m.text = `Hi ${f.guest},\n\n${answer}`
  control.automatic = true
- m.status = 'pending'; m.sentBy = p.approvedBy; m.revision = newId()
+ m.status = 'pending'; m.sentBy = p.approvedBy;m.authority=p.authority; m.revision = newId()
  const approval = { id: newId(), kind: 'automatic-reply', recordId: m.id, revision: m.revision, actorId: p.approvedBy, at: c.now }
  c.data.approvals.push(approval); m.approvalId = approval.id; m.detail = 'Automatic reply within the saved property policy; rendered from approved sources.'
 }

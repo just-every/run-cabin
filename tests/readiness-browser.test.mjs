@@ -72,3 +72,34 @@ test('REPORT-001: desktop and phone reports filter, explain denominators, drill 
   }
  }finally{if(browser)await browser.close();await h.close()}
 })
+
+
+test('REPORT-002: desktop and phone save current filters and explicitly approve visible scoped delivery',{timeout:120000},async()=>{
+ const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true});let browser
+ try{
+  const b=await reportBooks(h);browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+  const evidence=process.env.CABIN_SHARING_SHOTS??'test-results/report-sharing';await mkdir(evidence,{recursive:true})
+  for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000},acceptDownloads:true})
+   try{
+    const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
+    await page.goto(h.origin+'/app/reports?'+reportMonth+'&property='+b.p.id)
+    const reportName='Owner sharing '+width;await page.getByLabel('Saved report name',{exact:true}).fill(reportName);await page.getByRole('button',{name:'Save current report filters',exact:true}).click()
+    const saved=page.locator('[data-saved-report-id]').filter({has:page.getByRole('heading',{name:reportName,exact:true})});await expect(saved).toContainText('2026-10-01 to 2026-11-01 (exclusive)');await expect(saved).toContainText('accrual')
+    await saved.getByText('Schedule rental-owner delivery',{exact:true}).click();const form=saved.locator('form').filter({has:page.locator('input[name="recipientKind"][value="owner"]')})
+    await form.getByLabel('Rental-owner recipient',{exact:true}).selectOption(b.p.ownerEmail);await form.getByLabel('Reporting period',{exact:true}).selectOption('saved-window');await form.getByLabel('Delivery cadence',{exact:true}).selectOption('once');await form.getByLabel('File format',{exact:true}).selectOption('json');await form.getByLabel('Next run (UTC)',{exact:true}).fill(new Date(Date.now()+86400000).toISOString())
+    const consent=form.getByRole('checkbox',{name:'I approve this period, recipient, format and delivery schedule.'});await expect(consent).not.toBeChecked();await consent.check()
+    await saved.screenshot({path:join(evidence,`report-schedule-consent-${width}.png`)})
+    await form.getByRole('button',{name:'Approve report schedule',exact:true}).click()
+    const schedule=page.locator('[id^="report-schedule-"]').filter({has:page.getByRole('heading',{name:reportName,exact:true})});await expect(schedule).toContainText(b.p.ownerEmail);await expect(schedule).toContainText('JSON');await expect(schedule).toContainText('saved window');await expect(schedule).toContainText('once')
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'sharing controls fit the viewport')
+    await schedule.screenshot({path:join(evidence,`report-schedule-approved-${width}.png`)})
+    const savedId=await saved.getAttribute('data-saved-report-id'),state=(await h.send('/api/cabin/report-sharing.json',undefined,h.owner)).value,record=state.reportSchedules.find(s=>s.savedReportId===savedId),date=new Date(Date.now()-60000).toISOString()
+    await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(date,date,record.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await page.reload()
+    const run=page.locator('[id^="report-run-"]').filter({has:page.getByRole('heading',{name:reportName,exact:true})});await expect(run).toContainText('sent');await expect(run).toContainText('Data cutoff');await run.getByText('Run and delivery history',{exact:true}).click();await expect(run).toContainText('Mail provider accepted')
+    const [download]=await Promise.all([page.waitForEvent('download'),run.getByRole('link',{name:'Download frozen report (JSON)',exact:true}).click()]);const stream=await download.createReadStream(),chunks=[];for await(const chunk of stream)chunks.push(chunk);const report=JSON.parse(Buffer.concat(chunks).toString());assert.deepEqual(report.properties.map(p=>p.id),[b.p.id]);assert.ok(report.journals.every(j=>j.ownerKey===report.filters.owner))
+    await run.screenshot({path:join(evidence,`report-run-history-${width}.png`)})
+   }finally{await context.close()}
+  }
+ }finally{if(browser)await browser.close();await h.close()}
+})

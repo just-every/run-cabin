@@ -1,3 +1,4 @@
+import { runReportSchedules } from './reports/sharing'
 import { sweepQuotes } from './reservations/quotes'
 import { generateStatements } from './finance/close-schedule'
 import { advanceIssueChecks } from './issues/due'
@@ -16,6 +17,7 @@ import { advanceCases } from './inbox/team/advance'
 export async function settle(env: Bindings) {
  if(await restorationPaused(env.DB))return
  await sweepQuotes(env)
+ await runReportSchedules(env)
  // The five-minute Cron also advances unanswered offers and pre-arrival deadlines when no booking changed.
  if ((await load(env.DB)).homeSettings.some(s => s.dispatch)) await mutate(env.DB, SYSTEM, 'turnover.deadlines', () => undefined, () => false)
  try { await advanceIssueChecks(env) } catch { console.error('Cabin issue follow-up failed') }

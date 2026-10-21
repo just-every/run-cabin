@@ -4,6 +4,8 @@ import { chromium, expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { quoteHarness } from './quotes-support.mjs'
+import { harness } from './harness.mjs'
+import { homeDay } from './home-calendar.mjs'
 
 test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once and return on phone and desktop', {timeout:180000},async()=>{
  const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
@@ -77,5 +79,60 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
     await g.unrouteAll({behavior:'wait'});assert.deepEqual(routeFailures,[],'every booking-origin request reached the worker')
    }finally{await guest.close()}
   }finally{await context.close();await h.close()}
+ }}finally{await browser.close()}
+})
+
+test('GUEST-002: desktop and phone guests verify their own email, finish blocked tasks, read the released guide and report an issue', {timeout:180000},async()=>{
+ const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+ try{for(const width of [1440,390]){
+  const h=await harness({assets:true}),guest=await browser.newContext({viewport:{width,height:1000}}),g=await guest.newPage();g.setDefaultTimeout(12000)
+  try{
+   const evidence=process.env.CABIN_GUEST_SHOTS??'test-results/guest';await mkdir(evidence,{recursive:true})
+   const home=await h.cmd('property.save',{name:'synthetic-cabin-1',ownerName:'Synthetic host',ownerEmail:'synthetic-cabin-host@stay.example',commissionBps:2000})
+   await h.cmd('home.settings',{propertyId:home.id,address:'Private synthetic-cabin-1 address',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready']})
+   await h.cmd('direct.agreement.template',{propertyId:home.id,agreementTitle:'Synthetic cabin rental terms',agreementState:'ME',agreement:'Quiet hours after 10 pm. No smoking.',agreementRequired:true,agreementBlockAccess:true})
+   await h.cmd('portal.guide',{propertyId:home.id,version:0,arrival:'Park beside the green shed. Use the front entrance.',guidebook:'Leave recycling in the blue bin. The walking map is attached.'})
+   const guide=await h.cmd('portal.guide.file.add',{propertyId:home.id,version:1,guideFile:{name:'synthetic-cabin-1.txt',mimeType:'text/plain',base64:Buffer.from('Synthetic cabin walking map\n').toString('base64')}})
+   const stay=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',start:homeDay(3,'America/New_York'),end:homeDay(6,'America/New_York'),guestName:'synthetic-cabin-1 guest',guestEmail:'synthetic-cabin-1@stay.example'})
+   let s=await h.accessState();const link=s.guestPortalLinks.find(l=>l.bookingId===stay.bookingId),path='/stay/'+link.token
+   assert.ok(!s.codes.some(c=>c.bookingId===stay.bookingId&&c.holder==='guest'&&c.status==='issued'))
+   await g.goto(h.origin+path)
+   await expect(g.getByRole('button',{name:'Send code',exact:true})).toBeVisible()
+   await expect(g.getByText('synthetic-cabin-1 guest',{exact:true})).toHaveCount(0)
+   assert.ok(!(await g.content()).includes('Private synthetic-cabin-1 address'))
+   assert.equal((await guest.request.get(h.origin+path+'/api')).status(),401)
+   await g.screenshot({path:join(evidence,`guest-verification-${width}.png`),fullPage:true})
+   await g.getByRole('button',{name:'Send code',exact:true}).click()
+   await expect(g.getByRole('status')).toContainText('accepted by the mail provider')
+   const mail=JSON.parse((await h.db.prepare("SELECT message FROM rer_mail_development_outbox WHERE json_extract(message,'$.subject')='Your Cabin reservation verification code' ORDER BY sequence DESC LIMIT 1").first()).message)
+   await g.getByLabel('6-digit code',{exact:true}).fill(mail.text.match(/code is (\d{6})/)[1])
+   await g.getByRole('button',{name:'Verify email',exact:true}).click()
+   await expect(g.getByRole('heading',{name:'Before you arrive',exact:true})).toBeVisible()
+   await expect(g.locator('.code-card')).toHaveCount(0)
+   await expect(g.getByRole('link',{name:'Review and sign',exact:true})).toBeVisible()
+   await g.screenshot({path:join(evidence,`guest-tasks-${width}.png`),fullPage:true})
+   const other=await browser.newContext({viewport:{width,height:1000}})
+   try{const second=await other.newPage();await second.goto(h.origin+path);await expect(second.getByRole('button',{name:'Send code',exact:true})).toBeVisible();await expect(second.getByRole('heading',{name:'Before you arrive',exact:true})).toHaveCount(0)}finally{await other.close()}
+   await g.getByRole('link',{name:'Review and sign',exact:true}).click()
+   await g.getByLabel('Electronic signature (full guest name)',{exact:true}).fill('synthetic-cabin-1 guest')
+   await g.getByLabel('Reservation email',{exact:true}).fill('synthetic-cabin-1@stay.example')
+   await g.getByLabel('I reviewed this exact agreement and consent to electronic records and my electronic signature. I can download and retain my signed copy.',{exact:true}).check()
+   await g.getByRole('button',{name:'Sign this agreement',exact:true}).click()
+   await g.getByRole('link',{name:'Open your arrival details',exact:true}).click()
+   await expect(g.locator('.code-card')).toBeVisible()
+   await expect(g.getByText('Guide version 2',{exact:false})).toBeVisible()
+   await expect(g.getByText('Park beside the green shed. Use the front entrance.',{exact:true})).toBeVisible()
+   assert.ok(await g.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'portal fits viewport')
+   const file=await guest.request.get(h.origin+path+'/files/'+guide.files[0].id);assert.equal(await file.text(),'Synthetic cabin walking map\n')
+   await g.screenshot({path:join(evidence,`guest-guide-${width}.png`),fullPage:true})
+   await g.getByLabel('What needs attention?',{exact:true}).fill('The porch light needs attention.')
+   await g.getByRole('button',{name:'Report to your host',exact:true}).click()
+   await expect(g.getByRole('status')).toContainText('Problem reported')
+   await g.screenshot({path:join(evidence,`guest-reported-${width}.png`),fullPage:true})
+   s=await h.accessState();const booking=s.bookings.find(b=>b.id===stay.bookingId)
+   await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
+   const cancelled=await g.goto(h.origin+path);assert.equal(cancelled.status(),404)
+   assert.ok(!(await g.content()).includes('synthetic-cabin-1 guest'))
+  }finally{await guest.close();await h.close()}
  }}finally{await browser.close()}
 })

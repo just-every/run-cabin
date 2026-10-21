@@ -91,3 +91,54 @@ test('REPORT-001: filtered mixed-channel reports reconcile occupancy, bases, exc
  await h.restart();assert.equal((await b.report()).totals.grossCents,reversed.totals.grossCents)
  await h.cmd('member.save',{id:manager.id,revision:manager.revision,name:manager.name,email:manager.email,role:'manager',active:false});assert.ok([401,403].includes((await h.send('/api/cabin/reports.csv?'+reportMonth,undefined,manager.cookie)).status))
 }))
+
+
+const sharingMail={fail:false,attempts:[]}
+test('REPORT-002: approved owner and team schedules freeze scoped artifacts, refuse changed access and assign failed delivery',()=>run(async h=>{
+ sharingMail.fail=false;sharingMail.attempts=[]
+ const {reportBooks,reportMonth}=await import('./reports-support.mjs'),b=await reportBooks(h),manager=await h.person('SharingManager','manager'),cleaner=await h.person('SharingCleaner')
+ const sharing=async(cookie=h.owner)=>{const r=await h.send('/api/cabin/report-sharing.json',undefined,cookie);assert.equal(r.status,200,r.text);return r.value}
+ const filters=Object.fromEntries(new URLSearchParams(reportMonth)),saved=await h.cmd('report.save',{name:'Monthly portfolio',filters})
+ assert.deepEqual(saved.filters,{...filters,property:'',channel:'',owner:'',basis:'accrual',dates:'stay'})
+ const future=new Date(Date.now()+86400000).toISOString(),base={savedReportId:saved.id,savedReportRevision:saved.revision,period:'saved-window',cadence:'once',format:'json',nextRunAt:future,consent:true}
+ await h.cmd('report.schedule',{...base,consent:false,recipientKind:'owner',recipientEmail:b.p.ownerEmail},h.owner,400)
+ await h.cmd('report.schedule',{...base,recipientKind:'owner',recipientEmail:'unrelated@stay.example'},h.owner,403)
+ const ownerA=await h.cmd('report.schedule',{...base,recipientKind:'owner',recipientEmail:b.p.ownerEmail}),ownerB=await h.cmd('report.schedule',{...base,recipientKind:'owner',recipientEmail:b.other.ownerEmail}),digest=await h.cmd('report.schedule',{...base,recipientKind:'member',recipientMemberId:manager.id,format:'csv'})
+ await h.cmd('report.save',{name:'Forbidden',filters},cleaner.cookie,403)
+ // Saving and scheduling require the exact reviewed definition; a later edit does not replace its snapshot.
+ await h.cmd('report.save',{id:saved.id,revision:saved.revision,name:'Edited live definition',filters:{...filters,channel:'direct'}})
+ const before=await sharing();assert.equal(before.reportSchedules.length,3);assert.ok(before.reportSchedules.every(s=>s.filters.channel===''))
+ // Revoke the second owner's existing interest before the pending run becomes due.
+ await h.cmd('property.save',{...b.other,ownerName:'New current owner',ownerEmail:'replacement@stay.example'})
+ const due=async ids=>{const date=new Date(Date.now()-60000).toISOString();for(const id of ids)await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(date,date,id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})}
+ await due([ownerA.id,ownerB.id,digest.id])
+ let state=await sharing(),runs=state.reportRuns,a=runs.find(r=>r.scheduleId===ownerA.id),revoked=runs.find(r=>r.scheduleId===ownerB.id),team=runs.find(r=>r.scheduleId===digest.id)
+ assert.equal(a.status,'sent');assert.equal(team.status,'sent');assert.equal(revoked.status,'refused');assert.ok(!revoked.artifact)
+ assert.deepEqual(a.scope.propertyIds,[b.p.id]);assert.ok(a.cutoff);assert.ok(a.dataVersion>0);assert.ok(a.artifact.sha256)
+ assert.ok(a.history.some(e=>e.status==='sending'));assert.ok(a.history.some(e=>e.status==='sent'));assert.ok(state.reportFollowups.some(f=>f.runId===revoked.id&&f.assignedEmail==='owner@stay.example'))
+ const login=async email=>{await h.send('/owners/signin',{email});const messages=(await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence DESC').all()).results.map(x=>JSON.parse(x.message)),m=messages.find(m=>m.to.includes(email)&&m.subject.includes('Sign in to your Cabin owner portal'));assert.ok(m);const token=new URL(m.text.match(/http:\/\/[^\s]+\/owners\/confirm\?token=[^\s]+/)[0]).searchParams.get('token'),r=await h.send('/owners/confirm',{token});assert.equal(r.status,303,r.text);return r.cookie}
+ const ownerCookie=await login(b.p.ownerEmail),replacementCookie=await login('replacement@stay.example'),ownerFile=await h.send('/owners/reports/'+a.id,undefined,ownerCookie)
+ assert.equal(ownerFile.status,200,ownerFile.text);const report=JSON.parse(ownerFile.text);assert.ok(report.journals.length);assert.ok(report.journals.every(j=>j.ownerKey===a.scope.ownerKey));assert.ok(report.performance.every(p=>p.id===a.scope.ownerKey));assert.ok(!ownerFile.text.includes(b.other.id));assert.ok(!ownerFile.text.includes('replacement@stay.example'))
+ assert.equal((await h.send('/owners/reports/'+a.id,undefined,replacementCookie)).status,404)
+ assert.equal((await h.send('/api/cabin/report-artifacts/'+a.id,undefined,cleaner.cookie)).status,403)
+ assert.equal((await h.send('/api/cabin/report-artifacts/'+team.id)).status,401)
+ const csv=await h.send('/api/cabin/report-artifacts/'+team.id,undefined,manager.cookie);assert.equal(csv.status,200,csv.text);assert.match(csv.headers.get('content-type'),/csv/);assert.ok(csv.text.includes(b.p.id)&&csv.text.includes(b.other.id));assert.ok(csv.text.includes('"cutoff"'))
+ const outbox=(await h.db.prepare('SELECT message FROM rer_mail_development_outbox').all()).results.map(x=>JSON.parse(x.message))
+ assert.equal(outbox.filter(m=>m.deliveryId===a.id).length,1);assert.equal(outbox.filter(m=>m.deliveryId===revoked.id).length,0);assert.ok(outbox.find(m=>m.deliveryId===a.id).text.includes('/owners/reports/'+a.id))
+ // A new finance event changes live reports while previously generated bytes remain unchanged.
+ await b.post(b.vrbo,'earn',100,'2026-10-29','sharing-1');assert.equal((await h.send('/owners/reports/'+a.id,undefined,ownerCookie)).text,ownerFile.text)
+ await h.restart();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await sharing()).reportRuns.length,3);assert.equal((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,manager.cookie)).text,csv.text)
+ // A network-edge provider refusal creates assigned work while retaining the generated artifact.
+ const failedSaved=await h.cmd('report.save',{name:'Delivery review',filters}),failure=await h.cmd('report.schedule',{...base,savedReportId:failedSaved.id,savedReportRevision:failedSaved.revision,recipientKind:'member',recipientMemberId:manager.id,cadence:'weekly'})
+ sharingMail.fail=true;await due([failure.id]);sharingMail.fail=false;state=await sharing();const failed=state.reportRuns.find(r=>r.scheduleId===failure.id),follow=state.reportFollowups.find(f=>f.runId===failed.id)
+ assert.equal(failed.status,'delivery_failed');assert.ok(failed.artifact);assert.ok(follow.assignedTo&&follow.assignedEmail);assert.equal(state.reportSchedules.find(s=>s.id===failure.id).enabled,false)
+ const resolved=await h.cmd('report.followup.resolve',{id:follow.id,revision:follow.revision,resolution:'Provider refused the request; no message accepted. Keep schedule paused until reviewed.'});assert.ok(resolved.resolvedAt)
+ await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await sharing()).reportRuns.length,4)
+ // Owner and member revocation also apply to the already-frozen download doors.
+ await h.cmd('property.save',{...(await h.state()).properties.find(p=>p.id===b.p.id),ownerEmail:'changed@stay.example'});assert.equal((await h.send('/owners/reports/'+a.id,undefined,ownerCookie)).status,403)
+ await h.cmd('member.save',{id:manager.id,revision:manager.revision,name:manager.name,email:manager.email,role:'manager',active:false});assert.ok([401,403].includes((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,manager.cookie)).status))
+ const {erase}=await import('./privacy-flow.mjs'),current=(await h.state()).properties.find(p=>p.id===b.p.id)
+ await erase(h,{entity:'property',id:current.id,revision:current.revision})
+ assert.equal((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,h.owner)).status,404)
+ assert.equal((await sharing()).reportSchedules.filter(s=>s.propertyIds.includes(b.p.id)).length,0)
+},{auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{assert.equal(new URL(request.url).origin,'https://mail.cabin.test');const message=await request.json();sharingMail.attempts.push(message);return sharingMail.fail?new Response('Synthetic refusal',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-mail-'+sharingMail.attempts.length})}}))

@@ -68,7 +68,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
    if (m.control && booking) need(m.control.baseline === JSON.stringify(replySources(c.data, env.AUTH_ORIGIN, booking)), 'The stay, instructions or readiness changed. Discard this draft and write a current reply.', 409)
    const approval = { id: newId(), kind: 'message', recordId: m.id, revision: m.revision, actorId: who.id, at: c.now }
    c.data.approvals.push(approval)
-   Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, approvalId: approval.id, revision: newId() }); markReply(c, tid); return m
+   Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, authority:structuredClone(who), approvalId: approval.id, revision: newId() }); markReply(c, tid); return m
   }
   if (name === 'message.retry') {
    const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Message not found', 404); need(m.status === 'failed', 'Only a failed message can be sent again', 409)
@@ -81,7 +81,7 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
    const t = threads(c.data).find(r => r.id === text(p.thread, 'thread')); need(t, 'Thread not found', 404)
    const { b, last, r } = await replyTarget(env, c, t)
    claimGuard(c, t.id)
-   const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? last?.bookingId ?? null, email: r.email, phone: r.phone, ref: last?.ref ?? null, channel: r.channel, direction: 'out', source: 'host', status: 'pending', subject: optional(p.subject, 'subject', 200) || (last?.subject ? (/^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`) : 'About your stay'), text: text(p.text, 'message', 4000), detail: null, replyTo: last?.id ?? null, headerId: null, sentBy: who.id, approvalId: null, scheduledId: null, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
+   const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? last?.bookingId ?? null, email: r.email, phone: r.phone, ref: last?.ref ?? null, channel: r.channel, direction: 'out', source: 'host', status: 'pending', subject: optional(p.subject, 'subject', 200) || (last?.subject ? (/^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`) : 'About your stay'), text: text(p.text, 'message', 4000), detail: null, replyTo: last?.id ?? null, headerId: null, sentBy: who.id, authority:structuredClone(who), approvalId: null, scheduledId: null, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
    c.data.messages.push(m); markReply(c, t.id); c.entityId = m.id; return m
   }
   need(false, 'Unknown inbox command', 404)

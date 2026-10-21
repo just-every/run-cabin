@@ -1,3 +1,4 @@
+import { eraseReportSharing } from './reports/sharing/custody'
 import { eraseVerification } from './verification/retention'
 import { cases } from './verification/records'
 import { eraseOwnerProperty } from './owners/privacy'
@@ -41,11 +42,14 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>,name='pr
  const revision=integer(p.revision,'revision',1)
  if(entity==='property'){
   const prop=c.data.properties.find(v=>v.id===id);need(prop,'Property not found',404);need(prop.revision===revision,'Property changed; reload before erasing',409)
+  await eraseReportSharing(c,scope)
   const retained=await retainedRecords(c,scope,p);await fenceSending(c,scope);await fenceContacts(c,scope);await eraseAttachments(c,scope);await eraseSources(c,scope);scrubOperational(c,scope)
   const receiptId=await completion(c,entity,id,retained)
   const bookingIds=new Set(c.data.bookings.filter(b=>b.propertyId===id).map(b=>b.id));eraseProfiles(c,new Set(c.data.guests.filter(g=>bookingIds.has(g.bookingId)).map(g=>g.id)))
   for(const g of c.data.guests){g.facts=g.facts.filter(f=>!f.propertyIds.includes(id));g.consents=g.consents.filter(v=>v.propertyId!==id)}
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
+  for(const bookingId of bookingIds)c.queries.push(query('DELETE FROM cb_guest_challenges WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_sessions WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_limits WHERE booking_id=?',bookingId))
+  c.queries.push(query('DELETE FROM cb_guest_guide_files WHERE property_id=?',id))
   await eraseVerification(c,bookingIds)
   for(const v of cases(c.data).filter(v=>bookingIds.has(v.bookingId))){ids.push(v.id,'guest:'+v.bookingId)}
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))

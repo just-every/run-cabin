@@ -1,3 +1,4 @@
+import { queuedAuthority } from '../permissions/commands'
 import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../connections/mail'
@@ -16,7 +17,9 @@ export async function deliverStatements(env:Bindings){
  for(const pending of (await load(env.DB)).deliveries.filter(d=>d.status==='pending').slice(0,20)){
   const claimed=await mutate(env.DB,SYSTEM,'statement.delivery.claim',c=>{const d=c.data.deliveries.find(r=>r.id===pending.id);if(!d||d.status!=='pending')return null;d.status='sending';return {delivery:{...d},statement:c.data.statements.find(s=>s.id===d.statementId)}}).catch(()=>null)
   if(!claimed?.statement)continue
-  const {delivery:d,statement:s}=claimed,sender=operatorMail(env,s.propertyId)
+  const {delivery:d,statement:s}=claimed
+  if(!await queuedAuthority(env.DB,d.authority,d.authorityAction??'statement.deliver',d.propertyId)){await mutate(env.DB,SYSTEM,'statement.delivery.revoked',c=>{const row=c.data.deliveries.find(r=>r.id===d.id);if(row){row.status='failed';row.detail='The approving team grant changed before execution.'}});continue}
+  const sender=operatorMail(env,s.propertyId)
   let status:'sent'|'suppressed'|'failed'|'unavailable'='unavailable',detail:string|null='Configure a mail provider to deliver this statement.'
   if(sender&&env.MAIL_FROM){try{
    const link=new URL(`/owners?statement=${s.id}`,env.AUTH_ORIGIN).href

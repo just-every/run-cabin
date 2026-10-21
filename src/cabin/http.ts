@@ -1,3 +1,9 @@
+import { reportSharingState,downloadReportArtifact } from './reports/sharing'
+import { rentalOwnerPage } from './permissions/rental-owner'
+import { ownerAction } from './owners/actions'
+import { commandScope } from './permissions/commands'
+import { readScope } from './permissions/reads'
+import { hasAction } from './permissions/policy'
 import { readReport } from './reports/read'
 import { reportCsv } from './reports/export'
 import { staffQuoteCommand } from './reservations/quotes'
@@ -59,6 +65,9 @@ const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
 const pages=new Set(['/app','/app/reports','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/guests','/app/import','/app/agent','/app/direct','/app/books','/app/taxes','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
+ if(name==='rentalOwner.perform')name='rentalOwner.'+String(input.action??'')
+ await commandScope(env.DB,who,name,input)
+ if(name.startsWith('rentalOwner.'))return ownerAction(env,who.email,name.slice('rentalOwner.'.length),input,who)
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
@@ -156,6 +165,7 @@ async function inputBody(request:Request):Promise<Record<string,unknown>>{
   for(const key of new Set(form.keys())){const value=form.get(key)
    if(key==='sourceFiles'){const files=[];for(const file of form.getAll(key)){if(file===''||(file instanceof File&&!file.name&&!file.size))continue;need(file instanceof File&&file.size>0&&file.size<=2_000_000,'Choose export files up to 2 MB');files.push({name:file.name,text:await file.text()})}input.files=files}
    else if(key==='payoutFile'){need(value instanceof File&&value.size>0&&value.size<=2_000_000,'Choose a payout CSV up to 2 MB');input.csv=await value.text()}
+   else if(key==='guideFile'){need(value instanceof File&&value.size>0&&value.size<=1_000_000,'Choose a guide file up to 1 MB');const bytes=new Uint8Array(await value.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);input.guideFile={name:value.name,mimeType:value.type,base64:btoa(binary)}}
    else if(key==='photoFiles'){const photos=[];for(const file of form.getAll(key)){if(!(file instanceof File)||!file.size)continue;need(file.size<=256_000,'Use photos up to 256 KB each');const bytes=new Uint8Array(await file.arrayBuffer());let binary='';for(const b of bytes)binary+=String.fromCharCode(b);photos.push({photo:btoa(binary),mimeType:file.type})}input.photos=photos}
    else{need(!(value instanceof File),'Upload photos with the photo field');input[key]=form.getAll(key).length>1?form.getAll(key):value}
   }
@@ -200,7 +210,10 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   if(path==='/api/cabin/channel-agent/runner'){need(request.method==='POST','POST required',405);return json(await runnerOperation(env,request,await inputBody(request)))}
   if(request.method==='POST'&&!isAgent)need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   who=await principal(request,env,isAgent)
+  if(path==='/app'&&who.scope?.pmsRole==='rental_owner'&&request.method==='GET')return rentalOwnerPage(env,who)
+  if(path==='/app'&&who.scope&&who.scope.pmsRole!=='rental_owner'){const first=[['calendar:read','calendar'],['inbox:read','inbox'],['reports:read','reports'],['operations:read','maintenance'],['finance:read','statements']].find(([action])=>hasAction(who!,action));if(first)return new Response(null,{status:303,headers:{...headers,location:'/app/'+first[1]}})}
   if(request.method==='GET'){
+   await readScope(env.DB,who,url)
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
    const preview=path.match(/^\/api\/cabin\/promotions\/([\w-]+)\/preview$/)
    if(preview){manager(who);need(!who.isAgent,'Human access required',403);const row=(await promotionRows<PromotionOffer>(env.DB,'promotionOffers')).find(o=>o.id===preview[1]);need(row&&!row.restorePaused,'Offer not found',404);const token=await unseal(env.SESSION_SECRET,'promotion-offer',row.tokenSealed);need(token,'Offer link unavailable',410);await record(env.DB,who,'human.promotion.link',{kind:'promotionOffers',id:row.id,propertyId:row.propertyId,bookingId:row.bookingId,result:'released'});await assertLive(env.DB,who);return new Response(null,{status:303,headers:{...headers,location:'/offers/'+token}})}
@@ -214,8 +227,11 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(path==='/api/cabin/activity')return json(await history(env.DB,who,url.searchParams))
    if(path==='/api/cabin/activity.jsonl'){manager(who);need(!who.isAgent,'Human access required',403);await assertLive(env.DB,who);return new Response(exportHistory(env.DB,who,url.searchParams),{headers:{...headers,'content-type':'application/x-ndjson; charset=utf-8','content-disposition':'attachment; filename="cabin-activity.jsonl"'}})}
    if(path==='/api/cabin/ledger.csv'){manager(who);need(!who.isAgent,'Human access required',403);const ledger=await ledgerState(env.DB,who);const rows=[['Journal','Entity','Property','Owner reference','Reservation','Effective','Posted','Actor','Source type','Source','Revision','Reversal','Correction','Account','Debit USD cents','Credit USD cents'],...ledger.journals.flatMap(j=>j.lines.map(l=>[j.id,j.legalEntity,j.propertyId,j.ownerKey,j.bookingId,j.effectiveDate,j.postedAt,j.actorId,j.sourceType,j.sourceId,j.sourceRevision,j.reversalOf??'',j.correctionOf??'',l.account,l.debitCents,l.creditCents]))];return new Response(rows.map(r=>r.map(csvCell).join(',')).join('\r\n'),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="cabin-ledger.csv"'}})}
+   if(path==='/api/cabin/report-sharing.json')return json(await reportSharingState(env.DB,who))
+   const artifact=path.match(/^\/api\/cabin\/report-artifacts\/([\w-]+)$/)
+   if(artifact){const file=await downloadReportArtifact(env.DB,who,artifact[1]);return new Response(file.content,{headers:{...headers,'content-type':file.contentType,'content-disposition':`attachment; filename="${file.filename}"`}})}
    if(path==='/api/cabin/reports.json'||path==='/api/cabin/reports.csv'){const report=await readReport(env.DB,who,url.searchParams);return path.endsWith('.json')?json(report):new Response(reportCsv(report),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':'attachment; filename="cabin-report.csv"'}})}
-   if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,report:path==='/app/reports'?await readReport(env.DB,who,url.searchParams):undefined,activity:path==='/app/activity'?await history(env.DB,who,url.searchParams):undefined,activityParams:url.searchParams,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),channel:url.searchParams.get('channel'),reservation:url.searchParams.get('reservation'),request:url.searchParams.get('request'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
+   if(pages.has(path)){const state=await snapshot(env,who),identity=path==='/app/signin'?await signInSettings(request,original):undefined;return renderApp(state,path,{identity,reportSharing:path==='/app/reports'?await reportSharingState(env.DB,who):undefined,report:path==='/app/reports'?await readReport(env.DB,who,url.searchParams):undefined,activity:path==='/app/activity'?await history(env.DB,who,url.searchParams):undefined,activityParams:url.searchParams,from:url.searchParams.get('from'),days:url.searchParams.get('days'),home:url.searchParams.get('home'),channel:url.searchParams.get('channel'),reservation:url.searchParams.get('reservation'),request:url.searchParams.get('request'),thread,message:savedMessage(url.searchParams.get('done'),who,state,url.searchParams.get('record'))})}
    if(path==='/api/cabin/access'){need(!who.isAgent,'A human access grant is required',403);const data=await snapshot(env,who);await record(env.DB,who,'human.access.read',{kind:'codes',result:'requested'});await assertLive(env.DB,who);return json(accessDetails(data))}
    if(path==='/api/cabin/state'||path==='/api/cabin/agent/context')return json(ordinaryState(await snapshot(env,who)))
    if(path.startsWith('/api/cabin/privacy/'))return await privacyDownload(env.DB,who,path)??json({error:'Not found'},404)
@@ -232,7 +248,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
-   const state=await snapshot(env,who);return renderApp(state,back,{activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
+   if(name.startsWith('rentalOwner.'))return new Response(null,{status:303,headers:{...headers,location:'/app'}})
+   const state=await snapshot(env,who);return renderApp(state,back,{report:back==='/app/reports'?await readReport(env.DB,who,new URLSearchParams()):undefined,reportSharing:back==='/app/reports'?await reportSharingState(env.DB,who):undefined,activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    const result=await execute(request,env,who,body.name,body.input as Record<string,unknown>)
@@ -242,7 +259,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
  }catch(error){
   const status=Number((error as any)?.status)||500,message=(error as any)?.status?(error as Error).message:'Could not complete this request. Refresh and try again.'
   if(who&&request.method==='POST'){try{await assertLive(env.DB,who);await record(env.DB,who,'command.denied',{result:status===403?'denied':'refused'})}catch{}}
-  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
+  if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{report:back==='/app/reports'?await readReport(env.DB,who,new URLSearchParams()):undefined,reportSharing:back==='/app/reports'?await reportSharingState(env.DB,who):undefined,activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
   if(pages.has(path)&&status===401)return new Response(null,{status:303,headers:{...headers,location:'/signin?returnTo='+encodeURIComponent(path)}})
   return json({error:message},status)
  }

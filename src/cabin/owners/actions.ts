@@ -1,21 +1,23 @@
+import { permitsProperty } from '../permissions/policy'
 import type { Bindings } from '../../auth.server'
-import { need, text, newId, query, guard, exact, sha } from '../model'
-import { load, mutate, SYSTEM } from '../storage'
+import { type Actor, need, text, newId, query, guard, exact, sha } from '../model'
+import { authority, load, mutate, SYSTEM } from '../storage'
 import { changeBlock, cancelBlock } from '../blocks'
 import { settle } from '../settle'
 import { overlaps } from '../inventory'
 import { ownerRecords, sameEmail, optionalText, policyFor, stayDates } from './records'
 import { ownerBatch, ownerEvent } from './activity'
 
-export async function ownerAction(env:Bindings,email:string,name:string,input:Record<string,unknown>){
+export async function ownerAction(env:Bindings,email:string,name:string,input:Record<string,unknown>,nativeActor?:Actor){
  const [data,rows]=await Promise.all([load(env.DB),ownerRecords(env.DB)]),now=new Date().toISOString()
- const current=(id:string)=>{const p=data.properties.find(p=>p.id===id&&sameEmail(p.ownerEmail,email));need(p,'Home not found',404);return p}
- const queries=[guard('(SELECT version FROM cb_meta WHERE id=1)=?',data.version)];let result:{id:string;status:string;revision:string};let propertyId:string;let kind:string
+ const current=(id:string)=>{const p=data.properties.find(p=>p.id===id&&sameEmail(p.ownerEmail,email));need(p&&(!nativeActor||permitsProperty(nativeActor,p.id)),'Home not found',404);return p}
+ const native=nativeActor?authority(nativeActor):null
+ const queries=[...(native?[guard(native.sql,...native.params)]:[]),guard('(SELECT version FROM cb_meta WHERE id=1)=?',data.version)];let result:{id:string;status:string;revision:string};let propertyId:string;let kind:string
  if(name==='stay.edit'||name==='stay.cancel'){
   const r=rows.stayRequests.find(r=>r.id===text(input.id,'stay request ID')&&sameEmail(r.email,email));need(r,'Stay request not found',404);const home=current(r.propertyId);exact(r,input.revision)
   if(r.status==='approved'&&r.bookingId){
    const result=await mutate(env.DB,{...SYSTEM,id:'rental-owner:'+await sha(email.toLowerCase())},'owner.'+name,c=>{
-    need(c.data.version===data.version,'Records changed. Reload your portal.',409);const b=c.data.bookings.find(b=>b.id===r.bookingId);need(b,'Block not found',404)
+    if(native)c.queries.push(guard(native.sql,...native.params));need(c.data.version===data.version,'Records changed. Reload your portal.',409);const b=c.data.bookings.find(b=>b.id===r.bookingId);need(b,'Block not found',404)
     if(name==='stay.edit'){stayDates(c.data,policyFor(rows.policies,home),{start:input.start,end:input.end});changeBlock(c,b,{...input,revision:b.revision})}else cancelBlock(c,b,{revision:b.revision})
     const revision=newId();c.queries.push(guard('EXISTS(SELECT 1 FROM cb_properties WHERE id=? AND owner_email=? COLLATE NOCASE)',home.id,email),query('UPDATE cb_owner_stay_requests SET start=?,end=?,note=?,status=?,revision=?,decided_at=? WHERE id=?',b.start,b.end,b.blockUse?.reason??r.note,name==='stay.cancel'?'cancelled':'approved',revision,c.now,r.id));return {id:r.id,status:name==='stay.cancel'?'cancelled':'approved',revision}
    });await settle(env);return result
@@ -40,5 +42,5 @@ export async function ownerAction(env:Bindings,email:string,name:string,input:Re
   result={id,status:'pending',revision};propertyId=p.id;kind='owner-stay'
  }else{need(false,'Unknown owner action',404)}
  queries.push(guard('EXISTS(SELECT 1 FROM cb_properties WHERE id=? AND owner_email=? COLLATE NOCASE)',propertyId,email),await ownerEvent(email,`owner.${name}`,now,{id:result.id,kind,propertyId,result:result.status}),query('UPDATE cb_meta SET version=version+1 WHERE id=1'))
- await ownerBatch(env.DB,queries);return result
+ if(native)queries.push(guard(native.sql,...native.params));await ownerBatch(env.DB,queries);return result
 }

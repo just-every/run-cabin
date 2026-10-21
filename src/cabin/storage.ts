@@ -1,3 +1,5 @@
+import { mutationScope } from './permissions/mutations'
+import { syncPortal } from './portal/lifecycle'
 import { expireQuotes } from './reservations/quotes'
 import { queueChannelClosures } from './channel-agent/queue'
 import { synchronizePromotions } from './promotions/inventory'
@@ -26,18 +28,18 @@ export function authority(a: Actor): Query {
  const params: any[] = [a.id, a.operatorVersion, ['owner', 'agent'].includes(a.role) ? 'owner' : 'member']
  let sql = operator
  if (a.role === 'agent') { sql += ' AND EXISTS(SELECT 1 FROM cb_agent_keys WHERE id=? AND owner_id=? AND owner_version=? AND revoked_at IS NULL AND expires_at>?)'; params.push(a.keyId, a.id, a.operatorVersion, Date.now()) }
- if (a.role === 'manager' || a.role === 'cleaner') { sql += ' AND EXISTS(SELECT 1 FROM cb_members WHERE id=? AND email=? COLLATE NOCASE AND role=? AND active=1)'; params.push(a.memberId, a.email, a.role) }
+ if (a.role === 'manager' || a.role === 'cleaner') { sql += ' AND EXISTS(SELECT 1 FROM cb_members WHERE id=? AND email=? COLLATE NOCASE AND role=? AND active=1'+(a.memberVersion===undefined?'':' AND version=?')+')'; params.push(a.memberId, a.email, a.role);if(a.memberVersion!==undefined)params.push(a.memberVersion);if(a.scope){sql+=' AND EXISTS(SELECT 1 FROM cb_member_scopes WHERE member_id=? AND revision=?)';params.push(a.memberId,a.scope.revision);if(a.scope.pmsRole==='rental_owner'){for(const interest of a.interests??[]){sql+=' AND EXISTS(SELECT 1 FROM cb_properties WHERE id=? AND version=?)';params.push(interest.propertyId,interest.propertyRevision);if(interest.termsId){sql+=" AND EXISTS(SELECT 1 FROM cb_records WHERE kind='managementTerms' AND id=? AND revision=?)";params.push(interest.termsId,interest.termsRevision)}}}} }
  return query(sql, ...params)
 }
 export async function assertLive(db: D1Database, actor: Actor) { const a = authority(actor); need(await db.prepare(`SELECT 1 WHERE ${a.sql}`).bind(...a.params).first(), 'Access expired or revoked', 403) }
 export async function load(db: D1Database): Promise<Data> {
  const results = await db.batch<any>([
   db.prepare('SELECT version FROM cb_meta WHERE id=1'), db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
-  db.prepare('SELECT id,version AS revision,name,email,role,active FROM cb_members ORDER BY name,id'), db.prepare(`SELECT kind,data FROM cb_records WHERE kind IN (${kinds.map(()=>'?').join(',')}) ORDER BY rowid`).bind(...kinds),
+  db.prepare('SELECT m.id,m.version AS revision,m.name,m.email,m.role,m.active,s.pms_role,s.property_ids,s.actions,s.revision AS scope_revision FROM cb_members m LEFT JOIN cb_member_scopes s ON s.member_id=m.id ORDER BY m.name,m.id'), db.prepare(`SELECT kind,data FROM cb_records WHERE kind IN (${kinds.map(()=>'?').join(',')}) ORDER BY rowid`).bind(...kinds),
   db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
   db.prepare('SELECT e.id,COALESCE(a.anonymous_id,e.actor_id) AS actorId,e.actor_role AS actorRole,e.action,COALESCE(x.anonymous_id,e.entity_id) AS entityId,e.at FROM cb_events e LEFT JOIN cb_audit_redactions a ON a.subject_id=e.actor_id LEFT JOIN cb_audit_redactions x ON x.subject_id=e.entity_id ORDER BY e.rowid DESC LIMIT 100'),
  ])
- const data: Data = { threadCases:[], staffQuotes:[], statementSchedules:[], financialAllocations:[], sharedCosts:[], verifications:await loadVerifications(db), workExpenses:[], propertyProfiles: [], managementTerms: [], readinessPlans: [], readinessRecords: [], rentalTemplates: [], rentalAgreements: [], guests: [], guestMerges: [], guestPolicies: [], guestOffers: [], cleanerProfiles: [], ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
+ const data: Data = { guestPortalLinks:[], threadCases:[], staffQuotes:[], statementSchedules:[], financialAllocations:[], sharedCosts:[], verifications:await loadVerifications(db), workExpenses:[], propertyProfiles: [], managementTerms: [], readinessPlans: [], readinessRecords: [], rentalTemplates: [], rentalAgreements: [], guests: [], guestMerges: [], guestPolicies: [], guestOffers: [], cleanerProfiles: [], ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ id:m.id,revision:m.revision,name:m.name,email:m.email,role:m.role,active:!!m.active,...(m.pms_role?{scope:{pmsRole:m.pms_role,propertyIds:JSON.parse(m.property_ids),actions:JSON.parse(m.actions),revision:m.scope_revision}}:{}) })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  for(const task of data.tasks)if(!task.work)task.work=initialWork(data,task)
  return data
@@ -56,7 +58,9 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- expireQuotes(c); await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); syncTeam(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c); await queueChannelClosures(c)
+ mutationScope(c,name);expireQuotes(c); await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await syncPortal(c); await synchronizeMessages(c); retainGuestErasure(c); syncTeam(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c); await queueChannelClosures(c,name)
+ for(const message of c.data.messages)if(message.sentBy===c.actor.id&&!c.before.messages.some(m=>m.id===message.id&&m.revision===message.revision)){message.authority??=structuredClone(c.actor);message.authorityAction??=name}
+ if(c.actor.role!=='system')for(const delivery of c.data.deliveries)if(!c.before.deliveries.some(d=>d.id===delivery.id)){delivery.authority=structuredClone(c.actor);delivery.authorityAction=name}
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

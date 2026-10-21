@@ -92,7 +92,7 @@ test('rental agreements work without outside accounts: versioned property terms,
   assert.equal((await h.send(link,signature)).status,303)
   state=await h.accessState();a=state.rentalAgreements.find(a=>a.bookingId===stay.bookingId);d=a.documents.at(-1)
   const originalUrl=link+'/document/'+d.id,original=await h.send(originalUrl),code=state.codes.find(c=>c.bookingId===stay.bookingId&&c.holder==='guest'&&c.status==='issued')
-  assert.ok(code);assert.match((await h.send('/stay/'+code.link)).text,new RegExp(code.code));assert.match(original.text,/Email at signing: sam@stay.example/)
+  assert.ok(code);const guestCookie=await h.verifyGuest(code.link);assert.match((await h.send('/stay/'+code.link,undefined,guestCookie)).text,new RegExp(code.code));assert.match(original.text,/Email at signing: sam@stay.example/)
   assert.equal((await h.send(`/api/cabin/agreements/${a.id}/${d.id}`)).status,401)
   assert.equal((await h.send(`/api/cabin/agreements/${a.id}/${d.id}`,undefined,cleaner.cookie)).status,403)
   const redacted=await h.accessState(cleaner.cookie);assert.equal(redacted.rentalAgreements.length,0);assert.equal(redacted.rentalTemplates.length,0)
@@ -101,7 +101,7 @@ test('rental agreements work without outside accounts: versioned property terms,
   await h.cmd('direct.agreement.amend',{bookingId:stay.bookingId,revision:a.revision,start:day(8),end:day(11),reason:'Guest moved arrival and added their dog',terms:'One dog is approved for the amended dates.',useCurrentTemplate:'yes'},manager.cookie)
   state=await h.accessState();a=state.rentalAgreements.find(a=>a.bookingId===stay.bookingId);const amended=a.documents.at(-1)
   assert.equal(amended.signature,undefined);assert.equal(amended.templateVersion,next.currentVersion);assert.equal(amended.start,day(8));assert.equal(state.bookings.find(b=>b.id===stay.bookingId).start,day(8));assert.equal(state.codes.find(c=>c.id===code.id).status,'revoked')
-  const blocked=await h.send('/stay/'+code.link);assert.doesNotMatch(blocked.text,new RegExp(`<p class="code">${code.code}</p>`));assert.match(blocked.text,/Review and sign/)
+  const blocked=await h.send('/stay/'+code.link,undefined,guestCookie);assert.doesNotMatch(blocked.text,new RegExp(`<p class="code">${code.code}</p>`));assert.match(blocked.text,/Review and sign/)
   assert.equal((await h.send(originalUrl)).text,original.text,'original signed document and evidence remain byte-for-byte downloadable')
   assert.equal((await h.send(link,signature)).status,409,'old consent cannot satisfy the amendment')
   const renewed={...signature,version:amended.id,sha256:amended.sha256}

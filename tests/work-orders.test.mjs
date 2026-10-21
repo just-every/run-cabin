@@ -12,10 +12,11 @@ test('OPS-004: a guest appliance report becomes accepted, approved, inspected wo
   const home=await h.cmd('property.save',{name:'Lake Loft',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:2000})
   await h.cmd('home.settings',{propertyId:home.id,address:'20 Lake Street, Ithaca, NY',timeZone:'America/New_York',maintenanceId:vendor.id,checklist:['Ready']})
   await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Lake House LLC'})
-  const stay=await h.cmd('reservation.request',{propertyId:home.id,channel:'airbnb',start:'2026-11-01',end:'2026-11-04',guestName:'Megan Ortiz'})
+  const stay=await h.cmd('reservation.request',{propertyId:home.id,channel:'airbnb',start:'2026-11-01',end:'2026-11-04',guestName:'Megan Ortiz',guestEmail:'synthetic-cabin-1@stay.example'})
   const code=(await h.accessState()).codes.find(c=>c.bookingId===stay.bookingId&&c.holder==='guest'),bytes=await readFile('tests/fixtures/checklist.png'),photo={photo:bytes.toString('base64'),mimeType:'image/png'}
+  const guestCookie=await h.verifyGuest(code.link)
   const report=new FormData();report.set('action','maintenance');report.set('title','Dishwasher leaking');report.set('note','Water at the front left corner');report.set('photoFiles',new File([bytes],'dishwasher.png',{type:'image/png'}))
-  const response=await fetch(h.origin+'/stay/'+code.link,{method:'POST',headers:{origin:h.origin},body:report,redirect:'manual'})
+  const response=await fetch(h.origin+'/stay/'+code.link,{method:'POST',headers:{origin:h.origin,cookie:guestCookie},body:report,redirect:'manual'})
   assert.equal(response.status,303,await response.text())
   let task=(await h.accessState()).tasks.find(t=>t.title==='Dishwasher leaking')
   assert.equal(task.assigneeId,vendor.id);assert.equal(task.photos.length,1)

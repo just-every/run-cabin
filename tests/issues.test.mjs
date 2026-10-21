@@ -15,7 +15,8 @@ test('AGENT-003: guest issues bind approved sources, dispatch accepted inspected
   const booked=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',start,end,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
   let policy=await h.cmd('issue.settings',{propertyId:home.id,responsibleId:host.id,inspectorId:inspector.id,vendorIds:[vendor.id,backup.id],spendLimitCents:15000,recurrenceMinutes:1,instructionCategory:'access',instructionTitle:'Check the keypad display',instructionAnswer:'Tell the host whether the keypad display is lit. Do not dismantle it.'})
   const page='/stay/'+(await h.accessState()).codes.find(c=>c.bookingId===booked.bookingId&&c.holder==='guest').link
-  const guest=async body=>h.mf.dispatchFetch(h.origin+page,{method:'POST',headers:{origin:h.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),redirect:'manual'})
+  const guestCookie=await h.verifyGuest(page)
+  const guest=async body=>h.mf.dispatchFetch(h.origin+page,{method:'POST',headers:{origin:h.origin,cookie:guestCookie,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams(body),redirect:'manual'})
   assert.equal((await guest({reason:'Door keypad does not respond',category:'access'})).status,200)
   let issue=(await h.state()).recoveries.find(r=>r.issue?.category==='access')
   assert.ok(issue.issue.troubleshooting.sources.some(s=>s.includes(booked.bookingId)))

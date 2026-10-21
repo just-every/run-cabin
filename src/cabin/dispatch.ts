@@ -1,3 +1,4 @@
+import { hasAction,permitsProperty } from './permissions/policy'
 import { occupancy as isStay } from './blocks'
 import { accessBlocked } from './agreements/records'
 import { type Booking, type Context, type HomeSettings, type Turnover, newId, need } from './model'
@@ -17,7 +18,7 @@ import { synchronizeDispatch, reconcileAccepted, offerEligible } from './dispatc
 // cancelled one cancels them. Stays that checked out before today start nothing.
 const nights = (b: Booking) => ({ first: b.start.slice(0, 10), checkout: b.end.slice(0, 10) })
 export const liveTurnover = (c: { data: { turnovers: Turnover[] } }, bookingId: string) => c.data.turnovers.find(t => t.bookingId === bookingId && t.status !== 'draft' && t.status !== 'cancelled')
-const activeCleaner = (c: Context, id: string | null) => id ? c.data.members.find(m => m.id === id && m.active && m.role === 'cleaner') ?? null : null
+const activeCleaner = (c: Context, id: string | null, propertyId?:string) => id ? c.data.members.find(m => m.id === id && m.active && m.role === 'cleaner'&&(!m.scope||m.scope.actions.includes('*')||m.scope.actions.includes('operations:read'))&&(!propertyId||!m.scope||m.scope.propertyIds.includes('*')||m.scope.propertyIds.includes(propertyId))) ?? null : null
 
 function windowOf(c: Context, s: HomeSettings, b: Booking) {
  const checkout = nights(b).checkout
@@ -32,6 +33,7 @@ function cancel(c: Context, t: Turnover, reason: string) {
 
 /** The cleaner's code follows the assignment: a new cleaner gets fresh digits, a moved window moves them. */
 function cleanerCode(c: Context, s: HomeSettings, t: Turnover) {
+ if(t.cleanerId&&!activeCleaner(c,t.cleanerId,t.propertyId)){t.cleanerId=null;if(t.status==='approved')t.status='unassigned';t.revision=newId()}
  const current = c.data.codes.filter(r => r.turnoverId === t.id && r.status === 'issued')
  for (const r of current) if (t.status !== 'approved' || r.memberId !== t.cleanerId) revoke(r, t.status === 'completed' ? 'Turnover complete' : 'Reassigned')
  if (t.status !== 'approved' || !t.cleanerId) return null
@@ -61,7 +63,7 @@ export function dispatch(c: Context) {
   else if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
   const w = windowOf(c, s, b)
   if (!t) {
-   const cleaner = s.dispatch ? null : activeCleaner(c, s.cleanerId)
+   const cleaner = s.dispatch ? null : activeCleaner(c, s.cleanerId,b.propertyId)
    const row: Turnover = { id: newId(), revision: newId(), bookingId: b.id, bookingRevision: b.revision, propertyId: b.propertyId, cleanerId: cleaner?.id ?? null, checklist: [...s.checklist], photosRequired: s.photosRequired, dueDate: w.windowEnd.slice(0, 10), ...w, source: 'auto', status: cleaner ? 'approved' : 'unassigned', preparedBy: c.actor.id, preparedAt: c.now, notified: null, history: [{ at: c.now, by: c.actor.id, action: 'created', cleanerId: cleaner?.id ?? null }] }
    c.data.turnovers.push(row)
   } else {
@@ -74,7 +76,7 @@ export function dispatch(c: Context) {
    if (stale) {
     // Marking ready and reopening never land in one commit: the cleaner is refused with the reason instead.
     need(c.before.turnovers.find(x => x.id === t.id)?.status === 'completed', `Not marked ready: ${stale}. Reload the job.`, 409)
-    const cleaner = activeCleaner(c, t.cleanerId) ?? activeCleaner(c, s.cleanerId)
+    const cleaner = activeCleaner(c, t.cleanerId,b.propertyId) ?? activeCleaner(c, s.cleanerId,b.propertyId)
     Object.assign(t, { status: cleaner ? 'approved' : 'unassigned', cleanerId: cleaner?.id ?? null, revision: newId(), checklist: [...s.checklist], photosRequired: s.photosRequired })
     delete t.completion; delete t.checkedOut
     t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: `reopened: ${stale}`, cleanerId: t.cleanerId }]
@@ -84,7 +86,7 @@ export function dispatch(c: Context) {
    if (t.windowStart !== w.windowStart || t.windowEnd !== w.windowEnd || t.nextBookingId !== w.nextBookingId) Object.assign(t, w, { dueDate: w.windowEnd.slice(0, 10) }, t.windowStart ? { revision: newId() } : {})
    if (t.status !== 'completed' && t.checkedOut && Date.parse(t.checkedOut.at) < instant(w.windowStart, s.timeZone)) delete t.checkedOut
    t.bookingRevision = b.revision
-   if (t.status === 'unassigned' && !s.dispatch) { const cleaner = activeCleaner(c, s.cleanerId); if (cleaner) { Object.assign(t, { status: 'approved', cleanerId: cleaner.id, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'assigned', cleanerId: cleaner.id }] } }
+   if (t.status === 'unassigned' && !s.dispatch) { const cleaner = activeCleaner(c, s.cleanerId,b.propertyId); if (cleaner) { Object.assign(t, { status: 'approved', cleanerId: cleaner.id, revision: newId() }); t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'assigned', cleanerId: cleaner.id }] } }
   }
  }
  // Bring all windows and work revisions current before evaluating any route.

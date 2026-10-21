@@ -23,7 +23,7 @@ export function arrivalCommand(c: Context, name: string, p: Record<string, unkno
  c.data.approvals.push(approval)
  b.arrivalTime = time; b.revision = newId()
  for (const d of c.data.messages) if (d.replyTo === m.id && ['draft', 'drafting'].includes(d.status)) { d.status = 'discarded'; d.revision = newId() }
- const reply = { ...m, id: newId(), revision: newId(), direction: 'out' as const, source: 'host' as const, status: 'pending' as const, text: `Your early check-in at ${time12(time)} is approved. Your door code starts at ${time12(time)} (${settings.timeZone} time).`, subject: `Early check-in approved at ${home.name}`, replyTo: m.id, headerId: null, sentBy: c.actor.id, approvalId: approval.id, scheduledId: null, providerId: null, grounds: ['approved arrival time', 'verified readiness'], createdAt: c.now, sentAt: null, detail: null, control: undefined }
+ const reply = { ...m, id: newId(), revision: newId(), direction: 'out' as const, source: 'host' as const, status: 'pending' as const, text: `Your early check-in at ${time12(time)} is approved. Your door code starts at ${time12(time)} (${settings.timeZone} time).`, subject: `Early check-in approved at ${home.name}`, replyTo: m.id, headerId: null, sentBy: c.actor.id, authority:structuredClone(c.actor), approvalId: approval.id, scheduledId: null, providerId: null, grounds: ['approved arrival time', 'verified readiness'], createdAt: c.now, sentAt: null, detail: null, control: undefined }
  c.data.messages.push(reply); c.entityId = b.id
  return { bookingId: b.id, arrivalTime: time, messageId: reply.id }
 }

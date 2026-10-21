@@ -1,12 +1,12 @@
 import { openGuestIssue, issuePolicy } from '../issues/records'
 import type { Bindings } from '../../auth.server'
-import { need, type AccessCode, type Booking } from '../model'
+import { need, type Context, type Booking } from '../model'
 import { mutate, SYSTEM } from '../storage'
 import { createMaintenanceTask } from '../maintenance'
 import { settle } from '../settle'
 
 /** A stay link authorizes a report for that stay's home only, never staff actions. */
-export async function guestWorkReport(request:Request,env:Bindings,token:string,code:AccessCode,booking:Booking){
+export async function guestWorkReport(request:Request,env:Bindings,token:string,booking:Booking,authorize:(c:Context)=>Booking){
  const headers={'cache-control':'no-store','referrer-policy':'no-referrer'}
  try{
   need(request.headers.get('origin')===env.AUTH_ORIGIN,'Request refused',403)
@@ -23,9 +23,9 @@ export async function guestWorkReport(request:Request,env:Bindings,token:string,
    photos.push({photo:btoa(binary),mimeType:file.type})
   }
   need(photos.length>=1&&photos.length<=6,'Add one to six photos of the problem')
-  await mutate(env.DB,{...SYSTEM,id:code.id},'maintenance.guest.report',async c=>{
-   const current=c.data.codes.find(r=>r.link===token&&r.status==='issued'),b=current&&c.data.bookings.find(b=>b.id===current.bookingId&&b.status==='confirmed')
-   need(b&&b.id===booking.id,'Your stay changed. Reload before reporting.',409)
+  await mutate(env.DB,{...SYSTEM,id:'guest:'+booking.id},'maintenance.guest.report',async c=>{
+   const b=authorize(c)
+   need(b.id===booking.id,'Your stay changed. Reload before reporting.',409)
    const t=c.data.turnovers.find(t=>t.bookingId===b.id&&t.status!=='cancelled')
    const issue=openGuestIssue(c,b,String(data.get('title')??'')+' '+String(data.get('note')??''),'portal',env.OWNER_EMAIL,'maintenance')
    const task=await createMaintenanceTask(c,b.propertyId,t?.id??null,{title:data.get('title'),note:data.get('note'),photos},'Guest · '+(b.guestName||'private stay'))

@@ -1,3 +1,5 @@
+import { authorizedRentalInterests } from '../permissions/interests'
+import { hasAction,permitsProperty } from '../permissions/policy'
 import { type Actor, type Booking, manager, need, sha } from '../model'
 import { assertLive, load } from '../storage'
 import { journals } from '../ledger/store'
@@ -34,9 +36,16 @@ export const semantics = {
  pace:'Booking pace groups the selected reservations by the property-local date of their first saved revision and shows full booked nights and known rental value; it is current recorded history, not an invented historical inventory snapshot.',
  cutoff:'The cutoff is the current saved Cabin revision. Provider freshness is shown separately; a successful local read does not claim live provider or bank verification.'
 }
-export async function readReport(db:D1Database,actor:Actor,params:URLSearchParams){
- manager(actor);need(!actor.isAgent,'Human manager access required',403);await assertLive(db,actor)
- const f=reportFilters(params),data=await load(db),all=await journals(db),direct=await stays(db),cutoff=new Date().toISOString()
+export async function readReport(db:D1Database,actor:Actor,params:URLSearchParams,ownerEmail?:string){
+ if(ownerEmail)need(actor.role==='system','Owner sharing requires internal authority',403);else manager(actor);need(!actor.isAgent,'Human manager access required',403);await assertLive(db,actor)
+ if(!ownerEmail)need(hasAction(actor,'reports:read'),'Report access is outside your team grant',403)
+ const f=reportFilters(params),data=await load(db);let all=await journals(db),direct=await stays(db);const cutoff=new Date().toISOString()
+ const ownerKey=ownerEmail?await sha(ownerEmail.trim().toLowerCase()):null
+ if(ownerEmail){need(f.owner===ownerKey,'Owner recipient does not match this report',403);need(!await db.prepare('SELECT 1 FROM cb_member_offboarding WHERE email=? COLLATE NOCASE').bind(ownerEmail).first(),'Owner access was revoked',403)}
+ const interests=ownerEmail?await authorizedRentalInterests(db,ownerEmail,data):null,allowed=new Set(data.properties.filter(p=>permitsProperty(actor,p.id)&&(!interests||interests.some(i=>i.propertyId===p.id))).map(p=>p.id))
+ data.properties=data.properties.filter(p=>allowed.has(p.id))
+ for(const key of ['bookings','managementTerms','financialAllocations','homeSettings','tasks','turnovers','scheduled','connections','payouts'] as const)(data as any)[key]=data[key].filter((r:any)=>allowed.has(r.propertyId))
+ all=all.filter(j=>allowed.has(j.propertyId)&&(!ownerKey||j.ownerKey===ownerKey));direct=direct.filter(d=>allowed.has(d.propertyId))
  const version=data.version,inside=(date:string)=>date>=f.from&&date<f.until,keys=new Map<string,string>(),names=new Map<string,string>()
  for(const p of data.properties){const key=await sha(p.ownerEmail.trim().toLowerCase());keys.set(p.id,key);names.set(key,p.ownerName)}
  const bookingKeys=new Map<string,string>(),bookingOwners=new Map<string,Set<string>>()
@@ -44,28 +53,29 @@ export async function readReport(db:D1Database,actor:Actor,params:URLSearchParam
  for(const terms of [...data.managementTerms,...data.bookings.flatMap(b=>b.managementTerms?[b.managementTerms]:[])])for(const o of terms.allocation?.owners??[]){const key=await sha(o.email.trim().toLowerCase());names.set(key,o.name)}
  for(const a of data.financialAllocations)for(const p of a.parts)names.set(await sha(p.ownerEmail.trim().toLowerCase()),p.ownerName)
  for(const b of data.bookings){const set=new Set([bookingKeys.get(b.id)!]);for(const o of b.managementTerms?.allocation?.owners??[])set.add(await sha(o.email.trim().toLowerCase()));bookingOwners.set(b.id,set)}
- const owners=[...new Set([...keys.values(),...bookingKeys.values(),...all.map(j=>j.ownerKey),...names.keys()])].sort().map(id=>({id,name:names.get(id)??'Retained owner'}))
+ const owners=[...new Set([...keys.values(),...bookingKeys.values(),...all.map(j=>j.ownerKey),...names.keys()])].sort().filter(id=>!ownerKey||id===ownerKey).map(id=>({id,name:names.get(id)??'Retained owner'}))
  need(!f.property||data.properties.some(p=>p.id===f.property),'Home not found',404);need(!f.owner||owners.some(o=>o.id===f.owner),'Owner reference not found',404)
  const homes=data.properties.filter(p=>(!f.property||p.id===f.property)&&(!f.owner||keys.get(p.id)===f.owner||data.bookings.some(b=>b.propertyId===p.id&&bookingOwners.get(b.id)?.has(f.owner))||all.some(j=>j.propertyId===p.id&&j.ownerKey===f.owner))),homeIds=new Set(homes.map(p=>p.id)),byId=new Map(data.bookings.map(b=>[b.id,b]))
  const cohort=(b:Booking)=>(!f.channel||b.channel===f.channel)&&(!f.owner||bookingOwners.get(b.id)?.has(f.owner))
  const bookedDate=(b:Booking)=>localDay(Date.parse(b.lifecycle?.history[0]?.at??b.approvedAt),homeSettings(data,b.propertyId).timeZone)
  const selected=data.bookings.filter(b=>homeIds.has(b.propertyId)&&b.kind!=='block'&&cohort(b)&&(f.dates==='booking'?inside(bookedDate(b)):b.start.slice(0,10)<f.until&&b.end.slice(0,10)>f.from))
+
  const exceptions:{id:string;propertyId:string;bookingId:string;kind:string;detail:string;href:string}[]=[]
  const exception=(id:string,propertyId:string,bookingId:string,kind:string,detail:string,href:string)=>exceptions.push({id,propertyId,bookingId,kind,detail,href})
  const reservations=selected.map(b=>{
-  const paid=direct.find(s=>s.bookingId===b.id&&s.paymentId),price=b.lifecycle?.price??(paid?{rentCents:paid.quote.rentCents,feesCents:paid.quote.cleaningCents+paid.quote.extraGuestCents,taxCents:sum(paid.quote.taxes,t=>t.amountCents),totalCents:paid.quote.totalCents}:undefined),start=b.start.slice(0,10),end=b.end.slice(0,10),nights=b.status==='confirmed'?countNights(start>f.from?start:f.from,end<f.until?end:f.until):0
+  const paid=direct.find(s=>s.bookingId===b.id&&s.paymentId),price=ownerEmail&&(bookingOwners.get(b.id)?.size??0)>1?undefined:b.lifecycle?.price??(paid?{rentCents:paid.quote.rentCents,feesCents:paid.quote.cleaningCents+paid.quote.extraGuestCents,taxCents:sum(paid.quote.taxes,t=>t.amountCents),totalCents:paid.quote.totalCents}:undefined),start=b.start.slice(0,10),end=b.end.slice(0,10),nights=b.status==='confirmed'?countNights(start>f.from?start:f.from,end<f.until?end:f.until):0
   const rentalCents=price&&b.status==='confirmed'?nightly(price.rentCents,start,end,f.from,f.until):price?0:null,href='/app/calendar?from='+start+'&reservation='+encodeURIComponent(b.id)
-  if(!price)exception('price:'+b.id,b.propertyId,b.id,'missing-price','No saved rental price; ADR excludes these nights.',href)
+  if(!price)exception('price:'+b.id,b.propertyId,b.id,'missing-price',ownerEmail&&(bookingOwners.get(b.id)?.size??0)>1?'Shared reservation: full contract and payout amounts are withheld. Your posted allocation journals remain available. ADR excludes these unallocated nights.':'No saved rental price; ADR excludes these nights.',href)
   const receipts=data.payouts.filter(p=>p.bookingId===b.id&&p.match==='matched'),cash=all.filter(j=>j.bookingId===b.id).some(j=>j.lines.some(l=>l.account==='cash'&&l.debitCents>0))
   if(!receipts.length&&!cash)exception('settlement:'+b.id,b.propertyId,b.id,'missing-settlement','No matched payout or recorded trust-cash receipt. A processor receipt is not a bank receipt.',href)
   // Receivable balances are derived from immutable journals; unknown-price stays keep an explicit unknown collection state.
   const ledgerBalance=sum(all.filter(j=>j.bookingId===b.id),j=>-net(j,'receivable'))
   if(ledgerBalance>0)exception('collection:'+b.id,b.propertyId,b.id,'collection-due',`Posted guest receivable: ${ledgerBalance} USD cents.`,href)
   if(b.lifecycle?.sourceConflict)exception('conflict:'+b.id,b.propertyId,b.id,'source-conflict','A changed source reservation awaits reconciliation.',href)
-  return {id:b.id,propertyId:b.propertyId,ownerKey:bookingKeys.get(b.id)!,ownerKeys:[...bookingOwners.get(b.id)!],channel:b.channel,start,end,bookedDate:bookedDate(b),status:b.lifecycle?.outcome??b.status,nights,pricedNights:price?nights:0,rentalCents,fullRentalCents:price?.rentCents??null,contractCents:b.lifecycle?.settledChargeCents??price?.totalCents??null,receivableCents:ledgerBalance,href}
+  return {id:b.id,propertyId:b.propertyId,ownerKey:ownerKey??bookingKeys.get(b.id)!,ownerKeys:ownerKey?[ownerKey]:[...bookingOwners.get(b.id)!],channel:b.channel,start,end,bookedDate:bookedDate(b),status:b.lifecycle?.outcome??b.status,nights,pricedNights:price?nights:0,rentalCents,fullRentalCents:price?.rentCents??null,contractCents:ownerEmail&&(bookingOwners.get(b.id)?.size??0)>1?null:b.lifecycle?.settledChargeCents??price?.totalCents??null,receivableCents:ledgerBalance,href}
  })
  const blockKind=(b:Booking)=>b.blockUse?.purpose??(data.tasks.some(t=>t.work?.blockId===b.id)?'maintenance':'other')
- const blocks=data.bookings.filter(b=>homeIds.has(b.propertyId)&&b.status==='confirmed'&&b.kind==='block'&&b.start.slice(0,10)<f.until&&b.end.slice(0,10)>f.from).map(b=>({id:b.id,propertyId:b.propertyId,kind:blockKind(b),start:b.start.slice(0,10),end:b.end.slice(0,10),reason:b.blockUse?.reason??b.summary,nights:countNights(b.start.slice(0,10)>f.from?b.start.slice(0,10):f.from,b.end.slice(0,10)<f.until?b.end.slice(0,10):f.until),href:'/app/calendar?from='+b.start.slice(0,10)+'&reservation='+b.id}))
+ const blocks=data.bookings.filter(b=>homeIds.has(b.propertyId)&&b.status==='confirmed'&&b.kind==='block'&&b.start.slice(0,10)<f.until&&b.end.slice(0,10)>f.from).map(b=>({id:b.id,propertyId:b.propertyId,kind:blockKind(b),start:b.start.slice(0,10),end:b.end.slice(0,10),reason:ownerEmail?'Blocked inventory':b.blockUse?.reason??b.summary,nights:countNights(b.start.slice(0,10)>f.from?b.start.slice(0,10):f.from,b.end.slice(0,10)<f.until?b.end.slice(0,10):f.until),href:'/app/calendar?from='+b.start.slice(0,10)+'&reservation='+b.id}))
  const properties=homes.map(p=>{
   const homeBlocks=blocks.filter(b=>b.propertyId===p.id),rows=reservations.filter(b=>b.propertyId===p.id),occupied=new Set<string>(),owner=new Set<string>(),maintenance=new Set<string>(),other=new Set<string>()
   const add=(set:Set<string>,start:string,end:string)=>{for(let d=start>f.from?start:f.from;d<end&&d<f.until;d=new Date(Date.parse(d+'T00:00:00Z')+86400000).toISOString().slice(0,10))set.add(d)}
@@ -99,8 +109,8 @@ export async function readReport(db:D1Database,actor:Actor,params:URLSearchParam
   }
   return {id:j.id,propertyId:j.propertyId,bookingId:j.bookingId,ownerKey:j.ownerKey,channel:byId.get(j.bookingId)?.channel??'',effectiveDate:j.effectiveDate,sourceType:j.sourceType,sourceId:j.sourceId,sourceRevision:j.sourceRevision,reversalOf:j.reversalOf??'',grossCents,feesCents,refundsCents,expensesCents,commissionCents,taxCents,netCents:grossCents-feesCents-refundsCents-expensesCents-commissionCents-taxCents,ownerMovementCents:owner,cashMovementCents:cash,cleaningCents:type==='recovery'&&included?net(j,'vendorPayable'):type==='owner-use-cleaning'||data.tasks.some(t=>t.id===j.sourceId&&t.work?.asset==='Cleaning')?expensesCents:0,href:'/app/ledger#journal-'+j.id,lines:j.lines}
  })
- for(const r of reservations)if((r.status==='confirmed'||(r.contractCents??0)>0)&&!all.some(j=>j.bookingId===r.id&&['earn','direct-payment','payout'].includes(family(j))))exception('earn:'+r.id,r.propertyId,r.id,'unposted-earnings','No earned-revenue journal. Contracted rent is shown separately from accounting revenue.',r.href)
- const payouts=data.payouts.filter(p=>(p.propertyId?homeIds.has(p.propertyId):!f.property&&!f.owner)&&inside(p.date)&&(!f.channel||byId.get(p.bookingId??'')?.channel===f.channel||!p.bookingId&&p.source===f.channel)&&(!f.owner||bookingOwners.get(p.bookingId??'')?.has(f.owner))).map(p=>({id:p.id,propertyId:p.propertyId??'',bookingId:p.bookingId??'',ownerKey:bookingKeys.get(p.bookingId??'')??'',date:p.date,source:p.source,reference:p.reference,status:p.match,grossCents:p.grossCents,feeCents:p.feeCents,netCents:p.netCents,href:'/app/reports?from='+p.date+'&until='+new Date(Date.parse(p.date+'T00:00:00Z')+86400000).toISOString().slice(0,10)+'#payout-'+p.id}))
+ for(const r of reservations)if((r.status==='confirmed'||(r.contractCents??0)>0)&&!all.some(j=>j.bookingId===r.id&&(ownerEmail?['earn','direct-payment','payout','agreement-allocation']:['earn','direct-payment','payout']).includes(family(j))))exception('earn:'+r.id,r.propertyId,r.id,'unposted-earnings','No earned-revenue journal. Contracted rent is shown separately from accounting revenue.',r.href)
+ const payouts=data.payouts.filter(p=>(!ownerEmail||!!p.bookingId&&bookingOwners.get(p.bookingId)?.has(ownerKey!)&&bookingOwners.get(p.bookingId)?.size===1)&&(p.propertyId?homeIds.has(p.propertyId):!f.property&&!f.owner)&&inside(p.date)&&(!f.channel||byId.get(p.bookingId??'')?.channel===f.channel||!p.bookingId&&p.source===f.channel)&&(!f.owner||bookingOwners.get(p.bookingId??'')?.has(f.owner))).map(p=>({id:p.id,propertyId:p.propertyId??'',bookingId:p.bookingId??'',ownerKey:bookingKeys.get(p.bookingId??'')??'',date:p.date,source:p.source,reference:p.reference,status:p.match,grossCents:p.grossCents,feeCents:p.feeCents,netCents:p.netCents,href:'/app/reports?from='+p.date+'&until='+new Date(Date.parse(p.date+'T00:00:00Z')+86400000).toISOString().slice(0,10)+'#payout-'+p.id}))
  for(const p of payouts)if(p.status!=='matched')exception('unmatched:'+p.id,p.propertyId,p.bookingId,'unmatched-payout','Payout has no reviewed reservation match.',p.href)
  const operations:{id:string;propertyId:string;bookingId:string;kind:string;due:string;status:string;detail:string;href:string}[]=[]
  const allowedBooking=(id:string)=>{const b=byId.get(id);return !!b&&cohort(b)}
@@ -114,7 +124,9 @@ export async function readReport(db:D1Database,actor:Actor,params:URLSearchParam
  const channels=[...new Set(reservations.map(b=>b.channel))].map(channel=>{const rows=reservations.filter(b=>b.channel===channel);return {channel,reservations:rows.length,nights:sum(rows,b=>b.nights),rentalCents:sum(rows,b=>b.rentalCents??0),share:totals.occupiedNights?sum(rows,b=>b.nights)/totals.occupiedNights:null}})
  const pace=[...new Set(reservations.map(b=>b.bookedDate))].sort().map(date=>{const rows=reservations.filter(b=>b.bookedDate===date);return {date,bookings:rows.length,cancellations:rows.filter(b=>b.status!=='confirmed').length,bookedNights:sum(rows,b=>countNights(b.start,b.end)),rentalCents:sum(rows,b=>b.fullRentalCents??0)}})
  const performance=owners.filter(o=>!f.owner||o.id===f.owner).map(o=>{const rows=financial.filter(j=>j.ownerKey===o.id);return {...o,grossCents:sum(rows,j=>j.grossCents),netCents:sum(rows,j=>j.netCents),taxCents:sum(rows,j=>j.taxCents),ownerMovementCents:sum(rows,j=>j.ownerMovementCents),cashMovementCents:sum(rows,j=>j.cashMovementCents),cleaningCents:sum(rows,j=>j.cleaningCents),journalIds:rows.map(j=>j.id)}}).filter(o=>o.journalIds.length||reservations.some(b=>b.ownerKeys.includes(o.id)))
+ if(ownerEmail)for(const row of financial)row.href='/owners'
  const freshness=data.connections.filter(c=>homeIds.has(c.propertyId)&&(!f.channel||c.channel===f.channel)).map(c=>({id:c.id,propertyId:c.propertyId,channel:c.channel,status:c.status,lastSuccessAt:c.lastSuccessAt,error:c.error}))
+ if(ownerEmail){for(const rows of [reservations,blocks,payouts,deadlines,exceptions])for(const row of rows)row.href='/owners'}
  await assertLive(db,actor);const latest=await db.prepare('SELECT version FROM cb_meta WHERE id=1').first<{version:number}>();need(latest?.version===version,'Records changed while generating this report. Refresh for one consistent cutoff.',409)
  return {filters:f,cutoff,version,semantics,totals,properties,owners,channels,pace,performance,reservations,blocks,journals:financial,payouts,operations:deadlines,exceptions,freshness}
 }

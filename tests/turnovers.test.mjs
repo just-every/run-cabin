@@ -123,7 +123,10 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
 
     // The guest's stay page shows their code; cancelling the stay cancels its turnover and code.
     s = await h.accessState()
-    const page = await h.send(`/stay/${guestCode(kai).link}`, undefined, '')
+    const kaiBooking=s.bookings.find(b=>b.id===kai.id)
+    await h.cmd('booking.details',{id:kai.id,revision:kaiBooking.revision,guestName:kaiBooking.guestName,guestEmail:'synthetic-cabin-1@stay.example'})
+    const guestCookie=await h.verifyGuest(guestCode(kai).link)
+    const page = await h.send(`/stay/${guestCode(kai).link}`, undefined, guestCookie)
     assert.equal(page.status, 200); assert.ok(page.text.includes(guestCode(kai).code))
     const later = s.turnovers.find(t => t.bookingId === kai.id && t.status === 'approved')
     await feed({ uid: 'airbnb-fern-other', start: ymd(20), end: ymd(22), summary: 'Reserved' })

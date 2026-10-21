@@ -2,7 +2,7 @@ import { shell } from '../direct/public-ui'
 import { bookingSite } from '../website/store'
 import { frame } from '../website/pages'
 import type { Bindings } from '../../auth.server'
-import { need,sha } from '../model'
+import { need,sha,type Context } from '../model'
 import { load } from '../storage'
 import { settle } from '../settle'
 import { unseal } from '../seal'
@@ -20,7 +20,7 @@ async function input(request:Request){
 }
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'cache-control':'no-store','referrer-policy':'no-referrer'}})
 /** A private offer link is a scoped capability, never an operator session or a door-access capability. */
-export async function promotionGuestResponse(request:Request,env:Bindings){
+export async function promotionGuestResponse(request:Request,env:Bindings,authorize?:(c:Context)=>void,returnPath?:string){
  const path=new URL(request.url).pathname,token=path.match(/^\/offers\/([a-f0-9-]{72})$/)?.[1],wantsJson=request.headers.get('content-type')?.includes('application/json')||request.headers.get('accept')?.includes('application/json')
  try{
   const url=new URL(request.url),site=await bookingSite(env.DB);if(site?.domainVerified&&url.origin===site.origin)env={...env,AUTH_ORIGIN:url.origin}
@@ -34,7 +34,7 @@ export async function promotionGuestResponse(request:Request,env:Bindings){
    need(request.headers.get('origin')===env.AUTH_ORIGIN&&new URL(request.url).origin===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
    const p=await input(request)
    if(p.action==='accept'){
-    const url=await acceptPromotion(env,o.id,token,p)
+    const url=await acceptPromotion(env,o.id,token,p,authorize,returnPath)
     return wantsJson?json({url}):new Response(null,{status:303,headers:{...headers,location:url}})
    }
    need(p.action==='refresh','Unknown offer response',400);await reconcilePromotion(env,o.id);await settle(env)

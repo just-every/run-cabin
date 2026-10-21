@@ -1,3 +1,4 @@
+import { eraseReportSharing } from '../reports/sharing/custody'
 import { owner, need, newId, query, sha, type Context } from '../model'
 import { commit } from '../storage'
 import { eraseAttachments, fenceSending, scrubOperational } from './attachments'
@@ -7,6 +8,7 @@ import { scrub, type ErasureScope } from './scope'
 import { fenceContacts } from './contacts'
 import { eraseSources } from './sources'
 export async function eraseMember(c:Context,s:ErasureScope,p:Record<string,unknown>,fence:import('../model').Query[]){
+ await eraseReportSharing(c,s)
  owner(c.actor);const member=c.data.members.find(m=>m.id===s.id)!,retained=await retainedRecords(c,s,p)
  const operator=await c.db.prepare('SELECT id,role FROM oa_operators WHERE email=? COLLATE NOCASE').bind(member.email).first<{id:string;role:string}>()
  need(!operator||operator.id!==c.actor.id&&operator.role!=='owner','The installation owner identity cannot be erased through a team grant',409)

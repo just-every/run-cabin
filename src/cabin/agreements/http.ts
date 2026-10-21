@@ -1,12 +1,12 @@
 import type { Bindings } from '../../auth.server'
-import { need,text,newId } from '../model'
+import { need,text,newId,type Context } from '../model'
 import { load,mutate,SYSTEM } from '../storage'
 import { h,hidden,field } from '../ui/shared'
 import { shell,post } from '../direct/public-ui'
 import { currentDocument,accessBlocked } from './records'
 import { documentDownload } from './ui'
 
-export async function agreementResponse(request:Request,env:Bindings):Promise<Response|null>{
+export async function agreementResponse(request:Request,env:Bindings,authorize?:(c:Context)=>void):Promise<Response|null>{
  const url=new URL(request.url),match=url.pathname.match(/^\/book\/stay\/agreement\/([a-f0-9-]{72})(?:\/document\/([\w-]+))?$/)
  if(!url.pathname.startsWith('/book/stay/agreement/'))return null
  try{
@@ -21,6 +21,7 @@ export async function agreementResponse(request:Request,env:Bindings):Promise<Re
    if(reader)try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>8000){await reader.cancel();need(false,'Signing request too large',413)}source+=decoder.decode(value,{stream:true})}source+=decoder.decode()}finally{reader.releaseLock()}
    const p=request.headers.get('content-type')?.includes('application/json')?JSON.parse(source):Object.fromEntries(new URLSearchParams(source))
    await mutate(env.DB,{...SYSTEM,id:'guest:agreement:'+a.id},'agreement.signed',c=>{
+    authorize?.(c)
     const live=c.data.rentalAgreements.find(a=>a.token===token),booking=live&&c.data.bookings.find(b=>b.id===live.bookingId)
     need(live&&booking&&booking.status==='confirmed'&&!booking.guestErasedAt,'Agreement link expired',404)
     const d=currentDocument(live);need(p.version===d.id&&p.sha256===d.sha256,'Agreement changed. Review the current version before signing.',409)

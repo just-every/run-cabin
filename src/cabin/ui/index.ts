@@ -1,3 +1,5 @@
+import { reportSharingPanel } from '../reports/sharing'
+import { hasAction,pageAction } from '../permissions/policy'
 import { reports } from '../reports/ui'
 import type { Report } from '../reports/read'
 import { taxes } from '../taxes/ui'
@@ -24,11 +26,11 @@ import { threads } from '../inbox/threads'
 import { icon } from './icons'
 import { recovery } from './recovery'
 
-export interface Extras { report?:Report; activity?:any; activityParams?:URLSearchParams; identity?: { idpSignIn?: boolean } | null; message?: string; error?: string; result?: any; from?: string | null; thread?: string | null; days?: string | null; home?: string | null; channel?: string | null; reservation?: string | null; request?: string | null }
+export interface Extras { reportSharing?:any; report?:Report; activity?:any; activityParams?:URLSearchParams; identity?: { idpSignIn?: boolean } | null; message?: string; error?: string; result?: any; from?: string | null; thread?: string | null; days?: string | null; home?: string | null; channel?: string | null; reservation?: string | null; request?: string | null }
 // The workspace shell: the left rail (brand, home switcher, the pages this
 // role may open, the signed-in person and calendar sync), then the page.
 // Below 900px the rail folds into a top bar whose menu opens without script.
-function tabsFor(s: any): [string, string][][] {
+function allTabs(s: any): [string, string][][] {
   if (!manager(s)) return [[['turnovers', 'Turnovers'], ...(s.actor.role === 'cleaner' ? [['recovery', 'Stay recovery']] as [string, string][] : []), ['maintenance', 'Maintenance']]]
   return [
     [['calendar', 'Calendar'], ['inbox', 'Inbox'], ['guests', 'Guests'], ['reservations', 'Reservations'], ['readiness', 'Readiness'], ['turnovers', 'Turnovers'], ['recovery', 'Stay recovery'], ['maintenance', 'Maintenance']],
@@ -36,6 +38,8 @@ function tabsFor(s: any): [string, string][][] {
     [['channels', 'Channels'], ['people', 'Properties & people'], ...(owner(s) ? [['import', 'Move in'], ['agent', 'Agent access']] as [string, string][] : [])],
   ]
 }
+function tabsFor(s:any):[string,string][][]{return allTabs(s).map(group=>group.filter(([key])=>!s.actor.scope||s.actor.scope.actions.includes('*')||hasAction(s.actor,pageAction('/app/'+key)??'installation:read'))).filter(group=>group.length)}
+
 const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60_000)); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} hr ago` : `${Math.round(m / 1440)} days ago` }
 /** The rail's sync line: calendar links Cabin polls, else the last approved calendar file. */
 function syncLine(s: any): [string, string] {
@@ -69,7 +73,7 @@ export async function renderApp(state: any, path: string, extras: Extras = {}): 
   const tabs = tabsFor(state).flat()
   const allowed = tabs.some(([key]) => key === tab) || (tab === 'signin' && owner(state))
   const frame = await themeFrame({ href: '/rer-theme.css', productName: branding.name, accentColor: branding.primaryColor })
-  const pages: Record<string, () => string> = { reports: () => reports(extras.report!,state.properties), taxes: () => taxes(state,extras.result), guests: () => guests(state,extras.result), signin: () => signInPage(extras.identity), recovery: () => path === '/app/recovery/setup' && manager(state) ? recoverySetup(state) : recovery(state), inbox: () => inbox(state, extras.thread), activity: () => activity(state,extras.activity??{events:[],next:null},extras.activityParams??new URLSearchParams()), ledger: () => ledger(state), books: () => books(state), direct: () => direct(state), calendar: () => calendar(state, extras), reservations: () => reservations(state, extras.request), channels: () => channelPage(state,extras.result), readiness: () => readiness(state, extras.from), turnovers: () => turnovers(state), maintenance: () => maintenance(state), statements: () => statements(state), people: () => people(state), import: () => movein(state, extras), agent: () => agent(state, extras) }
+  const pages: Record<string, () => string> = { reports: () => reports(extras.report!,state.properties)+(extras.reportSharing?reportSharingPanel(extras.reportSharing,state.actor,extras.report!):''), taxes: () => taxes(state,extras.result), guests: () => guests(state,extras.result), signin: () => signInPage(extras.identity), recovery: () => path === '/app/recovery/setup' && manager(state) ? recoverySetup(state) : recovery(state), inbox: () => inbox(state, extras.thread), activity: () => activity(state,extras.activity??{events:[],next:null},extras.activityParams??new URLSearchParams()), ledger: () => ledger(state), books: () => books(state), direct: () => direct(state), calendar: () => calendar(state, extras), reservations: () => reservations(state, extras.request), channels: () => channelPage(state,extras.result), readiness: () => readiness(state, extras.from), turnovers: () => turnovers(state), maintenance: () => maintenance(state), statements: () => statements(state), people: () => people(state), import: () => movein(state, extras), agent: () => agent(state, extras) }
   const content = !allowed ? '<div class="page-heading"><h1>Page unavailable</h1><p>Your role cannot access this page.</p></div><p><a class="button" href="/app">Open your workspace</a></p>' : pages[tab]()
   return new Response(`<!doctype html><html lang="en"${frame.htmlClass}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${h(tab === 'signin' ? 'Sign-in settings' : tabs.find(([key]) => key === tab)?.[1] ?? branding.name)} · ${h(branding.name)}</title>${frame.head}<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/cabin.css"><link rel="stylesheet" href="/calendar.css"><link rel="stylesheet" href="/ops.css"><link rel="stylesheet" href="/inbox.css"><link rel="stylesheet" href="/movein.css"><link rel="stylesheet" href="/recovery.css"><link rel="stylesheet" href="/ledger.css"><link rel="stylesheet" href="/activity.css"><script src="/cabin.js" type="module"></script></head><body class="cabin" data-person="${h(state.actor.id)}" data-page="${h(path)}${extras.thread ? '?thread=' + encodeURIComponent(extras.thread) : ''}"><a class="skip" href="#main">Skip to content</a><div class="shell">${rail(state, tab, frame.brand)}<div class="work"><main id="main" class="page-${h(tab)}">${extras.error ? `<div class="notice error" role="alert">${h(extras.error)}</div>` : ''}${extras.message ? `<div class="notice" role="status">${h(extras.message)}</div>` : ''}${content}</main><footer>Cabin · Calendar links sync every 15 to 60 minutes; channel partner APIs come later.</footer></div></div></body></html>`, { status: allowed ? 200 : 403, headers: { 'content-type':'text/html; charset=utf-8', 'cache-control':'no-store', 'referrer-policy':'strict-origin', 'x-content-type-options':'nosniff', 'content-security-policy':`default-src 'self'; ${frame.policy.replace("img-src 'self'", "img-src 'self' blob:")}; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'` } })
 }

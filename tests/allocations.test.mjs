@@ -34,6 +34,18 @@ test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, 
  const scoped=(await h.send('/api/cabin/reports.json?from=2026-10-01&until=2026-11-01&owner='+beneficiary.id,undefined,h.owner)).value
  assert.equal(scoped.reservations.length,1);assert.ok(scoped.reservations[0].ownerKeys.includes(beneficiary.id));assert.equal(scoped.totals.grossCents,48000);assert.equal(scoped.totals.netCents,34640)
 
+ // An explicitly invited co-owner reads and receives only their recorded interest.
+ const coowner=await h.cmd('member.save',{name:'Morgan Lee',email:owners[1].email,pmsRole:'rental_owner',propertyIds:[p.id],actions:['owners:read'],active:true})
+ await h.cmd('member.invite',{id:coowner.id});const coownerSession=await h.signIn(owners[1].email)
+ const native=await h.send('/app',undefined,coownerSession);assert.equal(native.status,200,native.text);assert.ok(!native.text.includes('Karen Lee'))
+ const definition=await h.cmd('report.save',{name:'Co-owner monthly interest',filters:{from:'2026-10-01',until:'2026-11-01',property:p.id}}),schedule=await h.cmd('report.schedule',{savedReportId:definition.id,savedReportRevision:definition.revision,recipientKind:'owner',recipientEmail:owners[1].email,period:'saved-window',cadence:'once',format:'json',nextRunAt:new Date(Date.now()+86400000).toISOString(),consent:true})
+ const due=new Date(Date.now()-60000).toISOString();await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(due,due,schedule.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+ const sharing=(await h.send('/api/cabin/report-sharing.json',undefined,h.owner)).value,run=sharing.reportRuns.find(r=>r.scheduleId===schedule.id);assert.equal(run.status,'sent')
+ await h.send('/owners/signin',{email:owners[1].email});const mail=JSON.parse((await h.db.prepare("SELECT message FROM rer_mail_development_outbox WHERE instr(message,'Sign in to your Cabin owner portal')>0 ORDER BY sequence DESC LIMIT 1").first()).message),token=new URL(mail.text.match(/http:\/\/[^\s]+\/owners\/confirm\?token=[^\s]+/)[0]).searchParams.get('token'),session=(await h.send('/owners/confirm',{token})).cookie
+ const file=await h.send('/owners/reports/'+run.id,undefined,session);assert.equal(file.status,200,file.text);const own=JSON.parse(file.text)
+ assert.ok(own.journals.every(j=>j.ownerKey===beneficiary.id));assert.equal(own.totals.grossCents,48000);assert.equal(own.reservations[0].contractCents,null);assert.equal(own.payouts.length,0);assert.ok(!file.text.includes('Karen Lee'));assert.ok(own.exceptions.some(e=>e.kind==='missing-price'))
+ await h.cmd('member.save',{...coowner,active:false});assert.equal((await h.send('/owners/reports/'+run.id,undefined,session)).status,401);assert.equal((await h.send('/app',undefined,coownerSession)).status,403)
+
  for(const j of journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
  assert.equal(journals.flatMap(j=>j.lines).filter(l=>l.account==='allocationClearing').reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
  await terms(h,p,model([{name:'New Owner',email:'new@stay.example',bps:10000}],{fixedFeeCents:5000,reserveBps:0}),'2026-11-01')

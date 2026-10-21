@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { type Actor,need,text,newId } from '../model'
+import { type Actor,type Context,need,text,newId } from '../model'
 import { mutate } from '../storage'
 import { DIRECT_SYSTEM } from '../direct/store'
 import { restorationPaused } from '../connections/guard'
@@ -13,9 +13,10 @@ import type { PromotionOffer } from './types'
 const provider=(env:Bindings,o:PromotionOffer)=>({...env,CABIN_PROVIDER_PROPERTY_ID:o.propertyId,DIRECT_STRIPE_MODE:o.paymentMode})
 async function snapshot(env:Bindings,id:string){const row=(await promotionRows<PromotionOffer>(env.DB,'promotionOffers')).find(o=>o.id===id);need(row,'Offer not found',404);return row}
 /** A claim survives a crash before/after the HTTP response. An uncertain claim is read from Stripe, never resubmitted. */
-export async function acceptPromotion(env:Bindings,id:string,token:string,p:Record<string,unknown>){
+export async function acceptPromotion(env:Bindings,id:string,token:string,p:Record<string,unknown>,authorize?: (c:Context)=>void,returnPath?:string){
  const credentials=await stripeCredentials(env)
  const claimed=await mutate(env.DB,DIRECT_SYSTEM,'promotion.accept',async c=>{
+  authorize?.(c)
   const o=await offer(c,id);need(o.status==='sent'&&!o.checkoutRequestedAt,'This offer is already accepted or awaiting provider reconciliation',409)
   const {b}=await eligible(c,o);need(!o.cancelReason,'This offer was withdrawn',409)
   need(p.consent==='yes'&&text(p.signature,'full-name signature',120)===(b.guestName??b.summary),'Sign your full name and accept the exact supplemental terms')
@@ -30,7 +31,7 @@ export async function acceptPromotion(env:Bindings,id:string,token:string,p:Reco
    'payment_intent_data[metadata][promotionId]':claimed.id,'payment_intent_data[metadata][bookingId]':claimed.bookingId,
    'line_items[0][price_data][currency]':'usd','line_items[0][price_data][unit_amount]':String(claimed.amountCents),
    'line_items[0][price_data][product_data][name]':claimed.title,'line_items[0][quantity]':'1',expires_at:String(expires),
-   success_url:env.AUTH_ORIGIN+'/offers/'+token+'?returned=1',cancel_url:env.AUTH_ORIGIN+'/offers/'+token,
+   success_url:env.AUTH_ORIGIN+(returnPath??'/offers/'+token)+'?returned=1',cancel_url:env.AUTH_ORIGIN+(returnPath??'/offers/'+token),
   },'cabin:promotion:checkout:'+claimed.id)
   need(typeof session.id==='string'&&typeof session.url==='string'&&session.url.startsWith('https://checkout.stripe.com/'),'Stripe did not return a secure checkout',502)
   await saveSession(env,id,session);return session.url as string

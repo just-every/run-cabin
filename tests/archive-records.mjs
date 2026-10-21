@@ -49,21 +49,29 @@ export async function populateArchive(h,p,cleaner) {
  await h.cmd('booking.details',{id:booking.bookingId,revision:(await h.accessState()).bookings.find(row=>row.id===booking.bookingId).revision,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
  await h.cmd('inbox.address',{address:'guests@stay.example',revision:''})
  await h.cmd('inbox.try',{source:'From: Megan <megan@stay.example>\r\nTo: guests@stay.example\r\nSubject: Parking\r\nMessage-ID: <archive@stay.example>\r\nContent-Type: text/plain\r\n\r\nWhere can I park?'})
- await h.cmd('direct.stripe.save',{mode:'test',key:'sk_test_fake'})
+ await h.cmd('direct.stripe.save',{mode:'test',key:'synthetic-cabin-1'})
  const cfg=await h.cmd('direct.configure',{propertyId:p.id,enabled:true,slug:'archive-home',description:'Lake Loft for the next stay.',nightlyCents:18000,cleaningCents:7500,extraGuestCents:0,includedGuests:2,maxGuests:4,minNights:2,maxNights:14,minGapNights:0,depositCents:0,releaseHours:0,taxLabel:'State lodging tax',taxBps:900,countyTaxLabel:'County lodging tax',countyTaxBps:0,agreement:'No smoking. Quiet hours after 10 pm.',requireIdentity:false})
  const checkout=await h.send('/book/archive-home/checkout',{start:day(20),end:day(23),guests:2,homeRevision:cfg.revision,guestName:'Jordan Reyes',email:'jordan@stay.example',signature:'Jordan Reyes',consent:'yes'})
  assert.equal(checkout.status,200,checkout.text)
  const inbox=(await h.accessState()).inbox[0]
  await h.cmd('inbox.ai.save',{revision:inbox.revision,key:'archive-ai-fixture-key',model:'test-model'})
+ await h.cmd('portal.guide',{propertyId:p.id,version:0,arrival:'Private archive arrival',guidebook:'Retained walking guide'})
+ const guideBytes='Original synthetic-cabin-1 guide\n',guide=await h.cmd('portal.guide.file.add',{propertyId:p.id,version:1,guideFile:{name:'synthetic-cabin-1.txt',mimeType:'text/plain',base64:Buffer.from(guideBytes).toString('base64')}})
+ const portal=(await h.accessState()).guestPortalLinks.find(l=>l.bookingId===booking.bookingId),guestCookie=await h.verifyGuest(portal.token)
+ const pending=await h.send('/stay/'+portal.token+'/send-code',{},guestCookie);assert.equal(pending.status,200)
+ const authSecrets=[...(await h.db.prepare('SELECT token_hash FROM cb_guest_sessions').all()).results.map(r=>r.token_hash),...(await h.db.prepare('SELECT code_hash,browser_hash FROM cb_guest_challenges').all()).results.flatMap(r=>[r.code_hash,r.browser_hash])]
  const state=await h.accessState(), codes=state.codes.filter(c=>c.link).map(c=>c.link)
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
  const channelAgent=await populateChannelArchive(h,p)
- return {importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,privateLinks:[...codes,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
+ return {importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
  assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_provider_security').first()).n,0,'provider credentials and grants stay installation-local')
+ for(const table of ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits'])assert.equal((await h.db.prepare('SELECT count(*) AS n FROM '+table).first()).n,0,'guest authentication is never restored')
+ assert.equal((await h.send('/stay/'+proof.portal.token,undefined,proof.portal.cookie)).status,404)
+ const guideFile=await h.db.prepare('SELECT hex(bytes) AS bytes,sha256 FROM cb_guest_guide_files WHERE id=?').bind(proof.portal.file.id).first();assert.equal(Buffer.from(guideFile.bytes,'hex').toString(),proof.portal.guideBytes);assert.equal(guideFile.sha256,proof.portal.file.sha256)
  let s=await h.accessState(owner)
  const imported=await h.db.prepare('SELECT plan,fingerprint FROM cb_provider_moveins WHERE id=?').bind(proof.importedId).first();assert.equal(JSON.parse(imported.plan).homes[0].links.length,0);await h.cmd('import.provider.apply',{id:proof.importedId,fingerprint:imported.fingerprint},owner,409)
  assert.equal(s.restore.reviewed,0)
@@ -109,6 +117,7 @@ export async function checkRestored(h,owner,proof) {
  await h.cmd('restore.booking',{id:b.id,revision:b.revision,confirm:'yes'},owner)
  s=await h.accessState(owner)
  assert.equal(s.bookings.find(r=>r.id===b.id)?.restorePaused,undefined)
+ const fresh=s.guestPortalLinks.find(l=>l.bookingId===b.id);assert.ok(fresh.token&&fresh.token!==proof.portal.token);assert.equal((await h.send('/stay/'+fresh.token+'/api',undefined,proof.portal.cookie)).status,401,'fresh restored links require fresh email proof')
  assert.ok(s.codes.some(c=>c.bookingId===b.id&&c.status==='issued'&&!proof.privateLinks.includes(c.link)))
  const pdf=await h.mf.dispatchFetch(h.origin+`/api/cabin/statements/${proof.statementId}.pdf`,{headers:{cookie:owner}})
  assert.equal(pdf.status,200)

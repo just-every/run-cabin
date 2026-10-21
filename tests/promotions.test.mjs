@@ -43,7 +43,10 @@ test('WEB-005: signed gap supplement survives restart, applies once to the origi
   assert.equal((await h.send(path)).status,200)
   await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',guestName:'Conflict',start:day(5),end:day(6)}).then(r=>assert.equal(r.status,'declined'))
   assert.equal((await h.send(path,{action:'accept',signature:'Someone else',consent:'yes'})).status,400)
-  const accepted=await h.send(path,{action:'accept',signature:'Megan Ortiz',consent:'yes'});assert.equal(accepted.status,200,accepted.text);assert.equal(checkoutCalls,1)
+  const portal=(await h.accessState()).guestPortalLinks.find(l=>l.bookingId===booking.id),guestCookie=await h.verifyGuest(portal.token),portalOffer='/stay/'+portal.token+'/offers/'+o.id
+  assert.equal((await h.send(portalOffer,undefined,'',{accept:'application/json'})).status,401)
+  assert.match((await h.send('/stay/'+portal.token,undefined,guestCookie)).text,new RegExp('/offers/'+o.id))
+  const accepted=await h.send(portalOffer,{action:'accept',signature:'Megan Ortiz',consent:'yes'},guestCookie);assert.equal(accepted.status,200,accepted.text);assert.equal(checkoutCalls,1)
   assert.equal((await h.send(path,{action:'accept',signature:'Megan Ortiz',consent:'yes'})).status,409)
   await h.restart();paid=true
   assert.equal((await h.send(path,{action:'refresh'})).status,200)

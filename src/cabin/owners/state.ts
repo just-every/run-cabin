@@ -1,3 +1,4 @@
+import { authorizedRentalInterests } from '../permissions/interests'
 import { reserveReports, scopedReserves } from './reserves'
 import type { Bindings } from '../../auth.server'
 import { need, sha, type Statement } from '../model'
@@ -10,7 +11,7 @@ export function reportMonth(value?:string){const month=value??new Date().toISOSt
 /** Historical grants expose exactly the frozen statement, never today's home, guest records or new owner's ledger. */
 export async function portalState(env:Bindings,email:string,requestedMonth?:string){
  const month=reportMonth(requestedMonth),[data,records,ledger,ownerKey]=await Promise.all([load(env.DB),ownerRecords(env.DB),journals(env.DB),sha(email.toLowerCase())])
- const current=data.properties.filter(p=>sameEmail(p.ownerEmail,email)),ids=new Set(current.map(p=>p.id))
+ const interests=await authorizedRentalInterests(env.DB,email,data),current=data.properties.filter(p=>interests.some(i=>i.propertyId===p.id)).map(p=>{const i=interests.find(i=>i.propertyId===p.id)!;return {...p,ownerName:i.name,ownerEmail:i.email}}),ids=new Set(current.map(p=>p.id))
  const statements=data.statements.filter(s=>s.status==='approved'&&sameEmail(s.ownerEmail,email)&&(ids.has(s.propertyId)||records.grants.some(g=>g.statementId===s.id&&sameEmail(g.email,email)&&!g.revokedAt)))
  const properties=current.map(p=>({id:p.id,name:p.name,ownerName:p.ownerName,access:'current',policy:policyFor(records.policies,p)}))
  for(const s of statements)if(!properties.some(p=>p.id===s.propertyId))properties.push({id:s.propertyId,name:s.propertyName,ownerName:s.ownerName,access:'historical',policy:undefined as any})

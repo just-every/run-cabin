@@ -1,3 +1,4 @@
+import { eraseReportSharing } from '../reports/sharing/custody'
 import { eraseVerification } from '../verification/retention'
 import { cases } from '../verification/records'
 import { eraseProfiles } from '../guests/erase'
@@ -16,7 +17,7 @@ import { fenceContacts } from '../privacy/contacts'
 export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[]) {
  const booking=c.data.bookings.find(b=>b.id===text(p.id,'reservation'));need(booking,'Reservation not found',404)
  need(booking.revision===p.revision,'Reservation changed. Review it again before erasing',409)
- const scope=await erasureScope(c,p),retained=await retainedRecords(c,scope,p)
+ const scope=await erasureScope(c,p);await eraseReportSharing(c,scope);const retained=await retainedRecords(c,scope,p)
  await fenceSending(c,scope);await fenceContacts(c,scope);await eraseAttachments(c,scope);await eraseSources(c,scope)
  const email=booking.guestEmail?.toLowerCase(),phone=booking.guestPhone
  const origin=c.data.guests.find(g=>g.bookingId===booking.id),group=origin?guestGroup(c.data,origin.id):[],profileIds=new Set(group.map(g=>g.id)),groupBookings=new Set(group.map(g=>g.bookingId))
@@ -35,6 +36,7 @@ export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[
  for(const r of c.data.recoveries.filter(r=>ids.has(r.bookingId))){subjects.add(r.id);r.reason='Guest identity erased';delete r.issue;r.history=r.history.map(h=>({...h,why:''}));if(r.proposal)Object.assign(r.proposal,{why:'Guest identity erased',guestText:'',baseline:''});delete r.previous;delete r.appliedBaseline;r.revision=newId()}
  for(const d of await stays(c.db))if(ids.has(d.bookingId)){subjects.add(d.id);subjects.add('guest:'+d.id);d.guestName='Erased guest';d.email='';d.signature={name:'Erased guest',at:d.signature.at,version:d.signature.version,text:'Retained separately under the erasure receipt',sha256:d.signature.sha256,consent:''};delete d.customerId;delete d.paymentMethod;delete d.error;delete d.checkoutUrl;delete d.bookingLinkSealed;if(d.depositCheckout)delete (d.depositCheckout as any).url;if(d.deposit){delete d.deposit.reason;delete d.deposit.evidence}saveStay(c,d);c.queries.push(query('UPDATE cb_direct_stays SET token_hash=? WHERE id=?',await sha(newId()),d.id))}
  for(const v of cases(c.data).filter(v=>ids.has(v.bookingId))){subjects.add(v.id);subjects.add('guest:'+v.bookingId)}
+ for(const bookingId of ids)c.queries.push(query('DELETE FROM cb_guest_challenges WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_sessions WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_limits WHERE booking_id=?',bookingId))
  await eraseVerification(c,ids)
  for(const a of c.data.rentalAgreements)if(ids.has(a.bookingId)){a.token=null;a.documents=[];a.revision=newId()}
  // Redact this guest's snapshots without changing unrelated reservations.

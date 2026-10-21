@@ -15,6 +15,8 @@ export async function deliverNotices(env: Bindings) {
  for (const { id } of pending) {
   const claimed = await mutate(env.DB, SYSTEM, 'notice.claim', c => { const n = c.data.notices.find(r => r.id === id); if (!n || n.status !== 'pending') return null; n.status = 'sending'; return { ...n } }, () => false).catch(() => null)
   if (!claimed) continue
+  const current=(await load(env.DB)).members.find(m=>m.id===claimed.memberId)
+  if(current&&!current.active){await mutate(env.DB,SYSTEM,'notice.offboarded',c=>{const n=c.data.notices.find(n=>n.id===id);if(n){n.status='suppressed';n.detail='Team access ended before this notice was submitted.'}});continue}
   const sender=operatorMail(env,claimed.propertyId)
   let status: 'sent' | 'suppressed' | 'unavailable' | 'failed', detail: string | null = null
   if (!sender || !env.MAIL_FROM) { status = 'unavailable'; detail = 'No mail provider is set up for this install, so this email was not sent. The job is in Cabin.' }

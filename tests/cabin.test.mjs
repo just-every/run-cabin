@@ -208,3 +208,67 @@ test('an overlapping request is declined with its reason and the night is never 
     assert.equal(page.status, 200); assert.ok(page.text.includes(declined.reason))
   } finally { await h.close() }
 })
+
+test('PMS team invitations enforce each role’s property/actions, private read scopes and immediate offboarding',async()=>{
+ const requests=[],h=await harness({auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:async request=>{
+  const u=new URL(request.url);if(u.host!=='connect.getseam.com')return new Response('Unexpected edge',{status:599})
+  const body=await request.json();requests.push({path:u.pathname,body})
+  return Response.json(u.pathname.endsWith('/create')?{access_code:{access_code_id:'synthetic-cabin-'+requests.length}}:{ok:true})
+ }})
+ try{
+  const p=await property(h,{name:'Pine Ridge Private',ownerEmail:'rentalowner@stay.example'}),other=await property(h,{name:'Lake Loft Confidential',ownerEmail:'otherowner@stay.example'})
+  for(const home of [p,other])await h.cmd('home.settings',{propertyId:home.id,address:'200 Synthetic Road',timeZone:'America/New_York',checklist:['Ready']})
+  await h.cmd('owner.policy',{propertyId:p.id,calendarVisibility:'availability',expenseLimitCents:0,maxStayNights:14,noticeDays:0,agreement:'Explicit personal-stay request terms'})
+  const a=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Pine Guest',guestEmail:'pine@stay.example',start:day(3),end:day(5)}),b=await h.cmd('reservation.request',{propertyId:other.id,channel:'direct',guestName:'Lake Secret Guest',guestEmail:'lake@stay.example',start:day(3),end:day(5)})
+  const statements=[]
+  for(const home of [p,other]){const s=await h.cmd('statement.prepare',{propertyId:home.id,month:'2026-11',lines:[{description:'Rent',amountCents:10000}]});await h.cmd('statement.approve',{id:s.id,revision:s.revision});statements.push(s)}
+  await h.cmd('direct.agreement.template',{propertyId:other.id,agreementTitle:'Private rental terms',agreementState:'NY',agreement:'Private identity and rental evidence',agreementRequired:true,agreementBlockAccess:false})
+  await h.cmd('direct.agreement.request',{bookingId:b.bookingId})
+  const docs=(await h.accessState()).rentalAgreements.find(r=>r.bookingId===b.bookingId),document=docs.documents.at(-1)
+  const roles=[
+   ['manager',['operations:read','calendar:read','finance:read','reports:read','identity:read','task.raise'],'task.raise'],
+   ['reservation',['calendar:read','reservations:read','booking.details'],'booking.details'],
+   ['guest_service',['reservations:read','inbox:read','operations:read','access:read','booking.details'],'booking.details'],
+   ['accountant',['finance:read','reports:read','statement.prepare'],'statement.prepare'],
+   ['inspector',['operations:read','access:read','task.raise'],'task.raise'],
+   ['cleaner',['operations:read','access:read','task.raise'],'task.raise'],
+   ['maintenance',['operations:read','access:read','task.raise'],'task.raise'],
+   ['rental_owner',['owners:read','rentalOwner.stay.request'],'rentalOwner.stay.request']
+  ],people=[]
+  const actionInput=(name,home,booking)=>name==='booking.details'?{id:booking.bookingId,revision:booking.revision,guestName:'Updated guest',guestEmail:'updated@stay.example'}:name==='statement.prepare'?{propertyId:home.id,month:'2026-12',lines:[{description:'Scoped income',amountCents:5000}]}:name==='rentalOwner.stay.request'?{propertyId:home.id,start:day(20),end:day(22),note:'Owner personal stay'}:{propertyId:home.id,title:'Check porch light',note:'Scoped field report'}
+  for(const [role,actions,action] of roles){
+   const email=role==='rental_owner'?p.ownerEmail:role+'@stay.example',fields=new URLSearchParams({name:role,email,pmsRole:role,active:'true'});fields.append('propertyIds',p.id);for(const permission of actions)fields.append('actions',permission)
+   const saved=await h.mf.dispatchFetch(h.origin+'/app/action?name=member.save&returnTo=/app/people',{method:'POST',headers:{origin:h.origin,cookie:h.owner,'content-type':'application/x-www-form-urlencoded'},body:fields.toString()});assert.equal(saved.status,200,await saved.text())
+   const member=(await h.state()).members.find(m=>m.email===email);assert.ok(member?.scope.actions.includes(action));await h.cmd('member.invite',{id:member.id});const cookie=await h.signIn(email);people.push({...member,cookie})
+   const visible=await h.state(cookie);assert.ok(!JSON.stringify(visible).includes(other.id)&&!JSON.stringify(visible).includes('Lake Secret Guest'),'the state has no other-home rows or counts')
+   if(['inspector','cleaner','maintenance'].includes(role)){assert.ok(!JSON.stringify(visible).includes('Pine Guest'));assert.equal(visible.verifications.length,0);assert.equal(visible.statements.length,0)}
+   let serviceTurnover
+   if(['inspector','cleaner','maintenance'].includes(role)){serviceTurnover=(await h.state()).turnovers.find(t=>t.bookingId===a.bookingId&&t.status!=='cancelled');if(serviceTurnover.cleanerId!==member.id)await h.cmd('turnover.assign',{id:serviceTurnover.id,revision:serviceTurnover.revision,cleanerId:member.id})}
+   a.revision=(await h.state()).bookings.find(b=>b.id===a.bookingId).revision;b.revision=(await h.state()).bookings.find(r=>r.id===b.bookingId).revision
+   await h.cmd(action,{...actionInput(action,p,a),...(serviceTurnover?{turnoverId:serviceTurnover.id}:{})},cookie)
+   await h.cmd(action,actionInput(action,other,b),cookie,404)
+   for(const route of [`/api/cabin/statements/${statements[1].id}.csv`,`/api/cabin/statements/${statements[1].id}.pdf`,`/api/cabin/agreements/${docs.id}/${document.id}`])assert.ok([403,404].includes((await h.send(route,undefined,cookie)).status),role+' cannot read another home’s documents')
+   await h.cmd('agent.create',{label:'Unauthorized key'},cookie,403)
+   await h.cmd('provider.sharing',{id:'seam',operation:'credential',SEAM_API_KEY:'synthetic-cabin-2'},cookie,403)
+   assert.equal((await h.send('/api/cabin/agent/context',undefined,cookie)).status,401)
+   const humanPage=await h.send(role==='accountant'?'/app/reports':role==='rental_owner'?'/app':'/app/maintenance',undefined,cookie)
+   if(role==='accountant'||role==='rental_owner'||role==='manager'||['inspector','cleaner','maintenance'].includes(role))assert.equal(humanPage.status,200,humanPage.text)
+  }
+  const manager=people[0],scopedReport=await h.send('/api/cabin/reports.json?from=2026-11-01&until=2026-12-01',undefined,people[3].cookie)
+  assert.equal(scopedReport.status,200,scopedReport.text);assert.deepEqual(scopedReport.value.properties.map(p=>p.id),[p.id]);assert.ok(!scopedReport.text.includes(other.id))
+  // A real connected device code is removed on offboarding, not merely hidden in the UI.
+  const cleaner=people.find(m=>m.scope.pmsRole==='cleaner'),settings=(await h.state()).homeSettings.find(s=>s.propertyId===p.id)
+  await h.cmd('home.settings',{...settings,cleanerId:cleaner.id,lockDeviceId:'synthetic-cabin-3'})
+  const assigned=(await h.state()).turnovers.find(t=>t.bookingId===a.bookingId&&t.status!=='cancelled');if(assigned.cleanerId!==cleaner.id)await h.cmd('turnover.assign',{id:assigned.id,revision:assigned.revision,cleanerId:cleaner.id})
+  const code=(await h.accessState()).codes.find(c=>c.holder==='cleaner'&&c.memberId===cleaner.id&&c.status==='issued');assert.ok(code?.lock.providerId)
+  await h.cmd('member.save',{...cleaner,active:false})
+  const after=(await h.accessState()).codes.find(c=>c.id===code.id);assert.equal(after.status,'revoked');assert.equal(after.lock.state,'removed');assert.ok(requests.some(r=>r.path.endsWith('/delete')&&r.body.access_code_id===code.lock.providerId))
+  const saved=await h.cmd('report.save',{name:'Queued scope check',filters:{from:day(1),until:day(30),property:p.id}}),schedule=await h.cmd('report.schedule',{savedReportId:saved.id,savedReportRevision:saved.revision,recipientKind:'member',recipientMemberId:manager.id,period:'saved-window',cadence:'once',format:'json',nextRunAt:new Date(Date.now()+86400000).toISOString(),consent:true})
+  for(const person of people.filter(p=>p.id!==cleaner.id))await h.cmd('member.save',{...person,active:false})
+  const due=new Date(Date.now()-60000).toISOString();await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(due,due,schedule.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  const sharing=await h.send('/api/cabin/report-sharing.json',undefined,h.owner),refused=sharing.value.reportRuns.find(r=>r.scheduleId===schedule.id)
+  assert.equal(refused.status,'refused');assert.ok(!refused.artifact);assert.ok(sharing.value.reportFollowups.some(f=>f.runId===refused.id))
+
+  for(const person of people){await h.state(person.cookie,403);await h.cmd('task.raise',{propertyId:p.id,title:'Offboarded',note:'Must not run'},person.cookie,403)}
+ }finally{await h.close()}
+})

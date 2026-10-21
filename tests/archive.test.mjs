@@ -66,7 +66,7 @@ test('DATA-001: public CLI archive round trip refuses damaged or populated store
     await command(erased,['import','--input',old,'--journal',later,'--yes'],4)
     await command(erased,['import','--input',later,'--yes'])
     const proxy=await getPlatformProxy({configPath:join(erased,'wrangler.jsonc'),persist:{path:join(erased,'.wrangler/state/v3')},remoteBindings:false})
-    try { assert.equal(await proxy.env.DB.prepare('SELECT id FROM cb_properties WHERE id=?').bind(p.id).first(),null); assert.equal((await proxy.env.DB.prepare('SELECT COUNT(*) AS n FROM cb_photos').first()).n,0) }
+    try { assert.equal(await proxy.env.DB.prepare('SELECT id FROM cb_properties WHERE id=?').bind(p.id).first(),null); assert.equal((await proxy.env.DB.prepare('SELECT COUNT(*) AS n FROM cb_photos').first()).n,0);assert.equal((await proxy.env.DB.prepare('SELECT count(*) AS n FROM cb_guest_guide_files').first()).n,0);for(const table of ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits'])assert.equal((await proxy.env.DB.prepare('SELECT count(*) AS n FROM '+table).first()).n,0) }
     finally { await proxy.dispose() }
   } finally { if(h)await h.close();await rm(temporary,{recursive:true,force:true}) }
 })

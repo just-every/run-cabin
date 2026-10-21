@@ -1,3 +1,4 @@
+import { memberActor } from './permissions/authority'
 import { sharingAllowed } from './connections/guard'
 import { event, record } from './audit/write'
 import { operatorAuth, type Bindings } from '../auth.server'
@@ -11,9 +12,7 @@ export async function principal(request:Request,env:Bindings,isAgent=false):Prom
  }
  const session=await operatorAuth(env).getSession(request);need(session,'Sign in to continue',401)
  const op=session.operator,email=op.email.trim().toLowerCase()
- const member=op.role==='owner'?null:await env.DB.prepare('SELECT id,role FROM cb_members WHERE email=? COLLATE NOCASE AND active=1').bind(email).first<any>()
- need(op.role==='owner'||(op.role==='member'&&member),'Manager or cleaner access is not granted',403)
- const actor:Actor={id:op.id,email,role:op.role==='owner'?'owner':member!.role,memberId:member?.id,operatorVersion:op.version,isAgent:false};await assertLive(env.DB,actor);return actor
+ const actor=await memberActor(env.DB,op.id);need(actor,'Team access is not granted',403);await assertLive(env.DB,actor);return actor
 }
 export async function agentKeys(env:Bindings,actor:Actor){if(actor.role!=='owner')return [];return (await env.DB.prepare('SELECT id,label,created_at AS createdAt,expires_at AS expiresAt,revoked_at AS revokedAt FROM cb_agent_keys WHERE owner_id=? ORDER BY created_at DESC').bind(actor.id).all<Record<string,unknown>>()).results}
 export async function credentialCommand(request:Request,env:Bindings,actor:Actor,name:string,p:Record<string,unknown>){

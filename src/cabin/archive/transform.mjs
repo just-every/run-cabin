@@ -20,12 +20,22 @@ function scrub(value) {
  for (const [key, item] of Object.entries(value)) {
   if (['keySealed','bookingLinkSealed','tokenSealed','paymentMethod','customerId','checkoutUrl'].includes(key)) continue
   if (key === 'link' && 'holder' in value) { result[key] = null; continue }
+  if (key==='authority'&&item&&typeof item==='object') { result[key]={...item,operatorVersion:-1}; continue }
   if (['token','tokenHash'].includes(key)) { result[key] = null; continue }
   result[key] = key === 'code' && typeof item === 'string' && /^\d{4}$/.test(item) ? '' : scrub(item)
  }
  return result
 }
 export function exportRow(table, row) {
+ if(table==='cb_saved_reports'||table==='cb_report_schedules'||table==='cb_report_runs'){
+  const data=JSON.parse(row.data),invalidate=a=>a?{...a,operatorVersion:-1}:a
+  data.creator=invalidate(data.creator)
+  if(data.recipient?.actor)data.recipient.actor=invalidate(data.recipient.actor)
+  if(data.scope){data.scope.creator=invalidate(data.scope.creator);if(data.scope.recipient?.actor)data.scope.recipient.actor=invalidate(data.scope.recipient.actor)}
+  if(table==='cb_report_schedules'){data.enabled=false;data.pausedAt='restored';return {...row,enabled:0,data:JSON.stringify(data)}}
+  if(table==='cb_report_runs'&&['generating','sending'].includes(data.status)){data.status=data.status==='sending'?'delivery_failed':'generation_failed';data.finishedAt=data.startedAt;data.detail=pause;data.history.push({at:data.startedAt,status:data.status,detail:pause});return {...row,data:JSON.stringify(data)}}
+  return {...row,data:JSON.stringify(data)}
+ }
  if (table === 'cb_restore_review') return {...row,restored:1,reviewed:0,revision:'archive-review',reviewed_by:null,reviewed_at:null}
  if (table === 'cb_provider_sharing') return {...row,enabled:0,revision:'archive-review:'+row.id}
  if (table === 'cb_booking_site') { const data=JSON.parse(row.data); data.domainVerified=false; data.domainChallenge=''; return {...row,data:JSON.stringify(data)} }
@@ -53,6 +63,7 @@ export function exportRow(table, row) {
  const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled','threadCases'].includes(kind) ? redact(stripped) : stripped
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
+ if(kind==='guestPortalLinks'){data.token=null;data.status='revoked';data.sessionEpoch='restored'}
  if (kind === 'statementSchedules') { data.enabled=false; data.error=pause; data.actor={...data.actor,operatorVersion:-1} }
  if (kind === 'bookings') { data.restorePaused = true; if(data.quoteId){data.status='cancelled';data.cancelled=true} }
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
