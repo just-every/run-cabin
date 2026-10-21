@@ -1,4 +1,3 @@
-import { promotionPaidCents } from '../promotions/settlement'
 import { type Booking, type Context, integer, need } from '../model'
 import { modelFor,percent,splitCents } from '../finance/allocation-calculation'
 import { allocationTerms } from '../properties/terms'
@@ -19,17 +18,7 @@ export function policy(input:Record<string,unknown>):CancellationPolicy {
  return {known:true,name,freeUntil,retainedBps:integer(percent('retainedBps'),'cancellation basis points',0,10000),noShowBps:integer(percent('noShowBps'),'no-show basis points',0,10000)}
 }
 export const charge=(b:Booking)=>b.lifecycle?.settledChargeCents??b.lifecycle?.price?.totalCents??0
-export async function paymentBalance(c:Pick<Context,'db'|'data'>,b:Booking){
- const direct=await c.db.prepare("SELECT data FROM cb_direct_stays WHERE json_extract(data,'$.bookingId')=?").bind(b.id).first<{data:string}>(),d=direct?JSON.parse(direct.data):null
- const rows=(await journals(c.db)).filter(j=>j.bookingId===b.id)
- const family=(j:typeof rows[number]):string=>j.reversalOf?(()=>{const original=rows.find(r=>r.id===j.reversalOf);return original?family(original):j.sourceType})():j.sourceType
- const received=rows.filter(j=>family(j)==='payment').reduce((n,j)=>n+j.lines.filter(l=>l.account==='receivable').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
- const refunded=rows.filter(j=>family(j)==='refund').reduce((n,j)=>n+j.lines.filter(l=>l.account==='cash').reduce((a,l)=>a+l.creditCents-l.debitCents,0),0)
- const directRefunded=d?.refunds?.filter((r:any)=>r.status==='succeeded'&&r.kind!=='deposit').reduce((n:number,r:any)=>n+r.amounts.totalCents,0)??0
- const paidCents=await promotionPaidCents(c.db,b.id)+received+(d?.paymentId?d.quote.totalCents:0)-refunded-directRefunded
- const totalCents=b.lifecycle?.price?charge(b):d?.quote?.totalCents
- return {paidCents,totalCents:totalCents??null,balanceCents:totalCents===undefined?null:totalCents-paidCents}
-}
+export { paymentBalance } from './balances'
 /** Contractual receivables are not receipts. Changes post only their delta; cash is never invented. */
 export async function syncReservationFinance(c:Context){
  for(const b of c.data.bookings){

@@ -5,7 +5,8 @@ import { agentState } from './channel-agent/store'
 import { promotionState } from './promotions/store'
 import { issueCommand } from './issues/commands'
 import { secureAccount } from './connections/credentials'
-import { paymentBalance } from './reservations/finance'
+import { paymentBalances } from './reservations/balances'
+import { calendarDirect } from './pages/direct'
 import { lifecycleCommand } from './reservations/commands'
 import { allocationCommand } from './finance/allocation-commands'
 import { restoreState } from './archive/review'
@@ -50,8 +51,8 @@ if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
  for(const handler of [reportSharingCommand,issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
-export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
- await assertLive(env.DB,actor);const data=await load(env.DB)
+export async function snapshot(env:Bindings,actor:Actor,page?:{data:import('./model').Data;balanceBookingIds?:string[]}):Promise<State>{
+ await assertLive(env.DB,actor);const data=page?.data??await load(env.DB)
  if(actor.role==='cleaner'){data.guestPortalLinks=[];data.staffQuotes=[];
   data.statementSchedules=[];
   data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[]; data.managementTerms=[];
@@ -76,8 +77,11 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
  data.verifications=verificationState(data,actor) as typeof data.verifications
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))
- if(['owner','manager'].includes(actor.role)&&!actor.isAgent)for(const b of data.bookings)if(b.lifecycle?.price)(b as any).reservationBalance=await paymentBalance({db:env.DB,data},b)
- const state={...data,channelAgent:actor.role==='owner'&&!actor.isAgent?await agentState(env.DB):{profiles:[],actions:[]},promotions:await promotionState(env.DB,actor),privacy:await privacyState(env.DB,actor),restore:await restoreState(env.DB,actor),sharing:await sharingState(env,actor),taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:actor.scope&&!actor.scope.actions.includes('*')?null:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:!managedInstall(env)&&await secureAccount(env,'seam'),messaging:{sms:!managedInstall(env)&&await secureAccount(env,'twilio'),booking:!managedInstall(env)&&await secureAccount(env,'booking')},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ if(['owner','manager'].includes(actor.role)&&!actor.isAgent){const selected=data.bookings.filter(b=>b.lifecycle?.price&&(!page?.balanceBookingIds||page.balanceBookingIds.includes(b.id))),balances=await paymentBalances(env.DB,selected);for(const b of selected)(b as any).reservationBalance=balances.get(b.id)}
+ const full=page?{channelAgent:{profiles:[],actions:[]},agentKeys:[],importJobs:[],lockAccount:false,messaging:{sms:false,booking:false},direct:await calendarDirect(env.DB,page.balanceBookingIds??[])}:await (async()=>{
+ return {channelAgent:actor.role==='owner'&&!actor.isAgent?await agentState(env.DB):{profiles:[],actions:[]},promotions:await promotionState(env.DB,actor),privacy:await privacyState(env.DB,actor),restore:await restoreState(env.DB,actor),sharing:await sharingState(env,actor),taxes:await taxState(env.DB,actor),ownerOperations:await ownerOperationsState(env.DB,actor),...guestState(data,actor),ledger:await ledgerState(env.DB,actor),books:actor.scope&&!actor.scope.actions.includes('*')?null:await booksState(env,actor),direct:await directState(env,actor),actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??(new URL(env.AUTH_ORIGIN).hostname.endsWith('.workers.dev')?new URL(env.AUTH_ORIGIN).hostname.split('.')[0]:null),managed:managedInstall(env),lockAccount:!managedInstall(env)&&await secureAccount(env,'seam'),messaging:{sms:!managedInstall(env)&&await secureAccount(env,'twilio'),booking:!managedInstall(env)&&await secureAccount(env,'booking')},agentKeys:await agentKeys(env,actor),importJobs:await importJobs(env.DB,actor)}
+ })()
+ const state={...data,...full,actor,origin:env.AUTH_ORIGIN,local:env.AUTH_LOCAL==='true',workerName:env.CABIN_WORKER_NAME??null,managed:managedInstall(env)}
  await assertLive(env.DB,actor);return projectState(state,actor)
 }
 /** A completed turnover's cover photo, or any photo by id: owners and managers, the turnover's cleaner once it is done, a task's assignee or reporter. */

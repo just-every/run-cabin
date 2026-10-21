@@ -52,7 +52,7 @@ function syncLine(s: any): [string, string] {
   return file ? ['good', `Calendar file approved ${ago(file)}`] : ['', 'No calendar links yet']
 }
 function rail(s: any, tab: string, brand: string) {
-  const drafts = manager(s) ? threads(s).filter(t => t.drafts).length : 0
+  const drafts = manager(s) ? (s.inboxDraftThreads ?? threads(s).filter(t => t.drafts).length) : 0
   const groups = tabsFor(s).map(group => `<div class="nav-group">${group.map(([key, label]) => `<a href="/app/${key}"${key === tab ? ' aria-current="page"' : ''}>${icon(key === 'guests' ? 'people' : key === 'ledger' || key === 'taxes' ? 'books' : key === 'activity' || key === 'reports' ? 'statements' : key)}<span>${h(label)}</span>${key === 'inbox' && drafts ? `<b class="count" title="${drafts} drafted repl${drafts === 1 ? 'y' : 'ies'} waiting">${drafts}</b>` : ''}</a>`).join('')}</div>`).join('')
   const homes = manager(s) && s.properties.length ? `<details class="switcher"><summary>${icon('home')}<span>${s.properties.length === 1 ? h(s.properties[0].name) : `All ${s.properties.length} homes`}</span></summary><div class="switcher-list"><a href="/app/calendar">All homes</a>${s.properties.map((p: any) => `<a href="/app/calendar?home=${encodeURIComponent(p.id)}">${h(p.name)}</a>`).join('')}</div></details>` : ''
   const me = s.members.find((m: any) => m.id === s.actor.memberId)?.name ?? s.actor.email, initials = String(me).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w: string) => w[0].toUpperCase()).join('')
