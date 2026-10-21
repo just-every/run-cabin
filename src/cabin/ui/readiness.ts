@@ -6,6 +6,7 @@ import { localDay, dayName, when } from '../clock'
 import { homeSettings } from '../homes'
 import { channelName } from '../inventory'
 import { guestOf } from './calendar-grid'
+import { departures } from './departures'
 // The owner's portfolio view: for a chosen day, is each home ready for its next
 // guests? Each card shows the next arrival, the turnover before it, the door
 // code and the photos the cleaner sent back.
@@ -29,5 +30,5 @@ export function readiness(s: any, from?: string | null) {
     ${readinessEvidence(s,x)}${photos(list.slice(0, 4), `${x.property.name} ready photo`)}${list.length > 4 ? `<p class="muted"><a href="/app/turnovers#turnover-${h(t!.id)}">All ${list.length} photos</a></p>` : ''}</article>`
   }).join('')
   return heading('Readiness', title, notReady.length ? `Not ready: ${notReady.join(', ')}. Readiness requires completed cleaning, resolved maintenance, attested supplies and access, and inspector acceptance. Every exception records its guest impact.` : 'Readiness requires completed cleaning, resolved maintenance, attested supplies and access, and inspector acceptance. Every exception records its guest impact.')
-    + `<nav class="days" aria-label="Choose a day">${days}<form class="pick-day" method="get" action="/app/readiness"><label><span class="muted">Any day</span><input type="date" name="from" value="${h(day)}" required></label><button type="submit" class="quiet">Show</button></form></nav>` + (cards ? `<div class="ready-grid">${cards}</div>` : empty('Add homes and stays to see readiness.'))
+    + `<nav class="days" aria-label="Choose a day">${days}<form class="pick-day" method="get" action="/app/readiness"><label><span class="muted">Any day</span><input type="date" name="from" value="${h(day)}" required></label><button type="submit" class="quiet">Show</button></form></nav>` + departures(s, day) + (cards ? `<div class="ready-grid">${cards}</div>` : empty('Add homes and stays to see readiness.'))
 }

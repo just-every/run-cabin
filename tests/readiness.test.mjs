@@ -63,3 +63,56 @@ test('OPS-003: arrival stays unready until physical supplies, access, maintenanc
   assert.equal((await h.state(cleaner.cookie)).readinessRecords.length,0)
  } finally {await h.close()}
 })
+
+test('OPS-008: departures share a selected home-local day and retain actual checkout evidence without requiring another arrival',async()=>{
+ const h=await harness()
+ try {
+  const cleaner=await h.person('Avery'), staff=await h.person('Mira','manager')
+  const selected=day(-2), start=day(-5), stays=[]
+  for(const [name,timeZone,checkOutTime] of [['Eastern Cottage','America/New_York','09:15'],['Island Cottage','Pacific/Honolulu','11:30'],['Quiet Cottage','Pacific/Honolulu','10:45']]){
+   const home=await h.cmd('property.save',{name,ownerName:'Morgan',ownerEmail:'morgan@stay.example',commissionBps:2000})
+   await h.cmd('home.settings',{propertyId:home.id,address:'24 Test Lane',timeZone,checkOutTime,cleanerId:cleaner.id,checklist:['Ready'],photosRequired:1})
+   const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',kind:'stay',guestName:`Guest at ${name}`,start,end:selected})
+   stays.push({home,bookingId:request.bookingId,timeZone,checkOutTime})
+  }
+  // Past stays do not get automatically dispatched; the board must still list them.
+  for(const [i,cookie] of [cleaner.cookie,staff.cookie].entries()){
+   let t=await h.cmd('turnover.prepare',{bookingId:stays[i].bookingId,cleanerId:cleaner.id,checklist:['Ready']})
+   await h.cmd('turnover.approve',{id:t.id,revision:t.revision})
+   stays[i].turnover=await h.cmd('turnover.checkout',{id:t.id},cookie)
+  }
+  const cancelledHome=await h.cmd('property.save',{name:'Cancelled Cottage',ownerName:'Morgan',ownerEmail:'morgan@stay.example',commissionBps:2000})
+  const cancelled=await h.cmd('reservation.create',{propertyId:cancelledHome.id,method:'manual',channel:'direct',sourceId:'cancelled-departure',guestName:'Cancelled guest',start,end:selected,rentCents:10000,policyName:'Flexible',retainedBps:0,noShowBps:0})
+  await h.cmd('reservation.end',{id:cancelled.id,revision:cancelled.revision,reason:'Guest cancelled by phone'})
+  const section=async cookie=>{
+   const page=await h.send(`/app/readiness?from=${selected}`,undefined,cookie)
+   const board=page.text.match(/<section class="panel" aria-label="Departures">([\s\S]*?)<\/section>/)
+   assert.ok(board,'authorised staff can read the departures board')
+   return board[1]
+  }
+  const board=await section(staff.cookie), cards=[...board.matchAll(/<article class="record">([\s\S]*?)<\/article>/g)].map(m=>m[1])
+  assert.equal(cards.length,stays.length)
+  for(const stay of stays){
+   const card=cards.find(c=>c.includes(`reservation=${stay.bookingId}`))
+   assert.ok(card,`departure for ${stay.home.name} links to its source`)
+   assert.ok(card.includes(`datetime="${selected}T${stay.checkOutTime}"`))
+   assert.ok(card.includes(stay.timeZone))
+   const times=[...card.matchAll(/<time datetime="([^"]+)">([^<]+)<\/time>/g)]
+   assert.equal(times.length,stay.turnover?2:1)
+   if(stay.turnover){
+    const out=stay.turnover.checkedOut
+    assert.equal(times[1][1],out.at)
+    const local=new Intl.DateTimeFormat('en-US',{timeZone:stay.timeZone,hour:'numeric',minute:'2-digit',hour12:true}).format(new Date(out.at)).toLowerCase().replace(/\s+/g,' ')
+    assert.ok(times[1][2].toLowerCase().includes(local.replace(':00','')))
+    const source=card.match(/<dt>Source<\/dt><dd>([^<]+)<\/dd>/)[1]
+    assert.ok(source.toLowerCase().includes(out.source))
+    assert.ok(card.includes(`/app/turnovers#turnover-${stay.turnover.id}`))
+   }
+   const href=unescape(card.match(/href="([^"]*reservation=[^"]+)"/)[1])
+   assert.equal((await h.send(href,undefined,staff.cookie)).status,200)
+  }
+  assert.equal((await section(h.owner)).includes(`reservation=${cancelled.id}`),false)
+  const cleanerPage=await h.send(`/app/readiness?from=${selected}`,undefined,cleaner.cookie)
+  assert.ok(!cleanerPage.text.includes('Guest at Eastern Cottage'))
+ } finally {await h.close()}
+})
