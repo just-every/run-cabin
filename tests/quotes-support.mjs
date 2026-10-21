@@ -6,7 +6,7 @@ export const quoteDay=n=>homeDay(n,'America/New_York')
 export async function quoteHarness(options={}){
  const sessions=new Map();let creates=0,paid=false
  const h=await harness({root:options.root,assets:options.assets,auth:{STRIPE_TEST_SECRET_KEY:['sk','test',syntheticStripeKey.replace('-','')].join('_')},outbound:async request=>{
-  const url=new URL(request.url);assert.equal(url.hostname,'api.stripe.com');const form=new URLSearchParams(await request.text())
+  const url=new URL(request.url);if(options.siteOrigin&&url.origin===options.siteOrigin&&url.pathname.startsWith('/book/domain-proof/'))return new Response(url.pathname.split('/').at(-1));assert.equal(url.hostname,'api.stripe.com');const form=new URLSearchParams(await request.text())
   if(url.pathname==='/v1/checkout/sessions'&&request.method==='POST'){
    const id='cs_quote_'+(++creates),amount=[...form].filter(([k])=>/line_items\[\d+\]\[price_data\]\[unit_amount\]/.test(k)).reduce((n,[,v])=>n+Number(v),0)
    const session={id,url:'https://checkout.stripe.com/c/pay/'+id,metadata:{stayId:form.get('metadata[stayId]')},amount_total:amount,currency:'usd',success_url:form.get('success_url')};sessions.set(id,session);return Response.json(session)

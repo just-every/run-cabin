@@ -33,9 +33,9 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
  const verification=await verificationResponse(request,env);if(verification)return verification
  const rental=await agreementResponse(request,env);if(rental)return rental
  const url=new URL(request.url),path=url.pathname;if(path!=='/book'&&!path.startsWith('/book/'))return null
- let json=false
+ let json=false,embedded:URL|undefined
  try{
-  const embedded=embedContext(site,url)
+  embedded=embedContext(site,url)
   need(url.origin===env.AUTH_ORIGIN,'Wrong application origin',403);need(request.method==='GET'||request.method==='POST','Method not allowed',405)
   if(request.method==='POST')need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
   let input:Record<string,unknown>={}
@@ -80,6 +80,6 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
  }catch(error){const stayToken=(error as any)?.stayToken as string|undefined
   if(stayToken&&!json)return new Response(null,{status:303,headers:{location:'/book/stay/'+stayToken,'cache-control':'no-store','referrer-policy':'no-referrer'}})
   const status=Number((error as any)?.status)||500,message=status<500||(status===502||status===503)?guestText(error):'Could not complete this request. Contact the host or try again.'
-  return json?Response.json({error:message,...(stayToken?{bookingUrl:env.AUTH_ORIGIN+'/book/stay/'+stayToken}:{})},{status,headers:{'cache-control':'no-store'}}):shell('Booking needs attention',`<h1>Booking needs attention</h1><div class="notice error" role="alert">${h(message)}</div><p>${path.startsWith('/book/stay/')?'Your payment or verification may still be pending. Return to your saved stay page to check its status.':'Choose other dates or contact the host.'}</p><a href="${h(path.startsWith('/book/stay/')?path.replace(/\/(refresh|identity|deposit|pay)$/,''):'/book/'+(path.split('/')[2]??''))}">Return to booking</a>`,status)
+  return json?Response.json({error:message,...(stayToken?{bookingUrl:env.AUTH_ORIGIN+'/book/stay/'+stayToken}:{})},{status,headers:{'cache-control':'no-store'}}):shell('Booking needs attention',`<h1>Booking needs attention</h1><div class="notice error" role="alert">${h(message)}</div><p>${path.startsWith('/book/stay/')?'Your payment or verification may still be pending. Return to your saved stay page to check its status.':'Choose other dates or contact the host.'}</p><a href="${h(path.startsWith('/book/stay/')?path.replace(/\/(refresh|identity|deposit|pay)$/,''):'/book/'+(path.split('/')[2]??''))}">Return to booking</a>`,status,{embedReturn:embedded,brandName:site?.name,color:site?.color})
  }
 }

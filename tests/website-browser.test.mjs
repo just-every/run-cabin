@@ -8,18 +8,20 @@ import { quoteHarness } from './quotes-support.mjs'
 test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once and return on phone and desktop', {timeout:180000},async()=>{
  const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
  try{for(const width of [1440,390])for(const surface of ['external','wordpress']){
-  const h=await quoteHarness({assets:true}),context=await browser.newContext({viewport:{width,height:1000}})
+  const bookingOrigin='https://booking.example',h=await quoteHarness({assets:true,siteOrigin:bookingOrigin}),context=await browser.newContext({viewport:{width,height:1000}})
   try{
    const evidence=process.env.CABIN_EMBED_SHOTS??'test-results/website';await mkdir(evidence,{recursive:true})
-   const origin='https://'+surface+'.example',returnUrl=origin+'/booking',embedUrl=h.origin+'/book?'+new URLSearchParams({embedReturn:returnUrl})
-   await h.cmd('direct.site.save',{name:'Coastal stays',color:'#214d3d',embedOrigins:[origin]})
+   const origin='https://'+surface+'.example',returnUrl=origin+'/booking',embedUrl=bookingOrigin+'/book?'+new URLSearchParams({embedReturn:returnUrl})
+   await h.cmd('direct.site.save',{name:'Coastal stays',color:'#214d3d',embedOrigins:[origin],origin:bookingOrigin})
+   await h.cmd('direct.site.verify',{})
    const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}])
    const staff=await context.newPage();staff.setDefaultTimeout(12000);await staff.goto(h.origin+'/app/direct')
    await staff.getByText('Edit website, pages and public photos',{exact:true}).click()
    await expect(staff.getByLabel('Allowed embedding origins (one HTTPS origin per line)')).toHaveValue(origin)
+   await staff.screenshot({path:join(evidence,`${surface}-editor-${width}.png`),fullPage:true})
    await staff.getByRole('button',{name:'Publish website settings',exact:true}).click()
    await staff.getByText('Embed on your website or WordPress',{exact:true}).click()
-   const markup=await staff.getByLabel(origin+' embed code').inputValue();assert.ok(markup.includes(h.origin+'/book?'))
+   const markup=await staff.getByLabel(origin+' embed code').inputValue();assert.ok(markup.includes(bookingOrigin+'/book?'))
    await staff.screenshot({path:join(evidence,`${surface}-settings-${width}.png`),fullPage:true})
    const guest=await browser.newContext({viewport:{width,height:1000}}),g=await guest.newPage();g.setDefaultTimeout(12000)
    try{
@@ -28,12 +30,13 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
      if(surface==='wordpress'&&process.env.CABIN_WORDPRESS_URL){body=await (await fetch(process.env.CABIN_WORDPRESS_URL)).text();body=body.replace('CABIN_EMBED_URL',embedUrl.replaceAll('&','&amp;'))}
      await route.fulfill({contentType:'text/html',body})
     })
-    await g.route('https://checkout.stripe.com/**',async route=>{
+    const cdp=await guest.newCDPSession(g);await cdp.send('Fetch.enable',{patterns:[{urlPattern:'https://checkout.stripe.com/*',requestStage:'Request'}]})
+    cdp.on('Fetch.requestPaused',async event=>{
      const session=[...h.sessions.values()].at(-1);assert.ok(session)
-     assert.ok(!JSON.stringify(route.request().headers()).includes('/book/stay/'),'private stay link stays out of Stripe request headers')
-     await route.fulfill({contentType:'text/html',body:`<h1>Stripe test checkout (synthetic network edge)</h1><a href="${session.success_url}">Complete test payment</a>`})
+     assert.ok(!JSON.stringify(event.request.headers).includes('/book/stay/'),'private stay link stays out of Stripe request headers')
+     await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/html'}],body:Buffer.from(`<h1>Stripe test checkout (synthetic network edge)</h1><a href="${session.success_url}">Complete test payment</a>`).toString('base64')})
     })
-    await g.route(h.origin+'/book/stay/**',async route=>{if(new URL(route.request().url()).searchParams.has('paid'))h.pay();await route.continue()})
+    await g.route(bookingOrigin+'/**',async route=>{if(new URL(route.request().url()).searchParams.has('paid'))h.pay();const request=route.request(),response=await h.mf.dispatchFetch(request.url(),{method:request.method(),headers:request.headers(),...(request.postDataBuffer()?{body:request.postDataBuffer()}:{}),redirect:'manual'});await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())})})
     await g.goto(returnUrl)
     const frame=g.frameLocator('iframe[title="Search and book a vacation home"]')
     await expect(frame.getByRole('heading',{name:'Find an available home'})).toBeVisible()
@@ -42,6 +45,10 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
     await expect(frame.getByRole('link',{name:'Harbor House',exact:true})).toBeVisible()
     await g.screenshot({path:join(evidence,`${surface}-search-${width}.png`),fullPage:true})
     await frame.getByRole('link',{name:'Harbor House',exact:true}).click()
+    await expect(frame.getByRole('heading',{name:'Harbor House',exact:true,level:1})).toBeVisible()
+    await expect(frame.getByLabel('Arrival',{exact:true})).toHaveValue(h.input.start)
+    await expect(frame.getByLabel('Checkout',{exact:true})).toHaveValue(h.input.end)
+    await g.screenshot({path:join(evidence,`${surface}-listing-${width}.png`),fullPage:true})
     await frame.getByRole('button',{name:'Check price and availability',exact:true}).click()
     await expect(frame.getByRole('heading',{name:'Review your stay'})).toBeVisible()
     const child=g.frames().find(f=>f.url().includes('/book/harbor-house/quote'));assert.ok(child)

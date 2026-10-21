@@ -30,10 +30,10 @@ export function embedMarkup(origin:string,returnUrl:string){
 }
 /** Propagate the return page through native links and forms; payment leaves the frame. */
 export function embeddedPage(response:Response,target:URL){
- const carry=(path:string)=>{const url=new URL(path,'https://booking.invalid');url.searchParams.set('embedReturn',target.href);return url.pathname+url.search}
+ const carry=(path:string)=>{const url=new URL(path.replaceAll('&amp;','&'),'https://booking.invalid');url.searchParams.set('embedReturn',target.href);return url.pathname+url.search}
  const headers=new Headers(response.headers)
  headers.set('content-security-policy',(headers.get('content-security-policy')??'').replace("frame-ancestors 'none'",'frame-ancestors '+target.origin))
- headers.set('referrer-policy','no-referrer');headers.set('x-robots-tag','noindex, nofollow')
+ headers.set('referrer-policy','strict-origin');headers.set('x-robots-tag','noindex, nofollow')
  const rewrite=new HTMLRewriter().on('a[href]',{element(el){const path=el.getAttribute('href');if(path?.startsWith('/book'))el.setAttribute('href',carry(path))}}).on('form',{element(el){
   const path=el.getAttribute('action');if(!path?.startsWith('/book'))return
   el.setAttribute('action',carry(path))
