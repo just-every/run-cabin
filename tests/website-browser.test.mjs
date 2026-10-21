@@ -36,7 +36,17 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
      assert.ok(!JSON.stringify(event.request.headers).includes('/book/stay/'),'private stay link stays out of Stripe request headers')
      await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'text/html'}],body:Buffer.from(`<h1>Stripe test checkout (synthetic network edge)</h1><a href="${session.success_url}">Complete test payment</a>`).toString('base64')})
     })
-    await g.route(bookingOrigin+'/**',async route=>{if(new URL(route.request().url()).searchParams.has('paid'))h.pay();const request=route.request(),response=await h.mf.dispatchFetch(request.url(),{method:request.method(),headers:request.headers(),...(request.postDataBuffer()?{body:request.postDataBuffer()}:{}),redirect:'manual'});await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())})})
+    const routeFailures=[]
+    // Serve the booking origin from the harness worker. A dropped connection to the local runtime is retried once for reads only (never a form post, so checkout cannot double-create); any other failure aborts the request and is asserted below with its cause instead of surfacing as an unhandled rejection.
+    await g.route(bookingOrigin+'/**',async route=>{
+     const request=route.request(),idempotent=['GET','HEAD'].includes(request.method())
+     try{
+      if(new URL(request.url()).searchParams.has('paid'))h.pay()
+      const dispatch=()=>h.mf.dispatchFetch(request.url(),{method:request.method(),headers:request.headers(),...(request.postDataBuffer()?{body:request.postDataBuffer()}:{}),redirect:'manual'})
+      let response;try{response=await dispatch()}catch(error){if(!idempotent||error.message!=='fetch failed')throw error;response=await dispatch()}
+      await route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())})
+     }catch(error){routeFailures.push(`${request.method()} ${request.url()}: ${error.message} ${error.cause?.code??error.cause?.message??''}`.trim());await route.abort().catch(()=>{})}
+    })
     await g.goto(returnUrl)
     const frame=g.frameLocator('iframe[title="Search and book a vacation home"]')
     await expect(frame.getByRole('heading',{name:'Find an available home'})).toBeVisible()
@@ -61,6 +71,7 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
     await g.screenshot({path:join(evidence,`${surface}-confirmed-${width}.png`),fullPage:true})
     const state=await h.state();assert.equal(h.creates,1);assert.equal(state.bookings.filter(b=>b.kind==='stay').length,1);assert.equal(state.direct.stays[0].quote.totalCents,58300)
     await g.getByRole('link',{name:'Return to host website',exact:true}).click();assert.equal(g.url(),returnUrl)
+    await g.unrouteAll({behavior:'wait'});assert.deepEqual(routeFailures,[],'every booking-origin request reached the worker')
    }finally{await guest.close()}
   }finally{await context.close();await h.close()}
  }}finally{await browser.close()}
