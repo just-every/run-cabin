@@ -51,7 +51,10 @@ test('WEB-002: external and WordPress Custom HTML embeds search, sign, pay once 
     const frame=g.frameLocator('iframe[title="Search and book a vacation home"]')
     await expect(frame.getByRole('heading',{name:'Find an available home'})).toBeVisible()
     await frame.getByLabel('Arrival',{exact:true}).fill(h.input.start);await frame.getByLabel('Checkout',{exact:true}).fill(h.input.end);await frame.getByLabel('Guests',{exact:true}).fill('3')
-    await frame.getByRole('button',{name:'Search homes',exact:true}).focus();await g.keyboard.press('Enter')
+    // The unfiltered catalog already lists Harbor House, so wait for the search navigation itself before choosing a result.
+    const embedded=g.frames().find(f=>f!==g.mainFrame());assert.ok(embedded)
+    await frame.getByRole('button',{name:'Search homes',exact:true}).focus()
+    await Promise.all([embedded.waitForURL(url=>new URL(url).searchParams.get('start')===h.input.start),g.keyboard.press('Enter')])
     await expect(frame.getByRole('link',{name:'Harbor House',exact:true})).toBeVisible()
     await g.screenshot({path:join(evidence,`${surface}-search-${width}.png`),fullPage:true})
     await frame.getByRole('link',{name:'Harbor House',exact:true}).click()
