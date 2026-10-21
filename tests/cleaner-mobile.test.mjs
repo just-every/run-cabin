@@ -123,7 +123,7 @@ test('AUTH-002: desktop and phone team invitations enforce a single home and off
         await expect(member).toContainText('Reservation staff')
         await expect(member).toContainText(home.name)
         await expect(member.locator(':scope > p').filter({hasText:'Properties:'})).not.toContainText(otherHome.name)
-        await expect(member.getByRole('checkbox',{name:otherHome.name,exact:true})).not.toBeChecked()
+        await expect(member.locator('input[name=propertyIds][value="'+otherHome.id+'"]')).not.toBeChecked()
         await member.screenshot({path:`${evidence}/saved-member-${width}.png`})
         await member.getByRole('button',{name:'Send sign-in invitation',exact:true}).click()
         await expect(member.getByRole('button',{name:'Deactivate access',exact:true})).toBeVisible()
