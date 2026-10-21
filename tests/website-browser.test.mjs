@@ -105,7 +105,7 @@ test('GUEST-002: desktop and phone guests verify their own email, finish blocked
    assert.equal((await guest.request.get(h.origin+path+'/api')).status(),401)
    await g.screenshot({path:join(evidence,`guest-verification-${width}.png`),fullPage:true})
    const sentResponse=g.waitForResponse(r=>new URL(r.url()).pathname===path+'/send-code');await g.getByRole('button',{name:'Send code',exact:true}).click();const sent=await sentResponse;assert.equal(sent.status(),200,await sent.text())
-   await expect(g.getByRole('status')).toContainText('accepted by the mail provider')
+   await expect(g.getByRole('status')).toContainText('accepted by the mail provider');await g.screenshot({path:join(evidence,`guest-code-entry-${width}.png`),fullPage:true})
    const mail=JSON.parse((await h.db.prepare("SELECT message FROM rer_mail_development_outbox WHERE json_extract(message,'$.subject')='Your Cabin reservation verification code' ORDER BY sequence DESC LIMIT 1").first()).message)
    await g.getByLabel('6-digit code',{exact:true}).fill(mail.text.match(/code is (\d{6})/)[1])
    await g.getByRole('button',{name:'Verify email',exact:true}).click()
@@ -134,7 +134,7 @@ test('GUEST-002: desktop and phone guests verify their own email, finish blocked
    s=await h.accessState();const booking=s.bookings.find(b=>b.id===stay.bookingId)
    await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
    const cancelled=await g.goto(h.origin+path);assert.equal(cancelled.status(),404)
-   assert.ok(!(await g.content()).includes('Megan Ortiz'))
+   assert.ok(!(await g.content()).includes('Megan Ortiz'));await g.screenshot({path:join(evidence,`guest-cancelled-${width}.png`),fullPage:true})
   }finally{await guest.close();await h.close()}
  }}finally{await browser.close()}
 })
