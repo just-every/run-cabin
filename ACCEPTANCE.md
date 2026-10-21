@@ -342,10 +342,10 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 35 | 26 | 29 | 90 |
-| All | 48 | 26 | 29 | 103 |
+| Target and push further | 37 | 26 | 27 | 90 |
+| All | 50 | 26 | 27 | 103 |
 
-**103 clauses: 48 done, 26 partial, 29 missing.**
+**103 clauses: 50 done, 26 partial, 27 missing.**
 
 
 The current clause totals and authoritative Status cells are in `CONTRACT.md`; this build plan retains each clause’s acceptance journey. No new target capability is treated as accepted merely because a neighboring foundation is done.
