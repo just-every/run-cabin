@@ -44,8 +44,8 @@ export async function readReport(db:D1Database,actor:Actor,params:URLSearchParam
  if(ownerEmail){need(f.owner===ownerKey,'Owner recipient does not match this report',403);need(!await db.prepare('SELECT 1 FROM cb_member_offboarding WHERE email=? COLLATE NOCASE').bind(ownerEmail).first(),'Owner access was revoked',403)}
  const interests=ownerEmail?await authorizedRentalInterests(db,ownerEmail,data):null,allowed=new Set(data.properties.filter(p=>permitsProperty(actor,p.id)&&(!interests||interests.some(i=>i.propertyId===p.id))).map(p=>p.id))
  data.properties=data.properties.filter(p=>allowed.has(p.id))
- for(const key of ['bookings','managementTerms','financialAllocations','homeSettings','tasks','turnovers','scheduled','connections','payouts'] as const)(data as any)[key]=data[key].filter((r:any)=>allowed.has(r.propertyId))
- all=all.filter(j=>allowed.has(j.propertyId)&&(!ownerKey||j.ownerKey===ownerKey));direct=direct.filter(d=>allowed.has(d.propertyId))
+ if(ownerEmail||actor.scope&&!actor.scope.propertyIds.includes('*')){for(const key of ['bookings','managementTerms','financialAllocations','homeSettings','tasks','turnovers','scheduled','connections','payouts'] as const)(data as any)[key]=data[key].filter((r:any)=>allowed.has(r.propertyId));all=all.filter(j=>allowed.has(j.propertyId));direct=direct.filter(d=>allowed.has(d.propertyId))}
+ if(ownerKey)all=all.filter(j=>j.ownerKey===ownerKey)
  const version=data.version,inside=(date:string)=>date>=f.from&&date<f.until,keys=new Map<string,string>(),names=new Map<string,string>()
  for(const p of data.properties){const key=await sha(p.ownerEmail.trim().toLowerCase());keys.set(p.id,key);names.set(key,p.ownerName)}
  const bookingKeys=new Map<string,string>(),bookingOwners=new Map<string,Set<string>>()

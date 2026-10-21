@@ -83,7 +83,7 @@ export function projectState<T>(state: T, actor: Actor): T {
     if (own.length && !accepts(own)) return undefined
     const out: Row = {}
     for (const [key, item] of Object.entries(value)) {
-      if (secretField.test(key) && !(key==='token'&&'sessionEpoch'in value&&access&&!service) || ['customerId', 'paymentMethod', 'checkoutUrl', 'depositCheckout', 'previous', 'execution', 'authority'].includes(key)) continue
+      if (secretField.test(key) && !(key==='token'&&'sessionEpoch'in value&&access&&!service) || ['customerId', 'paymentMethod', 'checkoutUrl', 'depositCheckout', 'previous', 'execution', 'authority', 'emailHash', 'sessionEpoch'].includes(key)) continue
       if (!access && ['code', 'link', 'guide', 'guestText', 'content'].includes(key)) continue
       if ((!guest || service) && pii.has(key)) continue
       if (!identity && ['identity', 'verifications', 'documents', 'decision', 'provider', 'verificationPolicy'].includes(key)) continue

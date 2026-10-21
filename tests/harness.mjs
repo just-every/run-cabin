@@ -17,7 +17,7 @@ export async function harness(options = {}) {
   const socket = createServer(); await new Promise(r => socket.listen(0, '127.0.0.1', r)); const port = socket.address().port; await new Promise(r => socket.close(r))
   const dir = options.root ? join(options.root, '.wrangler/state/v3') : await mkdtemp(join(tmpdir(), 'cabin-test-')), origin = `http://${options.hostname??'127.0.0.1'}:${port}`, setup = randomBytes(32).toString('hex')
   const auth = { AUTH_LOCAL: 'true', OWNER_EMAIL: 'owner@stay.example', SESSION_SECRET: randomBytes(32).toString('hex'), SETUP_TOKEN: setup, MAIL_PROVIDER: 'development', MAIL_FROM: 'auth@stay.example', ...options.auth, AUTH_ORIGIN: origin }
-  const config = convertV4MiniflareOptions({ host: '127.0.0.1', port, modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-09-08', compatibilityFlags: ['nodejs_compat'], d1Databases: { DB: 'local-foundation-only' }, bindings: auth, unsafeTriggerHandlers: true, ...(options.outbound ? { outboundService: options.outbound } : {}) })
+  const config = convertV4MiniflareOptions({ host: options.hostname??'127.0.0.1', port, modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-09-08', compatibilityFlags: ['nodejs_compat'], d1Databases: { DB: 'local-foundation-only' }, bindings: auth, unsafeTriggerHandlers: true, ...(options.outbound ? { outboundService: options.outbound } : {}) })
   if(options.assets) config.workers[0].config.assets = {directory: join(process.cwd(), 'public'), hasUserWorker: true}
   let mf = new Miniflare({...config, resourcePersistencePath:dir})
   try {
