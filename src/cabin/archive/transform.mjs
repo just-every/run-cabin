@@ -50,7 +50,7 @@ export function exportRow(table, row) {
   return {...row,plan:JSON.stringify(plan),inventory:inventory?JSON.stringify(inventory):null}
  }
  if (table !== 'cb_records') return row
- const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled'].includes(kind) ? redact(stripped) : stripped
+ const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled','threadCases'].includes(kind) ? redact(stripped) : stripped
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
  if (kind === 'statementSchedules') { data.enabled=false; data.error=pause; data.actor={...data.actor,operatorVersion:-1} }

@@ -17,6 +17,7 @@ import { retainGuestErasure } from './audit/privacy'
 import { syncLedger } from './ledger/automatic'
 import { dispatch } from './dispatch'
 import { synchronizeMessages } from './inbox/schedule'
+import { syncTeam } from './inbox/team/cases'
 /** The scheduled iCal sync acts as Cabin itself; principal() never issues this role. */
 export const SYSTEM: Actor = { id: 'cabin:ical-sync', email: '', role: 'system', isAgent: false, operatorVersion: 0 }
 export function authority(a: Actor): Query {
@@ -36,7 +37,7 @@ export async function load(db: D1Database): Promise<Data> {
   db.prepare('SELECT a.id,a.kind,a.record_id AS recordId,a.revision,a.actor_id AS actorId,o.display_name AS actorName,a.at FROM cb_approvals a LEFT JOIN oa_operators o ON o.id=a.actor_id ORDER BY a.at,a.id'),
   db.prepare('SELECT e.id,COALESCE(a.anonymous_id,e.actor_id) AS actorId,e.actor_role AS actorRole,e.action,COALESCE(x.anonymous_id,e.entity_id) AS entityId,e.at FROM cb_events e LEFT JOIN cb_audit_redactions a ON a.subject_id=e.actor_id LEFT JOIN cb_audit_redactions x ON x.subject_id=e.entity_id ORDER BY e.rowid DESC LIMIT 100'),
  ])
- const data: Data = { staffQuotes:[], statementSchedules:[], financialAllocations:[], sharedCosts:[], verifications:await loadVerifications(db), workExpenses:[], propertyProfiles: [], managementTerms: [], readinessPlans: [], readinessRecords: [], rentalTemplates: [], rentalAgreements: [], guests: [], guestMerges: [], guestPolicies: [], guestOffers: [], cleanerProfiles: [], ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
+ const data: Data = { threadCases:[], staffQuotes:[], statementSchedules:[], financialAllocations:[], sharedCosts:[], verifications:await loadVerifications(db), workExpenses:[], propertyProfiles: [], managementTerms: [], readinessPlans: [], readinessRecords: [], rentalTemplates: [], rentalAgreements: [], guests: [], guestMerges: [], guestPolicies: [], guestOffers: [], cleanerProfiles: [], ledgerSettings: [], recoveries: [], recoveryPolicies: [], version: results[0].results[0].version, properties: results[1].results, members: results[2].results.map((m: any) => ({ ...m, active: !!m.active })), feeds: [], calendarDrafts: [], bookings: [], turnovers: [], statements: [], connections: [], exports: [], requests: [], homeSettings: [], codes: [], notices: [], tasks: [], messages: [], scheduled: [], inbox: [], payouts: [], deliveries: [], postings: [], approvals: results[4].results, events: results[5].results }
  for (const row of results[3].results) if ((kinds as readonly string[]).includes(row.kind)) (data[row.kind as typeof kinds[number]] as unknown[]).push(JSON.parse(row.data))
  for(const task of data.tasks)if(!task.work)task.work=initialWork(data,task)
  return data
@@ -55,7 +56,7 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */
 export async function commit(c: Context, name: string, audit = true) {
- expireQuotes(c); await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c); await queueChannelClosures(c)
+ expireQuotes(c); await synchronizePromotions(c,name); captureManagement(c); retainGuestErasure(c); syncGuests(c); await synchronizeAgreements(c); await synchronizeVerification(c); await recordReservations(c,name); await syncReservationFinance(c); dispatch(c); await synchronizeMessages(c); retainGuestErasure(c); syncTeam(c); await finishRecoveries(c); synchronizeIssues(c); await syncLedger(c); await allocateBlockCleaning(c); await queueChannelClosures(c)
  try { await c.db.batch(transaction(c, name, audit).map(q => c.db.prepare(q.sql).bind(...q.params))) }
  catch (error) { if (/constraint|CHECK|UNIQUE/i.test(String(error))) fail('Records or access changed. Reload and review before trying again.',409); throw error }
 }

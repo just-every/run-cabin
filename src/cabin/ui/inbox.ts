@@ -8,6 +8,7 @@ import { replySettings, replyEvidence, earlyArrival } from '../inbox/reply-ui'
 import { inboxSetup } from '../inbox/setup-ui'
 import { lateMinutes, dueFrom } from '../inbox/schedule'
 import { CHANNEL_LINE } from '../inbox/adapters/booking'
+import { teamChips, teamPanel, teamSettingsCard } from '../inbox/team/ui'
 // The guest inbox: one thread per guest on the left, the open thread on the
 // right with its stays, every message by email, text or channel, the drafted
 // reply waiting for a person and the stay's scheduled messages. At phone width
@@ -18,7 +19,7 @@ const page = (t: Thread | undefined) => t ? `inbox?thread=${t.id}` : 'inbox'
 const stayLine = (s: any, b: any) => `<span class="stay-chip ${b.status === 'confirmed' ? '' : 'gone'}"><span class="ch ch-${b.channel === 'booking.com' ? 'booking' : h(b.channel)}">${h(channelName(b.channel))}</span> ${h(propertyName(s, b.propertyId))} · ${h(span(b))}${b.status === 'confirmed' ? '' : ' · cancelled'}</span>`
 function row(s: any, t: Thread, current: boolean) {
   const last = [...t.messages].reverse().find(m => m.status !== 'draft' && m.status !== 'drafting'), stay = t.stays[t.stays.length - 1]
-  return `<a class="thread-row${current ? ' current' : ''}" href="/app/inbox?thread=${h(t.id)}"${current ? ' aria-current="true"' : ''}><span class="who"><strong>${h(t.name)}</strong>${t.drafts ? `<span class="draft-dot">Draft waiting</span>` : ''}</span><span class="muted">${stay ? `${h(propertyName(s, stay.propertyId))} · ${h(span(stay))}` : h(t.email ?? t.phone ?? 'No stay matched yet')}</span>${last ? `<span class="excerpt">${last.direction === 'in' ? '' : last.status === 'sent' ? 'You: ' : 'Not sent: '}${h(last.text.replace(/\s+/g, ' ').slice(0, 90))}</span>` : ''}</a>`
+  return `<a class="thread-row${current ? ' current' : ''}" href="/app/inbox?thread=${h(t.id)}"${current ? ' aria-current="true"' : ''}><span class="who"><strong>${h(t.name)}</strong>${t.drafts ? `<span class="draft-dot">Draft waiting</span>` : ''}</span>${teamChips(s, t)}<span class="muted">${stay ? `${h(propertyName(s, stay.propertyId))} · ${h(span(stay))}` : h(t.email ?? t.phone ?? 'No stay matched yet')}</span>${last ? `<span class="excerpt">${last.direction === 'in' ? '' : last.status === 'sent' ? 'You: ' : 'Not sent: '}${h(last.text.replace(/\s+/g, ' ').slice(0, 90))}</span>` : ''}</a>`
 }
 function status(s: any, m: any, t: Thread) {
   const when = at(s, m.propertyId, m.sentAt ?? m.createdAt)
@@ -57,12 +58,12 @@ function conversation(s: any, t: Thread) {
   const lastIn = [...t.messages].reverse().find((m: any) => m.direction === 'in')
   const compose = browserRead(s,lastIn)?channelReply(lastIn):form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="/app/inbox">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
-  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
+  ${contact(s, t)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${teamPanel(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
 }
 export function inbox(s: any, thread?: string | null) {
   const all = threads(s), open = all.find(t => t.id === thread) ?? (thread ? undefined : all[0])
   const list = all.length ? all.map(t => row(s, t, t === open)).join('') : empty('No guests yet. Each stay’s guest gets a thread here with its scheduled messages; guest email lands in it.')
   return heading('Guest inbox', 'One thread per guest', 'Email, text and every stay from Airbnb, Vrbo, Booking.com or booked direct join one thread per guest. Check-in details, checkout reminders and review requests go out on time; each guest message gets a drafted reply that waits for your nod.')
     + `<div class="inbox${thread && open ? ' has-thread' : ''}"><aside class="threads" aria-label="Guests">${list}</aside><section class="conversation" aria-label="Conversation">${open ? conversation(s, open) : empty(thread ? 'That conversation is not here any more.' : 'Choose a guest.')}</section></div>`
-    + replySettings(s) + inboxSetup(s)
+    + replySettings(s) + teamSettingsCard(s) + inboxSetup(s)
 }

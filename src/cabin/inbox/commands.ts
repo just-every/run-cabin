@@ -4,7 +4,10 @@ import { load, mutate } from '../storage'
 import { seal } from '../seal'
 import { managedInstall } from '../channels'
 import { settingsCommand, stored, inboxSettings } from './settings'
-import { threads } from './threads'
+import { threads, threadId, messageKey } from './threads'
+import { replyTarget } from './target'
+import { teamCommand, claimGuard, markReply } from './team/commands'
+import { teamSettingsCommand } from './team/settings'
 import { route } from './deliver'
 import { policyCommand, replySources } from './reply-policy'
 import { arrivalCommand } from './arrival'
@@ -53,17 +56,19 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   const policy = policyCommand(c, name, p); if (policy !== undefined) return policy
   const arrival = arrivalCommand(c, name, p); if (arrival !== undefined) return arrival
   const settled = settingsCommand(c, name, p); if (settled !== undefined) return settled
+  const team = teamSettingsCommand(c, name, p) ?? await teamCommand(env, c, name, p); if (team !== undefined) return team
   if (name === 'inbox.ai.remove') { stored(c, p.revision).ai = null; return { removed: true } }
   if (name === 'message.send' || name === 'message.discard') {
    const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Draft not found', 404); exact(m, p.revision)
    need(m.status === 'draft', m.status === 'drafting' ? 'This draft is still being written. Reload in a moment.' : 'This draft was already sent or discarded', 409)
    c.entityId = m.id
    if (name === 'message.discard') { Object.assign(m, { status: 'discarded', revision: newId() }); return m }
+   const tid = threadId(messageKey(c.data, m)); claimGuard(c, tid)
    const booking = c.data.bookings.find(b => b.id === m.bookingId)
    if (m.control && booking) need(m.control.baseline === JSON.stringify(replySources(c.data, env.AUTH_ORIGIN, booking)), 'The stay, instructions or readiness changed. Discard this draft and write a current reply.', 409)
    const approval = { id: newId(), kind: 'message', recordId: m.id, revision: m.revision, actorId: who.id, at: c.now }
    c.data.approvals.push(approval)
-   Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, approvalId: approval.id, revision: newId() }); return m
+   Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, approvalId: approval.id, revision: newId() }); markReply(c, tid); return m
   }
   if (name === 'message.retry') {
    const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Message not found', 404); need(m.status === 'failed', 'Only a failed message can be sent again', 409)
@@ -74,12 +79,10 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
   }
   if (name === 'message.compose') {
    const t = threads(c.data).find(r => r.id === text(p.thread, 'thread')); need(t, 'Thread not found', 404)
-   const today = c.now.slice(0, 10), b = [...t.stays].reverse().find(s => s.status === 'confirmed' && s.end.slice(0, 10) >= today) ?? t.stays[t.stays.length - 1] ?? null
-   const last = [...t.messages].reverse().find(m => m.direction === 'in')
-   const r = last && last.channel !== 'email' ? { channel: last.channel, email: null, phone: last.phone } : b ? await route(env, inboxSettings(c), b) : t.email ? { channel: 'email' as const, email: t.email, phone: null } : { unavailable: 'Cabin has no way to reach this guest yet.' }
-   need(!('unavailable' in r), 'unavailable' in r ? r.unavailable : '', 409)
+   const { b, last, r } = await replyTarget(env, c, t)
+   claimGuard(c, t.id)
    const m: GuestMessage = { id: newId(), revision: newId(), propertyId: b?.propertyId ?? null, bookingId: b?.id ?? last?.bookingId ?? null, email: r.email, phone: r.phone, ref: last?.ref ?? null, channel: r.channel, direction: 'out', source: 'host', status: 'pending', subject: optional(p.subject, 'subject', 200) || (last?.subject ? (/^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`) : 'About your stay'), text: text(p.text, 'message', 4000), detail: null, replyTo: last?.id ?? null, headerId: null, sentBy: who.id, approvalId: null, scheduledId: null, providerId: null, grounds: [], createdAt: c.now, sentAt: null }
-   c.data.messages.push(m); c.entityId = m.id; return m
+   c.data.messages.push(m); markReply(c, t.id); c.entityId = m.id; return m
   }
   need(false, 'Unknown inbox command', 404)
  })

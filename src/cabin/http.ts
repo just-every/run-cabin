@@ -60,7 +60,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name.startsWith('quote.')?await staffQuoteCommand(env,who,name,input):name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('quote.')?await staffQuoteCommand(env,who,name,input):name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')||name.startsWith('thread.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  if(name==='privacy.review'||name==='privacy.hold.read')return result
  await settle(env);return result
 }
@@ -116,6 +116,12 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='reservation.move')return 'Stay moved. Its turnover, door codes and scheduled messages moved with it.'
  if(name==='message.arrival.approve')return 'Early check-in approved. The guest access window and cleaner window changed; guest mail status is in the thread.'
  if(name==='inbox.reply.policy')return 'Reply authority and approved sources saved.'
+ if(name==='inbox.team.set')return 'Team setting saved. Routing and deadlines apply to guest messages that arrive from now on.'
+ if(name==='thread.note')return 'Private note saved. It is never sent to the guest.'
+ if(name==='thread.accept')return 'You are accountable for this thread. Escalation stopped.'
+ if(name==='thread.claim')return 'Others are told you are replying.'
+ if(name==='thread.handover')return 'Handed over with the reservation, open tasks and promises. The next person was notified and must accept it.'
+ if(name==='thread.template')return 'A draft from the template waits in the thread. Edit it, then send.'
  if(name==='message.send')return 'Approved exactly as written. The thread shows when it went out, or why it could not.'
  if(name==='message.compose')return 'Sending. The thread shows when it went out, or why it could not.'
  if(name==='message.discard')return 'Draft discarded. Nothing was sent.'

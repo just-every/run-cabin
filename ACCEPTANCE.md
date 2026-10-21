@@ -169,8 +169,8 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **MESSAGE-001 — Unified channel, SMS, email and WhatsApp inbox · partial.** Receive and reply on all three OTA channels, email, SMS and WhatsApp through the inbox; attach the correct reservation, replay an inbound event and simulate a rejected/outage send, proving one visible message and an assigned delivery failure without false delivery claims. Have one guest write about the same stay on Airbnb, then by SMS and by email, and verify all three appear in order in one thread for that guest, with each reply sent on the channel its message came from.
   Current evidence: `src/cabin/inbox/threads.ts`; `src/cabin/inbox/inbound.ts`; `src/cabin/inbox/deliver.ts`; `src/cabin/inbox/adapters/twilio.ts`; `src/cabin/inbox/adapters/booking.ts`; `src/cabin/ui/inbox.ts`; `tests/inbox.test.mjs` (line 17). Remaining: One thread per guest, keyed by the email (else phone) on their stays, joins every stay from any channel or direct, guest email routed to the install's address (Reply-To honored, quoted history left out, other addresses refused unread), the host's replies by email threaded under the guest's message, and submitted, sent, suppressed, unavailable and failed states. Twilio texts and Booking.com messages run through adapters tested only against documented-shape fixtures: texting waits on the owner's US A2P registration and Booking.com on a connectivity partner account, and the page says so. Airbnb and Vrbo messaging, WhatsApp, attachments, inquiry and alteration actions are absent.
 
-- **MESSAGE-002 — Team routing and response accountability · missing.** Route an after-hours access thread, add an internal note, have two staff attempt replies and hand the issue to the next shift; miss its response deadline and confirm escalation reaches an assigned manager with the full context.
-  Current evidence: none; the described acceptance journey is missing.
+- **MESSAGE-002 — Team routing and response accountability · done.** Route an after-hours access thread, add an internal note, have two staff attempt replies and hand the issue to the next shift; miss its response deadline and confirm escalation reaches an assigned manager with the full context.
+  Current evidence: `src/cabin/inbox/team/`; `src/cabin/inbox/commands.ts`; `src/cabin/ui/inbox.ts`; `src/cabin/storage.ts`; `tests/replies.test.mjs` (line 93); `docs/inbox.md`.
 
 - **MESSAGE-003 — Lifecycle messaging and post-stay follow-up · done.** Book, modify and cancel stays with scheduled templates; advance due times and verify each eligible message arrives through its chosen channel once, canceled or opted-out sends stay suppressed, withheld codes remain private and failed sends escalate. Verify each scheduled message is submitted to its provider within 5 minutes of its due time, including one that falls due while Cabin is restarting.
   Current evidence: `src/cabin/inbox/`; `src/cabin/ui/inbox.ts`; `tests/lifecycle.test.mjs`; `tests/inbox.test.mjs`; `docs/lifecycle-messages.md`. Assessment: Per-home event/local-time templates cover confirmation, required payment/signature/identity tasks, pre-arrival, arrival, checkout, reviews and consented repeat stays. Current payment, agreement, identity and physical readiness gate every template's access capabilities. Quiet hours, cancellation, contact/channel policy and signed guest opt-out fence waiting sends; durable due/attempt records show delays and assign failures or interrupted uncertainty without blind replay. Native restart, current conditions and exact correction/deduplication tests pass. Hosted authenticated confirmation, payment and withheld-access mail, product configuration and email preference before/after states exercised at 1440 and 390. SMS/OTA transport prerequisites remain MESSAGE-001.
@@ -342,10 +342,10 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 37 | 26 | 27 | 90 |
-| All | 50 | 26 | 27 | 103 |
+| Target and push further | 38 | 26 | 26 | 90 |
+| All | 51 | 26 | 26 | 103 |
 
-**103 clauses: 50 done, 26 partial, 27 missing.**
+**103 clauses: 51 done, 26 partial, 26 missing.**
 
 
 The current clause totals and authoritative Status cells are in `CONTRACT.md`; this build plan retains each clause’s acceptance journey. No new target capability is treated as accepted merely because a neighboring foundation is done.
