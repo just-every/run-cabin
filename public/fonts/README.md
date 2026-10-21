@@ -32,3 +32,10 @@ Their `@font-face` rules are in `fonts.css` with Outfit's. The site's tokens
 (`public/rer-theme.css`) sets Inter for text and Inter Tight for headings, so the
 app, sign-in and first-run setup read in the same faces as the homepage. Outfit
 stays as Base's foundation copy (`base-copies.json`).
+
+The theme declares its own Inter and Inter Tight faces, so the installer, which
+serves only that file and the files it names, has them too. Base's theme grammar
+allows only `:root` `--rer-*` theme tokens with literal values and `@font-face`
+rules there, so Base's extra tokens for the app (`--rer-font-mono`,
+`--rer-wordmark-weight` and `--rer-wordmark-tracking`) are in `fonts.css`, which
+the app's documents link with the theme.

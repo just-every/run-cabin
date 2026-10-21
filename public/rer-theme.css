@@ -1,7 +1,10 @@
 /* This edition's declared theme: the owner-picked app look (design desk, 17 Oct
    2026), the run site's pine and type on a cool white ground. The installer,
    sign-in, confirmation, /setup and the app read these --rer-* tokens; the app's
-   own palette (public/cabin.css) builds on them. */
+   own palette (public/cabin.css) builds on them. The installer reads this file
+   with Base's theme grammar (only :root --rer-* tokens with literal values, and
+   @font-face rules) and checks its colour pairs, so Base's extra tokens for the
+   code face and the wordmark are in public/fonts/fonts.css, linked with it. */
 @font-face {
   font-family: Inter;
   font-style: normal;
@@ -19,18 +22,16 @@
 :root {
   --rer-font-body: Inter, Arial, sans-serif;
   --rer-font-heading: 'Inter Tight', Inter, Arial, sans-serif;
-  --rer-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --rer-page: #f8fafb;
   --rer-surface: #ffffff;
   --rer-text: #101b2c;
   --rer-muted: #5d6b80;
-  --rer-border: #c3cbd2;
+  /* A control edge needs 3:1 on white: #c3cbd2 was 1.64:1. */
+  --rer-border: #8e969d;
   --rer-focus: #0f3d2e;
   --rer-link: #0f3d2e;
   --rer-accent: #0f3d2e;
   --rer-accent-text: #ffffff;
   --rer-radius: 12px;
-  --rer-wordmark-weight: 700;
-  --rer-wordmark-tracking: -.03em;
   --rer-logo: url('/brand/badge.svg');
 }

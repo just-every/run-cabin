@@ -58,6 +58,15 @@
 }
 button, input, select, textarea { font-family: inherit; }
 
+/* Base's extra tokens for the app's look, which Base's theme grammar keeps out of
+   /rer-theme.css (the installer reads that file): the app's code face, and the
+   wordmark's weight and tracking on the Lobby and the hosted demo's gate. */
+:root {
+  --rer-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --rer-wordmark-weight: 700;
+  --rer-wordmark-tracking: -.03em;
+}
+
 /* The run site's faces (SIL Open Font License 1.1), self-hosted like Outfit: Inter Tight for headings and the
    wordmark, Inter for body text, JetBrains Mono for commands. Only pages that name them download them. */
 @font-face {
