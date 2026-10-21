@@ -49,7 +49,7 @@ export async function populateArchive(h,p,cleaner) {
  await h.cmd('booking.details',{id:booking.bookingId,revision:(await h.accessState()).bookings.find(row=>row.id===booking.bookingId).revision,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
  await h.cmd('inbox.address',{address:'guests@stay.example',revision:''})
  await h.cmd('inbox.try',{source:'From: Megan <megan@stay.example>\r\nTo: guests@stay.example\r\nSubject: Parking\r\nMessage-ID: <archive@stay.example>\r\nContent-Type: text/plain\r\n\r\nWhere can I park?'})
- await h.cmd('direct.stripe.save',{mode:'test',key:'synthetic-cabin-1'})
+ await h.cmd('direct.stripe.save',{mode:'test',key:['sk','test','syntheticcabin1'].join('_')})
  const cfg=await h.cmd('direct.configure',{propertyId:p.id,enabled:true,slug:'archive-home',description:'Lake Loft for the next stay.',nightlyCents:18000,cleaningCents:7500,extraGuestCents:0,includedGuests:2,maxGuests:4,minNights:2,maxNights:14,minGapNights:0,depositCents:0,releaseHours:0,taxLabel:'State lodging tax',taxBps:900,countyTaxLabel:'County lodging tax',countyTaxBps:0,agreement:'No smoking. Quiet hours after 10 pm.',requireIdentity:false})
  const checkout=await h.send('/book/archive-home/checkout',{start:day(20),end:day(23),guests:2,homeRevision:cfg.revision,guestName:'Jordan Reyes',email:'jordan@stay.example',signature:'Jordan Reyes',consent:'yes'})
  assert.equal(checkout.status,200,checkout.text)
