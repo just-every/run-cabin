@@ -1,7 +1,7 @@
 import { themeFrame } from '../../base/theme-frame'
 import branding from '../../branding.json'
 import { h } from '../ui/shared'
-export const portalHeaders={'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'no-referrer','x-content-type-options':'nosniff','x-robots-tag':'noindex, nofollow'}
+export const portalHeaders={'content-type':'text/html; charset=utf-8','cache-control':'no-store','referrer-policy':'strict-origin','x-content-type-options':'nosniff','x-robots-tag':'noindex, nofollow'}
 export async function portalShell(home:string,body:string,status=200,cookies:string[]=[]){
  const frame=await themeFrame({href:'/rer-theme.css',productName:branding.name,accentColor:branding.primaryColor}),headers=new Headers({...portalHeaders,'content-security-policy':`default-src 'self'; ${frame.policy}; script-src 'none'; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'`})
  for(const cookie of cookies)headers.append('set-cookie',cookie)
