@@ -11,6 +11,6 @@ export async function rentalOwnerResponse(request:Request,env:Bindings,actor:Act
  const response=await ownersResponse(new Request(url,request),env,actor);need(response,'Not found',404)
  const headers=new Headers(response.headers),location=headers.get('location')
  if(location?.startsWith('/owners'))headers.set('location',location.replace('/owners','/app/rental-owner'))
- if(headers.get('content-type')?.includes('text/html'))return new Response((await response.text()).replaceAll('/owners/signout','/auth/signout').replaceAll('/owners','/app/rental-owner'),{status:response.status,headers})
+ if(headers.get('content-type')?.includes('text/html'))return new Response((await response.text()).replaceAll('/owners/signout','/auth/signout').replace(/\/owners(?=\/|[?#"'])/g,'/app/rental-owner'),{status:response.status,headers})
  return new Response(response.body,{status:response.status,headers})
 }
