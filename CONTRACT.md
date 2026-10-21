@@ -682,7 +682,7 @@ Every capability claim and demo action on the homepage maps to the clauses that 
 
 ## Status
 
-Judged from the code and tests at commit `1f70a033bc119d808f42ce911f5ca9d72cf8fcd3` (21 October 2026).
+Judged from the code and tests at commit `a124cd29ea9575bf4b077e4aef05088f7c2ef04a` (21 October 2026).
 
 The Status rows below are the authoritative current assessments. Their existing status, Evidence and Gap cells are preserved from main; ACCEPTANCE.md mirrors the status and current evidence for each clause. Earlier baseline audits are historical, not descriptions of the current implementation.
 
