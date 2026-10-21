@@ -75,3 +75,42 @@ test('RES-002: reviewed channel amendments deduplicate, legacy edits fence, and 
   b=(await h.accessState()).bookings.find(row=>row.id===no.id);assert.equal(b.lifecycle.outcome,'no_show');assert.equal(b.lifecycle.settledChargeCents,40000)
  }finally{await h.close()}
 })
+
+
+test('RES-006: issued quotes retain revisions, reserve until expiry and convert once with current price and inventory',async()=>{
+ const {quoteHarness,quoteDay}=await import('./quotes-support.mjs'),h=await quoteHarness()
+ try{
+  const cleaner=await h.person('QuoteCleaner'),manager=await h.person('QuoteManager','manager')
+  await h.cmd('quote.issue',h.input,cleaner.cookie,403)
+  let q=await h.cmd('quote.issue',h.input,manager.cookie),path=await h.link(q)
+  const page=await h.send(path);assert.equal(page.status,200,page.text);assert.match(page.text,/\$58[,.]300|\$583\.00/);assert.match(page.text,/50% cancellation/);assert.match(page.text,/3 guests/)
+  const old=q.revision
+  assert.equal((await h.send('/book/harbor-house/quote',h.input)).status,409,'quote inventory hold closes public search')
+  q=await h.cmd('quote.revise',{id:q.id,revision:q.revision,...h.input,guests:2})
+  await h.cmd('quote.revise',{id:q.id,revision:old,...h.input},h.owner,409)
+  assert.equal((await h.accept(q,path,{staffQuoteRevision:old})).status,409);assert.equal(h.creates,0)
+  assert.equal(q.versions.length,2);assert.equal(q.versions[0].price.totalCents,58300);assert.equal(q.versions[1].price.totalCents,55000)
+  assert.doesNotMatch((await h.send('/api/cabin/state',undefined,h.owner)).text,new RegExp(path.split('/').at(-1)))
+  assert.equal((await h.send('/api/cabin/quotes/'+q.id+'/link',undefined,cleaner.cookie)).status,403)
+  await h.restart()
+  const responses=await Promise.all([h.accept(q,path,{guests:2}),h.accept(q,path,{guests:2})]);assert.equal(responses.filter(r=>r.status===200).length>=1,true,responses.map(r=>r.text).join(' '));assert.ok(responses.every(r=>[200,303,409].includes(r.status)));assert.equal(h.creates,1)
+  const first=responses.find(r=>r.status===200).value
+  assert.equal((await h.accept(q,path,{guests:2})).status,303,'repeated acceptance returns the same private booking')
+  h.pay();const refresh=await h.send('/book/stay/'+first.token+'/refresh',{});assert.equal(refresh.value.stay.phase,'confirmed',refresh.text)
+  const state=await h.state(),result=state.staffQuotes.find(r=>r.id===q.id),b=state.bookings.find(b=>b.id===result.bookingId)
+  assert.equal(result.status,'accepted');assert.equal(result.acceptedRevision,q.revision);assert.equal(state.bookings.filter(b=>b.kind==='stay'&&b.status==='confirmed').length,1);assert.equal(b.guestName,h.input.guestName);assert.equal(state.direct.stays[0].quote.totalCents,55000);assert.equal(state.direct.stays[0].signature.name,h.input.guestName)
+  let expired=await h.cmd('quote.issue',{...h.input,start:quoteDay(25),end:quoteDay(28)}),expiredPath=await h.link(expired)
+  expired=await h.cmd('quote.expire',{id:expired.id,revision:expired.revision});assert.equal((await h.send(expiredPath)).status,409);assert.equal((await h.send('/book/harbor-house/quote',{start:quoteDay(25),end:quoteDay(28),guests:2})).status,200)
+  const timed=await h.cmd('quote.issue',{...h.input,start:quoteDay(35),end:quoteDay(38),expiresAt:new Date(Date.now()+1500).toISOString()});const timedPath=await h.link(timed);await new Promise(r=>setTimeout(r,1600));await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await h.send(timedPath)).status,409);assert.equal((await h.state()).bookings.find(b=>b.id===timed.holdBookingId).status,'cancelled')
+  let rate=await h.cmd('quote.issue',{...h.input,start:quoteDay(45),end:quoteDay(48),hold:false}),ratePath=await h.link(rate)
+  const changed=await h.cmd('direct.configure',{...h.cfg,revision:h.home.revision,nightlyCents:16000})
+  assert.equal((await h.send(ratePath)).status,409);assert.equal((await h.accept(rate,ratePath)).status,409);assert.equal(h.creates,1,'changed terms never create an obsolete Stripe charge')
+  rate=await h.cmd('quote.revise',{...h.input,start:quoteDay(45),end:quoteDay(48),hold:false,id:rate.id,revision:rate.revision})
+  await h.cmd('reservation.request',{propertyId:h.p.id,channel:'direct',start:quoteDay(45),end:quoteDay(48),guestName:'Rival guest'})
+  assert.equal((await h.send(ratePath)).status,409);assert.equal((await h.accept(rate,ratePath,{start:quoteDay(45),end:quoteDay(48),homeRevision:changed.revision})).status,409);assert.equal(h.creates,1)
+  const {erase}=await import('./privacy-flow.mjs'),latest=(await h.state()).bookings.find(row=>row.id===b.id)
+  await erase(h,{entity:'guest',id:latest.id,revision:latest.revision})
+  assert.equal((await h.send(path)).status,404,'erasure revokes the quote and resulting booking capabilities')
+  assert.doesNotMatch(JSON.stringify((await h.state()).staffQuotes),/alex@stay\.example|Alex Rivera/)
+ }finally{await h.close()}
+})

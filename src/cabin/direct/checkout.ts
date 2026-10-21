@@ -1,3 +1,4 @@
+import { currentQuote, quoteByToken, validateQuote, acceptQuote, acceptedQuote } from '../reservations/quotes'
 import { applyBookingCoupon } from '../promotions/booking-coupons'
 import { managementFor } from '../properties/terms'
 import { bookingAgreement } from './agreement-text'
@@ -16,12 +17,16 @@ import { instant,localDay } from '../clock'
 import type { DirectStay } from './types'
 import { policyFor,riskReasons } from '../verification/policy'
 import { createVerification,saveVerification } from '../verification/records'
+const currentStaff=(row:Parameters<typeof currentQuote>[0])=>currentQuote(row).price
 export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>) {
+ if(input.staffQuoteToken){const accepted=await acceptedQuote(env,input.staffQuoteToken);if(accepted)return accepted}
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
  const credentials=await stripeCredentials(env)
  const token=newId()+newId(),tokenHash=await sha(token),id=newId(),bookingId=newId()
  const row=await mutate(env.DB,DIRECT_SYSTEM,'direct.checkout',async c=>{
   const home=(await homes(env.DB)).find(h=>h.enabled&&h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
+  const staff=input.staffQuoteToken?await quoteByToken(c.data,input.staffQuoteToken):undefined
+  if(staff){need(staff.propertyId===home.propertyId,'Quote home changed',409);await validateQuote(c,staff,input.staffQuoteRevision);need(String(input.guestName).trim()===staff.guestName&&String(input.email).trim().toLowerCase()===staff.email,'Use the quote recipient name and email',409);need(input.start===currentStaff(staff).start&&input.end===currentStaff(staff).end&&Number(input.guests)===currentStaff(staff).guests&&!input.offerToken&&!input.couponCode,'Review the quoted dates, guests and price',409);acceptQuote(c,staff,input.staffQuoteRevision,bookingId,id)}
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
   const price=quote(home,c.data.bookings,input,localDay(Date.now(),homeSettings(c,home.propertyId).timeZone),offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
   await applyBookingCoupon(c.db,c.data,home,price,input)

@@ -1,3 +1,4 @@
+import { quoteByToken, currentQuote, validateQuote, acceptedQuote, sweepQuotes } from '../reservations/quotes'
 import { applyBookingCoupon } from '../promotions/booking-coupons'
 import { promotionGuestPanel } from '../promotions/guest'
 import { bookingSite } from '../website/store'
@@ -42,6 +43,15 @@ export async function bookingResponse(request:Request,env:Bindings):Promise<Resp
    if(reader)for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>32_000){await reader.cancel();need(false,'Request too large',413)}chunks.push(value)}
    const bytes=new Uint8Array(size);let pos=0;for(const chunk of chunks){bytes.set(chunk,pos);pos+=chunk.length}const body=new TextDecoder().decode(bytes)
    if(request.headers.get('content-type')?.includes('application/json')){json=true;input=JSON.parse(body);need(input&&typeof input==='object'&&!Array.isArray(input),'Use an input object')}else input=Object.fromEntries(new URLSearchParams(body))
+  }
+  await sweepQuotes(env)
+  const staffPath=path.match(/^\/book\/quote\/([a-f0-9-]{72})(?:\/(checkout))?$/)
+  if(staffPath){
+   const accepted=await acceptedQuote(env,staffPath[1]);if(accepted)return new Response(null,{status:303,headers:{location:accepted.bookingUrl,'cache-control':'no-store','referrer-policy':'no-referrer'}})
+   const data=await load(env.DB),row=await quoteByToken(data,staffPath[1]),v=currentQuote(row)
+   if(request.method==='POST'&&staffPath[2]){const result=await checkout(env,v.home.slug,{...input,staffQuoteToken:staffPath[1]});return json?Response.json(result):new Response(null,{status:303,headers:{location:result.url,'cache-control':'no-store','referrer-policy':'no-referrer'}})}
+   need(request.method==='GET'&&!staffPath[2],'Not found',404);const {home}=await validateQuote({db:env.DB,data,now:new Date().toISOString()},row);let mode:'test'|'live'|null=null;try{mode=(await stripeCredentials(env)).mode}catch{}
+   const response=await quotePage(home,data.properties.find(p=>p.id===home.propertyId)?.name??home.slug,v.price,mode,instant(`${v.price.start}T${homeSettings(data,home.propertyId).checkInTime}`,homeSettings(data,home.propertyId).timeZone)-48*3_600_000<=Date.now(),undefined,data.rentalTemplates.find(t=>t.propertyId===home.propertyId)?templateVersion(data.rentalTemplates.find(t=>t.propertyId===home.propertyId)!):undefined,frame(site,url),{token:staffPath[1],revision:row.revision,guestName:row.guestName,email:row.email,expiresAt:v.expiresAt,hold:v.hold});return response
   }
   await countVisit(env.DB,request,site)
   const website=await websiteResponse(request,env,site,input);if(website)return website

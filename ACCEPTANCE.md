@@ -114,7 +114,7 @@ For browser journeys use realistic US properties, guests, owners and USD amounts
 - **RES-005 — Linked rooms and whole-property inventory · missing.** Link two rooms and their whole-home listing, sell a room via an OTA and attempt a whole-home direct booking; then cancel and sell the whole home, proving both room listings close and all channel acknowledgments reconcile.
   Current evidence: none; the described acceptance journey is missing.
 
-- **RES-006 — Quotes and conversion to a reserved stay · missing.** Send a quote from Reservations, accept its link as a guest, complete checkout once and inspect the resulting booking; expire a rival quote and attempt acceptance after a rate or availability change without silently charging obsolete terms.
+- **RES-006 — Quotes and conversion to a reserved stay · done.** Send a quote from Reservations, accept its link as a guest, complete checkout once and inspect the resulting booking; expire a rival quote and attempt acceptance after a rate or availability change without silently charging obsolete terms.
   Current evidence: none; the described acceptance journey is missing.
 
 ## Revenue and direct bookings

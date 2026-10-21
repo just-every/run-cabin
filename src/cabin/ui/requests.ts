@@ -1,3 +1,4 @@
+import { quotesPanel } from '../reservations/quotes-ui'
 import { createReservation } from '../reservations/ui'
 import { blockEditor } from './blocks'
 import { h, form, hidden, select, panel, empty, heading, propertyName } from './shared'
@@ -34,5 +35,5 @@ export function reservations(s: any) {
   const lead = heading('Vacation rental operations', 'Reservations', 'Take a phone, email or channel request, block nights for an owner stay or maintenance, and keep each arrival’s guest details and arrival time.')
   if (!s.properties.length) return lead + panel('Take a request', empty('Add a home in Properties & people, or use Move in, to begin.'))
   const saved=panel('Saved reservations',s.bookings.filter((b:any)=>b.kind!=='block').map((b:any)=>`<p><a href="/app/calendar?reservation=${encodeURIComponent(b.id)}">${h(b.guestName??b.summary)} · ${h(propertyName(s,b.propertyId))} · ${h(span(b))}</a> · ${h(b.lifecycle?.outcome??b.status)}</p>`).join('')||empty('No stays saved yet.'))
-  return lead + saved+createReservation(s)+blockEditor(s)+`<div class="columns">${requestForms(s)}</div><div class="columns">${decisions(s)}${arrivals(s, today, addDays(today, ARRIVAL_DAYS))}</div>`
+  return lead + quotesPanel(s)+saved+createReservation(s)+blockEditor(s)+`<div class="columns">${requestForms(s)}</div><div class="columns">${decisions(s)}${arrivals(s, today, addDays(today, ARRIVAL_DAYS))}</div>`
 }

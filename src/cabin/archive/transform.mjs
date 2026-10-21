@@ -1,6 +1,6 @@
 // Portable business history has no live installation or guest capabilities.
 const pause = 'Restored history: review and reconnect before creating new work. Old effects are never replayed.'
-const privateLink = /https?:\/\/[^\s<>"']*\/(?:stay\/|offers\/|ical\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/g
+const privateLink = /https?:\/\/[^\s<>"']*\/(?:stay\/|offers\/|ical\/|book\/stay\/|book\/quote\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/g
 function text(value) {
  return value.replace(privateLink, '[private link removed on export]')
   .replace(/\/stay\/[a-f0-9]{48}\b/g, '[private link removed on export]')
@@ -54,7 +54,7 @@ export function exportRow(table, row) {
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
  if (kind === 'statementSchedules') { data.enabled=false; data.error=pause; data.actor={...data.actor,operatorVersion:-1} }
- if (kind === 'bookings') data.restorePaused = true
+ if (kind === 'bookings') { data.restorePaused = true; if(data.quoteId){data.status='cancelled';data.cancelled=true} }
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
  if (kind === 'channelAgentProfiles') { delete data.stateSealed; delete data.grantedAt; delete data.grantedBy; delete data.challenge; data.status='disconnected' }
  if (kind === 'channelAgentKeys') { delete data.hash; data.expiresAt='1970-01-01T00:00:00.000Z' }
@@ -68,6 +68,7 @@ export function exportRow(table, row) {
  if (kind === 'inbox') data.ai = null
  if (kind === 'promotionOffers') { data.restorePaused=true; data.tokenHash=null; delete data.tokenSealed; delete data.checkoutUrl }
  if (kind === 'promotionPolicies') data.enabled=false
+ if (kind === 'staffQuotes') { if(data.status==='issued')data.status='expired'; data.tokenHash=null; delete data.tokenSealed }
  if (kind === 'guestOffers') { data.status = 'revoked'; data.tokenHash = 'restored:'+data.id }
  if (kind === 'recoveries') { data.restorePaused = true; data.offerUrl = undefined; data.proposal = undefined }
  if (kind === 'scheduled' && typeof data.content === 'string') data.content = text(data.content)

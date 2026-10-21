@@ -1,3 +1,4 @@
+import { sweepQuotes } from './reservations/quotes'
 import { generateStatements } from './finance/close-schedule'
 import { advanceIssueChecks } from './issues/due'
 import { restorationPaused } from './connections/guard'
@@ -13,6 +14,7 @@ import { finishDrafts } from './inbox/drafts'
 /** After a commit, and on every Cron: send the emails dispatch wrote, deliver approved statements, push door codes to connected locks, write waiting AI drafts and send the guest messages that are due. What fails is retried on the next run. */
 export async function settle(env: Bindings) {
  if(await restorationPaused(env.DB))return
+ await sweepQuotes(env)
  // The five-minute Cron also advances unanswered offers and pre-arrival deadlines when no booking changed.
  if ((await load(env.DB)).homeSettings.some(s => s.dispatch)) await mutate(env.DB, SYSTEM, 'turnover.deadlines', () => undefined, () => false)
  try { await advanceIssueChecks(env) } catch { console.error('Cabin issue follow-up failed') }

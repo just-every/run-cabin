@@ -27,6 +27,7 @@ export function scrubOperational(c:Context,s:ErasureScope){
   // Signed bytes remain exact legal evidence. Scoped guest copies have already
   // moved into isolated holds; property copies are deleted in the same batch.
   if(kind==='rentalAgreements')continue
+  if(kind==='staffQuotes'&&(inScope(s,row)||s.values.some(v=>v.toLowerCase()===row.email?.toLowerCase()))){row.status='expired';row.tokenHash='';row.tokenSealed='';row.revision=newId();const hold=c.data.bookings.find(b=>b.id===row.holdBookingId);if(hold){hold.status='cancelled';hold.cancelled=true;hold.revision=newId()}}
   // Contact values can occur in cross-home snapshots or free text too. Retained
   // originals are isolated in the hold store before this anonymization.
  const clean=scrub(row,s.values);Object.assign(row,clean)

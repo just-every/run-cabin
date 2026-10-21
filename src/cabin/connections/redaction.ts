@@ -4,9 +4,9 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
  // A secret is a whole token: a door code's digits inside a hash or another opaque value are not that code.
  for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.replace(new RegExp(`(?<![A-Za-z0-9])${secret.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9])`, 'g'), '[restricted]')
  return result
-  .replace(/https?:\/\/[^\s<>"']*\/(?:offers\/|stay\/|ical\/|message-preferences\/|book\/stay\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
+  .replace(/https?:\/\/[^\s<>"']*\/(?:offers\/|stay\/|ical\/|message-preferences\/|book\/stay\/|book\/quote\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
   .replace(/\/message-preferences\/[a-z0-9_-]+\/[a-f0-9]{64}/gi, '[private link]')
-  .replace(/\/(?:stay\/|book\/stay\/|book\/return\/)[a-z0-9_-]{20,}/gi, '[private link]')
+  .replace(/\/(?:stay\/|book\/stay\/|book\/quote\/|book\/return\/)[a-z0-9_-]{20,}/gi, '[private link]')
   .replace(/\b(?:sk_(?:test|live)_[a-z0-9]+|sk-ant-[a-z0-9_-]+|Bearer\s+[a-z0-9._~-]+)/gi, '[credential]')
   .replace(/((?:door|guest|cleaner|entry|access)\s*(?:code|PIN)\s*[:#]?\s*)\d{4,10}\b/gi, '$1[restricted]')
   .replace(/((?:tax\s*ID|SSN|EIN|bank\s*(?:account|details)|routing\s*(?:number)?|account\s*number)\s*[:#]?\s*)[\d -]{4,30}/gi, '$1[restricted]')

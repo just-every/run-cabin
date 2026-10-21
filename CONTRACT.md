@@ -179,7 +179,7 @@ Linked listings and interchangeable units express shared physical capacity: sell
 
 #### RES-006 — Quotes and conversion to a reserved stay.
 
-Staff issue itemized USD quotes with guest counts, fees, taxes, cancellation terms, expiry, optional inventory hold and a secure direct-reservation link. Revisions and accepted terms are retained. Expired quotes release holds; concurrent quote acceptance revalidates price and inventory before payment.
+Staff issue itemized USD quotes with guest counts, fees, taxes, cancellation terms, expiry, optional inventory hold and a secure direct-reservation link. Revisions and accepted terms are retained. Expired quotes release holds; concurrent quote acceptance revalidates price and inventory before payment. Staff enter expiry with an explicit time zone; it is stored in UTC and expires when the current time is at or after that instant. A revision retains earlier itemized terms and replaces its optional hold; changed home terms require a new staff revision. Acceptance atomically replaces the quote hold with the checkout hold; repeat acceptance returns the same booking.
 
 **Acceptance evidence:** Send a quote from Reservations, accept its link as a guest, complete checkout once and inspect the resulting booking; expire a rival quote and attempt acceptance after a rate or availability change without silently charging obsolete terms.
 
@@ -693,10 +693,10 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 35 | 26 | 29 | 90 |
-| All | 48 | 26 | 29 | 103 |
+| Target and push further | 36 | 26 | 28 | 90 |
+| All | 49 | 26 | 28 | 103 |
 
-**103 clauses: 48 done, 26 partial, 29 missing.**
+**103 clauses: 49 done, 26 partial, 28 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -734,7 +734,7 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 | `RES-003` | Owner stays and maintenance blocks | target | done | `src/cabin/blocks.ts`; `src/cabin/inventory.ts`; `src/cabin/owners/`; `src/cabin/dispatch.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/blocks.ts`; `migrations/core/0030_owner_blocks.sql`; `tests/owners.test.mjs`; `docs/owner-blocks.md` | Managers and permitted rental owners create, revise and cancel reasoned personal-use and maintenance blocks against current inventory and exact revisions. Channel calendar exports, cleaning/checklists/photos and cleaner access follow the block; readiness includes its use. The frozen owner-use cleaning agreement posts one completed-work payable, never guest revenue or cash. Hosted owner mail sign-in, manager approval, overlap refusal, owner edit/cancel, all-channel export readback and cleaner completion with owner payable exercised at 1440 and 390; received owner and cleaner mail passed SPF/DKIM/DMARC. |
 | `RES-004` | Stay rules, fees and cancellation policies | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Per-home min/max nights, orphan gaps, occupancy, cleaning/extra-guest fees and tax-inclusive totals enforced through direct quote and checkout. Seasonal rates, buffers, cancellation policies and OTA restriction publication remain open. |
 | `RES-005` | Linked rooms and whole-property inventory | target | missing |  | No implementing flow in the audited tree. |
-| `RES-006` | Quotes and conversion to a reserved stay | target | missing |  | No implementing flow in the audited tree. |
+| `RES-006` | Quotes and conversion to a reserved stay | target | done | `src/cabin/reservations/quotes.ts`; `src/cabin/reservations/quotes-ui.ts`; `src/cabin/direct/checkout.ts`; `tests/reservations.test.mjs`; `tests/quotes-browser.test.mjs`; `tests/quotes-archive.test.mjs`; `docs/reservation-quotes.md` | Staff issuance/email, itemized USD price and cancellation terms, retained revisions, optional expiring holds, secure guest review and once-only signed checkout. Current terms and competing inventory are checked before Stripe creation; stale and expired quotes cannot charge. Public-door tests exercise restart, concurrent acceptance, timed and manual expiry and rival availability; staff and guest screens are exercised at 1440 and 390 with Stripe isolated only at the network edge. |
 | `PRICE-001` | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-002` | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
