@@ -1,3 +1,4 @@
+import { accessible } from './interface-accessibility.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, mkdir } from 'node:fs/promises'
@@ -53,7 +54,7 @@ test('OPS-002: offline cleaner photos and issue survive a changed job and requir
     await ready.getByRole('button',{name:'Mark ready',exact:true}).click()
     await expect(ready.locator('[data-upload-status]')).toContainText('Review the changed job')
     await mkdir('test-results/cleaner-mobile',{recursive:true})
-    for (const width of [1440,390]) {await page.setViewportSize({width,height:1000});await page.evaluate(()=>scrollTo(0,0)); assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), 'phone layout fits viewport'); assert.ok(await ready.locator('.local-draft img').first().evaluate(img=>img.complete&&img.naturalWidth>0), 'retained photo preview loads'); await page.screenshot({path:`test-results/cleaner-mobile/review-${width}.png`,fullPage:true})}
+    for (const width of [1440,390]) {await page.setViewportSize({width,height:1000});await page.evaluate(()=>scrollTo(0,0)); assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), 'phone layout fits viewport'); assert.ok(await ready.locator('.local-draft img').first().evaluate(img=>img.complete&&img.naturalWidth>0), 'retained photo preview loads'); await accessible(page); await page.screenshot({path:`test-results/cleaner-mobile/review-${width}.png`,fullPage:true})}
     await ready.getByRole('button',{name:'Use draft for current job'}).click()
     await ready.getByRole('button',{name:'Mark ready',exact:true}).click()
     await page.getByText(/Marked ready with 2 photos/).waitFor()
@@ -64,7 +65,7 @@ test('OPS-002: offline cleaner photos and issue survive a changed job and requir
     await issue.getByRole('button',{name:'Report it',exact:true}).click()
     await page.getByText('Patio light out',{exact:false}).last().waitFor()
     assert.equal((await h.state()).tasks.length,1)
-    for (const width of [1440,390]) {await page.setViewportSize({width,height:1000});await page.screenshot({path:`test-results/cleaner-mobile/done-${width}.png`,fullPage:true})}
+    for (const width of [1440,390]) {await page.setViewportSize({width,height:1000});await accessible(page);await page.screenshot({path:`test-results/cleaner-mobile/done-${width}.png`,fullPage:true})}
     // The same phone accepts a capacity-checked offer before it gets work/access.
     await h.cmd('cleaner.capacity',{memberId:cleaner.id,homeBase:settings.address,timeZone:settings.timeZone,availableFrom:'06:00',dailyJobs:4,dailyMinutes:600})
     settings = await h.cmd('home.settings',{...settings,dispatch:{templateName:'Clean and inspect',instructions:'Use the side entrance and check the patio light.',durationMinutes:120,rateCents:14500,startOffsetMinutes:0,finishBeforeMinutes:0,approvedCleanerIds:[cleaner.id],offerCount:1,responseMinutes:120,reminderMinutes:30,escalationMinutes:60}})
