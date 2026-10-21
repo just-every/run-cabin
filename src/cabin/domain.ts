@@ -52,7 +52,7 @@ if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
 }
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  await assertLive(env.DB,actor);const data=await load(env.DB)
- if(actor.role==='cleaner'){data.staffQuotes=[];
+ if(actor.role==='cleaner'){data.guestPortalLinks=[];data.staffQuotes=[];
   data.statementSchedules=[];
   data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[]; data.managementTerms=[];
   data.readinessPlans=[];data.readinessRecords=[];

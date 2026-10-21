@@ -1,3 +1,4 @@
+import { syncPortal, endPortalSessions } from '../portal/lifecycle'
 import { recordReservations } from '../reservations/history'
 import { captureManagement } from '../properties/terms'
 import { syncGuests } from '../guests/sync'
@@ -31,7 +32,7 @@ export async function installRecords(c:Context,id:string,plan:Normalized):Promis
   c.data.bookings.push(booking)
  }
  // Include the same automatic operations as a reservation created through any other public door.
- captureManagement(c);syncGuests(c);await recordReservations(c,'import.provider.apply');dispatch(c);scheduleMessages(c)
+ captureManagement(c);syncGuests(c);await recordReservations(c,'import.provider.apply');dispatch(c);await syncPortal(c);scheduleMessages(c)
  const inventory=capture(c,ids)
  for(const guest of plan.guests){
   const row={id:`${id}:guest:${guest.externalId}`,source_id:guest.externalId,data:JSON.stringify(guest)}
@@ -54,6 +55,7 @@ export async function removeRecords(c:Context,id:string,inventory:Inventory){
   const dependency=await c.db.prepare('SELECT 1 FROM cb_direct_homes WHERE property_id=? UNION ALL SELECT 1 FROM cb_direct_stays WHERE property_id=? LIMIT 1').bind(propertyId,propertyId).first()
   need(!dependency,'An imported listing now has direct-booking configuration or stays. Undo is blocked.',409)
  }
+ for(const link of c.data.guestPortalLinks.filter(l=>ids.has(l.propertyId)))endPortalSessions(c,link,'erased')
  const recordIds=new Set(inventory.records.map(r=>r.id))
  for(const kind of kinds){
   const rows=c.data[kind] as {id:string;propertyId?:string}[]
