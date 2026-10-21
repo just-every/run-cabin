@@ -10,7 +10,7 @@ export async function pageBase(db: D1Database, actor: Actor): Promise<Data> {
   db.prepare('SELECT id,version AS revision,name,owner_name AS ownerName,owner_email AS ownerEmail,commission_bps AS commissionBps FROM cb_properties ORDER BY name,id'),
   db.prepare('SELECT m.id,m.version AS revision,m.name,m.email,m.role,m.active,s.pms_role,s.property_ids,s.actions,s.revision AS scope_revision FROM cb_members m LEFT JOIN cb_member_scopes s ON s.member_id=m.id ORDER BY m.name,m.id'),
  ])
- const collections=Object.fromEntries(kinds.map(kind => [kind, []])) as Pick<Data,typeof kinds[number]>
+ const collections=Object.fromEntries<unknown[]>(kinds.map(kind => [kind, []])) as Pick<Data,typeof kinds[number]>
  return { ...collections, verifications: [], approvals: [], events: [], version: result[0].results[0].version,
   properties: result[1].results.filter((p: any) => permitsProperty(actor, p.id)),
   members: result[2].results.map((m: any) => ({ id:m.id,revision:m.revision,name:m.name,email:m.email,role:m.role,active:!!m.active,...(m.pms_role?{scope:{pmsRole:m.pms_role,propertyIds:JSON.parse(m.property_ids),actions:JSON.parse(m.actions),revision:m.scope_revision}}:{}) })),
