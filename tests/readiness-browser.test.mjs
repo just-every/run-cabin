@@ -108,3 +108,35 @@ test('REPORT-002: desktop and phone save current filters and explicitly approve 
   }
  }finally{if(browser)await browser.close();await h.close()}
 })
+
+
+test('native calendar and inbox preserve a keyboard-submitted failed reply and complete the booking conversation at desktop and phone sizes',{timeout:180000},async()=>{
+ const h=await harness({assets:true});let browser
+ try{
+  const {homeDay}=await import('./home-calendar.mjs'),day=n=>homeDay(n,'America/New_York')
+  const home=await h.cmd('property.save',{name:'Pine Ridge Cabin',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:1500})
+  await h.cmd('home.settings',{propertyId:home.id,address:'41 Pine Ridge Road, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Kitchen ready'],photosRequired:1})
+  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+  const evidence=process.env.CABIN_INTERFACE_SHOTS??'test-results/interface';await mkdir(evidence,{recursive:true})
+  for(const [n,width] of [1440,390].entries()){
+   const context=await browser.newContext({viewport:{width,height:1000}})
+   try{
+    const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}])
+    const page=await context.newPage();page.setDefaultTimeout(12000)
+    await page.goto(h.origin+'/app/calendar');const next=page.getByRole('link',{name:'New reservation',exact:true});await next.focus();await page.keyboard.press('Enter')
+    const request=page.locator('#request form');await request.getByLabel('Guest name',{exact:true}).fill('Megan Ortiz '+width);await request.getByLabel('Guest email (optional)').fill('megan-'+width+'@stay.example');await request.getByLabel('Arrival',{exact:true}).fill(day(3+n*5));await request.getByLabel('Checkout',{exact:true}).fill(day(6+n*5));await request.getByRole('button',{name:'Check and hold these nights',exact:true}).focus();await page.keyboard.press('Enter')
+    await expect(page.getByRole('status')).toContainText('Accepted');const booking=(await h.state()).bookings.find(b=>b.guestName==='Megan Ortiz '+width)
+    await page.goto(h.origin+'/app/calendar?reservation='+booking.id);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Megan Ortiz '+width);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Source freshness')
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'calendar fits viewport');await page.screenshot({path:join(evidence,'calendar-record-'+width+'.png'),fullPage:true})
+    await page.goto(h.origin+'/app/inbox');const search=page.getByRole('searchbox',{name:'Search guests and messages'});await search.fill('Megan Ortiz '+width);await page.keyboard.press('Enter');await expect(page.locator('.threads')).toContainText('of 1 guests');await page.locator('.thread-row').click()
+    const compose=page.locator('details.compose');await compose.locator('summary').focus();await page.keyboard.press('Enter');const text=compose.locator('textarea[name=text]');await text.fill('Could we arrive early and keep the luggage on the covered porch?');const send=compose.getByRole('button',{name:'Send',exact:true})
+    // A genuine server business refusal, not a transport stub: an overlong
+    // subject is posted after disabling only this browser's input maxlength.
+    await compose.locator('[name=subject]').evaluate(input=>input.removeAttribute('maxlength'));await compose.locator('[name=subject]').fill('Synthetic travel question '.repeat(12));await send.focus();await page.keyboard.press('Enter')
+    const alert=page.getByRole('alert').first();await expect(alert).toBeVisible();await expect(alert).toBeFocused();await expect(page.locator('details.compose')).toHaveAttribute('open','');await expect(page.locator('details.compose textarea[name=text]')).toHaveValue('Could we arrive early and keep the luggage on the covered porch?');assert.equal(await page.evaluate(()=>sessionStorage.getItem('cabin:submitted-form')),null)
+    await page.screenshot({path:join(evidence,'inbox-error-'+width+'.png'),fullPage:true})
+    await page.locator('details.compose [name=subject]').fill('Early arrival question');await page.locator('details.compose button[type=submit]').focus();await page.keyboard.press('Enter');await expect(page.getByRole('status')).toContainText(/sent|draft|queued|development/i);await expect(page.locator('.messages')).toContainText('Could we arrive early');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'inbox fits viewport');await page.screenshot({path:join(evidence,'inbox-completed-'+width+'.png'),fullPage:true})
+   }finally{await context.close()}
+  }
+ }finally{if(browser)await browser.close();await h.close()}
+})
