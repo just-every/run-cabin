@@ -61,10 +61,17 @@ test('WEB-005: signed gap supplement survives restart, applies once to the origi
   assert.equal(imported.matched,1)
   const statement=await h.cmd('statement.close.prepare',{propertyId:home.id,month:day(0).slice(0,7)})
   assert.equal(statement.netCents,14100);assert.equal(statement.managementFeeCents,4000);assert.equal(statement.taxCents,2000)
+  const reportQuery='from='+day(0).slice(0,7)+'-01&until='+new Date(Date.UTC(Number(day(0).slice(0,4)),Number(day(0).slice(5,7)),1)).toISOString().slice(0,10)
+  const reported=(await h.send('/api/cabin/reports.json?'+reportQuery,undefined,h.owner)).value
+  assert.equal(reported.totals.grossCents,22000);assert.equal(reported.totals.feesCents,300);assert.equal(reported.totals.commissionCents,4000);assert.equal(reported.totals.taxCents,2000);assert.equal(reported.totals.netCents,15700)
+
   await h.cmd('promotion.cancel',{id:o.id,revision:applied.revision,confirm:'yes',reason:'Guest declined the added night before the deadline'})
   const due=await current(h,o.id);assert.equal(due.refund.amountCents,22000)
   await h.cmd('promotion.refund',{id:o.id,revision:due.revision,confirm:'yes'});await h.restart();await h.cmd('promotion.reconcile',{id:o.id})
   assert.equal(refundCalls,1);assert.equal((await current(h,o.id)).status,'refunded');s=await h.state();b=s.bookings.find(b=>b.id===booking.id);assert.equal(b.end,day(5));assert.equal(b.reservationBalance.paidCents,0);assert.equal(b.lifecycle.price.totalCents,44000)
+  const refundedReport=(await h.send('/api/cabin/reports.json?'+reportQuery,undefined,h.owner)).value
+  assert.equal(refundedReport.totals.refundsCents,22000);assert.equal(refundedReport.totals.commissionCents,0);assert.equal(refundedReport.totals.taxCents,0);assert.equal(refundedReport.totals.netCents,-300)
+
  }finally{await h.close()}
 })
 

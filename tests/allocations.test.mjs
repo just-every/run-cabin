@@ -28,6 +28,12 @@ test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, 
  assert.equal(frozen.parts.find(p=>p.ownerEmail===owners[0].email).payableCents,46764)
  const journals=(await h.state()).ledger.journals.filter(j=>j.sourceType==='agreement-allocation')
  assert.equal(journals.length,3)
+ const report=(await h.send('/api/cabin/reports.json?from=2026-10-01&until=2026-11-01',undefined,h.owner)).value
+ assert.equal(report.totals.grossCents,120000);assert.equal(report.totals.feesCents,3000);assert.equal(report.totals.commissionCents,20400);assert.equal(report.totals.taxCents,10000);assert.equal(report.totals.netCents,86600)
+ assert.equal(report.performance.find(o=>o.name==='Karen Lee').grossCents,72000);const beneficiary=report.performance.find(o=>o.name==='Morgan Lee');assert.equal(beneficiary.grossCents,48000);assert.equal(beneficiary.netCents,34640)
+ const scoped=(await h.send('/api/cabin/reports.json?from=2026-10-01&until=2026-11-01&owner='+beneficiary.id,undefined,h.owner)).value
+ assert.equal(scoped.reservations.length,1);assert.ok(scoped.reservations[0].ownerKeys.includes(beneficiary.id));assert.equal(scoped.totals.grossCents,48000);assert.equal(scoped.totals.netCents,34640)
+
  for(const j of journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
  assert.equal(journals.flatMap(j=>j.lines).filter(l=>l.account==='allocationClearing').reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
  await terms(h,p,model([{name:'New Owner',email:'new@stay.example',bps:10000}],{fixedFeeCents:5000,reserveBps:0}),'2026-11-01')
