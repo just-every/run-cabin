@@ -31,6 +31,7 @@ import { exportCommand } from './ical-export'
 import { managedInstall } from './channels'
 import { turnoverCommand } from './turnovers'
 import { homeCommand } from './homes'
+import { portalCommand } from './portal/commands'
 import { taskCommand } from './maintenance'
 import { statementCommand } from './statements'
 import { privacyCommand } from './privacy'
@@ -44,7 +45,7 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
 expireQuotes(c)
 if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
- for(const handler of [issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
@@ -60,7 +61,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
   data.tasks=data.tasks.filter(t=>t.assigneeId===actor.memberId||t.raisedBy===actor.id||t.work?.inspectorId===actor.memberId).map(t=>({...t,work:t.work?{...t.work,ownerTerms:undefined}:undefined}))
   const bookingIds=new Set(data.turnovers.map(t=>t.bookingId)),propertyIds=new Set([...data.turnovers,...data.tasks].map(t=>t.propertyId)),turnoverIds=new Set(data.turnovers.map(t=>t.id))
   data.codes=data.codes.filter(r=>r.holder==='cleaner'&&r.memberId===actor.memberId&&r.turnoverId&&turnoverIds.has(r.turnoverId))
-  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
+  data.homeSettings=data.homeSettings.filter(r=>propertyIds.has(r.propertyId)).map(r=>({...r,cleanerId:null,maintenanceId:null,lockDeviceId:null,dispatch:undefined,guide:undefined}));data.notices=[];data.payouts=[];data.deliveries=[];data.postings=[]
   data.bookings=data.bookings.filter(b=>bookingIds.has(b.id)).map(({lifecycle:_life,blockUse:_use,guestName:_,guestEmail:_email,guestPhone:_phone,channelRef:_ref,...b})=>({...b,summary:'Reserved'}))
   data.properties=data.properties.filter(p=>propertyIds.has(p.id)).map(p=>({...p,ownerName:'',ownerEmail:'',commissionBps:0}))
   data.messages=[];data.threadCases=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=data.recoveries.filter(r=>turnoverIds.has(r.turnoverId)).map(r=>({...r,issue:undefined,proposal:r.proposal?{...r.proposal,creditCents:0,extraCleaningCents:0,guestText:'',baseline:''}:undefined,execution:undefined,previous:undefined,offerUrl:undefined,offerId:undefined,guestAcceptedAt:undefined,balanceCents:undefined,appliedBaseline:undefined}))
@@ -69,7 +70,7 @@ export async function snapshot(env:Bindings,actor:Actor):Promise<State>{
  }
  if(actor.isAgent){data.staffQuotes=[];data.statementSchedules=[];data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
- if(actor.isAgent){data.bookings=data.bookings.map(({lifecycle:_l,...b})=>b);data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.threadCases=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[]}
+ if(actor.isAgent){data.bookings=data.bookings.map(({lifecycle:_l,...b})=>b);data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.threadCases=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[];data.homeSettings=data.homeSettings.map(r=>({...r,guide:undefined}))}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.
  data.verifications=verificationState(data,actor) as typeof data.verifications
  data.inbox=data.inbox.map(r=>({...r,ai:r.ai&&{...r.ai,keySealed:''}}))

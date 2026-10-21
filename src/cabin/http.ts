@@ -107,6 +107,8 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='turnover.assign'&&result.status==='unassigned')return 'Offer sent. The cleaner must accept before being assigned or receiving door access.'
  if(name==='turnover.assign')return 'Assigned. The cleaner is emailed the window, address and door code.'
  if(name==='turnover.approve')return 'Approved and assigned. The cleaner is emailed the window, address and door code.'
+ if(name==='portal.guide')return `Guest guide saved as version ${result.version}. Stay pages show it from now on.`
+ if(name==='portal.link.rotate')return 'Guest link replaced. The old link no longer works; the new link is on the stay’s turnover and goes out in the next guest message.'
  if(name==='home.settings')return 'Turnover settings saved. Unfinished jobs now use this checklist and photo requirement.'
  if(name==='task.raise')return result.assigneeId?'Maintenance task added and its assignee emailed.':'Maintenance task added. Choose who fixes it.'
  if(name==='task.assign')return 'Task assigned and emailed.'

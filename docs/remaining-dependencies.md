@@ -6,7 +6,7 @@
 
 Homepage rows 5 and 31 require eligible USD payout evidence; 12, 15, 16, 42 and 46 require OTA partner accounts; 17 requires channel messaging, US A2P and WhatsApp access; 26 requires live locks and channel recovery; 33 requires QBO; 35 requires an authorized filing partner; and 14 requires pricing-provider access. None changed status. The expanded brief therefore selected CONTRACT clauses beyond those rows.
 
-These are all remaining target/push-further clauses: **26 partial and 29 missing** (including the 19 October SYNC-011 launch route). A dependency can be unfinished product work, permissioned source evidence, another clause, or an outside account. This table does not imply that every remaining task requires an account. The round selected partial clauses; missing clauses remain separate product work.
+These are all remaining target/push-further clauses: **27 partial and 25 missing** (including the 19 October SYNC-011 launch route). A dependency can be unfinished product work, permissioned source evidence, another clause, or an outside account. This table does not imply that every remaining task requires an account. The round selected partial clauses; missing clauses remain separate product work.
 
 | Clause | Status | Remaining dependency |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ These are all remaining target/push-further clauses: **26 partial and 29 missing
 | PAY-006 | missing | Booking.com property-collect cards, PCI-safe collection and invalid-card/follow-up APIs. |
 | MESSAGE-001 | partial | OTA messaging grants, US A2P registration, WhatsApp business authorization, attachments and channel inquiry actions. |
 | MESSAGE-002 | missing | Team assignment, response timers, escalation and accountability implementation. |
-| GUEST-002 | missing | Complete portal/check-in workflow beyond existing private stay/access pages. |
+| GUEST-002 | partial | A portal link before the door code exists (blocked stays), channel-paid payment state, phone-browser proof, guidebook files and identity re-verification on the link itself. |
 | GUEST-003 | missing | Review collection/publishing and consented campaign lifecycle; channel review accounts where required. |
 | GUEST-004 | missing | Airbnb host-review API authorization and acknowledged review automation. |
 | OPS-005 | partial | Connected Seam/live lock and device state; offline/battery alerts and backup entry plans. |
