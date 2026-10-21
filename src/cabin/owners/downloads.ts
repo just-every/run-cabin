@@ -3,7 +3,7 @@ import { need } from '../model'
 import { csvCell } from '../statements'
 import { portalState } from './state'
 export async function ownerDocument(env:Bindings,email:string,id:string){
- const row=await env.DB.prepare('SELECT d.title,d.content FROM cb_owner_documents d JOIN cb_properties p ON p.id=d.property_id WHERE d.id=? AND d.email=? COLLATE NOCASE AND p.owner_email=? COLLATE NOCASE AND d.withdrawn_at IS NULL').bind(id,email,email).first<{title:string;content:string}>()
+ const row=await env.DB.prepare('SELECT d.property_id AS propertyId,d.title,d.content FROM cb_owner_documents d JOIN cb_properties p ON p.id=d.property_id WHERE d.id=? AND d.email=? COLLATE NOCASE AND p.owner_email=? COLLATE NOCASE AND d.withdrawn_at IS NULL').bind(id,email,email).first<{propertyId:string;title:string;content:string}>()
  need(row,'Record not found',404);return row
 }
 export async function ownerRecordsCsv(env:Bindings,email:string,propertyId:string,month?:string){
