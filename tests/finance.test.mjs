@@ -134,6 +134,12 @@ test('REPORT-002: approved owner and team schedules freeze scoped artifacts, ref
  assert.equal(failed.status,'delivery_failed');assert.ok(failed.artifact);assert.ok(follow.assignedTo&&follow.assignedEmail);assert.equal(state.reportSchedules.find(s=>s.id===failure.id).enabled,false)
  const resolved=await h.cmd('report.followup.resolve',{id:follow.id,revision:follow.revision,resolution:'Provider refused the request; no message accepted. Keep schedule paused until reviewed.'});assert.ok(resolved.resolvedAt)
  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await sharing()).reportRuns.length,4)
+ // Model the durable state left by a worker stopped after claiming generation.
+ // Cron must assign this interrupted run, never silently regenerate or send it.
+ const interrupted={...failed,id:'synthetic-cabin-interrupted-generation',dueAt:new Date(Date.now()-3600000).toISOString(),startedAt:new Date(Date.now()-3600000).toISOString(),status:'generating',history:[],scope:null};delete interrupted.artifact;delete interrupted.finishedAt;delete interrupted.cutoff;delete interrupted.dataVersion
+ await h.db.prepare('INSERT INTO cb_report_runs(id,schedule_id,due_at,data) VALUES(?,?,?,?)').bind(interrupted.id,interrupted.scheduleId,interrupted.dueAt,JSON.stringify(interrupted)).run()
+ const sentBefore=sharingMail.attempts.length;await h.restart();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});state=await sharing()
+ assert.equal(state.reportRuns.find(r=>r.id===interrupted.id).status,'generation_failed');assert.ok(state.reportFollowups.some(f=>f.runId===interrupted.id&&f.assignedTo));assert.equal(sharingMail.attempts.length,sentBefore)
  // Owner and member revocation also apply to the already-frozen download doors.
  await h.cmd('property.save',{...(await h.state()).properties.find(p=>p.id===b.p.id),ownerEmail:'changed@stay.example'});assert.equal((await h.send('/owners/reports/'+a.id,undefined,ownerCookie)).status,403)
  await h.cmd('member.save',{id:manager.id,revision:manager.revision,name:manager.name,email:manager.email,role:'manager',active:false});assert.ok([401,403].includes((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,manager.cookie)).status))
