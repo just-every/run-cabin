@@ -1,3 +1,4 @@
+import { embedContext } from './embed'
 import type { Data } from '../model'
 import type { DirectHome, Quote } from '../direct/types'
 import type { BookingSite } from './store'
@@ -6,10 +7,10 @@ import { homeSettings } from '../homes'
 import { localDay } from '../clock'
 import { h, money } from '../ui/shared'
 import { shell, post } from '../direct/public-ui'
-export interface WebsiteFrame {brandName?:string;color?:string;head?:string;footer?:string;index?:boolean}
+export interface WebsiteFrame {embedReturn?:URL;brandName?:string;color?:string;head?:string;footer?:string;index?:boolean}
 export function frame(site:BookingSite|null,url:URL,index=false):WebsiteFrame{
  const canonical=(site?.domainVerified?site.origin:url.origin)+url.pathname
- return {brandName:site?.name,color:site?.color,index,head:index?`<meta name="description" content="${h(site?.seoDescription??'Book a vacation home directly with your host.')}"/><link rel="canonical" href="${h(canonical)}">`:'',footer:`${site?.pages.map(p=>`<a href="/book/pages/${h(p.slug)}">${h(p.title)}</a>`).join(' · ')??''}${site?.privacy?`<p>${h(site.privacy)}</p>`:''}${site?.analytics?`<p>Optional analytics count page views by date and page, without identity or cross-site tracking. No analytics run before your consent.</p>${'<form method="post" action="/book/consent"><button name="choice" value="allow">Allow anonymous counts</button><button name="choice" value="deny">Decline analytics</button></form>'}`:''}`}
+ return {embedReturn:embedContext(site,url),brandName:site?.name,color:site?.color,index,head:index?`<meta name="description" content="${h(site?.seoDescription??'Book a vacation home directly with your host.')}"/><link rel="canonical" href="${h(canonical)}">`:'',footer:`${site?.pages.map(p=>`<a href="/book/pages/${h(p.slug)}">${h(p.title)}</a>`).join(' · ')??''}${site?.privacy?`<p>${h(site.privacy)}</p>`:''}${site?.analytics?`<p>Optional analytics count page views by date and page, without identity or cross-site tracking. No analytics run before your consent.</p>${'<form method="post" action="/book/consent"><button name="choice" value="allow">Allow anonymous counts</button><button name="choice" value="deny">Decline analytics</button></form>'}`:''}`}
 }
 const queryFields=(params:URLSearchParams,max=100)=>`<label>Arrival<input type="date" name="start" value="${h(params.get('start')??'')}" required></label><label>Checkout<input type="date" name="end" value="${h(params.get('end')??'')}" required></label><label>Guests<input name="guests" type="number" min="1" max="${max}" value="${h(params.get('guests')??'2')}" required></label>`
 const gallery=(site:BookingSite|null,data:Data,propertyId:string)=>{const page=site?.listings.find(p=>p.propertyId===propertyId),profile=data.propertyProfiles.find(p=>p.propertyId===propertyId);return page?.photoIds.filter(id=>profile?.photos.some(p=>p.id===id)).map((id,i)=>`<figure><img src="/book/photos/${h(id)}" alt="${h(data.properties.find(p=>p.id===propertyId)?.name)} — photo ${i+1}" loading="lazy"></figure>`).join('')??''}

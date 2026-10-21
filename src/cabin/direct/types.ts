@@ -17,6 +17,7 @@ export interface Quote {
  returningGuest?:{offerId:string; guestId:string; name:string; discountBps:number};
 }
 export interface DirectStay {
+ embedReturnUrl?:string;
  depositReconciliations?:{id:string;at:string;actorId:string;reference:string;prior:NonNullable<DirectStay['deposit']>;provider:{id:string;status:string;amount:number;amount_received:number;amount_capturable:number;currency:string}}[];
  refunds?:import('./refund-types').Refund[];
  depositReceipts?:{key:string;messageId:string}[];

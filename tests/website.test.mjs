@@ -41,3 +41,28 @@ test('WEB-001: host website publishes only chosen media, searches current invent
   assert.match((await h.send('/book/sitemap.xml')).text,/pine-ridge/)
  }finally{await h.close()}
 })
+
+test('WEB-002: authorized embed shares inventory and exact checkout, rejects unapproved origins and private reads, and revokes its return link',async()=>{
+ const {quoteHarness}=await import('./quotes-support.mjs'),h=await quoteHarness()
+ try{
+  let site=await h.cmd('direct.site.save',{name:'Coastal stays',color:'#214d3d',embedOrigins:['https://host.example','https://wordpress.example']})
+  const target='https://host.example/bookings?source=website',embed='?'+new URLSearchParams({embedReturn:target})
+  const search=await h.send('/book'+embed+'&start='+h.input.start+'&end='+h.input.end+'&guests=3');assert.equal(search.status,200);assert.match(search.text,/Harbor House/)
+  const listing=await h.send('/book/harbor-house'+embed);assert.match(listing.headers.get('content-security-policy'),/frame-ancestors https:\/\/host.example/)
+  assert.match(listing.text,/embedReturn=/);assert.doesNotMatch(listing.text,/sk_test_|SESSION_SECRET/)
+  const before=await h.send('/book/harbor-house/quote',{start:h.input.start,end:h.input.end,guests:3})
+  const price=await h.send('/book/harbor-house/quote'+embed,{start:h.input.start,end:h.input.end,guests:3});assert.deepEqual(price.value.quote,before.value.quote)
+  for(const target of ['https://evil.example/booking','javascript:alert(1)','https://host.example.evil.example/booking','https://user@host.example/booking'])assert.equal((await h.send('/book?'+new URLSearchParams({embedReturn:target}))).status,403)
+  assert.equal((await h.send('/api/cabin/state',undefined,'',{origin:'https://host.example'})).status,401)
+  assert.equal((await h.send('/api/cabin/command',{name:'reservation.request',input:{}},'',{origin:'https://host.example'})).status,403)
+  const checkout=await h.send('/book/harbor-house/checkout'+embed,{...h.input,homeRevision:h.home.revision,signature:h.input.guestName,consent:'yes'});assert.equal(checkout.status,200,checkout.text)
+  h.pay();assert.match((await h.send(checkout.value.bookingUrl.replace(h.origin,''))).text,/Your stay is confirmed/)
+  const confirmed=await h.send(checkout.value.bookingUrl.replace(h.origin,''));assert.match(confirmed.text,/https:\/\/host.example\/bookings\?source=website/);assert.match(confirmed.headers.get('content-security-policy'),/frame-ancestors 'none'/)
+  assert.equal((await h.send(checkout.value.bookingUrl.replace(h.origin,'')+embed)).status,403)
+  assert.equal((await h.state()).bookings.filter(b=>b.kind==='stay').length,1)
+  assert.equal((await h.send('/book/harbor-house/quote'+embed,{start:h.input.start,end:h.input.end,guests:3})).status,409)
+  site=await h.cmd('direct.site.save',{...site,embedOrigins:[]})
+  assert.equal((await h.send('/book'+embed)).status,403)
+  assert.doesNotMatch((await h.send(checkout.value.bookingUrl.replace(h.origin,''))).text,/Return to host website/)
+ }finally{await h.close()}
+})

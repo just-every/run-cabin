@@ -1,3 +1,5 @@
+import { bookingSite } from '../website/store'
+import { embedReturn } from '../website/embed'
 import { currentQuote, quoteByToken, validateQuote, acceptQuote, acceptedQuote } from '../reservations/quotes'
 import { applyBookingCoupon } from '../promotions/booking-coupons'
 import { managementFor } from '../properties/terms'
@@ -21,6 +23,7 @@ const currentStaff=(row:Parameters<typeof currentQuote>[0])=>currentQuote(row).p
 export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>) {
  if(input.staffQuoteToken){const accepted=await acceptedQuote(env,input.staffQuoteToken);if(accepted)return accepted}
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
+ const returnUrl=embedReturn(await bookingSite(env.DB),input.embedReturnUrl)?.href
  const credentials=await stripeCredentials(env)
  const token=newId()+newId(),tokenHash=await sha(token),id=newId(),bookingId=newId()
  const row=await mutate(env.DB,DIRECT_SYSTEM,'direct.checkout',async c=>{
@@ -40,7 +43,7 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   const settings=homeSettings(c,home.propertyId),arrivalAt=new Date(instant(price.start+'T'+settings.checkInTime,settings.timeZone)).toISOString(),departureAt=new Date(instant(price.end+'T'+settings.checkOutTime,settings.timeZone)).toISOString()
   const rentalTemplate=c.data.rentalTemplates.find(t=>t.propertyId===home.propertyId),version=rentalTemplate?templateVersion(rentalTemplate):undefined
   const agreement=bookingAgreement(home,price,version)
-  const row:DirectStay={id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(requiresIdentity?'consented to identity verification with a manual-review alternative.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
+  const row:DirectStay={embedReturnUrl:returnUrl,id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(requiresIdentity?'consented to identity verification with a manual-review alternative.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
   c.data.bookings.push({id:bookingId,revision:newId(),uid:`cabin-direct-${id}`,propertyId:home.propertyId,channel:'direct',managementTerms:structuredClone(managementTerms),kind:'block',start:price.start,end:price.end,summary:'Direct checkout hold',status:'confirmed',cancelled:false,approvedAt:c.now,source:'request'})
   row.requireIdentity=requiresIdentity
   const verification=createVerification(c,bookingId,home.propertyId,identityPolicy,identityReasons,price.end);if(requiresIdentity){verification.consentAt=c.now;verification.consentMethod='stripe';saveVerification(c,verification)}
