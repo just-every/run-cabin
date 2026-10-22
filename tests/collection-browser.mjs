@@ -17,6 +17,7 @@ try{await collectionProviderJourney({screens:async(h,g,state)=>{
    if(state==='failure'){await expect(panel).toContainText('failed');await expect(panel).toContainText('Follow up by');const consent=panel.getByRole('checkbox',{name:'I reviewed the confirmed failure and approve one new attempt.'});await expect(consent).not.toBeChecked()}
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Payments fits viewport')
    const manualPanel=page.locator('section').filter({has:page.getByRole('heading',{name:'Payments · manual receipts',exact:true})}).last();await manualPanel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`manual-receipts-${state}-${width}.png`)})
+   await panel.screenshot({path:join(evidence,`payments-full-${state}-${width}.png`)})
    await panel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`payments-${state}-${width}.png`)})
    for(const part of g.cookie.split('; ')){const i=part.indexOf('=');await guest.addCookies([{name:part.slice(0,i),value:part.slice(i+1),url:h.origin}])}
    const gp=await guest.newPage();await gp.goto(h.origin+g.path)

@@ -362,7 +362,7 @@ test('source-backed cash and cleared-check receipts post once, retain evidence a
   const home=await collectionHome(h);await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Synthetic trust entity'})
   const b=await collectionBooking(h,home),source=async(method,amountCents)=>({bookingId:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,method,amountCents,reference:'synthetic-cabin-'+method,receivedAt:day(0),note:'Verified custody and original source evidence',confirm:'yes'})
   const cash=await source('cash',3000);await h.cmd('direct.manual.receive',{...cash,confirm:'no'},h.owner,400)
-  const first=await h.cmd('direct.manual.receive',cash);assert.equal((await h.cmd('direct.manual.receive',cash)).id,first.id)
+  const first=await h.cmd('direct.manual.receive',{...cash,amountCents:undefined,amountDollars:'30.00'});assert.equal((await h.cmd('direct.manual.receive',cash)).id,first.id)
   await h.cmd('direct.manual.receive',{...cash,amountCents:3001},h.owner,409)
   const check=await source('check',2000),second=await h.cmd('direct.manual.receive',check)
   assert.equal(second.manualReceipt.method,'check');assert.equal(second.manualReceipt.reference,check.reference)

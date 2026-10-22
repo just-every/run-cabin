@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFile,spawn } from 'node:child_process'
 import { promisify } from 'node:util'
-import { mkdtemp,rm } from 'node:fs/promises'
+import { mkdtemp,rm,readFile } from 'node:fs/promises'
 import { join,resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { chromium,expect } from '@playwright/test'
@@ -17,7 +17,7 @@ test('a fresh public-source clone installs, sets up, signs in and preserves a na
  const folder=await mkdtemp(join(tmpdir(),'cabin-source-')),root=join(folder,'run-cabin'),env={...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'}
  delete env.RER_LOCAL_OPERATION;delete env.RER_LOCAL_STATE_PATH
  let app,browser
- const command=async args=>{try{return await exec(process.execPath,[launcher,...args,'--cwd',root,'--json'],{env,maxBuffer:2000000})}catch(error){const failures=String(error.stdout??'').split('\n').flatMap(line=>{try{const v=JSON.parse(line);return v.event==='error'?[{code:v.code,step:v.step,message:String(v.message??'').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]').split('\n').filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join(' ')}]:[]}catch{return []}});throw new Error('Source lifecycle '+args[0]+' failed with exit '+error.code+'; sanitized diagnostic '+JSON.stringify(failures))}}
+ const command=async args=>{try{return await exec(process.execPath,[launcher,...args,'--cwd',root,'--json'],{env,maxBuffer:2000000})}catch(error){const failures=String(error.stdout??'').split('\n').flatMap(line=>{try{const v=JSON.parse(line);return v.event==='error'?[{code:v.code,step:v.step,message:String(v.message??'').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]').split('\n').filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join(' ')}]:[]}catch{return []}});const captured=await readFile(join(root,'.seed/installer/install.log'),'utf8').catch(()=>'');const diagnostic=captured.split('\n').slice(-60).filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join('\n').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]');throw new Error('Source lifecycle '+args[0]+' failed with exit '+error.code+'; sanitized diagnostic '+JSON.stringify(failures)+'; redacted capture tail '+diagnostic)}}
  const start=async()=>{
   app=spawn(process.execPath,[launcher,'dev','--cwd',root,'--foreground','--json'],{cwd:root,env,stdio:['ignore','pipe','pipe']})
   let buffer='',timer

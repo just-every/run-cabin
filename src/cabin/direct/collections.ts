@@ -4,7 +4,7 @@ import { mutate,assertLive } from '../storage'
 import { restorationPaused } from '../connections/guard'
 import { queuedAuthority } from '../permissions/commands'
 import { hasAction,permitsProperty } from '../permissions/policy'
-import { stripeCredentials } from './stripe'
+import { decimalUnits } from './presentation'
 import { DIRECT_SYSTEM } from './store'
 import { collectionPlans,saveCollection,publicCollection } from './collection-store'
 import { collectionBasis,collectionDue } from './collection-sync'
@@ -31,7 +31,7 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
    if(assigneeId===actor.id&&actor.memberId)assigneeId=actor.memberId
    need(assigneeId===actor.memberId||assigneeId===actor.id||member&&(!member.scope||member.scope.propertyIds.some(id=>id==='*'||id===b.propertyId)),'Choose yourself or an active manager for this home')
    const existing=await import('../reservations/balances');const balance=await existing.paymentBalance(c,b);need(balance.paidCents===0,'Existing payments must be reconciled before creating a new schedule',409)
-   const deposit=integer(Number(input.depositCents),'Deposit in cents',1,basis.totalCents),installment=integer(Number(input.installmentCents??0),'Installment in cents',0,basis.totalCents-deposit),balanceCents=basis.totalCents-deposit-installment
+   const deposit=integer(('depositDollars'in input?decimalUnits(input.depositDollars,'deposit'):Number(input.depositCents)),'Deposit in cents',1,basis.totalCents),installment=integer(('installmentDollars'in input?decimalUnits(input.installmentDollars,'installment'):Number(input.installmentCents??0)),'Installment in cents',0,basis.totalCents-deposit),balanceCents=basis.totalCents-deposit-installment
    const installmentDays=integer(Number(input.installmentDays??30),'Installment lead days',0,730),balanceDays=integer(Number(input.balanceDays??7),'Balance lead days',0,730)
    need(!installment||installmentDays>=balanceDays,'Installment must fall before the balance')
    const createdAt=c.now,jobs:CollectionJob[]=[]
@@ -50,7 +50,7 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
   need(input.confirm==='yes','Confirm the changed schedule and new guest consent')
   const {paymentBalance}=await import('../reservations/balances'),balance=await paymentBalance(c,b),total=balance.balanceCents
   need(total!==null&&total>0,'No outstanding reservation balance remains',409)
-  const deposit=integer(Number(input.depositCents),'Deposit cents',1,total),installment=integer(Number(input.installmentCents??0),'Installment cents',0,total-deposit),installmentDays=integer(Number(input.installmentDays??30),'Installment lead days',0,730),balanceDays=integer(Number(input.balanceDays??7),'Balance lead days',0,730)
+  const deposit=integer(('depositDollars'in input?decimalUnits(input.depositDollars,'deposit'):Number(input.depositCents)),'Deposit cents',1,total),installment=integer(('installmentDollars'in input?decimalUnits(input.installmentDollars,'installment'):Number(input.installmentCents??0)),'Installment cents',0,total-deposit),installmentDays=integer(Number(input.installmentDays??30),'Installment lead days',0,730),balanceDays=integer(Number(input.balanceDays??7),'Balance lead days',0,730)
   need(!installment||installmentDays>=balanceDays,'Installment must fall before the balance')
   for(const j of p.jobs)if(j.status!=='succeeded'){closeFollowup(c,j);j.status='suppressed';j.detail='Superseded by a reviewed schedule; prior attempts retained.';delete j.deadline}
   const add=(label:string,amountCents:number,leadDays:number|null)=>{if(amountCents)p.jobs.push({id:newId(),label,amountCents,leadDays,dueAt:collectionDue(c,b,leadDays,c.now),status:'scheduled',attempts:[]})}

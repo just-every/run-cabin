@@ -6,12 +6,13 @@ import { contextJournals,post } from '../ledger/store'
 import { debit,credit } from '../ledger/types'
 import { paymentBalance } from '../reservations/balances'
 import { day } from './rules'
+import { decimalUnits } from './presentation'
 export async function manualReceipt(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>){
  if(name!=='direct.manual.receive')return undefined
  manager(actor);need(!actor.isAgent&&hasAction(actor,name),'A human with payment authority must record receipts',403)
  const method=text(input.method,'receipt method');need(method==='cash'||method==='check','Choose cash or a cleared check')
  need(input.confirm==='yes','Confirm actual cash receipt or verified trust-bank check clearance; a promised payment is not a receipt')
- const reference=text(input.reference,'receipt or cleared-check reference',200),note=text(input.note,'source evidence and custody record',1000),receivedAt=day(input.receivedAt),amount=integer(Number(input.amountCents),'received USD cents',1,99999999)
+ const reference=text(input.reference,'receipt or cleared-check reference',200),note=text(input.note,'source evidence and custody record',1000),receivedAt=day(input.receivedAt),amount=integer(('amountDollars'in input?decimalUnits(input.amountDollars,'received amount'):Number(input.amountCents)),'received USD cents',1,99999999)
  need(Date.parse(receivedAt+'T00:00:00Z')<=Date.now(),'A future promised payment is not a receipt')
  return mutate(env.DB,actor,name,async c=>{
   const b=c.data.bookings.find(b=>b.id===input.bookingId)
