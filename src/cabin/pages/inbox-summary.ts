@@ -21,6 +21,7 @@ const retained = "r.kind='messages' AND json_extract(r.data,'$.status')!='discar
 const search = "lower(COALESCE(json_extract(r.data,'$.text'),'')||' '||COALESCE(json_extract(r.data,'$.subject'),'')||' '||COALESCE(json_extract(r.data,'$.email'),'')||' '||COALESCE(json_extract(r.data,'$.phone'),'')||' '||COALESCE(json_extract(r.data,'$.ref'),''))"
 const bookingSearch = "lower(COALESCE(json_extract(r.data,'$.guestName'),'')||' '||COALESCE(json_extract(r.data,'$.guestEmail'),'')||' '||COALESCE(json_extract(r.data,'$.guestPhone'),'')||' '||COALESCE(json_extract(r.data,'$.channelRef'),'')||' '||COALESCE(json_extract(r.data,'$.summary'),'')||' '||COALESCE(p.name,''))"
 const messages = 'cb_records r INDEXED BY cb_records_inbox_activity'
+const contactMessages = 'cb_records r INDEXED BY cb_records_inbox_contact_activity'
 const stays = "r.kind='bookings' AND COALESCE(json_extract(r.data,'$.kind'),'stay')='stay'"
 const keys = "keys AS MATERIALIZED (SELECT json_extract(value,'$[0]') booking,json_extract(value,'$[1]') key FROM json_each(?))"
 
@@ -42,8 +43,10 @@ function allActivity(scope: string) {
 
 /** Find matches first; only then read all activity of those complete threads. */
 function matchingActivity(scope: string, filtered: boolean) {
+ // The index orders booking/contact pairs, so repeated message hits can be
+ // deduplicated before materialization and the reviewed-identity join.
  const matched = filtered ? `matched AS MATERIALIZED (SELECT value key FROM json_each(?))` : `message_matches AS MATERIALIZED (
-  SELECT ${booking} booking,${contact} contact FROM ${messages}
+  SELECT DISTINCT ${booking} booking,${contact} contact FROM ${messages}
   WHERE ${retained}${scope} AND instr(${search},?)>0
  ), matched AS MATERIALIZED (
   SELECT COALESCE(k.key,m.contact) key FROM message_matches m LEFT JOIN keys k ON k.booking=m.booking
@@ -60,7 +63,7 @@ function matchingActivity(scope: string, filtered: boolean) {
   FROM matched_bookings k CROSS JOIN ${messages}
   WHERE ${retained} AND ${booking}=k.booking${scope}
   UNION ALL SELECT m.key,${at},${draft},1
-  FROM matched_contacts m CROSS JOIN ${messages}
+  FROM matched_contacts m CROSS JOIN ${contactMessages}
   WHERE ${retained} AND ${contact}=m.key
   AND NOT EXISTS (SELECT 1 FROM keys k WHERE k.booking=${booking})${scope}
   UNION ALL SELECT k.key,COALESCE(json_extract(r.data,'$.approvedAt'),''),0,1
