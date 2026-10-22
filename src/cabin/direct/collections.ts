@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { integer,manager,need,newId,text,type Actor,type Context,type GuestMessage } from '../model'
+import { integer,manager,need,newId,text,type Actor,type GuestMessage } from '../model'
 import { mutate,assertLive } from '../storage'
 import { restorationPaused } from '../connections/guard'
 import { queuedAuthority } from '../permissions/commands'
@@ -8,10 +8,11 @@ import { decimalUnits } from './presentation'
 import { DIRECT_SYSTEM } from './store'
 import { collectionPlans,saveCollection,collectionOutput } from './collection-store'
 import { collectionBasis,collectionDue } from './collection-sync'
+import { followup,closeFollowup } from './collection-followup'
 import { chargeCollection,findCollectionPayment } from './collection-provider'
 import { post } from '../ledger/store'
 import { debit,credit } from '../ledger/types'
-import type { CollectionPlan,CollectionJob,CollectionAttempt } from './collection-types'
+import type { CollectionPlan,CollectionAttempt } from './collection-types'
 const envFor=(env:Bindings,p:CollectionPlan)=>({...env,CABIN_PROVIDER_PROPERTY_ID:p.propertyId,DIRECT_STRIPE_MODE:p.mode})
 const plan=async(db:D1Database,id:string)=>{const p=(await collectionPlans(db)).find(p=>p.id===id);need(p,'Collection schedule not found',404);return p}
 const owns=(actor:Actor,p:CollectionPlan)=>need(permitsProperty(actor,p.propertyId),'Collection schedule not found',404)
@@ -67,18 +68,6 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
  need(provider&&['requires_payment_method','canceled'].includes(provider.status)&&provider.amount_received===0,'Stripe has not confirmed a safe failed outcome',409)
  return mutate(env.DB,actor,name,async c=>{const p=await plan(c.db,prior.id);need(p.revision===input.revision&&p.status==='active','Schedule changed. Reload and review.',409);const job=p.jobs.find(v=>v.id===j.id)!;need(job.status==='failed'&&job.attempts.at(-1)?.id===a.id,'Attempt changed',409);closeFollowup(c,job);delete job.followupNoticeId;delete job.overdueNoticeId;job.status='scheduled';job.resolvedAt=c.now;delete job.deadline;job.detail='Human reviewed Stripe failure and approved one new attempt: '+reference;p.authority=structuredClone(actor);p.history.push({at:c.now,detail:job.detail});saveCollection(c,p);return collectionOutput(p,actor)})
 }
-async function followup(c:Context,p:CollectionPlan,j:CollectionJob,detail:string,notify=true){
- if(j.detail!==detail)p.history.push({at:c.now,detail:j.label+': '+detail})
- j.detail=detail;j.deadline??=new Date(Date.parse(c.now)+24*3600000).toISOString()
- if(!notify)return
- const overdue=Date.parse(j.deadline)<=Date.parse(c.now),field=overdue?'overdueNoticeId':'followupNoticeId'
- if(j[field])return
- const member=c.data.members.find(m=>m.id===p.assigneeId&&m.active&&m.role==='manager'),owner=await c.db.prepare("SELECT id,email FROM oa_operators WHERE role='owner' AND status='active' ORDER BY id LIMIT 1").first<{id:string;email:string}>()
- const responsible=member??owner;need(responsible,'Restore the installation owner before following up payments',409)
- p.assigneeId=responsible.id;const id=newId();j[field]=id
- c.data.notices.push({id,revision:newId(),propertyId:p.propertyId,memberId:responsible.id,email:responsible.email,kind:'payment',recordId:p.id,subject:overdue?'Overdue reservation payment follow-up':'Reservation payment needs review',text:j.label+': '+detail+' Follow up by '+j.deadline+'. No automatic retry is authorized.',status:'pending',detail:null,createdAt:c.now,sentAt:null,...(overdue?{priority:'urgent' as const}:{})})
-}
-function closeFollowup(c:Context,j:CollectionJob){for(const id of [j.followupNoticeId,j.overdueNoticeId]){const n=c.data.notices.find(n=>n.id===id);if(n?.status==='pending'){n.status='suppressed';n.detail='Payment follow-up resolved before delivery';n.revision=newId()}}}
 
 async function outcome(env:Bindings,pid:string,jid:string,aid:string,provider:any){
  return mutate(env.DB,DIRECT_SYSTEM,'direct.collection.outcome',async c=>{

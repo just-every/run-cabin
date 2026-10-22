@@ -47,7 +47,7 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
  need(!direct||direct.phase==='confirmed','Finish or expire the checkout before amending the confirmed stay',409)
  if(direct&&!l.price){l.price={rentCents:direct.quote.rentCents,feesCents:direct.quote.cleaningCents+direct.quote.extraGuestCents,taxCents:direct.quote.taxes.reduce((n,t)=>n+t.amountCents,0),totalCents:direct.quote.totalCents}}
  if(b.source==='feed'){l.sourceReview=true;l.sourceOrigin??={propertyId:b.propertyId,channel:b.channel,uid:b.uid,connectionId:b.connectionId,snapshot:{start:b.start,end:b.end,summary:b.summary}}}
- if(l.policy.known===false&&p.policyName)l.policy=policy(p)
+ if(p.policyName)l.policy=policy(p)
  if(name==='reservation.end'){
   need(l.policy.known!==false,'Record the source cancellation policy in an exact amendment before ending this reservation.',409)
   const outcome=p.outcome??'cancelled';need(outcome==='cancelled'||outcome==='no_show','Choose cancellation or no-show')

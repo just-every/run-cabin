@@ -57,12 +57,21 @@ export async function collectionProviderJourney({screens}={}){
   const makeDue=async index=>{const raw=await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first();const saved=JSON.parse(raw.data);saved.jobs[index].dueAt=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(saved),p.id).run()}
   await makeDue(1);fault='decline';await tick();assert.equal((await collectionState(h,p.id)).jobs[1].status,'uncertain');await tick();state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'failed');assert.ok(state.jobs[1].deadline);assert.equal(state.assigneeId,await ownerId(h))
   const rawFailure=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first()).data);rawFailure.jobs[1].deadline=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(rawFailure),p.id).run()
-  await tick();await h.restart();await tick();assert.equal((await h.state()).notices.filter(n=>n.kind==='payment'&&n.priority==='urgent').length,1,'overdue escalation is durable and once-only');state=await collectionState(h,p.id)
+  await h.cmd('reservation.amend',{id:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,propertyId:home.id,start:b.start,end:b.end,guestName:b.guestName,guestEmail:b.guestEmail,policyName:'Revised host cancellation policy',retainedBps:1000,noShowBps:1000,reason:'Host changed policy; payment consent must be renewed'})
+  state=await collectionState(h,p.id);assert.equal(state.status,'consent_required');const failedAttempts=structuredClone(state.jobs[1].attempts),beforeFollowup=writes.length
+  await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[1].id,revision:state.revision,confirm:'yes',reference:'Cannot retry without renewed guest consent'},h.owner,409)
+  await tick();await h.restart();await tick();assert.equal(writes.length,beforeFollowup,'failed and overdue follow-up never charges while consent is invalid')
+  const task=(await h.state()).tasks.find(t=>t.id===state.jobs[1].followupTaskId);assert.equal(task.status,'open');assert.equal(task.assigneeId,await ownerId(h));assert.match(task.note,/Follow up by/)
+  assert.deepEqual((await collectionState(h,p.id)).jobs[1].attempts,failedAttempts,'policy changes preserve previous payment attempts')
+  const mails=(await h.db.prepare('SELECT message FROM rer_mail_development_outbox').all()).results.map(r=>JSON.parse(r.message));assert.ok(mails.some(m=>m.subject==='Overdue reservation payment follow-up'),'overdue message is submitted while consent is invalid')
+  assert.equal((await h.state()).notices.filter(n=>n.kind==='payment'&&n.priority==='urgent').length,1,'overdue escalation is durable and once-only');state=await collectionState(h,p.id)
   if(screens)await screens(h,g,'failure')
+  assert.equal((await h.send(g.path,{action:'consent',revision:state.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,303)
+  assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303);state=await collectionState(h,p.id)
   await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[1].id,revision:state.revision,confirm:'yes',reference:'Guest confirmed retry after provider-confirmed failure'})
-  fault='';await tick();assert.equal(writes.length,3);state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'succeeded');assert.ok(state.jobs[1].resolvedAt);assert.equal(state.jobs[1].attempts.length,2)
+  fault='';await tick();assert.equal(writes.length,3);state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'succeeded');assert.ok(state.jobs[1].resolvedAt);assert.equal(state.jobs[1].attempts.length,2);assert.equal((await h.state()).tasks.find(t=>t.id===task.id).status,'closed')
   let booking=(await h.state()).bookings.find(v=>v.id===b.id)
-  await h.cmd('reservation.amend',{id:b.id,revision:booking.revision,propertyId:home.id,start:day(20),end:day(22),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest requested later arrival'})
+  await h.cmd('reservation.amend',{id:b.id,revision:booking.revision,propertyId:home.id,start:day(5),end:day(7),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest requested earlier arrival'})
   state=await collectionState(h,p.id);assert.equal(state.status,'consent_required');assert.notEqual(state.jobs[2].dueAt,p.jobs[2].dueAt);await tick();assert.equal(writes.length,3)
   await h.cmd('direct.collection.revise',{id:p.id,revision:state.revision,depositCents:9000,installmentCents:0,balanceDays:3,confirm:'yes'},h.owner,400)
   await h.cmd('direct.collection.revise',{id:p.id,revision:state.revision,depositCents:1000,installmentCents:0,balanceDays:3,confirm:'yes'})
@@ -87,6 +96,7 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g3.path,{action:'refresh'},g3.cookie)).status,303);assert.equal(attempts.size,count,'offboarded creator cannot charge a queued mandate')
   const {erase}=await import('./privacy-flow.mjs');const currentGuest=(await h.state()).bookings.find(v=>v.id===b3.id);await erase(h,{entity:'guest',id:b3.id,revision:currentGuest.revision})
   const erased=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p3.id).first()).data);assert.equal(erased.status,'cancelled');assert.equal(erased.basis.email,'');assert.equal(erased.consent,undefined);assert.equal(erased.paymentMethod,undefined);assert.equal(erased.customerId,undefined)
+  await (await import('./collection-consent-flow.mjs')).collectionConsentFlow(h,{writes,tick})
   console.log('Collection provider-edge journey PASS: deposit, lost-acceptance restart reconciliation, failed installment, reviewed retry, date-change reconsent, cancellation, receipts, balances and inactive archive. Provider POST count: '+writes.length)
  }finally{await h.close()}
 }

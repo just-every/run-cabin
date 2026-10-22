@@ -19,7 +19,7 @@ export function redactSensitiveText(value:string,secrets:readonly string[]=[]){r
 
 const PRIVATE_KEYS = new Set(['emailHash','sessionEpoch','bodySealed','stateSealed','beforeSealed','afterSealed','storageState','keySealed','bookingLinkSealed','credential_sealed','tokenSealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
 /** Ordinary API/export/agent representations carry references, never active capabilities. */
-const REFERENCES=new Set(['id','revision','uid','code','sourceKey','sourceId','sourceRevision','channelRef','start','end','at','date','month','timeZone','first','checkout'])
+const REFERENCES=new Set(['id','revision','uid','code','sourceKey','sourceId','sourceRevision','channelRef','replyTo','start','end','at','date','month','timeZone','first','checkout'])
 export function ordinaryOutput(value: unknown, secrets: readonly string[] = [],field=''): any {
  if (typeof value === 'string') return REFERENCES.has(field)||/(?:Id|Ids|Revision|At|Date|Hash|Sha256)$/.test(field)?value:redactSensitiveText(value,secrets)
  if (Array.isArray(value)) return value.map(item => ordinaryOutput(item,secrets,field))
