@@ -6,7 +6,7 @@ import { queuedAuthority } from '../permissions/commands'
 import { hasAction,permitsProperty } from '../permissions/policy'
 import { decimalUnits } from './presentation'
 import { DIRECT_SYSTEM } from './store'
-import { collectionPlans,saveCollection,publicCollection } from './collection-store'
+import { collectionPlans,saveCollection,collectionOutput } from './collection-store'
 import { collectionBasis,collectionDue } from './collection-sync'
 import { chargeCollection,findCollectionPayment } from './collection-provider'
 import { post } from '../ledger/store'
@@ -38,11 +38,11 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
    const add=(label:string,amountCents:number,leadDays:number|null)=>{if(amountCents)jobs.push({id:newId(),label,amountCents,leadDays,dueAt:collectionDue(c,b,leadDays,c.now),status:'scheduled',attempts:[]})}
    add('Reservation deposit',deposit,null);add('Installment',installment,installmentDays);add('Pre-arrival balance',balanceCents,balanceDays)
    const p:CollectionPlan={id:newId(),revision:newId(),bookingId:b.id,propertyId:b.propertyId,createdAt,authority:structuredClone(actor),basis,mode,status:'consent_required',policy:b.lifecycle.policy.name,assigneeId,jobs,history:[{at:c.now,detail:'Exact guest consent and Stripe setup are required. No charge has been requested.'}]}
-   saveCollection(c,p);return publicCollection(p)
+   saveCollection(c,p);return collectionOutput(p,actor)
   })
  }
  const prior=await plan(env.DB,text(input.id,'schedule'));owns(actor,prior)
- if(name==='direct.collection.refresh'){await runCollection(env,prior.id);return publicCollection(await plan(env.DB,prior.id))}
+ if(name==='direct.collection.refresh'){await runCollection(env,prior.id);return collectionOutput(await plan(env.DB,prior.id),actor)}
  if(name==='direct.collection.revise')return mutate(env.DB,actor,name,async c=>{
   const p=c.data.collectionPlans.find(v=>v.id===prior.id)!,b=c.data.bookings.find(v=>v.id===p.bookingId)
   need(p.revision===input.revision&&!p.restored&&b&&b.status==='confirmed'&&!b.cancelled&&!b.guestErasedAt&&!b.restorePaused,'Schedule changed or reservation ended',409)
@@ -56,7 +56,7 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
   const add=(label:string,amountCents:number,leadDays:number|null)=>{if(amountCents)p.jobs.push({id:newId(),label,amountCents,leadDays,dueAt:collectionDue(c,b,leadDays,c.now),status:'scheduled',attempts:[]})}
   add('Revised reservation deposit',deposit,null);add('Revised installment',installment,installmentDays);add('Revised pre-arrival balance',total-deposit-installment,balanceDays)
   p.basis=collectionBasis(b);p.policy=b.lifecycle!.policy.name;p.status='consent_required';delete p.consent;delete p.setup;delete p.customerId;delete p.paymentMethod;p.authority=structuredClone(actor)
-  p.history.push({at:c.now,detail:'Human reviewed the remaining balance and requested a fresh exact guest mandate. Prior payments and attempts retained.'});saveCollection(c,p);return publicCollection(p)
+  p.history.push({at:c.now,detail:'Human reviewed the remaining balance and requested a fresh exact guest mandate. Prior payments and attempts retained.'});saveCollection(c,p);return collectionOutput(p,actor)
  })
 
  need(name==='direct.collection.retry','Unknown collection command',404)
@@ -65,7 +65,7 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
  need(input.confirm==='yes','Confirm the reviewed retry');const reference=text(input.reference,'review and follow-up evidence',1000)
  const provider=await findCollectionPayment(envFor(env,prior),prior,a)
  need(provider&&['requires_payment_method','canceled'].includes(provider.status)&&provider.amount_received===0,'Stripe has not confirmed a safe failed outcome',409)
- return mutate(env.DB,actor,name,async c=>{const p=await plan(c.db,prior.id);need(p.revision===input.revision&&p.status==='active','Schedule changed. Reload and review.',409);const job=p.jobs.find(v=>v.id===j.id)!;need(job.status==='failed'&&job.attempts.at(-1)?.id===a.id,'Attempt changed',409);closeFollowup(c,job);delete job.followupNoticeId;delete job.overdueNoticeId;job.status='scheduled';job.resolvedAt=c.now;delete job.deadline;job.detail='Human reviewed Stripe failure and approved one new attempt: '+reference;p.authority=structuredClone(actor);p.history.push({at:c.now,detail:job.detail});saveCollection(c,p);return publicCollection(p)})
+ return mutate(env.DB,actor,name,async c=>{const p=await plan(c.db,prior.id);need(p.revision===input.revision&&p.status==='active','Schedule changed. Reload and review.',409);const job=p.jobs.find(v=>v.id===j.id)!;need(job.status==='failed'&&job.attempts.at(-1)?.id===a.id,'Attempt changed',409);closeFollowup(c,job);delete job.followupNoticeId;delete job.overdueNoticeId;job.status='scheduled';job.resolvedAt=c.now;delete job.deadline;job.detail='Human reviewed Stripe failure and approved one new attempt: '+reference;p.authority=structuredClone(actor);p.history.push({at:c.now,detail:job.detail});saveCollection(c,p);return collectionOutput(p,actor)})
 }
 async function followup(c:Context,p:CollectionPlan,j:CollectionJob,detail:string,notify=true){
  if(j.detail!==detail)p.history.push({at:c.now,detail:j.label+': '+detail})

@@ -46,6 +46,7 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g.path,{action:'consent',revision:'stale',signature:b.guestName,consent:'yes'},g.cookie)).status,409)
   if(screens)await screens(h,g,'consent')
   assert.equal((await h.send(g.path,{action:'consent',revision:p.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,303)
+  assert.equal((await h.state()).events.find(e=>e.action==='guest.collection.consent').actorId,'guest:'+b.id,'consent is attributed to the verified guest')
   assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303)
   assert.equal(writes.length,1);let state=await collectionState(h,p.id);assert.equal(state.jobs[0].status,'uncertain');assert.ok(state.jobs[0].deadline)
   await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[0].id,revision:state.revision,confirm:'yes',reference:'synthetic-cabin-1'},h.owner,409)
@@ -101,7 +102,7 @@ export async function collectionScopedJourney(){
   for(const name of ['direct.collection.refresh','direct.collection.retry','direct.collection.revise'])await h.cmd(name,{id:outsidePlan.id,revision:outsidePlan.revision,jobId:outsidePlan.jobs[0].id,depositCents:1000,confirm:'yes',reference:'synthetic-cabin-scope'},accountantCookie,404)
   await h.cmd('direct.collection.create',{bookingId:outside.id,depositCents:1000,assigneeId:accountant.id},accountantCookie,404)
   await h.cmd('direct.manual.receive',{bookingId:outside.id,revision:outside.revision,method:'cash',amountCents:1000,receivedAt:day(0),reference:'synthetic-cabin-scope',note:'Actual receipt evidence',confirm:'yes'},accountantCookie,404)
-  await h.cmd('direct.collection.create',{bookingId:inside.id,depositCents:1000,assigneeId:accountant.id},accountantCookie)
+  const scopedPlan=await h.cmd('direct.collection.create',{bookingId:inside.id,depositCents:1000,assigneeId:accountant.id},accountantCookie);assert.equal(scopedPlan.basis.email,undefined,'financial command responses obey the same field projection as reads');assert.equal((await h.cmd('direct.collection.refresh',{id:scopedPlan.id},accountantCookie)).basis.email,undefined)
   await h.cmd('direct.manual.receive',{bookingId:inside.id,revision:(await h.state()).bookings.find(b=>b.id===inside.id).revision,method:'cash',amountDollars:'10.00',receivedAt:day(0),reference:'synthetic-cabin-scoped-receipt',note:'Actual scoped cash receipt',confirm:'yes'},accountantCookie)
   assert.equal((await h.state(accountantCookie)).direct.collections.length,1)
  }finally{await h.close()}

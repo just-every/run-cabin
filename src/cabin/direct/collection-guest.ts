@@ -12,7 +12,7 @@ import { h,money,hidden,field } from '../ui/shared'
 import { timeLabel } from './presentation'
 import { queuedAuthority } from '../permissions/commands'
 export async function collectionGuest(request:Request,env:Bindings,portal:PortalContext,authorize:(c:Context)=>void){
- const path='/stay/'+portal.link.token+'/payments'
+ const actor={...DIRECT_SYSTEM,id:'guest:'+portal.booking.id},path='/stay/'+portal.link.token+'/payments'
  let p=(await collectionPlans(env.DB)).find(p=>p.bookingId===portal.booking.id)
  need(p&&!p.restored&&p.status!=='cancelled','Payment schedule unavailable',404)
  const stripeEnv={...env,CABIN_PROVIDER_PROPERTY_ID:p.propertyId,DIRECT_STRIPE_MODE:p.mode}
@@ -26,7 +26,7 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
   need(input.action==='consent'||input.action==='refresh','Unknown payment action')
   if(input.action==='consent'){
    need(input.consent==='yes'&&text(input.signature,'full guest signature',120)===portal.booking.guestName,'Sign with your full reservation name and explicitly authorize the saved schedule')
-   p=await mutate(env.DB,DIRECT_SYSTEM,'direct.collection.consent',async c=>{
+   p=await mutate(env.DB,actor,'guest.collection.consent',async c=>{
     authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!,b=c.data.bookings.find(b=>b.id===current.bookingId)!
     need(current.revision===input.revision&&current.status==='consent_required'&&!current.jobs.some(j=>['uncertain','pending'].includes(j.status))&&JSON.stringify(collectionBasis(b))===JSON.stringify(current.basis),'Schedule changed or a charge is pending. Review before signing.',409)
     need(await queuedAuthority(c.db,current.authority,'direct.collection.create',current.propertyId),'Host collection permission changed',403)
@@ -37,7 +37,7 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
    })
    const result=await setupCollection(stripeEnv,p,env.AUTH_ORIGIN,path)
    need(result.id&&typeof result.url==='string'&&new URL(result.url).origin==='https://checkout.stripe.com','Stripe did not return a secure card setup page',502)
-   await mutate(env.DB,DIRECT_SYSTEM,'direct.collection.setup.ready',async c=>{authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!;need(current.revision===p!.revision,'Schedule changed during Stripe setup',409);current.setup={...current.setup!,id:result.id,url:result.url};saveCollection(c,current)})
+   await mutate(env.DB,actor,'guest.collection.setup.ready',async c=>{authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!;need(current.revision===p!.revision,'Schedule changed during Stripe setup',409);current.setup={...current.setup!,id:result.id,url:result.url};saveCollection(c,current)})
    return new Response(null,{status:303,headers:{location:result.url,'cache-control':'no-store','referrer-policy':'no-referrer'}})
   }
   if(p.setup?.id){
@@ -46,7 +46,7 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
     need(si&&typeof si==='object'&&si.status==='succeeded'&&si.metadata?.collectionPlanId===p.id&&session.metadata?.collectionPlanId===p.id,'Stripe setup does not match this schedule',409)
     const customer=typeof si.customer==='string'?si.customer:si.customer?.id,method=typeof si.payment_method==='string'?si.payment_method:si.payment_method?.id
     need(customer&&method,'Stripe did not return a vaulted customer and payment method',409)
-    await mutate(env.DB,DIRECT_SYSTEM,'direct.collection.mandate.ready',async c=>{authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!;need(current.revision===p!.revision&&current.consent&&current.status==='consent_required'&&current.setup?.id===session.id,'Schedule changed during setup readback',409);current.customerId=customer;current.paymentMethod=method;current.status='active';delete current.setup;current.history.push({at:c.now,detail:'Stripe confirmed the guest-approved saved-card mandate.'});saveCollection(c,current)})
+    await mutate(env.DB,actor,'guest.collection.mandate.ready',async c=>{authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!;need(current.revision===p!.revision&&current.consent&&current.status==='consent_required'&&current.setup?.id===session.id,'Schedule changed during setup readback',409);current.customerId=customer;current.paymentMethod=method;current.status='active';delete current.setup;current.history.push({at:c.now,detail:'Stripe confirmed the guest-approved saved-card mandate.'});saveCollection(c,current)})
    }
   }
   await runCollection(env,p.id)
