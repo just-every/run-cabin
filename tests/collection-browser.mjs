@@ -22,6 +22,12 @@ try{await collectionProviderJourney({screens:async(h,g,state)=>{
    await manualPanel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`manual-receipts-${state}-${width}.png`)})
    await panel.screenshot({path:join(evidence,`payments-full-${state}-${width}.png`)})
    await panel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`payments-${state}-${width}.png`)})
+   if(state==='failure'){
+    await page.goto(h.origin+'/app/maintenance')
+    await expect(page.getByText('Reservation payment needs review',{exact:true}).first()).toBeVisible()
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Assigned payment task fits viewport')
+    await page.screenshot({path:join(evidence,`payment-followup-task-${width}.png`),fullPage:true})
+   }
    for(const part of g.cookie.split('; ')){const i=part.indexOf('=');await guest.addCookies([{name:part.slice(0,i),value:part.slice(i+1),url:h.origin}])}
    const gp=await guest.newPage();await gp.goto(h.origin+g.path)
    await expect(gp.getByRole('heading',{name:'Your payment schedule',exact:true})).toBeVisible()
