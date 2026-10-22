@@ -1,5 +1,3 @@
-# Portfolio questions
-
 Open **Portfolio questions** in the manager workspace (`/app/questions`). Ask, for example, “Why did this property's owner net fall?”, “Which arrivals are at risk?”, “What do the saved guest conversations say?”, or “What is our occupancy and ADR?”. The question selects a report topic; the visible property, dates, channel and accounting controls select the records. Cabin does not infer a different property or date window from a name in the question. Unsupported questions say that they cannot be grounded and propose no work.
 
 Answers are live reads of saved Cabin records. They show the installation revision, generation cutoff, filters, report links, source identifiers and uncertainty. They do not call a language-model or provider service, send the prompt elsewhere, or store question and answer history. Guest text is quoted evidence and never executable instructions. Access codes, capability links and credential-shaped text are redacted from conversation quotations. Unlinked messages are excluded rather than assigned to a guest by name.
@@ -22,7 +20,22 @@ Approval creates a nonblocking internal task, with the named assignee, report re
 
 ## Native doors
 
-- `POST /api/cabin/questions` accepts `{"question":"Why did owner net fall?","filters":{"from":"2026-10-01","until":"2026-11-01","property":"HOME_ID","basis":"accrual"}}`. The response contains `kind`, `filters`, `cutoff`, `version`, `statements`, `citations`, `warnings`, matching `reports`, a proposed investigation and its `digest`.
+`POST /api/cabin/questions` accepts a question and report filters:
+
+```json
+{
+  "question": "Why did owner net fall?",
+  "filters": {
+    "from": "2026-10-01",
+    "until": "2026-11-01",
+    "property": "HOME_ID",
+    "basis": "accrual"
+  }
+}
+```
+
+The response contains `kind`, `filters`, `cutoff`, `version`, `statements`, `citations`, `warnings`, matching `reports`, a proposed investigation and its `digest`.
+
 - `question.ask` through `POST /api/cabin/command` has the same input and read behavior. It returns the answer under `result`.
 - `question.investigate` through that command door accepts the exact `question`, `filters`, `digest`, selected `propertyId`, `assigneeId` and `consent: true`. It returns the assigned task.
 - Owner sessions can POST the question to `/owners/questions` (HTML form or JSON); `/owners/questions/report` opens their currently scoped report using its query filters. Native rental-owner sessions use the corresponding `/app/rental-owner/questions` paths.
