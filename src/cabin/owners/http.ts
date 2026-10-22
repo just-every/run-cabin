@@ -1,4 +1,4 @@
-import { answerQuestion, questionReport, rentalQuestionAccess } from '../questions/read'
+import { answerQuestion, questionReport, rentalQuestionAccess, assertRentalQuestionAccess } from '../questions/read'
 import { questionPanel, ownerQuestionReport } from '../questions/ui'
 import { page } from './ui'
 import { type Actor } from '../model'
@@ -40,7 +40,7 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
    const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env)
    if(path==='/owners/questions'||path==='/owners/questions/answer'){
     const access=await rentalQuestionAccess(env.DB,email,nativeActor),answer=await answerQuestion(env.DB,access,value)
-    await rentalQuestionAccess(env.DB,email,nativeActor)
+    await assertRentalQuestionAccess(env.DB,access,nativeActor)
     if(request.headers.get('content-type')?.includes('application/json'))return Response.json(answer,{headers})
     return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1>'+questionPanel(answer.properties,answer,true)+'</main>','Questions')
    }
@@ -56,7 +56,7 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
    const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env),month=url.searchParams.get('month')??undefined
    if(path==='/owners/questions'||path==='/owners/questions/report'){
     const access=await rentalQuestionAccess(env.DB,email,nativeActor)
-    if(path.endsWith('/report')){const report=await questionReport(env.DB,access,url.searchParams);await rentalQuestionAccess(env.DB,email,nativeActor);return page(ownerQuestionReport(report),'Your source report')}
+    if(path.endsWith('/report')){const report=await questionReport(env.DB,access,url.searchParams);await assertRentalQuestionAccess(env.DB,access,nativeActor);return page(ownerQuestionReport(report),'Your source report')}
     const directory=await env.DB.prepare('SELECT id,name FROM cb_properties WHERE id IN (SELECT value FROM json_each(?)) ORDER BY name').bind(JSON.stringify(access.actor.scope!.propertyIds)).all<{id:string;name:string}>()
     return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1>'+questionPanel(directory.results,undefined,true)+'</main>','Questions')
    }

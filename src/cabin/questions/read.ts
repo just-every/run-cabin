@@ -32,6 +32,10 @@ export async function rentalQuestionAccess(db:D1Database,email:string,native?:Ac
  need(interests.length,'No current home ownership access',403)
  return {actor:{...SYSTEM,id:'cabin:owner-question',scope:{pmsRole:'rental_owner',propertyIds:interests.map(i=>i.propertyId),actions:['reports:read'],revision:0}},ownerEmail:email.trim().toLowerCase()}
 }
+export async function assertRentalQuestionAccess(db:D1Database,access:QuestionAccess,native?:Actor){
+ const current=await rentalQuestionAccess(db,access.ownerEmail!,native)
+ need(JSON.stringify([...current.actor.scope!.propertyIds].sort())===JSON.stringify([...access.actor.scope!.propertyIds].sort()),'Owner access changed while answering. Open a fresh question.',403)
+}
 export function reportLink(filters:ReportFilters,owner=false){return (owner?'/owners/questions/report':'/app/reports')+'?'+new URLSearchParams({...filters})}
 export async function questionReport(db:D1Database,access:QuestionAccess,params:URLSearchParams){
  if(access.ownerEmail){const key=await sha(access.ownerEmail);need(!params.get('owner')||params.get('owner')===key,'Owner filter not found',404);params.set('owner',key)}
