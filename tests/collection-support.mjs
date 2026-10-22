@@ -85,6 +85,14 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g3.path,{action:'refresh'},g3.cookie)).status,303);assert.equal(attempts.size,count,'offboarded creator cannot charge a queued mandate')
   const {erase}=await import('./privacy-flow.mjs');const currentGuest=(await h.state()).bookings.find(v=>v.id===b3.id);await erase(h,{entity:'guest',id:b3.id,revision:currentGuest.revision})
   const erased=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p3.id).first()).data);assert.equal(erased.status,'cancelled');assert.equal(erased.basis.email,'');assert.equal(erased.consent,undefined);assert.equal(erased.paymentMethod,undefined);assert.equal(erased.customerId,undefined)
+  console.log('Collection provider-edge journey PASS: deposit, lost-acceptance restart reconciliation, failed installment, reviewed retry, date-change reconsent, cancellation, receipts, balances and inactive archive. Provider POST count: '+writes.length)
+ }finally{await h.close()}
+}
+
+export async function collectionScopedJourney(){
+ const h=await harness({outbound:async()=>assert.fail('No processor effect is authorized by this scope journey')})
+ try{
+  const home=await collectionHome(h);await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Synthetic scoped trust'})
   const otherHome=await collectionHome(h),outside=await collectionBooking(h,otherHome,80),outsidePlan=await createCollection(h,outside),inside=await collectionBooking(h,home,60)
   const accountant=await h.cmd('member.save',{name:'Collection Accountant',email:'accountant@stay.example',pmsRole:'accountant',propertyIds:[home.id],actions:['finance:read','direct.collection.create','direct.collection.refresh','direct.collection.revise','direct.collection.retry','direct.manual.receive'],active:true})
   await h.cmd('member.invite',{id:accountant.id});const accountantCookie=await h.signIn(accountant.email)
@@ -95,7 +103,8 @@ export async function collectionProviderJourney({screens}={}){
   await h.cmd('direct.manual.receive',{bookingId:outside.id,revision:outside.revision,method:'cash',amountCents:1000,receivedAt:day(0),reference:'synthetic-cabin-scope',note:'Actual receipt evidence',confirm:'yes'},accountantCookie,404)
   await h.cmd('direct.collection.create',{bookingId:inside.id,depositCents:1000,assigneeId:accountant.id},accountantCookie)
   await h.cmd('direct.manual.receive',{bookingId:inside.id,revision:(await h.state()).bookings.find(b=>b.id===inside.id).revision,method:'cash',amountDollars:'10.00',receivedAt:day(0),reference:'synthetic-cabin-scoped-receipt',note:'Actual scoped cash receipt',confirm:'yes'},accountantCookie)
-  console.log('Collection provider-edge journey PASS: deposit, lost-acceptance restart reconciliation, failed installment, reviewed retry, date-change reconsent, cancellation, receipts, balances and inactive archive. Provider POST count: '+writes.length)
+  assert.equal((await h.state(accountantCookie)).direct.collections.length,1)
  }finally{await h.close()}
 }
-if(process.argv[1]===import.meta.filename)await collectionProviderJourney()
+
+if(process.argv[1]===import.meta.filename){await collectionProviderJourney();await collectionScopedJourney()}

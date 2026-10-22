@@ -374,3 +374,8 @@ test('source-backed cash and cleared-check receipts post once, retain evidence a
   assert.ok(receipts.every(j=>j.sourceType==='payment'&&j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0)===0));assert.ok(receipts.every(j=>j.manualReceipt.note===check.note))
  }finally{await h.close()}
 })
+
+
+test('scoped financial roles can use their own payment doors and cannot read or mutate another property schedule or manual receipt',async()=>{
+ const {collectionScopedJourney}=await import('./collection-support.mjs');await collectionScopedJourney()
+})
