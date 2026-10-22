@@ -8,12 +8,24 @@ const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','
 try{await collectionProviderJourney({screens:async(h,g,state)=>{
  for(const [index,width] of [1440,390].entries()){
   const manualBooking=state==='consent'?await collectionBooking(h,(await h.state()).properties[0],50+index*5):null
+  const scheduleBooking=state==='consent'?await collectionBooking(h,(await h.state()).properties[0],85+index*5):null
   const owner=await browser.newContext({viewport:{width,height:1000}}),guest=await browser.newContext({viewport:{width,height:1000}})
   try{
    const [name,value]=h.owner.split('=');await owner.addCookies([{name,value,url:h.origin}])
    const page=await owner.newPage();await page.goto(h.origin+'/app/direct')
    await expect(page.getByRole('heading',{name:'Payments · scheduled collection',exact:true})).toBeVisible()
    const panel=page.locator('section').filter({has:page.getByRole('heading',{name:'Payments · scheduled collection',exact:true})}).last()
+   if(scheduleBooking){
+    // Configure a deposit and pre-arrival balance through the Payments form itself at this width.
+    const create=panel.locator('form[action*="direct.collection.create"]')
+    await create.locator('select[name="bookingId"]').selectOption(scheduleBooking.id)
+    await create.getByLabel('Reservation deposit (USD)',{exact:true}).fill('30.00');await create.getByLabel('Balance days before arrival',{exact:true}).fill('7')
+    await create.getByRole('button',{name:'Save schedule for guest approval',exact:true}).click()
+    const saved=panel.locator('article').filter({has:page.getByRole('heading',{name:scheduleBooking.guestName,exact:true})})
+    await expect(saved).toContainText('consent_required');await expect(saved).toContainText('Reservation deposit · $30.00');await expect(saved).toContainText('Pre-arrival balance · $100.00')
+    const configured=(await h.state()).direct.collections.find(p=>p.bookingId===scheduleBooking.id)
+    assert.deepEqual(configured.jobs.map(j=>[j.label,j.amountCents,j.status]),[['Reservation deposit',3000,'scheduled'],['Pre-arrival balance',10000,'scheduled']]);assert.equal(configured.status,'consent_required')
+   }
    if(state==='revision')await panel.getByText('Revise unpaid schedule or replace saved card',{exact:true}).click()
    if(state==='failure'){await expect(panel).toContainText('failed');await expect(panel).toContainText('Follow up by');const consent=panel.getByRole('checkbox',{name:'I reviewed the confirmed failure and approve one new attempt.'});await expect(consent).not.toBeChecked()}
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Payments fits viewport')
