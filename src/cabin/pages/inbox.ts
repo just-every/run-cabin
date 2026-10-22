@@ -13,7 +13,6 @@ export interface InboxPage {
 const THREADS=25, MESSAGES=50
 /** Search all retained messages in SQL; transfer only one explicit results page. */
 export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Promise<InboxPage> {
- const started=performance.now(),lap=(name:string)=>console.log('INBOX_PROFILE',name,Math.round(performance.now()-started))
  const query=(url.searchParams.get('q')??'').trim()
  if(query.length>200)throw Object.assign(new Error('Search with up to 200 characters'),{status:400})
  const page=pageNumber(url.searchParams.get('page'),'guest'), messagePage=pageNumber(url.searchParams.get('messages'),'message'), homes=scoped(data)
@@ -21,7 +20,6 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
   db.prepare(`SELECT id,json_extract(data,'$.bookingId') bookingId,json_extract(data,'$.mergedInto') mergedInto,json_extract(data,'$.erasedAt') erasedAt FROM cb_records WHERE kind='guests'`),
   db.prepare(`SELECT id FROM cb_records WHERE kind='bookings' AND ${inIds("json_extract(data,'$.propertyId')")}`).bind(homes),
  ])
- lap('identities')
  const profiles=new Map<string,any>(result[0].results.map((g:any)=>[g.id,g])), origins=new Map<string,any>()
  for(const g of profiles.values())if(!g.erasedAt&&!origins.has(g.bookingId))origins.set(g.bookingId,g)
  const root=(g:any)=>{const seen=new Set<string>();let current=g;while(current?.mergedInto){if(current.erasedAt||seen.has(current.id))return g.id;seen.add(current.id);current=profiles.get(current.mergedInto)}return current&&!current.erasedAt?current.id:g.id}
@@ -39,7 +37,7 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  const constrained=!!actor.scope&&!(actor.scope.propertyIds.includes('*')&&actor.scope.actions.includes('*'))
  if(constrained&&!actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes','exports'])
  const redact=constrained?sensitiveTextRedactor([...data.codes.flatMap(r=>[r.code,r.link]),...data.exports.map(r=>r.token)].filter((v):v is string=>typeof v==='string')):undefined
- const {total,rows:selected}=await inboxSummary(db,{mapping,query,page,size:THREADS,scope,scopeParams,redact});lap('summary')
+ const {total,rows:selected}=await inboxSummary(db,{mapping,query,page,size:THREADS,scope,scopeParams,redact})
  const pages=Math.max(1,Math.ceil(total/THREADS))
  if(page>pages)throw Object.assign(new Error('That guest page is no longer available. Search again from the first page.'),{status:400})
  const requested=url.searchParams.get('thread')
@@ -54,7 +52,6 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  await records(db,data,['homeSettings','threadCases'],inIds("json_extract(data,'$.propertyId')"),[homes])
  await records(db,data,['inbox'])
  if(!constrained||actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
- lap('records')
  const make=(key:string):Thread=>{
   const stays=data.bookings.filter(b=>keysByBooking.get(b.id)===key&&(b.kind??'stay')==='stay').sort((a,b)=>a.start.localeCompare(b.start)), named=[...stays].reverse().find(b=>b.guestName), first=stays[0]
   const email=key.startsWith('e:')?key.slice(2):stays.find(b=>b.guestEmail)?.guestEmail??null,phone=key.startsWith('p:')?key.slice(2):stays.find(b=>b.guestPhone)?.guestPhone??null
@@ -66,7 +63,6 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  // ordinary booking index narrows each read before touching message bodies.
  const previewRows=await Promise.all(list.map(async t=>{const selection=messageSelection(keys,t.key,scope,scopeParams);const row=await db.prepare(`SELECT r.data FROM cb_records r WHERE ${selection.where} AND json_extract(r.data,'$.status') NOT IN ('draft','drafting') ORDER BY COALESCE(json_extract(r.data,'$.sentAt'),json_extract(r.data,'$.createdAt')) DESC,r.id DESC LIMIT 1`).bind(...selection.params).first<{data:string}>();return {t,message:row?JSON.parse(row.data):undefined}}))
  for(const {t,message} of previewRows)if(message)t.messages=[message]
- lap('previews')
  let messageTotal=0,latestIncoming:any
  if(open){
   const selection=messageSelection(keys,open.key,scope,scopeParams),order="COALESCE(json_extract(r.data,'$.sentAt'),json_extract(r.data,'$.createdAt')) DESC,r.id DESC"
@@ -80,11 +76,9 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
   open.messages=results[1].results.map((r:any)=>JSON.parse(r.data)).reverse();data.messages=open.messages
   latestIncoming=results[2].results[0]?JSON.parse(results[2].results[0].data):undefined
  }
- lap('transcript')
- const replyIds=JSON.stringify([...new Set((open?.messages??[]).map(m=>m.replyTo).filter(Boolean))])
- const references=await db.prepare(`SELECT data FROM cb_records WHERE kind='messages' AND ${inIds('id')}`).bind(replyIds).all<{data:string}>()
+ const replyIds=[...new Set((open?.messages??[]).map(m=>m.replyTo).filter(Boolean))]
+ const references=replyIds.length?await db.prepare(`SELECT r.data FROM json_each(?) wanted CROSS JOIN cb_records r WHERE r.id=wanted.value AND r.kind='messages'`).bind(JSON.stringify(replyIds)).all<{data:string}>():{results:[]}
  data.messages=[...data.messages,...references.results.map(r=>JSON.parse(r.data)),...(latestIncoming?[latestIncoming]:[])]
- lap('references')
  // Metadata must cross the same read projection as the ordinary state. In
  // particular previews must not retain authority objects or scoped secrets.
  const messageRows=[...list.flatMap(t=>t.messages),...data.messages]
@@ -92,6 +86,5 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  for(const t of new Set([...list,...(open?[open]:[])])){if(redact){t.name=redact(t.name);t.email=t.email?redact(t.email):null;t.phone=t.phone?redact(t.phone):null}t.messages=t.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m);t.stays=t.stays.map(b=>visibleBookings.get(b.id)).filter((b):b is NonNullable<typeof b>=>!!b);t.scheduled=t.scheduled.map(r=>visibleScheduled.get(r.id)).filter((r):r is NonNullable<typeof r>=>!!r)}
  data.messages=data.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m)
  latestIncoming=latestIncoming?visibleMessages.get(latestIncoming.id):undefined
- lap('projected')
  return {query,page,size:THREADS,total,pages,threads:list,open,messagePage,messageSize:MESSAGES,messageTotal,messagePages:Math.max(1,Math.ceil(messageTotal/MESSAGES)),latestIncoming}
 }

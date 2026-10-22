@@ -17,7 +17,7 @@ export async function readPageData(db:D1Database,actor:Actor,path:string,url:URL
  if(path==='/app/calendar')metadata=await calendarData(db,actor,data,url)
  else if(path==='/app/inbox')metadata={inboxPage:await inboxData(db,actor,data,url)}
  else await records(db,data,['feeds','connections'],inIds("json_extract(data,'$.propertyId')"),[scoped(data)])
- const draftStarted=performance.now();metadata.inboxDraftThreads=await draftThreadCount(db,actor,data);console.log('DRAFT_PROFILE',Math.round(performance.now()-draftStarted))
+ metadata.inboxDraftThreads=await draftThreadCount(db,actor,data)
  need((await db.prepare('SELECT version FROM cb_meta WHERE id=1').first<{version:number}>())?.version===data.version,'Records changed while this page was loading. Reload and review.',409)
  await assertLive(db,actor)
  return {data,...metadata}
