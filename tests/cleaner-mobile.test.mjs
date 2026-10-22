@@ -155,8 +155,11 @@ test('AUTH-002: desktop and phone team invitations enforce a single home and off
         await expect(staffPage.locator(`#stay-${stay.bookingId}`).getByLabel('Guest name',{exact:true})).toHaveValue(updatedName)
         await expect(staffPage.locator('body')).not.toContainText(otherHome.name)
         assert.ok(await staffPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'scoped reservations fit the viewport')
+        if(width===390)await staffPage.locator('label[for=rail-menu]').click()
         await expect(staffPage.locator('.me-text .role')).toHaveText(/reservation staff/i)
+        await expect(staffPage.locator('.me-text .role')).toBeVisible()
         await staffPage.screenshot({path:`${evidence}/scoped-staff-${width}.png`,fullPage:true})
+        if(width===390)await staffPage.locator('label[for=rail-menu]').click()
 
         const foreign = (await h.state()).bookings.find(b=>b.id===otherStay.bookingId)
         const denied = await staffPage.request.post(h.origin+'/api/cabin/command',{headers:{origin:h.origin},data:{name:'booking.details',input:{id:foreign.id,revision:foreign.revision,propertyId:home.id,guestName:'Changed outside grant'}}})
