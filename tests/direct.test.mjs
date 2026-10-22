@@ -333,6 +333,8 @@ test('scheduled collections require current reservation terms, guest consent and
   const current=(await h.state()).bookings.find(v=>v.id===b.id)
   await h.cmd('reservation.amend',{id:b.id,revision:current.revision,propertyId:p.id,start:day(20),end:day(22),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest reviewed new dates'})
   const changed=await collectionState(h,schedule.id);assert.equal(changed.status,'consent_required');assert.notEqual(changed.jobs[2].dueAt,schedule.jobs[2].dueAt)
+  await h.cmd('direct.collection.revise',{id:changed.id,revision:changed.revision,depositCents:5000,installmentCents:1000,installmentDays:10,balanceDays:3,confirm:'yes'})
+  const revised=await collectionState(h,schedule.id);assert.equal(revised.jobs.filter(j=>j.status==='scheduled').reduce((n,j)=>n+j.amountCents,0),13000);assert.ok(revised.history.some(v=>v.detail.includes('remaining balance')))
   await h.cmd('direct.collection.retry',{id:changed.id,jobId:changed.jobs[0].id,revision:changed.revision,reference:'synthetic-cabin-1',confirm:'yes'},h.owner,409)
   const cleaner=await h.person('CollectionCleaner');assert.equal((await h.state(cleaner.cookie)).direct.collections,undefined)
   await h.cmd('direct.collection.create',{bookingId:b.id,depositCents:1,assigneeId:cleaner.id},cleaner.cookie,403)

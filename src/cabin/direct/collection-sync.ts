@@ -3,7 +3,7 @@ import { homeSettings } from '../homes'
 import { charge } from '../reservations/finance'
 import { collectionPlans,saveCollection } from './collection-store'
 import type { Booking,Context } from '../model'
-export const collectionBasis=(b:Booking)=>({start:b.start,end:b.end,email:(b.guestEmail??'').trim().toLowerCase(),totalCents:charge(b),propertyId:b.propertyId,policy:b.lifecycle?.policy.name??'',arrivalTime:b.arrivalTime??''})
+export const collectionBasis=(b:Booking)=>({start:b.start,end:b.end,email:(b.guestEmail??'').trim().toLowerCase(),totalCents:charge(b),propertyId:b.propertyId,policy:JSON.stringify(b.lifecycle?.policy??null),arrivalTime:b.arrivalTime??''})
 export function collectionDue(c:Pick<Context,'data'>,b:Booking,days:number|null,created:string){
  if(days===null)return created
  const settings=homeSettings(c,b.propertyId),date=new Date(Date.parse(b.start.slice(0,10)+'T12:00:00Z')-days*86400000).toISOString().slice(0,10)

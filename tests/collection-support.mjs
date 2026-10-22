@@ -29,6 +29,7 @@ export async function collectionProviderJourney({screens}={}){
   if(path==='/v1/payment_intents'&&request.method==='POST'){
    assert.equal(f.get('off_session'),'true');assert.equal(f.get('confirm'),'true');assert.ok(request.headers.get('idempotency-key'))
    const aid=f.get('metadata[collectionAttemptId]');assert.equal(attempts.has(aid),false,'no duplicate provider POST for an interrupted attempt');attempts.set(aid,true)
+   if(fault==='before'){fault='';return new Response('unavailable before provider acceptance',{status:502})}
    const p={id:'synthetic_cabin_payment_'+(++sequence),customer:f.get('customer'),amount:Number(f.get('amount')),amount_received:fault==='decline'?0:Number(f.get('amount')),currency:'usd',status:fault==='decline'?'requires_payment_method':'succeeded',metadata:{collectionPlanId:f.get('metadata[collectionPlanId]'),collectionJobId:f.get('metadata[collectionJobId]'),collectionAttemptId:aid}}
    payments.set(p.id,p);writes.push(p);if(fault==='lost'){fault='';return new Response('uncertain network response',{status:502})}return Response.json(p)
   }
@@ -52,19 +53,35 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.state()).messages.filter(m=>m.subject==='Your payment receipt').length,1)
   const makeDue=async index=>{const raw=await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first();const saved=JSON.parse(raw.data);saved.jobs[index].dueAt=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(saved),p.id).run()}
   await makeDue(1);fault='decline';await tick();state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'failed');assert.ok(state.jobs[1].deadline);assert.equal(state.assigneeId,await ownerId(h))
+  const rawFailure=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first()).data);rawFailure.jobs[1].deadline=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(rawFailure),p.id).run()
+  await tick();await h.restart();await tick();assert.equal((await h.state()).notices.filter(n=>n.kind==='payment'&&n.priority==='urgent').length,1,'overdue escalation is durable and once-only');state=await collectionState(h,p.id)
   if(screens)await screens(h,g,'failure')
   await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[1].id,revision:state.revision,confirm:'yes',reference:'Guest confirmed retry after provider-confirmed failure'})
   fault='';await tick();assert.equal(writes.length,3);state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'succeeded');assert.ok(state.jobs[1].resolvedAt);assert.equal(state.jobs[1].attempts.length,2)
   let booking=(await h.state()).bookings.find(v=>v.id===b.id)
   await h.cmd('reservation.amend',{id:b.id,revision:booking.revision,propertyId:home.id,start:day(20),end:day(22),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest requested later arrival'})
   state=await collectionState(h,p.id);assert.equal(state.status,'consent_required');assert.notEqual(state.jobs[2].dueAt,p.jobs[2].dueAt);await tick();assert.equal(writes.length,3)
+  await h.cmd('direct.collection.revise',{id:p.id,revision:state.revision,depositCents:9000,installmentCents:0,balanceDays:3,confirm:'yes'},h.owner,400)
+  await h.cmd('direct.collection.revise',{id:p.id,revision:state.revision,depositCents:1000,installmentCents:0,balanceDays:3,confirm:'yes'})
+  state=await collectionState(h,p.id);assert.equal(state.jobs.filter(j=>j.status==='scheduled').reduce((n,j)=>n+j.amountCents,0),8000,'new mandate is only for the unpaid balance');assert.equal(state.jobs.filter(j=>j.status==='succeeded').length,2,'successful jobs are immutable')
+  if(screens)await screens(h,g,'revision')
+  assert.equal((await h.send(g.path,{action:'consent',revision:state.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,303)
+  assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303);assert.equal(writes.length,4)
   booking=(await h.state()).bookings.find(v=>v.id===b.id)
   await h.cmd('reservation.end',{id:b.id,revision:booking.revision,outcome:'cancelled',reason:'Guest cancellation'})
-  await h.restart();await tick();state=await collectionState(h,p.id);assert.equal(state.status,'cancelled');assert.equal(state.jobs[2].status,'suppressed');assert.equal(writes.length,3)
-  assert.equal((await h.state()).bookings.find(v=>v.id===b.id).reservationBalance.paidCents,5000)
+  await h.restart();await tick();state=await collectionState(h,p.id);assert.equal(state.status,'cancelled');assert.equal(state.jobs[2].status,'suppressed');assert.equal(writes.length,4)
+  assert.equal((await h.state()).bookings.find(v=>v.id===b.id).reservationBalance.paidCents,6000)
   const raw=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first()).data)
   const {exportRow}=await import('../src/cabin/archive/transform.mjs');const archived=JSON.parse(exportRow('cb_records',{kind:'collectionPlans',data:JSON.stringify(raw)}).data)
   assert.equal(archived.restored,true);assert.equal(archived.status,'paused');assert.equal(archived.paymentMethod,undefined);assert.equal(archived.customerId,undefined);assert.equal(archived.consent,undefined)
+  const b2=await collectionBooking(h,home,30),p2=await createCollection(h,b2),g2=await guestCollection(h,b2)
+  assert.equal((await h.send(g2.path,{action:'consent',revision:p2.revision,signature:b2.guestName,consent:'yes'},g2.cookie)).status,303)
+  fault='before';assert.equal((await h.send(g2.path,{action:'refresh'},g2.cookie)).status,303);const count=attempts.size
+  await h.restart();await tick();await tick();assert.equal(attempts.size,count,'no second POST when interruption preceded acceptance and reads are empty');assert.equal((await collectionState(h,p2.id)).jobs[0].status,'uncertain')
+  const manager=await h.person('CollectionManager','manager'),b3=await collectionBooking(h,home,40),p3=await h.cmd('direct.collection.create',{bookingId:b3.id,depositCents:3000,assigneeId:manager.id},manager.cookie),g3=await guestCollection(h,b3)
+  assert.equal((await h.send(g3.path,{action:'consent',revision:p3.revision,signature:b3.guestName,consent:'yes'},g3.cookie)).status,303)
+  await h.cmd('member.save',{id:manager.id,revision:(await h.state()).members.find(m=>m.id===manager.id).revision,name:manager.name,email:manager.email,role:'manager',active:false})
+  assert.equal((await h.send(g3.path,{action:'refresh'},g3.cookie)).status,303);assert.equal(attempts.size,count,'offboarded creator cannot charge a queued mandate')
   console.log('Collection provider-edge journey PASS: deposit, lost-acceptance restart reconciliation, failed installment, reviewed retry, date-change reconsent, cancellation, receipts, balances and inactive archive. Provider POST count: '+writes.length)
  }finally{await h.close()}
 }

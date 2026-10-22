@@ -43,6 +43,22 @@ export async function collectionCommand(env:Bindings,actor:Actor,name:string,inp
  }
  const prior=await plan(env.DB,text(input.id,'schedule'));owns(actor,prior)
  if(name==='direct.collection.refresh'){await runCollection(env,prior.id);return publicCollection(await plan(env.DB,prior.id))}
+ if(name==='direct.collection.revise')return mutate(env.DB,actor,name,async c=>{
+  const p=c.data.collectionPlans.find(v=>v.id===prior.id)!,b=c.data.bookings.find(v=>v.id===p.bookingId)
+  need(p.revision===input.revision&&!p.restored&&b&&b.status==='confirmed'&&!b.cancelled&&!b.guestErasedAt&&!b.restorePaused,'Schedule changed or reservation ended',409)
+  need(!p.jobs.some(j=>['uncertain','pending'].includes(j.status)),'Reconcile every started payment before changing the mandate',409)
+  need(input.confirm==='yes','Confirm the changed schedule and new guest consent')
+  const {paymentBalance}=await import('../reservations/balances'),balance=await paymentBalance(c,b),total=balance.balanceCents
+  need(total!==null&&total>0,'No outstanding reservation balance remains',409)
+  const deposit=integer(Number(input.depositCents),'Deposit cents',1,total),installment=integer(Number(input.installmentCents??0),'Installment cents',0,total-deposit),installmentDays=integer(Number(input.installmentDays??30),'Installment lead days',0,730),balanceDays=integer(Number(input.balanceDays??7),'Balance lead days',0,730)
+  need(!installment||installmentDays>=balanceDays,'Installment must fall before the balance')
+  for(const j of p.jobs)if(j.status!=='succeeded'){closeFollowup(c,j);j.status='suppressed';j.detail='Superseded by a reviewed schedule; prior attempts retained.';delete j.deadline}
+  const add=(label:string,amountCents:number,leadDays:number|null)=>{if(amountCents)p.jobs.push({id:newId(),label,amountCents,leadDays,dueAt:collectionDue(c,b,leadDays,c.now),status:'scheduled',attempts:[]})}
+  add('Revised reservation deposit',deposit,null);add('Revised installment',installment,installmentDays);add('Revised pre-arrival balance',total-deposit-installment,balanceDays)
+  p.basis=collectionBasis(b);p.policy=b.lifecycle!.policy.name;p.status='consent_required';delete p.consent;delete p.setup;delete p.customerId;delete p.paymentMethod;p.authority=structuredClone(actor)
+  p.history.push({at:c.now,detail:'Human reviewed the remaining balance and requested a fresh exact guest mandate. Prior payments and attempts retained.'});saveCollection(c,p);return publicCollection(p)
+ })
+
  need(name==='direct.collection.retry','Unknown collection command',404)
  const j=prior.jobs.find(j=>j.id===input.jobId),a=j?.attempts.at(-1)
  need(j&&a&&j.status==='failed'&&a.outcome==='failed','Only a provider-confirmed failed payment can be retried. Uncertain charges require reconciliation.',409)

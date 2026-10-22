@@ -27,7 +27,8 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
     authorize(c);const current=(await collectionPlans(c.db)).find(v=>v.id===p!.id)!,b=c.data.bookings.find(b=>b.id===current.bookingId)!
     need(current.revision===input.revision&&current.status==='consent_required'&&!current.jobs.some(j=>['uncertain','pending'].includes(j.status))&&JSON.stringify(collectionBasis(b))===JSON.stringify(current.basis),'Schedule changed or a charge is pending. Review before signing.',409)
     need(await queuedAuthority(c.db,current.authority,'direct.collection.create',current.propertyId),'Host collection permission changed',403)
-    need(current.jobs.filter(j=>j.status!=='suppressed').reduce((n,j)=>n+j.amountCents,0)===current.basis.totalCents,'Price changed. The host must reconcile this schedule before a new mandate.',409)
+    const {paymentBalance}=await import('../reservations/balances'),balance=await paymentBalance(c,b)
+    need(current.jobs.filter(j=>j.status==='scheduled'||j.status==='failed').reduce((n,j)=>n+j.amountCents,0)===balance.balanceCents,'Price or receipts changed. The host must review the remaining schedule before a new mandate.',409)
     current.consent={at:c.now,signature:String(input.signature),digest:await sha(JSON.stringify({basis:current.basis,policy:current.policy,jobs:current.jobs.map(j=>({id:j.id,amountCents:j.amountCents,dueAt:j.dueAt}))}))}
     current.setup={attempt:newId(),at:c.now};saveCollection(c,current);return current
    })
