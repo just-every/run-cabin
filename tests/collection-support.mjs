@@ -50,6 +50,8 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303)
   assert.equal(writes.length,1);let state=await collectionState(h,p.id);assert.equal(state.jobs[0].status,'uncertain');assert.ok(state.jobs[0].deadline)
   await h.cmd('reservation.amend',{id:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,propertyId:home.id,start:day(20),end:day(22),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Cannot move a started charge to new terms'},h.owner,409)
+  await h.cmd('reservation.move',{id:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,start:day(20),end:day(22)},h.owner,409)
+  await h.cmd('booking.details',{id:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,guestName:b.guestName,guestEmail:'changed@stay.example'},h.owner,409)
   await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[0].id,revision:state.revision,confirm:'yes',reference:'synthetic-cabin-1'},h.owner,409)
   await h.restart();await tick();state=await collectionState(h,p.id);assert.equal(state.jobs[0].status,'succeeded');assert.equal(writes.length,1)
   assert.equal((await h.state()).bookings.find(v=>v.id===b.id).reservationBalance.paidCents,3000)

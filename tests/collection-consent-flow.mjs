@@ -18,6 +18,10 @@ export async function collectionConsentFlow(h,{writes,tick}){
  const dues=saved.jobs.map(j=>j.dueAt)
  await amend({start:day(70),end:day(72)})
  saved=await collectionState(h,p.id);assert.equal(saved.status,'active');assert.deepEqual(saved.consent,consent,'a host deferral needs no renewed consent');assert.ok(saved.jobs.every((j,i)=>j.dueAt>=dues[i]));assert.ok(saved.jobs[1].dueAt>dues[1])
+ await h.cmd('reservation.move',{id:b.id,revision:(await current()).revision,start:day(75),end:day(77)})
+ saved=await collectionState(h,p.id);assert.equal(saved.status,'active');assert.deepEqual(saved.consent,consent,'calendar date deferral retains the mandate through its public door')
+ await h.cmd('booking.details',{id:b.id,revision:(await current()).revision,guestName:'Synthetic Updated Contact',guestEmail:b.guestEmail,guestPhone:'+18285550188',arrivalTime:'17:00'})
+ saved=await collectionState(h,p.id);assert.equal(saved.status,'active');assert.deepEqual(saved.consent,consent,'contact-door time deferral and phone edits retain consent')
  // Even with a lower price, an earlier due date cannot use the favourable-change exception.
  for(const changes of [{start:day(65),end:day(67),rentCents:8000,feesCents:2000,taxCents:1000},{rentCents:10000,feesCents:2000,taxCents:1000},{policyName:'New cancellation policy',retainedBps:2000,noShowBps:3000},{propertyId:(await collectionHome(h)).id},{guestEmail:'updated-guest@stay.example'}]){
   const before=await collectionState(h,p.id),count=writes.length

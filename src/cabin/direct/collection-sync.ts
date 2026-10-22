@@ -2,7 +2,7 @@ import { instant } from '../clock'
 import { homeSettings } from '../homes'
 import { charge } from '../reservations/finance'
 import { saveCollection } from './collection-store'
-import type { Booking,Context } from '../model'
+import { need,type Booking,type Context } from '../model'
 export const collectionBasis=(b:Booking)=>({start:b.start,end:b.end,email:(b.guestEmail??'').trim().toLowerCase(),totalCents:charge(b),propertyId:b.propertyId,policy:JSON.stringify(b.lifecycle?.policy??null),arrivalTime:b.arrivalTime??''})
 export function collectionDue(c:Pick<Context,'data'>,b:Booking,days:number|null,created:string){
  if(days===null)return created
@@ -20,9 +20,10 @@ export async function syncCollections(c:Context,name:string){
    if(b?.guestErasedAt){delete p.consent;delete p.customerId;p.basis.email='';p.history=[];for(const j of p.jobs)delete j.detail}
    p.history.push({at:c.now,detail:'Future collection suppressed; uncertain provider effects still require reconciliation.'});saveCollection(c,p)
   }else if(JSON.stringify(basis)!==JSON.stringify(p.basis)){
+   need(!p.jobs.some(j=>['uncertain','pending'].includes(j.status)),'Reconcile started collection effects before changing reservation terms',409)
    const next=basis!,old=p.basis,unpaid=p.jobs.filter(j=>['scheduled','failed'].includes(j.status))
    // An exception may never increase a charge, bring it forward, or silently change its policy, home or verification channel.
-   const favorable=name==='reservation.amend'&&!c.actor.isAgent&&next.email===old.email&&next.propertyId===old.propertyId&&next.policy===old.policy&&next.totalCents<=old.totalCents&&next.start>=old.start&&next.end>=old.end&&unpaid.every(j=>collectionDue(c,b,j.leadDays,p.createdAt)>=j.dueAt)
+   const favorable=['reservation.amend','reservation.move','booking.details'].includes(name)&&!c.actor.isAgent&&next.email===old.email&&next.propertyId===old.propertyId&&next.policy===old.policy&&next.totalCents<=old.totalCents&&next.start>=old.start&&next.end>=old.end&&unpaid.every(j=>collectionDue(c,b,j.leadDays,p.createdAt)>=j.dueAt)
    if(favorable){
     let reduction=old.totalCents-next.totalCents
     for(const j of [...unpaid].reverse()){
