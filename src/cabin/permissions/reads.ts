@@ -6,7 +6,8 @@ export async function readScope(db:D1Database,actor:Actor,url:URL){
  if(!actor.scope||actor.scope.propertyIds.includes('*')&&actor.scope.actions.includes('*'))return
  const path=url.pathname
  if(path==='/api/cabin/state'||path==='/app')return
- if(path.startsWith('/app/')){need(['/app/calendar','/app/reservations','/app/inbox','/app/guests','/app/readiness','/app/turnovers','/app/maintenance','/app/recovery','/app/reports','/app/statements','/app/ledger','/app/taxes','/app/people'].includes(path),'Page outside your team grant',403);const action=pageAction(path);need(action&&hasAction(actor,action),'Page outside your team grant',403);return}
+ if(path.startsWith('/app/')){need(['/app/calendar','/app/reservations','/app/inbox','/app/guests','/app/readiness','/app/turnovers','/app/maintenance','/app/recovery','/app/reports','/app/questions','/app/statements','/app/ledger','/app/taxes','/app/people'].includes(path),'Page outside your team grant',403);const action=pageAction(path);need(action&&hasAction(actor,action),'Page outside your team grant',403);return}
+ if(path==='/api/cabin/questions'){requireAction(actor,'reports:read');return}
  if(path==='/api/cabin/access'){requireAction(actor,'access:read');return}
  if(['/api/cabin/reports.json','/api/cabin/reports.csv','/api/cabin/report-sharing.json'].includes(path)){requireAction(actor,'reports:read');return}
  if(path.startsWith('/api/cabin/report-artifacts/')){requireAction(actor,'reports:read');return}

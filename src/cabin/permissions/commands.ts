@@ -5,7 +5,7 @@ const targetKeys=new Set(['id','bookingId','propertyId','statementId','taskId','
 /** Resolve every supplied resource against server records, never just the claimed home. */
 export async function commandScope(db:D1Database,actor:Actor,name:string,input:Record<string,unknown>){
  await assertLive(db,actor)
- if(!actor.scope||name.startsWith('report.'))return
+ if(!actor.scope||(name.startsWith('report.')||name.startsWith('question.')))return
  need(hasAction(actor,name),'This action is outside your team grant',403)
  if(actor.scope.propertyIds.includes('*')&&actor.scope.actions.includes('*'))return
  const data=await load(db),properties=new Set<string>(),unresolved:string[]=[]

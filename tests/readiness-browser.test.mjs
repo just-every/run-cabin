@@ -145,3 +145,47 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
   }
  }finally{if(browser)await browser.close();await h.close()}
 })
+
+test('portfolio questions on desktop and phone reconcile sources, show uncertainty and approve a named investigation by keyboard',{timeout:180000},async()=>{
+ const h=await harness({assets:true,outbound:()=>new Response('Synthetic provider unavailable',{status:503})});let browser
+ try{
+  const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h)
+  await h.cmd('channel.connect',{propertyId:b.p.id,channel:'airbnb',url:'https://synthetic-cabin.example/feed.ics',intervalMinutes:15});const link=(await h.access()).connections.find(c=>c.propertyId===b.p.id);await h.cmd('channel.sync',{id:link.id})
+  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+  const evidence=process.env.CABIN_QUESTION_SHOTS??'test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
+  for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000}})
+   try{
+    const [name,value]=b.manager.cookie.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
+    await page.goto(h.origin+'/app/questions');const form=page.getByRole('form',{name:'Portfolio question'}),question=form.getByLabel('Your question',{exact:true})
+    await question.fill('Why did this property’s owner net fall?');await form.getByLabel('Start date',{exact:true}).fill('2026-10-01');await form.getByLabel('End date (exclusive)',{exact:true}).fill('2026-11-01');await form.getByLabel('Property',{exact:true}).selectOption(b.p.id)
+    // Force the server's real length validation and retain the submitted form.
+    await question.evaluate(el=>el.removeAttribute('maxlength'));await question.fill('Why did net fall? '.repeat(60));await form.getByRole('button',{name:'Ask Cabin',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByRole('alert')).toContainText('up to 1000');await expect(page.getByRole('alert')).toBeFocused();await expect(page.getByLabel('Your question',{exact:true})).toHaveValue('Why did net fall? '.repeat(60))
+    await page.getByLabel('Your question',{exact:true}).fill('Why did this property’s owner net fall?');await page.getByRole('button',{name:'Ask Cabin',exact:true}).focus();await page.keyboard.press('Enter')
+    const answer=page.getByRole('region',{name:'Answer from saved records'});await expect(answer).toContainText('fell');await expect(answer).toContainText('$1,233.00');await expect(answer).toContainText('$2,000.00');await expect(answer).toContainText('Cutoff');await expect(page.getByRole('region',{name:'Uncertainty and source freshness'})).toContainText('Stale or unavailable provider read')
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'question answer fits viewport');await accessible(page);await page.screenshot({path:join(evidence,'staff-net-'+width+'.png'),fullPage:true})
+    const source=page.getByRole('region',{name:'Cited records'}).getByRole('link').filter({hasText:'journal ·'}).first(),href=await source.getAttribute('href');await source.click();assert.equal(new URL(page.url()).searchParams.get('property'),b.p.id);await expect(page.locator('#'+new URL(href,h.origin).hash.slice(1))).toBeVisible();await page.goBack()
+    await page.getByLabel('Your question',{exact:true}).fill('Which arrivals are at risk?');await page.getByRole('button',{name:'Ask Cabin',exact:true}).click();await expect(page.getByRole('region',{name:'Answer from saved records'})).toContainText('need readiness review');await expect(page.getByRole('region',{name:'Cited records'})).toContainText(/unknown|not-ready/);await accessible(page);await page.screenshot({path:join(evidence,'staff-arrivals-'+width+'.png'),fullPage:true})
+    const approval=page.getByRole('form',{name:'Approve investigation'});await approval.getByLabel('Investigation home',{exact:true}).selectOption(b.p.id);await approval.getByLabel('Responsible person',{exact:true}).selectOption(b.manager.id);await approval.getByRole('checkbox').check();await approval.getByRole('button',{name:'Approve assigned investigation',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByRole('status')).toContainText('approved and assigned');const investigations=page.getByRole('heading',{name:'Assigned investigations'}).locator('..');await expect(investigations).toContainText(b.manager.name);await page.screenshot({path:join(evidence,'staff-assigned-'+width+'.png'),fullPage:true});await accessible(page)
+   }finally{await context.close()}
+  }
+ }finally{if(browser)await browser.close();await h.close()}
+})
+
+test('rental-owner portfolio questions and their report citations stay within the owner’s homes on desktop and phone',{timeout:180000},async()=>{
+ const h=await harness({assets:true});let browser
+ try{
+  const {questionBooks,questionOwnerLogin}=await import('./reports-support.mjs'),b=await questionBooks(h),owner=await questionOwnerLogin(h,b.p.ownerEmail)
+  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']});const evidence=process.env.CABIN_QUESTION_SHOTS??'test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
+  for(const width of [1440,390]){
+   const context=await browser.newContext({viewport:{width,height:1000}})
+   try{
+    const [name,value]=owner.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
+    await page.goto(h.origin+'/owners');await page.getByRole('link',{name:'Ask Cabin about your records',exact:true}).click();const form=page.getByRole('form',{name:'Portfolio question'});await form.getByLabel('Your question',{exact:true}).fill('Why did my owner net fall?');await form.getByLabel('Start date',{exact:true}).fill('2026-10-01');await form.getByLabel('End date (exclusive)',{exact:true}).fill('2026-11-01');await form.getByRole('button',{name:'Ask Cabin',exact:true}).click()
+    await expect(page.getByRole('region',{name:'Answer from saved records'})).toContainText('Pine Ridge Cabin');assert.ok(!(await page.content()).includes(b.other.id));assert.ok(!(await page.content()).includes(b.other.ownerEmail));await expect(page.getByRole('region',{name:'Follow-up'})).toHaveCount(0);assert.equal(await page.getByRole('button',{name:'Approve assigned investigation'}).count(),0)
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'owner question fits viewport');await accessible(page);await page.screenshot({path:join(evidence,'owner-answer-'+width+'.png'),fullPage:true})
+    await page.getByRole('link',{name:'Current report',exact:true}).click();await expect(page.getByRole('heading',{name:'Your source report',exact:true})).toBeVisible();assert.ok(!(await page.content()).includes(b.other.id));assert.ok(!(await page.content()).includes(b.other.ownerEmail));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'owner report fits viewport');await accessible(page);await page.screenshot({path:join(evidence,'owner-report-'+width+'.png'),fullPage:true})
+   }finally{await context.close()}
+  }
+ }finally{if(browser)await browser.close();await h.close()}
+})

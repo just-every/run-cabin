@@ -9,7 +9,7 @@ const operations=['turnover.prepare','turnover.approve','turnover.assign','turno
 const finance=['ledger.post','ledger.reverse','ledger.close','statement.prepare','statement.approve','statement.close.prepare','statement.deliver','payout.import','payout.match','tax.report.prepare','tax.report.approve','tax.report.deliver']
 const reports=['report.save','report.schedule','report.pause','report.followup.resolve']
 export const roleActions:Record<PmsRole,string[]>={
- manager:['calendar:read','reservations:read','inbox:read','operations:read','finance:read','reports:read','owners:read','access:read','identity:read',...reservation,...inbox,...operations,...finance,...reports,'calendar.prepare','calendar.approve'],
+ manager:['calendar:read','reservations:read','inbox:read','operations:read','finance:read','reports:read','owners:read','access:read','identity:read',...reservation,...inbox,...operations,...finance,...reports,'calendar.prepare','calendar.approve','question.investigate'],
  reservation:['calendar:read','reservations:read',...reservation],
  guest_service:['calendar:read','reservations:read','inbox:read','operations:read','access:read',...inbox,'booking.details','portal.link.rotate','portal.sessions.end','task.raise','issue.open','issue.followup'],
  accountant:['finance:read','reports:read',...finance,...reports],
@@ -25,5 +25,5 @@ export function requireProperty(actor:Actor,id:string){need(permitsProperty(acto
 export const serviceRole=(role:string)=>['cleaner','inspector','maintenance'].includes(role)
 export function pageAction(path:string){
  const page=path.split('/')[2]||'calendar'
- return ({calendar:'calendar:read',reservations:'reservations:read',inbox:'inbox:read',guests:'reservations:read',readiness:'operations:read',turnovers:'operations:read',maintenance:'operations:read',recovery:'operations:read',reports:'reports:read',statements:'finance:read',ledger:'finance:read',taxes:'finance:read',people:'owners:read'} as Record<string,string>)[page]
+ return ({calendar:'calendar:read',reservations:'reservations:read',inbox:'inbox:read',guests:'reservations:read',readiness:'operations:read',turnovers:'operations:read',maintenance:'operations:read',recovery:'operations:read',reports:'reports:read',questions:'reports:read',statements:'finance:read',ledger:'finance:read',taxes:'finance:read',people:'owners:read'} as Record<string,string>)[page]
 }

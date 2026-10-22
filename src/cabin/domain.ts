@@ -1,3 +1,4 @@
+import { questionCommand } from './questions/commands'
 import { reportSharingCommand } from './reports/sharing'
 import { projectState } from './permissions/projection'
 import { expireQuotes } from './reservations/quotes'
@@ -48,7 +49,7 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
 expireQuotes(c)
 if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
- for(const handler of [reportSharingCommand,issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [questionCommand,reportSharingCommand,issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor,page?:{data:import('./model').Data;balanceBookingIds?:string[]}){

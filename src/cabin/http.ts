@@ -1,3 +1,4 @@
+import { answerQuestion } from './questions/read'
 import { readPageData } from './pages'
 import { reportSharingState,downloadReportArtifact } from './reports/sharing'
 import { rentalOwnerResponse } from './permissions/rental-owner'
@@ -63,13 +64,14 @@ import { inboxCommand } from './inbox/commands'
 import { smsResponse } from './inbox/sms'
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers})
-const pages=new Set(['/app','/app/reports','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/guests','/app/import','/app/agent','/app/direct','/app/books','/app/taxes','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
+const pages=new Set(['/app','/app/reports','/app/questions','/app/calendar','/app/readiness','/app/turnovers','/app/maintenance','/app/statements','/app/people','/app/guests','/app/import','/app/agent','/app/direct','/app/books','/app/taxes','/app/ledger','/app/activity','/app/inbox','/app/reservations','/app/channels','/app/recovery','/app/recovery/setup','/app/signin'])
 const AGENT_COMMANDS=['calendar.prepare','turnover.prepare','statement.prepare']
 async function execute(request:Request,env:Bindings,who:Actor,name:string,input:Record<string,unknown>){
  if(name==='rentalOwner.perform')name='rentalOwner.'+String(input.action??'')
  await commandScope(env.DB,who,name,input)
  if(name.startsWith('rentalOwner.'))return ownerAction(env,who.email,name.slice('rentalOwner.'.length),input,who)
  if(who.isAgent)need(AGENT_COMMANDS.includes(name),'Agents may only prepare drafts. Human approval is required.',403)
+ if(name==='question.ask')return answerQuestion(env.DB,{actor:who},input)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
  const result=name.startsWith('quote.')?await staffQuoteCommand(env,who,name,input):name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')||name.startsWith('thread.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
@@ -84,6 +86,7 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name==='question.investigate')return 'Investigation approved and assigned. Open the task below to follow its outcome.'
  if(name==='privacy.review')return 'Erasure review saved. Read the exact retention holds and external deletion steps before confirming below.'
  if(name==='privacy.erase')return `Local erasure completed. Receipt ${result.receiptId} lists retained records and external deletion steps under Properties & people.`
  if(name==='restore.review')return 'Restored records reviewed. Reconnect each provider separately; historical effects stay retired.'
@@ -202,7 +205,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
  if(path.startsWith('/stay/'))return guestStayResponse(request,runtimeBindings(original))
  if(path==='/inbound/sms')return smsResponse(request,runtimeBindings(original))
  if(!path.startsWith('/api/cabin/')&&path!=='/app'&&!path.startsWith('/app/'))return null
- const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),[returnPath,returnQuery='']=(url.searchParams.get('returnTo')??'').split('?'),back=pages.has(returnPath)?returnPath:'/app',thread=new URLSearchParams(returnQuery).get('thread')??url.searchParams.get('thread');let who:Actor|undefined
+ const env=runtimeBindings(original),isAgent=path.startsWith('/api/cabin/agent/'),[returnPath,returnQuery='']=(url.searchParams.get('returnTo')??'').split('?'),back=pages.has(returnPath)?returnPath:'/app',thread=new URLSearchParams(returnQuery).get('thread')??url.searchParams.get('thread');let who:Actor|undefined,questionInput:Record<string,unknown>|undefined
  try{
   need(url.origin===env.AUTH_ORIGIN&&(!request.headers.has('host')||request.headers.get('host')===url.host),'Wrong application origin',403)
   need(request.method==='GET'||request.method==='POST','Method not allowed',405)
@@ -246,6 +249,10 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    if(csv)return new Response(await statementCsv(env.DB,who,csv[1]),{headers:{...headers,'content-type':'text/csv; charset=utf-8','content-disposition':`attachment; filename="cabin-statement-${csv[1]}.csv"`}})
    const photo=path.match(/^\/api\/cabin\/turnovers\/([\w-]+)\/photo$/),direct=path.match(/^\/api\/cabin\/photos\/([\w-]+)$/)
    if(photo||direct){const saved=await turnoverPhoto(env.DB,who,(photo??direct)![1],!!direct);return new Response(saved.bytes,{headers:{...headers,'content-type':saved.mimeType,'content-disposition':'inline','content-security-policy':"default-src 'none'; sandbox"}})}
+  }else if(path==='/app/questions'||path==='/api/cabin/questions'){
+   const input=questionInput=await inputBody(request),answer=await answerQuestion(env.DB,{actor:who},input)
+   if(path==='/api/cabin/questions')return json(answer)
+   return renderApp(await snapshot(env,who),'/app/questions',{questionAnswer:answer})
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
@@ -260,6 +267,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
  }catch(error){
   const status=Number((error as any)?.status)||500,message=(error as any)?.status?(error as Error).message:'Could not complete this request. Refresh and try again.'
   if(who&&request.method==='POST'){try{await assertLive(env.DB,who);await record(env.DB,who,'command.denied',{result:status===403?'denied':'refused'})}catch{}}
+  if(path==='/app/questions'&&who&&request.method==='POST'){try{return await renderApp(await snapshot(env,who),path,{questionInput,error:message})}catch{/* Recheck authority rather than return a stale form. */}}
   if(path==='/app/action'&&who){try{return await renderApp(await snapshot(env,who),back,{report:back==='/app/reports'?await readReport(env.DB,who,new URLSearchParams()):undefined,reportSharing:back==='/app/reports'?await reportSharingState(env.DB,who):undefined,activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,error:message,thread})}catch{/* Revocation cannot fall back to a stale page. */}}
   if(pages.has(path)&&status===401)return new Response(null,{status:303,headers:{...headers,location:'/signin?returnTo='+encodeURIComponent(path)}})
   return json({error:message},status)

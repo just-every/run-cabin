@@ -24,3 +24,17 @@ export async function reportBooks(h,{many=false}={}){
  const report=async(query=reportMonth,cookie=h.owner)=>{const response=await h.send('/api/cabin/reports.json?'+query,undefined,cookie);assert.equal(response.status,200,response.text);return response.value}
  return {p,other,air,vrbo,unpaid,cancel,second,boundary,task,unknown,report,post}
 }
+
+// Owner sign-in remains the real portal flow; the mail transport is the test edge.
+export async function questionOwnerLogin(h,email){
+ assert.equal((await h.send('/owners/signin',{email})).status,200)
+ const messages=(await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence DESC').all()).results.map(r=>JSON.parse(r.message)),mail=messages.find(m=>m.to.includes(email)&&m.subject.includes('Sign in to your Cabin owner portal'));assert.ok(mail)
+ const token=new URL(mail.text.match(/http:\/\/[^\s]+\/owners\/confirm\?token=[^\s]+/)[0]).searchParams.get('token'),r=await h.send('/owners/confirm',{token});assert.equal(r.status,303,r.text);return r.cookie
+}
+export async function questionBooks(h){
+ const b=await reportBooks(h)
+ const previous=await h.cmd('reservation.create',{propertyId:b.p.id,method:'phone',channel:'direct',start:'2026-09-01',end:'2026-09-05',rentCents:200000,sourceId:'synthetic-cabin-question-1',guestName:'Synthetic Cabin Prior Guest',policyName:'50% cancellation charge',retainedBps:5000,noShowBps:10000})
+ await b.post(previous,'earn',200000,'2026-09-15','question-1')
+ const manager=await h.person('PortfolioInvestigator','manager')
+ return {...b,manager,filters:{from:'2026-10-01',until:'2026-11-01',property:b.p.id,basis:'accrual',dates:'stay',channel:'',owner:''}}
+}

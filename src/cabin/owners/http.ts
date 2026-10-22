@@ -1,3 +1,6 @@
+import { answerQuestion, questionReport, rentalQuestionAccess } from '../questions/read'
+import { questionPanel, ownerQuestionReport } from '../questions/ui'
+import { page } from './ui'
 import { type Actor } from '../model'
 import { assertLive } from '../storage'
 import { hasAction,permitsProperty } from '../permissions/policy'
@@ -35,6 +38,12 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
    if(path==='/owners/confirm')return new Response(null,{status:303,headers:{...headers,location:'/owners','set-cookie':await confirmOwner(env,value.token)}})
    if(path==='/owners/signout')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin','set-cookie':await signOutOwner(request,env)}})
    const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env)
+   if(path==='/owners/questions'||path==='/owners/questions/answer'){
+    const access=await rentalQuestionAccess(env.DB,email,nativeActor),answer=await answerQuestion(env.DB,access,value)
+    await rentalQuestionAccess(env.DB,email,nativeActor)
+    if(request.headers.get('content-type')?.includes('application/json'))return Response.json(answer,{headers})
+    return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1>'+questionPanel(answer.properties,answer,true)+'</main>','Questions')
+   }
    if(path==='/owners/action'){
     need(!nativeActor||hasAction(nativeActor,'rentalOwner.'+String(value.action??'')),'Action outside your team grant',403)
     const result=await ownerAction(env,email,String(value.action??''),value,nativeActor)
@@ -45,6 +54,12 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
    if(path==='/owners/signin')return signInPage()
    if(path==='/owners/confirm')return confirmationPage(url.searchParams.get('token')??'')
    const email=nativeActor?(await assertLive(env.DB,nativeActor),nativeActor.email):await ownerEmail(request,env),month=url.searchParams.get('month')??undefined
+   if(path==='/owners/questions'||path==='/owners/questions/report'){
+    const access=await rentalQuestionAccess(env.DB,email,nativeActor)
+    if(path.endsWith('/report')){const report=await questionReport(env.DB,access,url.searchParams);await rentalQuestionAccess(env.DB,email,nativeActor);return page(ownerQuestionReport(report),'Your source report')}
+    const directory=await env.DB.prepare('SELECT id,name FROM cb_properties WHERE id IN (SELECT value FROM json_each(?)) ORDER BY name').bind(JSON.stringify(access.actor.scope!.propertyIds)).all<{id:string;name:string}>()
+    return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1>'+questionPanel(directory.results,undefined,true)+'</main>','Questions')
+   }
    if(path==='/owners'){
     const s=await nativeState(env,email,month,nativeActor),selected=url.searchParams.get('statement')
     if(selected)need(s.statements.some(s=>s.id===selected),'Approved statement not found',404)
@@ -68,7 +83,7 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
  }catch(error){
   const status=Number((error as any).status)||500,message=status<500?(error as Error).message:'Could not complete the request. Try again.'
   if(status===401&&path==='/owners')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin'}})
-  if(path.startsWith('/owners/api/')||path.endsWith('.pdf')||path.endsWith('.csv')||path.endsWith('.txt')||path.startsWith('/owners/reports/')||request.headers.get('content-type')?.includes('application/json')&&path==='/owners/action')return Response.json({error:message},{status,headers})
+  if(path==='/owners/questions/report'||request.headers.get('content-type')?.includes('application/json')&&path.startsWith('/owners/questions')||path.startsWith('/owners/api/')||path.endsWith('.pdf')||path.endsWith('.csv')||path.endsWith('.txt')||path.startsWith('/owners/reports/')||request.headers.get('content-type')?.includes('application/json')&&path==='/owners/action')return Response.json({error:message},{status,headers})
   if(path==='/owners/action'||path==='/owners')return portalErrorPage(message,status)
   return signInPage(message,status)
  }
