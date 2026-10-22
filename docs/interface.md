@@ -26,7 +26,11 @@ Integration:
   all pending conversation roots, rather than rebuilding `threads` from the
   selected page. A selected page is not the portfolio count.
 
-Migration 0061 adds ordinary property, booking-reference and status expression indexes.
+Migrations 0061 and 0062 add ordinary property, booking-reference, status and
+covering message-activity expression indexes. Search selects matching reviewed
+threads before aggregating their complete activity. Scoped search counts use the
+same redacted text as the rendered conversation, including access codes from
+records outside the selected page.
 The page version is checked again after all reads, including its pending badge;
 a concurrent commit returns a visible refusal to reload. No secondary content store,
 FTS tables or archive changes are involved. Inbox query parameters are `q`,

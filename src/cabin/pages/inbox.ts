@@ -83,7 +83,7 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  // particular previews must not retain authority objects or scoped secrets.
  const messageRows=[...list.flatMap(t=>t.messages),...data.messages]
  const projected=projectState({...data,messages:messageRows},actor), visibleMessages=new Map(projected.messages.map(m=>[m.id,m])), visibleBookings=new Map(projected.bookings.map(b=>[b.id,b])),visibleScheduled=new Map(projected.scheduled.map(r=>[r.id,r]))
- for(const t of new Set([...list,...(open?[open]:[])])){t.messages=t.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m);t.stays=t.stays.map(b=>visibleBookings.get(b.id)).filter((b):b is NonNullable<typeof b>=>!!b);t.scheduled=t.scheduled.map(r=>visibleScheduled.get(r.id)).filter((r):r is NonNullable<typeof r>=>!!r)}
+ for(const t of new Set([...list,...(open?[open]:[])])){if(redact){t.name=redact(t.name);t.email=t.email?redact(t.email):null;t.phone=t.phone?redact(t.phone):null}t.messages=t.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m);t.stays=t.stays.map(b=>visibleBookings.get(b.id)).filter((b):b is NonNullable<typeof b>=>!!b);t.scheduled=t.scheduled.map(r=>visibleScheduled.get(r.id)).filter((r):r is NonNullable<typeof r>=>!!r)}
  data.messages=data.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m)
  latestIncoming=latestIncoming?visibleMessages.get(latestIncoming.id):undefined
  return {query,page,size:THREADS,total,pages,threads:list,open,messagePage,messageSize:MESSAGES,messageTotal,messagePages:Math.max(1,Math.ceil(messageTotal/MESSAGES)),latestIncoming}
