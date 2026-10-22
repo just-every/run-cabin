@@ -1,4 +1,4 @@
-# Scheduled reservation payments
+# Reservation payments
 
 Open Direct bookings → Payments · scheduled collection for a priced direct reservation created by staff. Its cancellation policy and guest email must already be saved. Existing direct website checkouts have their own payment flow and cannot be charged again here. Channel-paid reservations require their channel's dedicated payment mandate.
 
@@ -16,4 +16,6 @@ Archive exports remove saved-card capabilities and restore collection plans inac
 
 The provider-edge journey covers interruption both before provider acceptance and after an accepted charge whose response was lost, once-only overdue escalation, a revised remaining-balance mandate and revoked creator authority.
 
-The unconditional integration assertion is in `tests/direct.test.mjs`. `node tests/collection-support.mjs` runs the provider-edge acceptance journey; it requires a privately injected `CABIN_COLLECTION_TEST_CREDENTIAL` from the installation's Stripe test credential. It intercepts Stripe only at the network edge and stores no credential fixture. `node tests/collection-browser.mjs` runs the same journey with desktop and phone browser proof. These journeys prove application behavior, not live Stripe acceptance, real funds, delivery to a guest, Booking.com authorization or a physical lock.
+The unconditional integration assertion is in `tests/direct.test.mjs`. `node tests/collection-support.mjs` runs the provider-edge acceptance journey; it uses the repository's existing synthetic-cabin fixture convention at the intercepted Stripe network edge. Strict production credential validation is unchanged; no held key or live provider is used. The same journey runs unconditionally in Verify's direct-payment suite. `node tests/collection-browser.mjs` runs the same journey with desktop and phone browser proof. These journeys prove application behavior, not live Stripe acceptance, real funds, delivery to a guest, Booking.com authorization or a physical lock.
+
+Manual cash and cleared-check receipts are recorded in Payments → manual receipts. Enter the actual USD cents, receipt/clearance date, stable source reference and custody evidence; explicitly confirm that money was actually received. A pending/unverified check is not recorded as paid. The immutable trust-ledger entry reduces only that reservation's outstanding balance, refuses overpayment and conflicting replay, and never claims a Stripe settlement. Configure the property's ledger legal entity first. Correct erroneous evidence through the existing linked ledger reversal/correction door. Manual receipts do not complete PAY-001's pending/returned ACH acceptance.

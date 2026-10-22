@@ -347,3 +347,28 @@ test('scheduled collections require current reservation terms, guest consent and
   assert.ok((await collectionState(h,schedule.id)).jobs.every(j=>j.status==='suppressed'))
  }finally{await h.close()}
 })
+
+
+test('scheduled collection reconciles provider interruptions, failed follow-up, revised mandates and revoked authority without duplicate charges',{timeout:120000},async()=>{
+ const {collectionProviderJourney}=await import('./collection-support.mjs');await collectionProviderJourney()
+})
+
+
+test('source-backed cash and cleared-check receipts post once, retain evidence and reduce only the correct outstanding balance',async()=>{
+ const {collectionHome,collectionBooking,day}=await import('./collection-support.mjs'),h=await harness({outbound:async()=>assert.fail('Manual receipts have no processor effect')})
+ try{
+  const home=await collectionHome(h);await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Synthetic trust entity'})
+  const b=await collectionBooking(h,home),source=async(method,amountCents)=>({bookingId:b.id,revision:(await h.state()).bookings.find(v=>v.id===b.id).revision,method,amountCents,reference:'synthetic-cabin-'+method,receivedAt:day(0),note:'Verified custody and original source evidence',confirm:'yes'})
+  const cash=await source('cash',3000);await h.cmd('direct.manual.receive',{...cash,confirm:'no'},h.owner,400)
+  const first=await h.cmd('direct.manual.receive',cash);assert.equal((await h.cmd('direct.manual.receive',cash)).id,first.id)
+  await h.cmd('direct.manual.receive',{...cash,amountCents:3001},h.owner,409)
+  const check=await source('check',2000),second=await h.cmd('direct.manual.receive',check)
+  assert.equal(second.manualReceipt.method,'check');assert.equal(second.manualReceipt.reference,check.reference)
+  const balance=(await h.state()).bookings.find(v=>v.id===b.id).reservationBalance;assert.equal(balance.paidCents,5000);assert.equal(balance.balanceCents,8000)
+  const cleaner=await h.person('ManualReceiptCleaner');await h.cmd('direct.manual.receive',await source('cash',1000),cleaner.cookie,403)
+  await h.cmd('direct.manual.receive',{...await source('cash',9000),reference:'synthetic-cabin-overpayment'},h.owner,409)
+  await h.cmd('direct.manual.receive',{...await source('cash',1000),reference:'synthetic-cabin-future',receivedAt:day(2)},h.owner,400)
+  await h.restart();const state=await h.state(),receipts=state.ledger.journals.filter(j=>j.manualReceipt);assert.equal(receipts.length,2);assert.equal(state.bookings.find(v=>v.id===b.id).reservationBalance.paidCents,5000)
+  assert.ok(receipts.every(j=>j.sourceType==='payment'&&j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0)===0));assert.ok(receipts.every(j=>j.manualReceipt.note===check.note))
+ }finally{await h.close()}
+})

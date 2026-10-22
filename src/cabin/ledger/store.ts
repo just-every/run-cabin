@@ -6,7 +6,7 @@ export async function journals(db:D1Database):Promise<Journal[]> {
  return (await db.prepare('SELECT data FROM cb_ledger_journals ORDER BY posted_at,id').all<{data:string}>()).results.map(r=>JSON.parse(r.data))
 }
 export async function contextJournals(c:Context){let rows=pending.get(c);if(!rows){rows=await journals(c.db);pending.set(c,rows)}return rows}
-export async function post(c:Context,input:{sourceKey:string;propertyId:string;bookingId:string;effectiveDate:string;sourceType:string;sourceId:string;sourceRevision:string;lines:Leg[];correctionOf?:string;reversalOf?:string;ownerKey?:string;legalEntity?:string}) {
+export async function post(c:Context,input:{manualReceipt?:Journal['manualReceipt'];sourceKey:string;propertyId:string;bookingId:string;effectiveDate:string;sourceType:string;sourceId:string;sourceRevision:string;lines:Leg[];correctionOf?:string;reversalOf?:string;ownerKey?:string;legalEntity?:string}) {
  const rows=await contextJournals(c)
  const existing=rows.find(r=>r.sourceKey===input.sourceKey);if(existing)return existing
  const p=c.data.properties.find(p=>p.id===input.propertyId),setting=c.data.ledgerSettings.find(s=>s.propertyId===input.propertyId)

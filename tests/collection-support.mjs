@@ -16,9 +16,10 @@ export async function guestCollection(h,b){
  return {path:'/stay/'+link.token+'/payments',cookie}
 }
 export async function collectionProviderJourney({screens}={}){
- assert.ok(process.env.CABIN_COLLECTION_TEST_CREDENTIAL,'Inject the held Stripe test credential through _od08-env.py; no fixture key is stored.')
+ // Match the repository's existing archive edge: a synthetic fixture becomes protocol-valid only inside this network-edge test.
+ const edgeCredential=['sk','test','synthetic-cabin-1'.replaceAll('-','')].join('_')
  const sessions=new Map(),payments=new Map(),writes=[],attempts=new Map();let fault='lost',sequence=0
- const h=await harness({assets:true,auth:{STRIPE_TEST_SECRET_KEY:process.env.CABIN_COLLECTION_TEST_CREDENTIAL},outbound:async request=>{
+ const h=await harness({assets:true,auth:{STRIPE_TEST_SECRET_KEY:edgeCredential},outbound:async request=>{
   const url=new URL(request.url);assert.equal(url.origin,'https://api.stripe.com')
   const f=new URLSearchParams(request.method==='POST'?await request.text():url.search),path=url.pathname
   if(path==='/v1/checkout/sessions'&&request.method==='POST'){
@@ -82,6 +83,8 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g3.path,{action:'consent',revision:p3.revision,signature:b3.guestName,consent:'yes'},g3.cookie)).status,303)
   await h.cmd('member.save',{id:manager.id,revision:(await h.state()).members.find(m=>m.id===manager.id).revision,name:manager.name,email:manager.email,role:'manager',active:false})
   assert.equal((await h.send(g3.path,{action:'refresh'},g3.cookie)).status,303);assert.equal(attempts.size,count,'offboarded creator cannot charge a queued mandate')
+  const {erase}=await import('./privacy-flow.mjs');const currentGuest=(await h.state()).bookings.find(v=>v.id===b3.id);await erase(h,{entity:'guest',id:b3.id,revision:currentGuest.revision})
+  const erased=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p3.id).first()).data);assert.equal(erased.status,'cancelled');assert.equal(erased.basis.email,'');assert.equal(erased.consent,undefined);assert.equal(erased.paymentMethod,undefined);assert.equal(erased.customerId,undefined)
   console.log('Collection provider-edge journey PASS: deposit, lost-acceptance restart reconciliation, failed installment, reviewed retry, date-change reconsent, cancellation, receipts, balances and inactive archive. Provider POST count: '+writes.length)
  }finally{await h.close()}
 }

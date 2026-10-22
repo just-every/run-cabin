@@ -101,7 +101,7 @@
   "nightly": [
     {
       "name": "clone",
-      "browser": false,
+      "browser": true,
       "hosted": false,
       "commands": [
         "pnpm run test:launch"

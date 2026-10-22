@@ -1,4 +1,4 @@
-import { collectionPanel } from '../direct/collection-ui'
+import { collectionPanel,manualReceiptPanel } from '../direct/collection-ui'
 import { promotionPanel } from '../promotions/ui'
 import { websiteEditor } from '../website/ui'
 import { verificationPolicyFields,verificationQueue } from '../verification/ui'
@@ -116,6 +116,7 @@ export function direct(state: any) {
     + promotionPanel(state)
     + stripeSetup(state)
     + collectionPanel(state)
+    + manualReceiptPanel(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
     + agreementPanel(state)
     + verificationQueue(state)

@@ -1,3 +1,4 @@
+import { manualReceipt } from './manual-receipts'
 import { collectionCommand } from './collections'
 import { collectionPlans,publicCollection } from './collection-store'
 import { bookingSite,websiteCommand } from '../website/store'
@@ -21,6 +22,7 @@ export async function directState(env:Bindings,actor:Actor) {
 }
 export async function directCommand(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>) {
  manager(actor);await assertLive(env.DB,actor)
+ const receipt=await manualReceipt(env,actor,name,input);if(receipt!==undefined)return receipt
  const collection=await collectionCommand(env,actor,name,input);if(collection!==undefined)return collection
  const website=await websiteCommand(env,actor,name,input);if(website!==undefined)return website
  const refund=await refundCommand(env,actor,name,input);if(refund!==undefined)return refund

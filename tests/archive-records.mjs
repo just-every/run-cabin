@@ -1,3 +1,4 @@
+import { collectionBooking,createCollection } from './collection-support.mjs'
 import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -39,6 +40,7 @@ export async function populateArchive(h,p,cleaner) {
  const imported=await h.cmd('import.provider.preview',{provider:'guesty',asOf:day(0),files:[{name:'cabin-cutover.csv',text:'Record type,Provider,Listing ID,Listing name,Owner name,Owner email,Commission percent,Channel,iCal URL\n'+'home,guesty,archive-listing,Archive Lodge,Karen Ortiz,karen@stay.example,20,,\n'+'link,guesty,archive-listing,,,,,airbnb,https://calendar.stay.example/private-import-link.ics\n'}]})
  await h.cmd('home.settings',{propertyId:p.id,address:'14 Lake View Drive, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:cleaner.id,checklist:['Linen changed'],photosRequired:1})
  await h.cmd('ledger.configure',{propertyId:p.id,legalEntity:'Lake Loft Rentals LLC'})
+ const collection=await createCollection(h,await collectionBooking(h,p,100))
  await h.cmd('payout.import',{propertyId:p.id,source:'airbnb',csv:'Date,Type,Confirmation code,Start date,Nights,Currency,Gross earnings,Host service fee,Amount,Payout ID\n2026-01-06,Reservation,archive-stay,2026-01-01,4,USD,1000.00,30.00,970.00,ARCHIVE-PAYOUT\n'})
  const statement=await h.cmd('statement.prepare',{propertyId:p.id,month:'2026-01'})
  await h.cmd('statement.approve',{id:statement.id,revision:statement.revision})
@@ -65,13 +67,14 @@ export async function populateArchive(h,p,cleaner) {
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
  const channelAgent=await populateChannelArchive(h,p)
- return {importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
+ return {collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
  assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_provider_security').first()).n,0,'provider credentials and grants stay installation-local')
  for(const table of ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits'])assert.equal((await h.db.prepare('SELECT count(*) AS n FROM '+table).first()).n,0,'guest authentication is never restored')
  assert.equal((await h.send('/stay/'+proof.portal.token,undefined,proof.portal.cookie)).status,404)
  const guideFile=await h.db.prepare('SELECT hex(bytes) AS bytes,sha256 FROM cb_guest_guide_files WHERE id=?').bind(proof.portal.file.id).first();assert.equal(Buffer.from(guideFile.bytes,'hex').toString(),proof.portal.guideBytes);assert.equal(guideFile.sha256,proof.portal.file.sha256)
+ const collection=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(proof.collectionId).first()).data);assert.equal(collection.restored,true);assert.equal(collection.status,'paused');assert.equal(collection.customerId,undefined);assert.equal(collection.paymentMethod,undefined);assert.equal(collection.setup,undefined)
  let s=await h.accessState(owner)
  const imported=await h.db.prepare('SELECT plan,fingerprint FROM cb_provider_moveins WHERE id=?').bind(proof.importedId).first();assert.equal(JSON.parse(imported.plan).homes[0].links.length,0);await h.cmd('import.provider.apply',{id:proof.importedId,fingerprint:imported.fingerprint},owner,409)
  assert.equal(s.restore.reviewed,0)
