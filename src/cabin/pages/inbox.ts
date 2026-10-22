@@ -1,6 +1,8 @@
 import type { Actor, Data } from '../model'
 import { threadId, type Thread } from '../inbox/threads'
 import { projectState } from '../permissions/projection'
+import { inboxSummary } from './inbox-summary'
+import { sensitiveTextRedactor } from '../connections/redaction'
 import { messageSelection } from './message-query'
 import { inIds, pageNumber, records, scoped } from './core'
 
@@ -31,17 +33,13 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  const key=`COALESCE(k.key,CASE WHEN json_extract(r.data,'$.email') IS NOT NULL THEN 'e:'||json_extract(r.data,'$.email') WHEN json_extract(r.data,'$.phone') IS NOT NULL THEN 'p:'||json_extract(r.data,'$.phone') ELSE 'r:'||COALESCE(json_extract(r.data,'$.ref'),'unknown') END)`
  const cte=`WITH keys AS MATERIALIZED (SELECT json_extract(value,'$[0]') booking,json_extract(value,'$[1]') key FROM json_each(?)),
  message_rows AS (SELECT r.id,r.data,${key} key FROM cb_records r LEFT JOIN keys k ON k.booking=json_extract(r.data,'$.bookingId') WHERE r.kind='messages' AND json_extract(r.data,'$.status')!='discarded'${scope})`
- const needle=query.toLowerCase(), match=`instr(lower(COALESCE(json_extract(data,'$.text'),'')||' '||COALESCE(json_extract(data,'$.subject'),'')||' '||COALESCE(json_extract(data,'$.email'),'')||' '||COALESCE(json_extract(data,'$.phone'),'')||' '||COALESCE(json_extract(data,'$.ref'),'')),?)>0`
- const activity=`${cte}, activity AS (
- SELECT key,COALESCE(json_extract(data,'$.sentAt'),json_extract(data,'$.createdAt'),'') at,CASE WHEN json_extract(data,'$.status') IN ('draft','drafting') THEN 1 ELSE 0 END draft,CASE WHEN ?='' OR ${match} THEN 1 ELSE 0 END matched FROM message_rows
- UNION ALL SELECT k.key,COALESCE(json_extract(r.data,'$.approvedAt'),''),0,CASE WHEN ?='' OR instr(lower(COALESCE(json_extract(r.data,'$.guestName'),'')||' '||COALESCE(json_extract(r.data,'$.guestEmail'),'')||' '||COALESCE(json_extract(r.data,'$.guestPhone'),'')||' '||COALESCE(json_extract(r.data,'$.channelRef'),'')||' '||COALESCE(json_extract(r.data,'$.summary'),'')||' '||COALESCE(p.name,'')),?)>0 THEN 1 ELSE 0 END FROM cb_records r JOIN keys k ON k.booking=r.id LEFT JOIN cb_properties p ON p.id=json_extract(r.data,'$.propertyId') WHERE r.kind='bookings' AND COALESCE(json_extract(r.data,'$.kind'),'stay')='stay'
- UNION ALL SELECT k.key,COALESCE(json_extract(r.data,'$.sentAt'),''),0,0 FROM cb_records r JOIN keys k ON k.booking=json_extract(r.data,'$.bookingId') WHERE r.kind='scheduled'
- ), grouped AS (SELECT key,MAX(at) lastAt,SUM(draft) drafts FROM activity GROUP BY key HAVING MAX(matched)=1)`
- const params=[mapping,...scopeParams,needle,needle,needle,needle]
- const summary=await db.prepare(`${activity} SELECT (SELECT COUNT(*) FROM grouped) total, (SELECT json_group_array(json_object('key',key,'lastAt',lastAt,'drafts',drafts)) FROM (SELECT * FROM grouped ORDER BY (drafts>0) DESC,lastAt DESC,key LIMIT ? OFFSET ?)) rows`).bind(...params,THREADS,(page-1)*THREADS).first<{total:number;rows:string}>()
- const total=Number(summary?.total??0), pages=Math.max(1,Math.ceil(total/THREADS))
+ // Scoped reads search the same redacted text that the person may see.
+ const constrained=!!actor.scope&&!(actor.scope.propertyIds.includes('*')&&actor.scope.actions.includes('*'))
+ if(constrained&&!actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes','exports'])
+ const redact=constrained?sensitiveTextRedactor([...data.codes.flatMap(r=>[r.code,r.link]),...data.exports.map(r=>r.token)].filter((v):v is string=>typeof v==='string')):undefined
+ const {total,rows:selected}=await inboxSummary(db,{mapping,query,page,size:THREADS,scope,scopeParams,redact})
+ const pages=Math.max(1,Math.ceil(total/THREADS))
  if(page>pages)throw Object.assign(new Error('That guest page is no longer available. Search again from the first page.'),{status:400})
- const selected: {key:string;lastAt:string;drafts:number}[]=JSON.parse(summary?.rows??'[]')
  const requested=url.searchParams.get('thread')
  let openKey=requested?keys.find(([,key])=>threadId(key)===requested)?.[1]:selected[0]?.key
  // Unmatched conversations have no booking in keys; resolve their stable id
@@ -53,7 +51,7 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  await records(db,data,['guests','scheduled'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
  await records(db,data,['homeSettings','threadCases'],inIds("json_extract(data,'$.propertyId')"),[homes])
  await records(db,data,['inbox'])
- await records(db,data,['codes'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
+ if(!constrained||actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
  const make=(key:string):Thread=>{
   const stays=data.bookings.filter(b=>keysByBooking.get(b.id)===key&&(b.kind??'stay')==='stay').sort((a,b)=>a.start.localeCompare(b.start)), named=[...stays].reverse().find(b=>b.guestName), first=stays[0]
   const email=key.startsWith('e:')?key.slice(2):stays.find(b=>b.guestEmail)?.guestEmail??null,phone=key.startsWith('p:')?key.slice(2):stays.find(b=>b.guestPhone)?.guestPhone??null
@@ -83,9 +81,10 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  data.messages=[...data.messages,...references.results.map(r=>JSON.parse(r.data)),...(latestIncoming?[latestIncoming]:[])]
  // Metadata must cross the same read projection as the ordinary state. In
  // particular previews must not retain authority objects or scoped secrets.
- const messageRows=[...list.flatMap(t=>t.messages),...(open?.messages??[]),...(latestIncoming?[latestIncoming]:[])]
+ const messageRows=[...list.flatMap(t=>t.messages),...data.messages]
  const projected=projectState({...data,messages:messageRows},actor), visibleMessages=new Map(projected.messages.map(m=>[m.id,m])), visibleBookings=new Map(projected.bookings.map(b=>[b.id,b])),visibleScheduled=new Map(projected.scheduled.map(r=>[r.id,r]))
  for(const t of new Set([...list,...(open?[open]:[])])){t.messages=t.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m);t.stays=t.stays.map(b=>visibleBookings.get(b.id)).filter((b):b is NonNullable<typeof b>=>!!b);t.scheduled=t.scheduled.map(r=>visibleScheduled.get(r.id)).filter((r):r is NonNullable<typeof r>=>!!r)}
+ data.messages=data.messages.map(m=>visibleMessages.get(m.id)).filter((m):m is NonNullable<typeof m>=>!!m)
  latestIncoming=latestIncoming?visibleMessages.get(latestIncoming.id):undefined
  return {query,page,size:THREADS,total,pages,threads:list,open,messagePage,messageSize:MESSAGES,messageTotal,messagePages:Math.max(1,Math.ceil(messageTotal/MESSAGES)),latestIncoming}
 }

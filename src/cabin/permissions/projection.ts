@@ -1,5 +1,5 @@
 import type { Actor } from '../model'
-import { redactSensitiveText } from '../connections/redaction'
+import { sensitiveTextRedactor } from '../connections/redaction'
 
 type Row = Record<string, any>
 type Scope = { propertyIds: string[]; actions: string[]; revision: number; pmsRole: string }
@@ -71,11 +71,12 @@ export function projectState<T>(state: T, actor: Actor): T {
     }
   }
   const secrets = [...rows(source.codes).flatMap(row => [row.code, row.link]), ...rows(source.exports).map(row => row.token)].filter((s): s is string => typeof s === 'string' && !!s)
+  const redact=sensitiveTextRedactor(access?[]:secrets)
   const secretField = /sealed|secret|password|credential|storageState|token|bankAccount|banking|routingNumber|taxId|ssn|idImage/i
   const pii = new Set(['guestName', 'guestEmail', 'guestPhone', 'email', 'phone', 'identities', 'facts', 'consents', 'signature', 'guest', 'recipient', 'reservationTerms'])
   const money = new Set(['managementTerms', 'ownerTerms', 'ownerAllocations', 'allocation', 'reservationBalance', 'price', 'quote', 'invoice', 'deposit', 'refunds', 'taxFilings', 'close'])
   const clean = (value: any, inherited: string[] = []): any => {
-    if (typeof value === 'string') return redactSensitiveText(value, access ? [] : secrets)
+    if (typeof value === 'string') return redact(value)
     if (Array.isArray(value)) return value.map(item => clean(item, inherited)).filter(item => item !== undefined)
     if (!object(value)) return value
     const explicit = directScope(value), linked = references.some(key => typeof value[key] === 'string' && value[key]) ? propertyIds(value) : []

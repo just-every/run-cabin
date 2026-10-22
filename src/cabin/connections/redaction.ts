@@ -1,8 +1,9 @@
 /** Text boundaries supplement structured omission; never use them to store credentials safely. */
-export function redactSensitiveText(value: string, secrets: readonly string[] = []) {
- let result = value
- // A secret is a whole token: a door code's digits inside a hash or another opaque value are not that code.
- for (const secret of secrets.filter(v => v.length >= 4).sort((a,b) => b.length-a.length)) result = result.replace(new RegExp(`(?<![A-Za-z0-9])${secret.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9])`, 'g'), '[restricted]')
+export function sensitiveTextRedactor(secrets: readonly string[] = []) {
+ const values=[...new Set(secrets.filter(v=>v.length>=4))].sort((a,b)=>b.length-a.length)
+ const tokens=values.length?new RegExp(`(?<![A-Za-z0-9])(?:${values.map(secret=>secret.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')})(?![A-Za-z0-9])`,'g'):undefined
+ return (value:string) => {
+ const result=tokens?value.replace(tokens,'[restricted]'):value
  return result
   .replace(/https?:\/\/[^\s<>"']*\/(?:offers\/|stay\/|ical\/|message-preferences\/|book\/stay\/|book\/quote\/|book\/return\/|owners\/confirm\?|auth\/confirm\?)[^\s<>"']*/gi, '[private link]')
   .replace(/\/message-preferences\/[a-z0-9_-]+\/[a-f0-9]{64}/gi, '[private link]')
@@ -13,6 +14,9 @@ export function redactSensitiveText(value: string, secrets: readonly string[] = 
   .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[tax ID]')
   .replace(/\b(?:\d[ -]?){13,19}\b/g, '[restricted number]')
 }
+}
+export function redactSensitiveText(value:string,secrets:readonly string[]=[]){return sensitiveTextRedactor(secrets)(value)}
+
 const PRIVATE_KEYS = new Set(['emailHash','sessionEpoch','bodySealed','stateSealed','beforeSealed','afterSealed','storageState','keySealed','bookingLinkSealed','credential_sealed','tokenSealed','token','tokenHash','token_hash','paymentMethod','customerId','checkoutUrl','bankAccount','routingNumber','taxId','ssn','idImage'])
 /** Ordinary API/export/agent representations carry references, never active capabilities. */
 const REFERENCES=new Set(['id','revision','uid','code','sourceKey','sourceId','sourceRevision','channelRef','start','end','at','date','month','timeZone','first','checkout'])

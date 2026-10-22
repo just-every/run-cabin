@@ -7,6 +7,7 @@ export interface InboxSummaryOptions {
  /** The message scope and bindings already used by inboxData/messageSelection. */
  scope: string
  scopeParams: unknown[]
+ redact?: (text:string)=>string
 }
 export interface InboxSummaryRow { key: string; lastAt: string; drafts: number }
 export interface InboxSummary { total: number; rows: InboxSummaryRow[] }
@@ -40,8 +41,8 @@ function allActivity(scope: string) {
 }
 
 /** Find matches first; only then read all activity of those complete threads. */
-function matchingActivity(scope: string) {
- return `message_matches AS MATERIALIZED (
+function matchingActivity(scope: string, filtered: boolean) {
+ const matched = filtered ? `matched AS MATERIALIZED (SELECT value key FROM json_each(?))` : `message_matches AS MATERIALIZED (
   SELECT ${booking} booking,${contact} contact FROM ${messages}
   WHERE ${retained}${scope} AND instr(${search},?)>0
  ), matched AS MATERIALIZED (
@@ -49,7 +50,8 @@ function matchingActivity(scope: string) {
   UNION SELECT k.key FROM cb_records r JOIN keys k ON k.booking=r.id
   LEFT JOIN cb_properties p ON p.id=json_extract(r.data,'$.propertyId')
   WHERE ${stays} AND instr(${bookingSearch},?)>0
- ), matched_bookings AS MATERIALIZED (
+ )`
+ return `${matched}, matched_bookings AS MATERIALIZED (
   SELECT k.booking,k.key FROM keys k JOIN matched m ON m.key=k.key
  ), matched_contacts AS MATERIALIZED (
   SELECT key FROM matched WHERE substr(key,1,2) IN ('e:','p:','r:')
@@ -76,9 +78,15 @@ export async function inboxSummary(db: D1Database, options: InboxSummaryOptions)
  // even when the search narrows activity to just a few reviewed guest roots.
  const scope = options.scope.replaceAll('k.booking IS NOT NULL',`${booking} IN (SELECT booking FROM keys)`)
  const needle = query.toLowerCase()
- const activity = needle ? matchingActivity(scope) : allActivity(scope)
+ let filtered:string[]|undefined
+ if(needle&&options.redact){
+  const candidates=await db.prepare(`WITH ${keys} SELECT COALESCE(k.key,${contact}) key,${search.slice(6,-1)} text FROM ${messages} LEFT JOIN keys k ON k.booking=${booking} WHERE ${retained}${scope} AND instr(${search},?)>0
+   UNION ALL SELECT k.key,${bookingSearch.slice(6,-1)} FROM cb_records r JOIN keys k ON k.booking=r.id LEFT JOIN cb_properties p ON p.id=json_extract(r.data,'$.propertyId') WHERE ${stays} AND instr(${bookingSearch},?)>0`).bind(mapping,...scopeParams,needle,needle).all<{key:string;text:string}>()
+  filtered=[...new Set(candidates.results.filter(r=>options.redact!(r.text).toLowerCase().includes(needle)).map(r=>r.key))]
+ }
+ const activity = needle ? matchingActivity(scope,!!filtered) : allActivity(scope)
  const params = needle
-  ? [mapping,...scopeParams,needle,needle,...scopeParams,...scopeParams]
+  ? filtered?[mapping,JSON.stringify(filtered),...scopeParams,...scopeParams]:[mapping,...scopeParams,needle,needle,...scopeParams,...scopeParams]
   : [mapping,...scopeParams]
  const result = await db.prepare(`WITH ${keys},${activity}, grouped AS (
   SELECT key,MAX(at) lastAt,SUM(drafts) drafts FROM activity GROUP BY key HAVING MAX(eligible)=1
