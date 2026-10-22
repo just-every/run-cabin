@@ -12,7 +12,7 @@ import { followup,closeFollowup } from './collection-followup'
 import { chargeCollection,findCollectionPayment } from './collection-provider'
 import { post } from '../ledger/store'
 import { debit,credit } from '../ledger/types'
-import type { CollectionPlan,CollectionAttempt } from './collection-types'
+import type { CollectionPlan,CollectionJob,CollectionAttempt } from './collection-types'
 const envFor=(env:Bindings,p:CollectionPlan)=>({...env,CABIN_PROVIDER_PROPERTY_ID:p.propertyId,DIRECT_STRIPE_MODE:p.mode})
 const plan=async(db:D1Database,id:string)=>{const p=(await collectionPlans(db)).find(p=>p.id===id);need(p,'Collection schedule not found',404);return p}
 const owns=(actor:Actor,p:CollectionPlan)=>need(permitsProperty(actor,p.propertyId),'Collection schedule not found',404)
