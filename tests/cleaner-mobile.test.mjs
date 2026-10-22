@@ -155,6 +155,7 @@ test('AUTH-002: desktop and phone team invitations enforce a single home and off
         await expect(staffPage.locator(`#stay-${stay.bookingId}`).getByLabel('Guest name',{exact:true})).toHaveValue(updatedName)
         await expect(staffPage.locator('body')).not.toContainText(otherHome.name)
         assert.ok(await staffPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'scoped reservations fit the viewport')
+        await expect(staffPage.locator('.me-text .role')).toHaveText(/reservation staff/i)
         await staffPage.screenshot({path:`${evidence}/scoped-staff-${width}.png`,fullPage:true})
 
         const foreign = (await h.state()).bookings.find(b=>b.id===otherStay.bookingId)

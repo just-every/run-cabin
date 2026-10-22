@@ -1,5 +1,5 @@
 import { reportSharingPanel } from '../reports/sharing'
-import { hasAction,pageAction } from '../permissions/policy'
+import { hasAction,pageAction,roleNames } from '../permissions/policy'
 import { reports } from '../reports/ui'
 import type { Report } from '../reports/read'
 import { taxes } from '../taxes/ui'
@@ -59,7 +59,7 @@ function rail(s: any, tab: string, brand: string) {
   const [tone, sync] = syncLine(s)
   return `<aside class="rail" aria-label="Workspace"><div class="rail-top"><a class="logo" href="/app">${brand}</a><input type="checkbox" id="rail-menu" class="rail-toggle" aria-label="Workspace menu"><label for="rail-menu" class="rail-menu">${icon('menu')}<span>Menu</span></label></div>
   <div class="rail-body">${homes}<nav aria-label="Cabin workspace">${groups}</nav>
-  <div class="me"><span class="avatar" aria-hidden="true">${h(initials)}</span><div class="me-text"><strong title="${h(s.actor.email)}">${h(me)}</strong><span class="role">${h(s.actor.role)}</span>${manager(s) ? `<span class="sync ${tone}"><i></i>${h(sync)}</span>` : ''}</div>
+  <div class="me"><span class="avatar" aria-hidden="true">${h(initials)}</span><div class="me-text"><strong title="${h(s.actor.email)}">${h(me)}</strong><span class="role">${h(roleNames[s.actor.scope?.pmsRole as keyof typeof roleNames]??s.actor.role)}</span>${manager(s) ? `<span class="sync ${tone}"><i></i>${h(sync)}</span>` : ''}</div>
   <div class="me-links">${owner(s) ? `<a href="/app/signin"${tab === 'signin' ? ' aria-current="page"' : ''}>${icon('settings')}<span>Sign-in settings</span></a>` : ''}<button type="button" data-signout>${icon('signout')}<span>Sign out</span></button></div></div></div></aside>`
 }
 /** The owner's sign-in settings, saved by Base's own form handler. */
