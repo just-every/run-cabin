@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "findings": [
+    {
+      "rule": "hygiene.email",
+      "path": "tests/launch.test.mjs",
+      "blob": "c14c18e1ec9423abaa303f577c9ac786eef390f1",
+      "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-22"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/launch.test.mjs",
+      "blob": "34c8d2bfd5a1d63ac347d8bb9a304104da710d39",
+      "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-22"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/launch.test.mjs",
+      "blob": "c6668eab76655d11f30242c3d7d0788a12e87a09",
+      "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-22"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/launch.test.mjs",
+      "blob": "72c8bef34ce92051ec13c2904a05d3fc95422748",
+      "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-22"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/launch.test.mjs",
+      "blob": "6034a77797707cf7d8a77ecb850bace1c4dab613",
+      "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-22"
+    }
+  ]
+}
