@@ -1,3 +1,4 @@
+import { collectionDueJobs } from './collections'
 import { restorationPaused } from '../connections/guard'
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
@@ -113,6 +114,7 @@ export async function settleDeposit(env:Bindings,actor:Actor,id:string,action:'r
 export async function directDue(env:Bindings) {
  if(await restorationPaused(env.DB))return
  await verificationDue(env)
+ await collectionDueJobs(env)
  for(const row of await dueStays(env.DB))try{
   let s=row;s=await refresh(env,s.id)
   if(s.phase!=='cancelled'&&s.deposit?.status==='canceled'&&!s.checkedOutAt&&Date.now()<departure(s))await update(env,s.id,'direct.deposit.expired-alert',r=>{r.error='The damage authorization closed before checkout. No damage funds are secured. Ask the guest to renew it from their booking page.'})

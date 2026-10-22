@@ -113,7 +113,7 @@ export function projectState<T>(state: T, actor: Actor): T {
   if ('lockAccount' in source) result.lockAccount = false
   if ('messaging' in source) result.messaging = { sms: false, booking: false }
 
-  const direct = (value: Row) => ({ homes: select(value.homes, has('reservations')), stays: select(value.stays, has('reservations')) })
+  const direct = (value: Row) => ({ collections: select(value.collections, finance), homes: select(value.homes, has('reservations')), stays: select(value.stays, has('reservations')) })
   const ledger = (value: Row) => ({ journals: select(value.journals, finance), periods: [] })
   const promotions = (value: Row) => ({ policies: select(value.policies, has('reservations')), offers: select(value.offers, guest) })
   const owners = (value: Row) => Object.fromEntries(['policies', 'grants', 'views', 'documents', 'expenses', 'stayRequests'].map(key => [key, select(value[key], owner)]))

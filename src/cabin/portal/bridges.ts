@@ -1,3 +1,4 @@
+import { collectionGuest } from '../direct/collection-guest'
 import { agreementResponse } from '../agreements/http'
 import { verificationResponse } from '../verification/guest'
 import { promotionGuestResponse } from '../promotions/guest'
@@ -9,6 +10,7 @@ import { authorizeGuestWrite, type PortalContext } from './auth'
 /** Portal tasks retain their original business handlers behind the guest session boundary. */
 export async function portalBridge(request:Request,env:Bindings,p:PortalContext,sessionHash:string,tail:string){
  const path='/stay/'+p.link.token,authorize=(c:Parameters<typeof authorizeGuestWrite>[0])=>{authorizeGuestWrite(c,p,sessionHash)}
+ if(tail==='payments')return collectionGuest(request,env,p,authorize)
  let source='',target='',response:Response|null=null
  if(/^verification(?:\/(?:stripe|manual|refresh))?$/.test(tail)){
   const verification=p.data.verifications.find(v=>v.bookingId===p.booking.id);need(verification?.token,'Identity task unavailable',404)

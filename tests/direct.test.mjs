@@ -317,3 +317,31 @@ test('PAY-003 settles approved claims, rent refunds, saved cancellations and cha
   assert.equal((await h.send('/app/direct',undefined,h.owner)).status,200)
  }finally{await h.close()}
 })
+
+
+test('scheduled collections require current reservation terms, guest consent and Stripe configuration before any external effect',async()=>{
+ const {collectionHome,collectionBooking,createCollection,collectionState,guestCollection,day}=await import('./collection-support.mjs')
+ let outbound=0;const h=await harness({outbound:async()=>{outbound++;throw new Error('No provider effect is authorized')}})
+ try{
+  const p=await collectionHome(h),b=await collectionBooking(h,p),schedule=await createCollection(h,b)
+  assert.equal(schedule.status,'consent_required');assert.deepEqual(schedule.jobs.map(j=>j.amountCents),[3000,2000,8000]);assert.equal(schedule.policy,b.lifecycle.policy.name)
+  await createCollection(h,b).then(()=>assert.fail('duplicate schedule'),error=>assert.match(error.message,/already has/))
+  const g=await guestCollection(h,b);assert.equal((await h.send(g.path,undefined,'',{accept:'application/json'})).status,401)
+  await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
+  assert.equal((await h.send(g.path,{action:'consent',revision:schedule.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,503)
+  assert.equal(outbound,0,'missing configuration fails before egress')
+  const current=(await h.state()).bookings.find(v=>v.id===b.id)
+  await h.cmd('reservation.amend',{id:b.id,revision:current.revision,propertyId:p.id,start:day(20),end:day(22),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest reviewed new dates'})
+  const changed=await collectionState(h,schedule.id);assert.equal(changed.status,'consent_required');assert.notEqual(changed.jobs[2].dueAt,schedule.jobs[2].dueAt)
+  await h.cmd('direct.collection.retry',{id:changed.id,jobId:changed.jobs[0].id,revision:changed.revision,reference:'synthetic-cabin-1',confirm:'yes'},h.owner,409)
+  const cleaner=await h.person('CollectionCleaner');assert.equal((await h.state(cleaner.cookie)).direct.collections,undefined)
+  await h.cmd('direct.collection.create',{bookingId:b.id,depositCents:1,assigneeId:cleaner.id},cleaner.cookie,403)
+  const owner=(await h.state()).actor.id,b2=await collectionBooking(h,p,30)
+  await h.cmd('direct.collection.create',{bookingId:b2.id,depositCents:13001,assigneeId:owner},h.owner,400)
+  await h.cmd('direct.collection.create',{bookingId:b2.id,depositCents:3000,mode:'live',assigneeId:owner},h.owner,400)
+  const booking=(await h.state()).bookings.find(v=>v.id===b.id)
+  await h.cmd('reservation.end',{id:b.id,revision:booking.revision,outcome:'cancelled',reason:'Guest cancelled'})
+  await h.restart();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
+  assert.ok((await collectionState(h,schedule.id)).jobs.every(j=>j.status==='suppressed'))
+ }finally{await h.close()}
+})
