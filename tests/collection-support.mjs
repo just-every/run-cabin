@@ -32,7 +32,7 @@ export async function collectionProviderJourney({screens}={}){
    const aid=f.get('metadata[collectionAttemptId]');assert.equal(attempts.has(aid),false,'no duplicate provider POST for an interrupted attempt');attempts.set(aid,true)
    if(fault==='before'){fault='';return new Response('unavailable before provider acceptance',{status:502})}
    const p={id:'synthetic_cabin_payment_'+(++sequence),customer:f.get('customer'),amount:Number(f.get('amount')),amount_received:fault==='decline'?0:Number(f.get('amount')),currency:'usd',status:fault==='decline'?'requires_payment_method':'succeeded',metadata:{collectionPlanId:f.get('metadata[collectionPlanId]'),collectionJobId:f.get('metadata[collectionJobId]'),collectionAttemptId:aid}}
-   payments.set(p.id,p);writes.push(p);if(fault==='lost'){fault='';return new Response('uncertain network response',{status:502})}return Response.json(p)
+   payments.set(p.id,p);writes.push(p);if(fault==='decline')return Response.json({error:{type:'card_error',code:'card_declined',payment_intent:p}},{status:402});if(fault==='lost'){fault='';return new Response('uncertain network response',{status:502})}return Response.json(p)
   }
   if(path==='/v1/payment_intents')return Response.json({data:[...payments.values()].filter(p=>p.customer===url.searchParams.get('customer')),has_more:false})
   if(path.startsWith('/v1/payment_intents/'))return Response.json(payments.get(path.split('/').at(-1)))
@@ -54,7 +54,7 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.state()).bookings.find(v=>v.id===b.id).reservationBalance.paidCents,3000)
   assert.equal((await h.state()).messages.filter(m=>m.subject==='Your payment receipt').length,1)
   const makeDue=async index=>{const raw=await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first();const saved=JSON.parse(raw.data);saved.jobs[index].dueAt=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(saved),p.id).run()}
-  await makeDue(1);fault='decline';await tick();state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'failed');assert.ok(state.jobs[1].deadline);assert.equal(state.assigneeId,await ownerId(h))
+  await makeDue(1);fault='decline';await tick();assert.equal((await collectionState(h,p.id)).jobs[1].status,'uncertain');await tick();state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'failed');assert.ok(state.jobs[1].deadline);assert.equal(state.assigneeId,await ownerId(h))
   const rawFailure=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p.id).first()).data);rawFailure.jobs[1].deadline=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(rawFailure),p.id).run()
   await tick();await h.restart();await tick();assert.equal((await h.state()).notices.filter(n=>n.kind==='payment'&&n.priority==='urgent').length,1,'overdue escalation is durable and once-only');state=await collectionState(h,p.id)
   if(screens)await screens(h,g,'failure')
