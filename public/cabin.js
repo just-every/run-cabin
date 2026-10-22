@@ -100,6 +100,12 @@ try {
     error.tabIndex = -1; error.focus()
   }
 } catch { sessionStorage.removeItem(recoveryKey) }
+// Question forms are rendered back by the server without storing the prompt in
+// browser recovery storage. Move keyboard focus to that server refusal as well.
+if (location.pathname === '/app/questions') {
+  const error = document.querySelector('main > .notice.error[role="alert"]')
+  if (error) { error.tabIndex = -1; error.focus() }
+}
 document.addEventListener('submit', event => {
   const form = event.target
   if (!(form instanceof HTMLFormElement)) return
