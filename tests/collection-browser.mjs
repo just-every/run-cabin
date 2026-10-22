@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import { chromium,expect } from '@playwright/test'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { collectionProviderJourney } from './collection-support.mjs'
+import { collectionProviderJourney,collectionBooking } from './collection-support.mjs'
 const evidence=process.env.CABIN_COLLECTION_SHOTS??'test-results/collections';await mkdir(evidence,{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
 try{await collectionProviderJourney({screens:async(h,g,state)=>{
- for(const width of [1440,390]){
+ for(const [index,width] of [1440,390].entries()){
+  const manualBooking=state==='consent'?await collectionBooking(h,(await h.state()).properties[0],50+index*5):null
   const owner=await browser.newContext({viewport:{width,height:1000}}),guest=await browser.newContext({viewport:{width,height:1000}})
   try{
    const [name,value]=h.owner.split('=');await owner.addCookies([{name,value,url:h.origin}])
@@ -16,7 +17,9 @@ try{await collectionProviderJourney({screens:async(h,g,state)=>{
    if(state==='revision')await panel.getByText('Revise unpaid schedule or replace saved card',{exact:true}).click()
    if(state==='failure'){await expect(panel).toContainText('failed');await expect(panel).toContainText('Follow up by');const consent=panel.getByRole('checkbox',{name:'I reviewed the confirmed failure and approve one new attempt.'});await expect(consent).not.toBeChecked()}
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Payments fits viewport')
-   const manualPanel=page.locator('section').filter({has:page.getByRole('heading',{name:'Payments · manual receipts',exact:true})}).last();await manualPanel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`manual-receipts-${state}-${width}.png`)})
+   const manualPanel=page.locator('section').filter({has:page.getByRole('heading',{name:'Payments · manual receipts',exact:true})}).last();if(manualBooking){const entry=manualPanel.locator('details').filter({has:page.locator('input[name="bookingId"][value="'+manualBooking.id+'"]')});await entry.locator('summary').click();await entry.getByLabel('Received amount (USD)',{exact:true}).fill('10.00');await entry.getByLabel('Receipt or cleared-check reference',{exact:true}).fill('synthetic-cabin-receipt-'+width);await entry.getByLabel('Source evidence and custody record',{exact:true}).fill('Counted cash received in trust custody');const confirmation=entry.getByRole('checkbox');await expect(confirmation).not.toBeChecked();await confirmation.check();await entry.getByRole('button',{name:'Record actual manual receipt',exact:true}).click();await expect(manualPanel.locator('article').filter({hasText:'synthetic-cabin-receipt-'+width})).toContainText('$10.00')}
+   await manualPanel.screenshot({path:join(evidence,`manual-receipts-full-${state}-${width}.png`)})
+   await manualPanel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`manual-receipts-${state}-${width}.png`)})
    await panel.screenshot({path:join(evidence,`payments-full-${state}-${width}.png`)})
    await panel.scrollIntoViewIfNeeded();await page.screenshot({path:join(evidence,`payments-${state}-${width}.png`)})
    for(const part of g.cookie.split('; ')){const i=part.indexOf('=');await guest.addCookies([{name:part.slice(0,i),value:part.slice(i+1),url:h.origin}])}
