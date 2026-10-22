@@ -707,10 +707,10 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 43 | 25 | 22 | 90 |
-| All | 56 | 25 | 22 | 103 |
+| Target and push further | 44 | 25 | 21 | 90 |
+| All | 57 | 25 | 21 | 103 |
 
-**103 clauses: 56 done, 25 partial, 22 missing.**
+**103 clauses: 57 done, 25 partial, 21 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
