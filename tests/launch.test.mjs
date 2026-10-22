@@ -57,6 +57,9 @@ test('a fresh public-source clone installs, sets up, signs in and preserves a na
    await stopOwned(app);app=undefined
   }
   console.log('Source lifecycle PASS on '+process.platform+': clean clone, rer install/setup/dev, native owner sign-in, saved reservation/schedule and owned-process restart without duplicate product jobs')
+ }catch(error){
+  if(String(error?.message??'').startsWith('Source lifecycle '))throw error
+  throw new Error('Owner source lifecycle assertion failed; private browser entry withheld.')
  }finally{
   if(browser)await browser.close();await stopOwned(app);await rm(folder,{recursive:true,force:true})
  }
