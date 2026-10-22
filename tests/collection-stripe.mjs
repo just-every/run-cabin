@@ -36,7 +36,7 @@ try{
    for(const part of g.cookie.split('; ')){const i=part.indexOf('=');await context.addCookies([{name:part.slice(0,i),value:part.slice(i+1),url:h.origin}])}
    const page=await context.newPage();page.setDefaultTimeout(60000);step='Stripe hosted card setup'
    await page.goto(start.headers.get('location'));await page.getByLabel('Card number',{exact:true}).fill(card)
-   step='Stripe expiry';await page.getByLabel('Expiration',{exact:true}).fill('1230');step='Stripe CVC';await page.getByLabel('Credit or debit card CVC/CVV',{exact:true}).fill('123')
+   step='Stripe expiry';await page.getByLabel('Expiration',{exact:true}).fill('1230');step='Stripe CVC';await page.getByRole('textbox',{name:'Credit or debit card CVC/CVV',exact:true}).fill('123')
    step='Stripe billing name';await page.locator('#billingName').fill(b.guestName);step='Stripe billing country';await page.locator('#billingCountry').selectOption('AU');step='Stripe Link choice';await page.locator('#enableStripePass').uncheck()
    step='Stripe save';await page.locator('button[type="submit"]').click();step='Stripe return';await page.waitForURL(url=>url.origin===h.origin,{timeout:120000})
   }finally{await context.close()}
