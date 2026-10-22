@@ -29,7 +29,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | WEB-002 | missing | Embeddable booking engine and real external-site integration. |
 | WEB-005 | partial | Complete hosted owner-statement reconciliation needs source settlement evidence for the original stays and eligible USD payout/bank evidence. The supplied Stripe account settles AUD. API channel/device acknowledgements also retain SYNC/OPS prerequisites. Paid offers, refunds, original-stay/access/work updates and export feeds are implemented and exercised. |
 | PAY-001 | partial | Live-mode authority, US ACH-capable account and documented manual-receipt workflow. Supplied Stripe account is Australian. |
-| PAY-002 | missing | Saved payment mandates, installment schedules, follow-up and actual provider collection acceptance. |
+| PAY-002 | partial | Native direct guest-card schedules and ct-approved consent changes have real Stripe sandbox collection/restart/failure/follow-up acceptance. PAY-005 virtual-card source intake and activation/expiry/loaded-amount execution, plus PAY-006 property-collect guest-card intake/consent, remain unavailable under their own clauses. |
 | PAY-004 | missing | Licensed protection partner, merchant chargeback permissions and real evidence/case lifecycle. |
 | PAY-005 | missing | Booking.com partner account with eligible virtual cards and processor authority. |
 | PAY-006 | missing | Booking.com property-collect cards, PCI-safe collection and invalid-card/follow-up APIs. |
