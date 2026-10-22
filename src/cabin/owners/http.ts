@@ -43,7 +43,7 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
    if(path==='/owners/questions'||path==='/owners/questions/answer'){
     const access=await rentalQuestionAccess(env.DB,email,nativeActor),answer=await answerQuestion(env.DB,access,value)
     await assertRentalQuestionAccess(env.DB,access,nativeActor)
-    if(request.headers.get('content-type')?.includes('application/json'))return Response.json(answer,{headers})
+    if(request.headers.get('content-type')?.includes('application/json')){const scoped=nativeActor?{...answer,reports:answer.reports.map((r:any)=>({...r,href:r.href.replace(/^\/owners/,'/app/rental-owner')})),citations:answer.citations.map((r:any)=>({...r,href:r.href.replace(/^\/owners/,'/app/rental-owner')}))}:answer;return Response.json(scoped,{headers})}
     return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1>'+questionPanel(answer.properties,answer,true)+'</main>','Questions')
    }
    if(path==='/owners/action'){

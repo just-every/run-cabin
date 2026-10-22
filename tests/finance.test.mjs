@@ -152,6 +152,7 @@ test('REPORT-002: approved owner and team schedules freeze scoped artifacts, ref
 test('portfolio questions reconcile a falling owner net to current and comparison report sources without changing the books',()=>run(async h=>{
  const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h),input={question:'Why did this property’s owner net fall?',filters:b.filters},before=await h.state()
  const answer=await h.send('/api/cabin/questions',input,b.manager.cookie);assert.equal(answer.status,200,answer.text);const a=answer.value
+ const commandAnswer=await h.cmd('question.ask',input,b.manager.cookie);assert.deepEqual(commandAnswer.reports,a.reports);assert.deepEqual(commandAnswer.citations,a.citations)
  assert.equal(a.kind,'net');assert.ok(a.cutoff);assert.equal(a.version,before.version);assert.deepEqual(a.filters,b.filters);assert.match(a.statements[0],/fell/)
  assert.equal(a.reports[0].totals.netCents,160000-2700-10000-12000-12000);assert.equal(a.reports[1].totals.netCents,200000);assert.equal(a.reports[1].filters.from,'2026-08-31');assert.equal(a.reports[1].filters.until,'2026-10-01')
  for(const r of a.reports){const report=await h.send('/api/cabin/reports.json?'+new URLSearchParams(r.filters),undefined,b.manager.cookie);assert.equal(report.status,200);assert.deepEqual(r.totals,report.value.totals);assert.equal(report.value.version,a.version);assert.equal(report.value.journals.reduce((n,j)=>n+j.netCents,0),r.totals.netCents)}
