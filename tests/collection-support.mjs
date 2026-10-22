@@ -71,7 +71,7 @@ export async function collectionProviderJourney({screens}={}){
   assert.equal((await h.send(g.path,{action:'consent',revision:state.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,303)
   assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303);state=await collectionState(h,p.id)
   await h.cmd('direct.collection.retry',{id:p.id,jobId:state.jobs[1].id,revision:state.revision,confirm:'yes',reference:'Guest confirmed retry after provider-confirmed failure'})
-  fault='';await tick();assert.equal(writes.length,3);state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'succeeded');assert.ok(state.jobs[1].resolvedAt);assert.equal(state.jobs[1].attempts.length,2);assert.equal((await h.state()).tasks.find(t=>t.id===task.id).status,'closed')
+  await makeDue(1);fault='';await tick();assert.equal(writes.length,3);state=await collectionState(h,p.id);assert.equal(state.jobs[1].status,'succeeded');assert.ok(state.jobs[1].resolvedAt);assert.equal(state.jobs[1].attempts.length,2);assert.equal((await h.state()).tasks.find(t=>t.id===task.id).status,'closed')
   let booking=(await h.state()).bookings.find(v=>v.id===b.id)
   await h.cmd('reservation.amend',{id:b.id,revision:booking.revision,propertyId:home.id,start:day(5),end:day(7),guestName:b.guestName,guestEmail:b.guestEmail,reason:'Guest requested earlier arrival'})
   state=await collectionState(h,p.id);assert.equal(state.status,'consent_required');assert.notEqual(state.jobs[2].dueAt,p.jobs[2].dueAt);await tick();assert.equal(writes.length,3)
