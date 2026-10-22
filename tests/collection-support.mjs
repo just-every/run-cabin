@@ -91,6 +91,7 @@ export async function collectionProviderJourney({screens}={}){
   const b2=await collectionBooking(h,home,30),p2=await createCollection(h,b2),g2=await guestCollection(h,b2)
   assert.equal((await h.send(g2.path,{action:'consent',revision:p2.revision,signature:b2.guestName,consent:'yes'},g2.cookie)).status,303)
   fault='before';assert.equal((await h.send(g2.path,{action:'refresh'},g2.cookie)).status,303);const count=attempts.size
+  const blocked=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(p2.id).first()).data);for(const job of blocked.jobs)job.dueAt=new Date(Date.now()-1000).toISOString();await h.db.prepare('UPDATE cb_records SET data=? WHERE id=?').bind(JSON.stringify(blocked),p2.id).run()
   await h.restart();await tick();await tick();assert.equal(attempts.size,count,'no second POST when interruption preceded acceptance and reads are empty');assert.equal((await collectionState(h,p2.id)).jobs[0].status,'uncertain')
   const manager=await h.person('CollectionManager','manager'),b3=await collectionBooking(h,home,40),p3=await h.cmd('direct.collection.create',{bookingId:b3.id,depositCents:3000,assigneeId:manager.id},manager.cookie),g3=await guestCollection(h,b3)
   assert.equal((await h.send(g3.path,{action:'consent',revision:p3.revision,signature:b3.guestName,consent:'yes'},g3.cookie)).status,303)

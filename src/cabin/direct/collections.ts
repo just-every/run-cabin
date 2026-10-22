@@ -98,6 +98,7 @@ export async function runCollection(env:Bindings,id:string){
    const claimed=await mutate(env.DB,DIRECT_SYSTEM,'direct.collection.claim',async c=>{
     const current=await plan(c.db,id),job=current.jobs.find(v=>v.id===j.id)!,b=c.data.bookings.find(b=>b.id===current.bookingId)
     need(!current.restored&&current.status==='active'&&job.status==='scheduled'&&Date.parse(job.dueAt)<=Date.now()&&b&&b.status==='confirmed'&&!b.cancelled&&!b.guestErasedAt&&!b.restorePaused&&JSON.stringify(collectionBasis(b))===JSON.stringify(current.basis),'Collection schedule is no longer current',409)
+    need(!current.jobs.some(j=>['uncertain','pending'].includes(j.status)),'Reconcile every started collection before another charge',409)
     const {paymentBalance}=await import('../reservations/balances');const balance=await paymentBalance(c,b);need(balance.balanceCents!==null&&job.amountCents<=balance.balanceCents,'Recorded receipts changed the outstanding amount; review before collection.',409)
     need(current.consent&&current.customerId&&current.paymentMethod,'Guest payment mandate is missing',409)
     need(await queuedAuthority(c.db,current.authority,'direct.collection.create',current.propertyId),'Collection authority was revoked',403)
