@@ -1,6 +1,7 @@
 import { answerQuestion, questionReport, rentalQuestionAccess, assertRentalQuestionAccess } from '../questions/read'
 import { questionPanel, ownerQuestionReport } from '../questions/ui'
 import { page } from './ui'
+import { h } from '../ui/shared'
 import { type Actor } from '../model'
 import { assertLive } from '../storage'
 import { hasAction,permitsProperty } from '../permissions/policy'
@@ -27,13 +28,14 @@ async function inputBody(request:Request){
 export async function ownersResponse(request:Request,original:Bindings,nativeActor?:Actor):Promise<Response|null>{
  const env=runtimeBindings(original),url=new URL(request.url),path=url.pathname
  if(path!=='/owners'&&!path.startsWith('/owners/'))return null
+ let questionInput:Record<string,unknown>|undefined
  try{
   need(url.origin===env.AUTH_ORIGIN&&(!request.headers.has('host')||request.headers.get('host')===url.host),'Wrong application origin',403)
   need(request.method==='GET'||request.method==='POST','Method not allowed',405)
   if(request.method==='POST'){
    need(request.headers.get('origin')===env.AUTH_ORIGIN&&request.headers.get('sec-fetch-site')!=='cross-site','Cross-site request refused',403)
    need(Number(request.headers.get('content-length')??0)<=4096,'Request too large',413)
-   const value=await inputBody(request)
+   const value=await inputBody(request);if(path==='/owners/questions'||path==='/owners/questions/answer')questionInput=value
    if(path==='/owners/signin'){await requestOwnerLink(env,value);return signInPage(env.AUTH_LOCAL==='true'||env.RER_DEMO==='1'?'Local development does not send email. Ask your manager to preview your owner portal from Statements.':'If this address has owner access, a sign-in link is on its way.')}
    if(path==='/owners/confirm')return new Response(null,{status:303,headers:{...headers,location:'/owners','set-cookie':await confirmOwner(env,value.token)}})
    if(path==='/owners/signout')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin','set-cookie':await signOutOwner(request,env)}})
@@ -85,6 +87,7 @@ export async function ownersResponse(request:Request,original:Bindings,nativeAct
   if(status===401&&path==='/owners')return new Response(null,{status:303,headers:{...headers,location:'/owners/signin'}})
   if(path==='/owners/questions/report'||request.headers.get('content-type')?.includes('application/json')&&path.startsWith('/owners/questions')||path.startsWith('/owners/api/')||path.endsWith('.pdf')||path.endsWith('.csv')||path.endsWith('.txt')||path.startsWith('/owners/reports/')||request.headers.get('content-type')?.includes('application/json')&&path==='/owners/action')return Response.json({error:message},{status,headers})
   if(path==='/owners/action'||path==='/owners')return portalErrorPage(message,status)
+  if(questionInput){try{const email=nativeActor?.email??await ownerEmail(request,env),access=await rentalQuestionAccess(env.DB,email,nativeActor),homes=await env.DB.prepare('SELECT id,name FROM cb_properties WHERE id IN (SELECT value FROM json_each(?)) ORDER BY name').bind(JSON.stringify(access.actor.scope!.propertyIds)).all<{id:string;name:string}>();return page('<main><p><a href="/owners">Your owner portal</a></p><h1>Questions about your homes</h1><p role="alert">'+h(message)+'</p>'+questionPanel(homes.results,undefined,true,[],questionInput)+'</main>','Review question',status)}catch{/* Expired owner authority cannot return a question form. */}}
   return signInPage(message,status)
  }
 }

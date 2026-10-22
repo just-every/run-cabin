@@ -85,3 +85,7 @@ Use `Authorization: Bearer TOKEN` with `GET /api/cabin/agent/context` and `POST 
 Direct-booking settings and payment/deposit actions are documented in [Direct bookings](/docs/direct-bookings). Owner/manager session commands: `direct.configure`, `direct.refresh`, `direct.deposit.release`, `direct.deposit.capture` (amount in cents, reason and evidence required after checkout), and `direct.tax.filed` (state/county confirmation reference). Bearer agents cannot use these commands. Public guest forms live under `/book`; stay links are private capabilities.
 
 Provider custody uses owner-only `provider.sharing` operations `grant`, `credential` and `revoke`, bound to the displayed `securityRevision`, named actions and property IDs. The native form and JSON transport retain every selected action/home. Ordinary `/api/cabin/state` and bearer context omit access capabilities; a currently authorized person explicitly reads `/api/cabin/access` for their permitted access details. These reads are audited; bearer keys cannot use that human door. See `docs/provider-security.md`.
+
+## Portfolio questions
+
+`POST /api/cabin/questions` and the native `question.ask` command read permission-scoped portfolio answers. `question.investigate` approves one exact, assigned internal follow-up. Filters, source revision and digest, current grants and explicit consent are checked on the server. Rental owners use their separate scoped portal doors. See [Portfolio questions](portfolio-questions.md) for inputs, comparison semantics, source freshness, owner isolation and approval limits.
