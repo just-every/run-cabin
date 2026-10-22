@@ -30,7 +30,8 @@ test('a fresh public-source clone installs, sets up, signs in and preserves a na
   })
  }
  try{
-  await exec('git',['clone','--no-local',resolve('.'),root],{env})
+  // A consumer source checkout needs only this exact tree, not unpublished historical blobs from a filtered builder clone.
+  await exec('git',['clone','--no-local','--depth','1',resolve('.'),root],{env})
   await exec('git',['config','user.name','Run Edit Run fleet'],{cwd:root,env});await exec('git',['config','user.email','fleet@runeditrun.com'],{cwd:root,env})
   await command(['install'])
   await command(['setup','--owner-email','synthetic-cabin-owner@stay.example','--non-interactive'])

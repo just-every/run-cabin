@@ -327,6 +327,8 @@ test('scheduled collections require current reservation terms, guest consent and
   assert.equal(schedule.status,'consent_required');assert.deepEqual(schedule.jobs.map(j=>j.amountCents),[3000,2000,8000]);assert.equal(schedule.policy,b.lifecycle.policy.name)
   await createCollection(h,b).then(()=>assert.fail('duplicate schedule'),error=>assert.match(error.message,/already has/))
   const g=await guestCollection(h,b);assert.equal((await h.send(g.path,undefined,'',{accept:'application/json'})).status,401)
+  assert.equal((await h.send(g.path,{action:'consent',signature:'x'.repeat(9000)},g.cookie)).status,413)
+  const privateView=(await h.send(g.path,undefined,g.cookie,{accept:'application/json'})).value;assert.equal(privateView.authority,undefined);assert.equal(privateView.assigneeId,undefined);assert.equal(privateView.history,undefined);assert.equal(privateView.consent,undefined)
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
   assert.equal((await h.send(g.path,{action:'consent',revision:schedule.revision,signature:b.guestName,consent:'yes'},g.cookie)).status,503)
   assert.equal(outbound,0,'missing configuration fails before egress')

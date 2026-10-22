@@ -18,8 +18,11 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
  const stripeEnv={...env,CABIN_PROVIDER_PROPERTY_ID:p.propertyId,DIRECT_STRIPE_MODE:p.mode}
  if(request.method==='POST'){
   need(Number(request.headers.get('content-length')??0)<=8000,'Request too large',413)
-  const raw=await request.text();need(raw.length<=8000,'Request too large',413)
+  const chunks:Uint8Array[]=[];let size=0;const reader=request.body?.getReader()
+  if(reader)try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>8000){await reader.cancel();need(false,'Request too large',413)}chunks.push(value)}}finally{reader.releaseLock()}
+  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length}const raw=new TextDecoder().decode(bytes)
   const input:Record<string,unknown>=request.headers.get('content-type')?.includes('application/json')?JSON.parse(raw):Object.fromEntries(new URLSearchParams(raw))
+  need(input&&typeof input==='object'&&!Array.isArray(input),'Use a form or JSON object')
   need(input.action==='consent'||input.action==='refresh','Unknown payment action')
   if(input.action==='consent'){
    need(input.consent==='yes'&&text(input.signature,'full guest signature',120)===portal.booking.guestName,'Sign with your full reservation name and explicitly authorize the saved schedule')
@@ -49,8 +52,9 @@ export async function collectionGuest(request:Request,env:Bindings,portal:Portal
   await runCollection(env,p.id)
   return new Response(null,{status:303,headers:{location:path,'cache-control':'no-store'}})
  }
- const safe=publicCollection(p)
+ const description=(status:string)=>({failed:'Stripe confirmed no funds received. Your host will follow up.',uncertain:'Stripe confirmation is pending. Another charge is refused.',pending:'Stripe is processing this payment. Your host will follow up.',succeeded:'Stripe confirmed this payment.',scheduled:'Scheduled under your saved payment terms.',suppressed:'This historical item will not be collected.'}[status]??'Host review required.')
+ const safe={id:p.id,revision:p.revision,status:p.status,mode:p.mode,start:p.basis.start,end:p.basis.end,totalCents:p.basis.totalCents,policy:p.policy,jobs:p.jobs.map(j=>({id:j.id,label:j.label,amountCents:j.amountCents,dueAt:j.dueAt,status:j.status,detail:description(j.status)}))}
  if(request.headers.get('accept')?.includes('application/json'))return Response.json(safe,{headers:{'cache-control':'no-store','referrer-policy':'no-referrer'}})
- const list=p.jobs.map(j=>`<li><strong>${h(j.label)}: ${h(money(j.amountCents))}</strong> · due ${h(timeLabel(j.dueAt,'UTC'))} · ${h(j.status)}${j.detail?`<p>${h(j.detail)}</p>`:''}</li>`).join('')
+ const list=p.jobs.map(j=>`<li><strong>${h(j.label)}: ${h(money(j.amountCents))}</strong> · due ${h(timeLabel(j.dueAt,'UTC'))} · ${h(j.status)}<p>${h(description(j.status))}</p></li>`).join('')
  return portalShell('Your reservation',`<section class="panel"><h1>Your payment schedule</h1><p>${h(p.basis.start)} to ${h(p.basis.end)} · ${h(money(p.basis.totalCents))} total.</p><p>${h(p.policy)}</p><p>${p.mode==='test'?'Stripe test mode; no real money moves.':'Stripe live mode; these collections charge real money.'}</p><ul>${list}</ul>${p.status==='consent_required'&&!p.setup?`<form method="post">${hidden('action','consent')}${hidden('revision',p.revision)}${field('signature','Full guest signature')}<label class="check"><input type="checkbox" name="consent" value="yes" required>I authorize Stripe to save my card and collect only the exact amounts and due dates above. Changed stay terms require my approval again.</label><button>Authorize schedule and open Stripe</button></form>`:''}${p.setup?.url?`<a href="${h(p.setup.url)}" rel="noreferrer">Complete secure card setup on Stripe</a>`:''}<form method="post">${hidden('action','refresh')}<button>Check Stripe setup and payments</button></form><p><a href="/stay/${h(portal.link.token)}">Return to your stay</a></p></section>`)
 }

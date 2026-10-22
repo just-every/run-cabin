@@ -21,7 +21,8 @@ export async function manualReceipt(env:Bindings,actor:Actor,name:string,input:R
   if(old){need(old.bookingId===b.id&&old.sourceRevision===sourceRevision,'This receipt reference already has different immutable evidence or amount',409);return old}
   need(b.revision===input.revision,'Reservation changed. Review the receipt against its current balance.',409)
   const balance=await paymentBalance(c,b);need(balance.balanceCents!==null&&amount<=balance.balanceCents,'Receipt exceeds the current outstanding reservation balance',409)
-  const row=await post(c,{sourceKey,sourceType:'payment',sourceId:reference,sourceRevision,propertyId:b.propertyId,bookingId:b.id,effectiveDate:receivedAt,manualReceipt:{method,reference,note,receivedAt},lines:[debit('cash',amount),credit('receivable',amount)]})
+  const effectiveDate=await c.db.prepare('SELECT 1 FROM cb_ledger_periods WHERE month=?').bind(receivedAt.slice(0,7)).first()?c.now.slice(0,10):receivedAt
+  const row=await post(c,{sourceKey,sourceType:'payment',sourceId:reference,sourceRevision,propertyId:b.propertyId,bookingId:b.id,effectiveDate,manualReceipt:{method,reference,note,receivedAt},lines:[debit('cash',amount),credit('receivable',amount)]})
   c.entityId=b.id;return row
  })
 }
