@@ -36,9 +36,9 @@ try{
    for(const part of g.cookie.split('; ')){const i=part.indexOf('=');await context.addCookies([{name:part.slice(0,i),value:part.slice(i+1),url:h.origin}])}
    const page=await context.newPage();page.setDefaultTimeout(60000);step='Stripe hosted card setup'
    await page.goto(start.headers.get('location'));await page.getByLabel('Card number',{exact:true}).fill(card)
-   await page.getByLabel('Expiration',{exact:true}).fill('1230');await page.getByLabel('Credit or debit card CVC/CVV',{exact:true}).fill('123')
-   await page.locator('#billingName').fill(b.guestName);await page.locator('#billingCountry').selectOption('AU');await page.locator('#enableStripePass').uncheck()
-   await page.locator('button[type="submit"]').click();await page.waitForURL(url=>url.origin===h.origin,{timeout:120000})
+   step='Stripe expiry';await page.getByLabel('Expiration',{exact:true}).fill('1230');step='Stripe CVC';await page.getByLabel('Credit or debit card CVC/CVV',{exact:true}).fill('123')
+   step='Stripe billing name';await page.locator('#billingName').fill(b.guestName);step='Stripe billing country';await page.locator('#billingCountry').selectOption('AU');step='Stripe Link choice';await page.locator('#enableStripePass').uncheck()
+   step='Stripe save';await page.locator('button[type="submit"]').click();step='Stripe return';await page.waitForURL(url=>url.origin===h.origin,{timeout:120000})
   }finally{await context.close()}
   step='read back Stripe setup and collect';assert.equal((await h.send(g.path,{action:'refresh'},g.cookie)).status,303)
  }
@@ -71,5 +71,5 @@ try{
  const encoded=JSON.stringify(await h.state());assert.ok(!encoded.includes('4242424242424242')&&!encoded.includes('4000000000000341'))
  console.log('Real Stripe sandbox collection PASS: exact deposit/installment/balance, lost-response restart readback, failed collection, assigned overdue task/message during invalid consent, replacement mandate, changed arrival, cancellation, receipts and no duplicate POST.')
  console.log('Stripe test payment acknowledgments '+JSON.stringify(payments));console.log('Distinct durable attempt keys '+new Set(requests).size)
-}catch(error){console.error('Real Stripe collection failed at '+step+' ('+error.name+'). Private checkout and credentials withheld.');if(error.code==='ERR_ASSERTION')console.error(error.message);process.exitCode=1}
+}catch(error){console.error('Real Stripe collection failed at '+step+' ('+error.name+'). Private checkout and credentials withheld.');console.error(String(error.message).replaceAll(process.env.STRIPE_TEST_SECRET_KEY,'[credential]').replace(/https?:\/\/[^\s<>"']+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]'));process.exitCode=1}
 finally{if(browser)await browser.close();if(h)await h.close()}
