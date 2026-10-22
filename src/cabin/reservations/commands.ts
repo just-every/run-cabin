@@ -39,6 +39,7 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
  const replay=eventId&&l.events.find(e=>e.id===eventId)
  if(replay){need(replay.fingerprint===fingerprint,'This source event already has different terms. Reconcile it explicitly.',409);return b}
  exact(b,p.revision);need(name==='reservation.reconcile'||b.status==='confirmed','This reservation has already ended',409);fence(c,b)
+ need(name!=='reservation.amend'||!c.data.collectionPlans.some(plan=>plan.bookingId===b.id&&plan.jobs.some(job=>['uncertain','pending'].includes(job.status))),'Reconcile started collection effects before amending this reservation. Cancellation can still suppress unstarted jobs.',409)
  if(name==='reservation.reconcile'){need(l.sourceConflict,'No source conflict to reconcile',409);need(p.resolution==='keep'||p.resolution==='source','Choose the reviewed source or the current revision');if(p.resolution==='source'){const incoming=l.sourceConflict;const next={...b,start:incoming.start,end:incoming.end};if(!incoming.cancelled)availability(c,next);Object.assign(b,next,{summary:incoming.summary,status:incoming.cancelled?'cancelled':'confirmed',cancelled:incoming.cancelled,revision:newId(),approvedAt:c.now});l.sourceReview=false}delete l.sourceConflict;c.entityId=b.id;return b}
  const direct=(await stays(c.db)).find(s=>s.bookingId===b.id)
  need(!direct||!unsettled(direct),'A refund is awaiting Stripe reconciliation. Resolve it before changing the stay.',409)
