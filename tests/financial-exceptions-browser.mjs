@@ -55,6 +55,7 @@ try{
     if(stage==='corrected-awaiting-distribution'){
      await expect(section.getByText('This case remains open:',{exact:false})).toBeVisible()
      await page.goto(origin+'/app/statements')
+     await expect(page.locator('details.statement-month > summary').filter({hasText:'2 approved'})).toHaveText(/ · 2 approved · owner payouts \$875\.00$/)
      await page.screenshot({path:join(directory,`frozen-statements-${width}.png`),fullPage:true})
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Frozen statement forms fit '+width)
      for(const basis of ['cash','accrual']){

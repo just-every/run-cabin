@@ -85,6 +85,9 @@ export async function exceptionJourney({act,screens}={}){
   const supplement=await h.cmd('statement.close.prepare',{propertyId:home.id,month:currentMonth,adjustmentOf:adjustment.id})
   assert.equal(supplement.close.movementCents,500);assert.equal(supplement.netCents,87500);assert.equal(supplement.close.refundsCents,-500)
   await h.cmd('statement.approve',{id:supplement.id,revision:supplement.revision})
+  const statementPage=await h.send('/app/statements',undefined,h.owner)
+  assert.equal(statementPage.status,200)
+  assert.match(statementPage.text,/<summary>[^<]* · 2 approved · owner payouts \$875\.00<\/summary>/,'The monthly summary counts the latest closing balance, not its superseded supplement baseline')
   const final=(await cases()).find(c=>c.id===row.id)
   assert.equal(final.evidence.payableCents,87500);assert.equal(final.evidence.bankMatchedDistributionCents,0)
   for(const basis of ['cash','accrual']){
