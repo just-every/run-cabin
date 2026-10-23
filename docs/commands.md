@@ -90,4 +90,4 @@ Provider custody uses owner-only `provider.sharing` operations `grant`, `credent
 
 `POST /api/cabin/questions` and the native `question.ask` command read permission-scoped portfolio answers. `question.investigate` approves one exact, assigned internal follow-up. Filters, source revision and digest, current grants and explicit consent are checked on the server. Rental owners use their separate scoped portal doors. See [Portfolio questions](/docs/portfolio-questions) for inputs, comparison semantics, source freshness, owner isolation and approval limits.
 
-Source-linked financial investigations and exact correction commands are documented in [Financial exception cases](financial-exceptions.md). They require native installation-owner authority and do not authorize an external refund or transfer.
+Source-linked financial investigations and exact correction commands are documented in [Financial exception cases](/docs/financial-exceptions). They require native installation-owner authority and do not authorize an external refund or transfer.

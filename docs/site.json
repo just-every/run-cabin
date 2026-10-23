@@ -16,6 +16,7 @@
         { "slug": "inbox", "title": "Guest inbox", "file": "inbox.md", "summary": "One thread per guest across stays, email and texts; check-in details, checkout reminders and review requests on time; drafted replies that wait for your nod." },
         { "slug": "turnovers", "title": "Turnovers", "file": "turnovers.md", "summary": "Every stay makes its turnover and door codes; the cleaner is emailed, marks the home ready with photos, and Readiness shows which homes are ready." },
         { "slug": "statements", "title": "Owner statements", "file": "statements.md", "summary": "Import channel payout CSVs, match stays, review management fees and owner payout, approve and deliver frozen statements, and export to Pantry or QuickBooks." },
+        { "slug": "financial-exceptions", "title": "Financial exception cases", "file": "financial-exceptions.md", "summary": "Investigate split settlements, missing fees and refunds, review source-linked corrections and keep unresolved owner distributions visible." },
         { "slug": "portfolio-questions", "title": "Portfolio questions", "file": "portfolio-questions.md", "summary": "Ask scoped questions about owner net, arrivals, reservations and saved conversations, follow their sources and approve assigned investigations." },
         { "slug": "agent-access", "title": "Agent access", "file": "agent-access.md", "summary": "Give the agent you already use a token to prepare calendar reviews, turnovers and statements for a person to approve." }
       ]

@@ -1,6 +1,6 @@
 # Monthly owner close
 
-Configure each home's legal entity in Trust ledger before importing settlements. In Statements, import Airbnb and Vrbo transaction reports or [reviewed Booking.com and Stripe USD settlement rows](statement-settlements.md). Every transaction retains its provider identity and batch; a changed or duplicate source never creates a second receipt. These imports do not claim a live channel connection or bank acknowledgement.
+Configure each home's legal entity in Trust ledger before importing settlements. In Statements, import Airbnb and Vrbo transaction reports or [reviewed Booking.com and Stripe USD settlement rows](https://github.com/just-every/run-cabin/blob/main/docs/statement-settlements.md). Every transaction retains its provider identity and batch; a changed or duplicate source never creates a second receipt. These imports do not claim a live channel connection or bank acknowledgement.
 
 Use **Reconciled monthly ledger close** for an owner/month. Resolve unmatched/unassigned receipts and missing settlement evidence for departed stays first. Post actual invoices, commission, reserve allocations, tax responsibility, refunds and distributions through the existing reviewed ledger/allocation doors. A statement reports those immutable postings; it never estimates a missing fee, sends money or invents a bank receipt.
 
