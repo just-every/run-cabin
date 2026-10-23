@@ -94,10 +94,10 @@ export async function readReport(db:D1Database,actor:Actor,params:URLSearchParam
   const calendarNights=countNights(f.from,f.until),availableNights=calendarNights-blocked.size,rentalCents=sum(rows,b=>b.rentalCents??0),pricedNights=sum(rows,b=>b.pricedNights)
   return {id:p.id,name:p.name,timeZone:settings(p.id).timeZone,calendarNights,ownerNights:owner.size,maintenanceNights:maintenance.size,otherBlockedNights:other.size,availableNights,occupiedNights:occupied.size,pricedNights,rentalCents,occupancy:availableNights?occupied.size/availableNights:null,adrCents:pricedNights?Math.round(rentalCents/pricedNights):null,revparCents:availableNights?Math.round(rentalCents/availableNights):null,cancellations:rows.filter(b=>b.status==='cancelled'||b.status==='no_show').length}
  })
- const family=(j:Journal):string=>j.reversalOf?journalsById.get(j.reversalOf)?.sourceType??j.sourceType:j.sourceType
+ const family=(j:Journal):string=>{const type=j.reversalOf?journalsById.get(j.reversalOf)?.sourceType??j.sourceType:j.sourceType;return type==='settlement-correction'?'payout':type}
  const hasEarn=new Set(all.filter(j=>['earn','direct-payment'].includes(j.sourceType)).map(j=>j.bookingId))
  const financial=all.filter(j=>homeIds.has(j.propertyId)&&inside(j.effectiveDate)&&(!f.owner||j.ownerKey===f.owner)&&(!f.channel||byId.get(j.bookingId)?.channel===f.channel)).map(j=>{
-  const original=j.reversalOf?journalsById.get(j.reversalOf)??j:j,type=family(j),payout=payoutsById.get(original.sourceId),cash=-net(j,'cash'),owner=net(j,'ownerLiability'),managerRevenue=net(j,'managerRevenue'),sign=j.reversalOf?-1:1
+  const original=j.reversalOf?journalsById.get(j.reversalOf)??j:j,type=family(j),payout=original.settlement??payoutsById.get(original.sourceId),cash=-net(j,'cash'),owner=net(j,'ownerLiability'),managerRevenue=net(j,'managerRevenue'),sign=j.reversalOf?-1:1
   const promotionOwner=type.startsWith('promotion-owner-'),promotionRefund=type.startsWith('promotion-refund-owner-'),tax=net(j,'taxes'),reserves=net(j,'ownerReserves'),vendor=net(j,'vendorPayable')
   const earned=['earn','direct-payment'].includes(type)||type==='payout'&&!hasEarn.has(j.bookingId)&&owner!==0
   let grossCents=f.basis==='cash'?(type==='payout'&&payout?(payout.grossCents>0?payout.grossCents*sign:0):['payment','deposit'].includes(type)?cash:0):earned?(type==='payout'&&payout?(payout.grossCents>0?payout.grossCents*sign:0):owner+tax+managerRevenue):promotionOwner?owner+reserves+tax+managerRevenue+vendor:0

@@ -28,7 +28,7 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
   need(!row.restorePaused,'Restored case history is inactive. Review current sources before new work.',409)
   if(name==='financeCase.request'){
    need(['settlement','fee','refund','bank'].includes(String(p.kind)),'Choose the missing source record')
-   row.requests.push({id:newId(),kind:p.kind as 'fee',detail:text(p.detail,'record to obtain and responsible follow-up',1000),requestedBy:c.actor.id,at:c.now});row.status='awaiting_records'
+   row.requests.push({id:newId(),kind:p.kind as FinancialCase['requests'][number]['kind'],detail:text(p.detail,'record to obtain and responsible follow-up',1000),requestedBy:c.actor.id,at:c.now});row.status='awaiting_records'
   }else if(name==='financeCase.obtain'){
    const request=row.requests.find(r=>r.id===p.requestId);need(request&&!request.evidenceId,'Open record request not found',409)
    const id=text(p.evidenceId,'imported source id'),bank=await bankData(c.db)
@@ -62,7 +62,7 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
     const reversed=await post(c,{...original,sourceKey:'reversal:'+original.id,sourceType:'correction',sourceId:original.id,sourceRevision:original.id,effectiveDate:proposal.effectiveDate,reversalOf:original.id,lines:original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))})
     const {grossCents:g,feeCents:f,netCents:n}=proposal.source
     const signed=(account:'cash'|'ownerLiability',amount:number,dr:boolean)=>amount===0?[]:[(amount>0===dr?debit:credit)(account,Math.abs(amount))]
-    const corrected=await post(c,{sourceKey:'financial-correction:'+proposal.id,propertyId:original.propertyId,bookingId:original.bookingId,ownerKey:original.ownerKey,legalEntity:original.legalEntity,sourceType:'settlement-correction',sourceId:proposal.id,sourceRevision:proposal.sourceDigest,effectiveDate:proposal.effectiveDate,correctionOf:original.id,lines:[...signed('cash',n,true),...signed('ownerLiability',g,false),...signed('ownerLiability',f,true)]})
+    const corrected=await post(c,{sourceKey:'financial-correction:'+proposal.id,propertyId:original.propertyId,bookingId:original.bookingId,ownerKey:original.ownerKey,legalEntity:original.legalEntity,settlement:{grossCents:g,feeCents:f,netCents:n},sourceType:'settlement-correction',sourceId:proposal.id,sourceRevision:proposal.sourceDigest,effectiveDate:proposal.effectiveDate,correctionOf:original.id,lines:[...signed('cash',n,true),...signed('ownerLiability',g,false),...signed('ownerLiability',f,true)]})
     proposal.journalIds=[reversed.id,corrected.id];proposal.status='approved';row.status='corrected'
     c.data.approvals.push({id:newId(),kind:'financial-correction',recordId:proposal.id,revision:proposal.baseline,actorId:c.actor.id,at:c.now})
    }else{proposal.status='rejected';row.status='investigating'}

@@ -35,7 +35,7 @@ try{
     await expect(page.locator('[role="alert"]')).toHaveCount(0)
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Case forms fit '+width)
     return (await h.state()).financialExceptions.find(r=>input.id?r.id===input.id:r.bookingId===input.bookingId)
-   },screens:async(h,stage)=>{
+   },screens:async(h,stage,scope)=>{
     await visit(h)
     const section=page.locator('section.panel').filter({has:page.getByRole('heading',{name:'Financial exception cases',exact:true})})
     await section.scrollIntoViewIfNeeded()
@@ -53,6 +53,13 @@ try{
      await page.goto(origin+'/app/statements')
      await page.screenshot({path:join(directory,`frozen-statements-${width}.png`),fullPage:true})
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Frozen statement forms fit '+width)
+     for(const basis of ['cash','accrual']){
+      await page.goto(origin+'/app/reports?'+new URLSearchParams({...scope,basis}))
+      await expect(page.getByRole('heading',{name:'Reports',exact:true})).toBeVisible()
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Corrected report fits '+width)
+      for(const control of await page.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Report icon-only controls require tooltips')
+      await page.screenshot({path:join(directory,`corrected-report-${basis}-${width}.png`),fullPage:true})
+     }
     }
    }})
   }finally{await context.close()}

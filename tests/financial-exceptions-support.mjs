@@ -78,7 +78,22 @@ export async function exceptionJourney({act,screens}={}){
   assert.equal(result.evidence.payableCents,87000);assert.equal(result.evidence.bankMatchedDistributionCents,0)
   assert.equal(result.evidence.recordedDistributionCents,0);assert.ok(result.requests.every(r=>r.evidenceId))
   assert.equal(result.status,'investigating','No distribution means the case stays open')
-  if(screens)await screens(h,'corrected-awaiting-distribution')
+  // A provider can later return part of the refund fee. Its corrected source
+  // must keep refund classification and supplement the already frozen close.
+  proposed=await proposal({payoutId:refund.id,csv:csv('synthetic-cabin-6','-100.00','-5.00','-95.00','Refund',current),evidence:'synthetic-cabin-10: retained refund fee return',why:'Provider refund detail returns $5.00 of its fee; explicit settled net is -$95.00.'})
+  await update('financeCase.approve',{proposalId:proposed.id,confirm:'yes',reason:'Reviewed provider refund fee return and exact linked correction.'})
+  const supplement=await h.cmd('statement.close.prepare',{propertyId:home.id,month:currentMonth,adjustmentOf:adjustment.id})
+  assert.equal(supplement.close.movementCents,500);assert.equal(supplement.netCents,87500);assert.equal(supplement.close.refundsCents,-500)
+  await h.cmd('statement.approve',{id:supplement.id,revision:supplement.revision})
+  const final=(await cases()).find(c=>c.id===row.id)
+  assert.equal(final.evidence.payableCents,87500);assert.equal(final.evidence.bankMatchedDistributionCents,0)
+  for(const basis of ['cash','accrual']){
+   const report=await h.send('/api/cabin/reports.json?'+new URLSearchParams({property:home.id,from:month+'-01',until:day(1),basis}),undefined,h.owner)
+   assert.equal(report.status,200,report.text)
+   assert.equal(report.value.totals.grossCents,100000);assert.equal(report.value.totals.feesCents,2500);assert.equal(report.value.totals.refundsCents,10000)
+   assert.equal(report.value.totals.netCents,final.evidence.payableCents,'Corrected source reports reconcile to the ledger and frozen adjustment on '+basis)
+  }
+  if(screens)await screens(h,'corrected-awaiting-distribution',{property:home.id,from:month+'-01',until:day(1)})
   const staff=await h.person('FinancialStaff','manager')
   assert.deepEqual((await h.state(staff.cookie)).financialExceptions,[])
   await h.cmd('financeCase.review',{id:row.id,revision:row.revision},staff.cookie,403)
@@ -86,6 +101,6 @@ export async function exceptionJourney({act,screens}={}){
   await h.cmd('financeCase.open',{bookingId:booking.id,reason:'Duplicate case'},h.owner,409)
   const cleaner=await h.person('FinancialCleaner');assert.deepEqual((await h.state(cleaner.cookie)).financialExceptions,[])
   for(const j of state.ledger.journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
-  return {id:row.id,payableCents:result.evidence.payableCents,distributionCents:0}
+  return {id:row.id,payableCents:final.evidence.payableCents,distributionCents:0}
  }finally{await h.close()}
 }

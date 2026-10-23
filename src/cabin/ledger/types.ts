@@ -10,6 +10,7 @@ export type Account = keyof typeof accounts
 export interface LedgerSetting { id:string; revision:string; propertyId:string; legalEntity:string }
 export interface Leg { account:Account; debitCents:number; creditCents:number }
 export interface Journal {
+ settlement?:{grossCents:number;feeCents:number;netCents:number};
  manualReceipt?:{method:'cash'|'check';reference:string;note:string;receivedAt:string};
  id:string; sourceKey:string; propertyId:string; bookingId:string; ownerKey:string; legalEntity:string;
  effectiveDate:string; postedAt:string; actorId:string; sourceType:string; sourceId:string; sourceRevision:string;
