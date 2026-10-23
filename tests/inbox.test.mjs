@@ -222,3 +222,27 @@ test('guest search covers retained message history and explicit guest/message pa
 
  } finally {await h.close()}
 })
+
+test('property-limited inbox staff act only on conversations wholly within their homes', async () => {
+ const h = await harness()
+ try {
+  const [home, other] = [await h.cmd('property.save', { name: 'synthetic-cabin-1', ownerName: 'Synthetic owner', ownerEmail: 'owner@synthetic.example', commissionBps: 1500 }), await h.cmd('property.save', { name: 'synthetic-cabin-2', ownerName: 'Synthetic owner', ownerEmail: 'owner@synthetic.example', commissionBps: 1500 })]
+  await h.cmd('inbox.address', { address: INBOX, revision: '' })
+  await h.cmd('inbox.team.set', { section: 'template', title: 'Synthetic', text: 'Synthetic template', revision: (await h.accessState()).inbox.find(r => r.id === 'inbox').revision })
+  for (const [n, p] of [[1, home], [2, other]]) await h.cmd('reservation.request', { propertyId: p.id, channel: 'direct', kind: 'stay', guestName: `Synthetic Guest ${n}`, guestEmail: `guest${n}@synthetic.example`, start: day(1), end: day(3) })
+  for (const [n, from] of [[1, 'guest1@synthetic.example'], [2, 'guest2@synthetic.example'], [3, 'stranger@synthetic.example']]) await h.cmd('inbox.try', { source: mime({ from, subject: 'Synthetic question', id: `synthetic-cabin-${n}@synthetic.example`, text: 'Is the hot tub open?' }) })
+  const cases = (await h.state()).threadCases, unmatched = cases.find(r => r.propertyId === null), own = cases.find(r => r.propertyId === home.id), foreign = cases.find(r => r.propertyId === other.id)
+  assert.ok(unmatched && own && foreign, JSON.stringify(cases))
+  await h.cmd('thread.note', { thread: unmatched.id, text: 'Host-only synthetic note' })
+  const staff = await h.cmd('member.save', { name: 'Synthetic inbox staff', email: 'synthetic-inbox@stay.example', pmsRole: 'guest_service', propertyIds: [home.id], actions: ['inbox:read', 'thread.triage', 'message.compose'], active: true }); await h.cmd('member.invite', { id: staff.id }); const cookie = await h.signIn('synthetic-inbox@stay.example')
+  const triage = (thread, status, extra = {}) => h.cmd('thread.triage', { thread, labels: 'synthetic', urgency: 'urgent', ...extra }, cookie, status)
+  const before = await h.state()
+  await triage(unmatched.id, 403, { propertyId: home.id })
+  await h.cmd('message.compose', { thread: unmatched.id, propertyId: home.id, text: 'Synthetic reply' }, cookie, 403)
+  await triage(foreign.id, 404, { propertyId: home.id })
+  const after = await h.state()
+  assert.deepEqual(after.threadCases.filter(r => r.id !== own.id), before.threadCases.filter(r => r.id !== own.id))
+  assert.equal(after.messages.length, before.messages.length)
+  assert.equal((await triage(own.id, 200)).urgency, 'urgent')
+ } finally { await h.close() }
+})

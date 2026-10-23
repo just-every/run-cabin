@@ -25,11 +25,12 @@ export async function commandScope(db:D1Database,actor:Actor,name:string,input:R
   if(key==='propertyIds'&&Array.isArray(value))for(const id of value)if(typeof id==='string')await resolve(id)
  }
  // A thread key is a contact-wide identifier. Its entire cohort must be in scope.
- if(typeof input.threadId==='string'){
-  const {threadId,messageKey}=await import('../inbox/threads')
-  const messages=data.messages.filter(m=>threadId(messageKey(data,m))===input.threadId)
-  need(messages.length,'Thread not found',404)
-  for(const m of messages){need(m.propertyId,'Unscoped conversation requires the installation owner',403);properties.add(m.propertyId)}
+ if(input.thread!==undefined){
+  const {threads}=await import('../inbox/threads')
+  const thread=threads(data).find(t=>t.id===input.thread)
+  need(thread,'Thread not found',404)
+  for(const b of thread.stays)properties.add(b.propertyId)
+  for(const m of thread.messages){const id=m.propertyId??byId.get(m.bookingId??'')?.propertyId;need(id,'Unscoped conversation requires the installation owner',403);properties.add(id)}
  }
 
  need(unresolved.length===0&&properties.size>0,'Choose a record within your property grant',403)
