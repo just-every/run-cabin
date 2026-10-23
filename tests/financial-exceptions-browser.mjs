@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { exceptionJourney } from './financial-exceptions-support.mjs'
-const directory=process.env.CABIN_EXCEPTION_SHOTS??'test-results/financial-exceptions';await mkdir(directory,{recursive:true})
+const directory=process.env.CABIN_EXCEPTION_SHOTS??'./test-results/financial-exceptions';await mkdir(directory,{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
 try{
  for(const width of [1440,390]){
@@ -70,4 +70,4 @@ try{
   }finally{await context.close()}
  }
 }finally{await browser.close()}
-console.log('Financial exception source pursuit, exact rejection/approval, open distribution boundary, keyboard, tooltip audit and accessibility PASS at 1440/390')
+console.log('Financial exception source pursuit, exact rejection and approval, open distribution boundary, keyboard, tooltip audit and accessibility PASS at 1440/390')

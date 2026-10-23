@@ -10,7 +10,7 @@ Use **Statements → Reconciled monthly ledger close** for the linked adjustment
 
 The case displays recorded owner payable, recorded distribution and the portion matched to bank evidence separately. It remains open. Matching local records does not establish an actual provider transfer, completeness of a source export, physical receipt of money or FIN-006 execution authority. The full AGENT-002 acceptance still requires actual owner-distribution evidence and the remaining provider workflows.
 
-The conservative default, awaiting contract review, is installation-owner-only case access and decisions. Accountants retain their existing finance tools; this feature grants no additional access or external authority. Every change records actor, revision and history. Archive export keeps evidence but pauses cases; **Review current sources** retires pending proposals before new work. Property/guest erasure retains case accounting evidence under the existing reviewed accounting-retention policy.
+The conservative default, awaiting contract review, is installation-owner-only case access and decisions. Accountants retain their existing finance tools; this feature grants no additional access or external authority. Every change records actor, revision and history. Archive export keeps evidence but pauses cases; **Review current sources** retires pending proposals before new work. Property and guest erasure retains case accounting evidence under the existing reviewed accounting-retention policy.
 
 The same operations are available through the authenticated command door (`POST /api/cabin/command`, body `{ "name": "financeCase.open", "input": { ... } }`):
 
