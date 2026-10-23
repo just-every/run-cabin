@@ -63,6 +63,7 @@ export function exportRow(table, row) {
  const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled','threadCases'].includes(kind) ? redact(stripped) : stripped
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
+ if(kind==='financialCases')data.restorePaused=true
  if(kind==='distributionPlans')data.restorePaused=true
  if(kind==='guestPortalLinks'){data.token=null;data.status='revoked';data.sessionEpoch='restored'}
  if (kind === 'statementSchedules') { data.enabled=false; data.error=pause; data.actor={...data.actor,operatorVersion:-1} }

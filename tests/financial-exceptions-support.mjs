@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict'
+import { harness } from './harness.mjs'
+import { homeDay } from './home-calendar.mjs'
+const day=n=>homeDay(n,'America/New_York')
+const cents=(rows,account)=>rows.reduce((n,j)=>n+j.lines.filter(l=>l.account===account).reduce((v,l)=>v+l.creditCents-l.debitCents,0),0)
+export async function exceptionJourney({act,screens}={}){
+ const h=await harness({assets:true,outbound:()=>assert.fail('Source investigation and approved local corrections must not call providers')})
+ const action=async(name,input)=>act?act(h,name,input):h.cmd(name,input)
+ const cases=async()=>(await h.state()).financialExceptions
+ try{
+  const home=await h.cmd('property.save',{name:'Cedar Financial Review',ownerName:'Morgan Lee',ownerEmail:'morgan@stay.example',commissionBps:0})
+  await h.cmd('home.settings',{propertyId:home.id,address:'200 Synthetic Road',timeZone:'America/New_York',checklist:['Ready']})
+  await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Cedar Rentals LLC'})
+  const date=day(-35),month=date.slice(0,7),current=day(0),currentMonth=current.slice(0,7)
+  assert.notEqual(month,currentMonth,'The frozen and correction periods are distinct')
+  const draft=await h.cmd('calendar.prepare',{propertyId:home.id,channel:'airbnb',calendar:`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:synthetic-cabin-1\r\nDTSTART;VALUE=DATE:${day(-39).replaceAll('-','')}\r\nDTEND;VALUE=DATE:${day(-36).replaceAll('-','')}\r\nSUMMARY:Reserved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`})
+  await h.cmd('calendar.approve',{id:draft.id,revision:draft.revision})
+  const booking=(await h.state()).bookings.find(b=>b.propertyId===home.id)
+  const csv=(id,gross,fee,net,type='Reservation',when=date)=>`Date,Type,Confirmation code,Currency,Gross earnings,Host service fee,Amount,Payout ID,Transaction ID\n${when},${type},synthetic-cabin-1,USD,${gross},${fee},${net},synthetic-cabin-2,${id}\n`
+  const first=(await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-3','500.00','0.00','500.00')})).imported[0]
+  await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-4','500.00','15.00','485.00')})
+  let statement=await h.cmd('statement.close.prepare',{propertyId:home.id,month})
+  await h.cmd('statement.approve',{id:statement.id,revision:statement.revision})
+  const frozen=(await h.send(`/api/cabin/statements/${statement.id}.csv`,undefined,h.owner)).text
+  assert.equal(statement.netCents,98500)
+  await h.cmd('ledger.close',{month})
+  let row=await action('financeCase.open',{bookingId:booking.id,reason:'Split payout is missing its first channel fee; obtain the provider detail and follow a later refund.'})
+  const update=async(name,input={})=>{row=await action(name,{id:row.id,revision:row.revision,...input});return row}
+  await update('financeCase.request',{kind:'fee',detail:'Installation owner: obtain explicit fee detail for synthetic-cabin-3 from the provider.'})
+  const feeRequest=row.requests[0].id
+  await h.cmd('financeCase.obtain',{id:row.id,revision:row.revision,requestId:feeRequest,evidenceId:'not-obtained'},h.owner,409)
+  await h.cmd('financeCase.obtain',{id:row.id,revision:row.revision,requestId:feeRequest,evidenceId:first.id},h.owner,409)
+  if(screens)await screens(h,'missing-record')
+  const proposal=async(extra={})=>{
+   const evidence=(await cases()).find(c=>c.id===row.id).evidence
+   await update('financeCase.propose',{payoutId:first.id,baseline:evidence.digest,csv:csv('synthetic-cabin-3','500.00','15.00','485.00'),evidence:'synthetic-cabin-5: retained provider fee detail',effectiveDate:current,why:'Explicit provider fee is $15.00; gross is unchanged, bank net is $485.00.',...extra})
+   return row.proposals.at(-1)
+  }
+  const journalsBefore=(await h.state()).ledger.journals
+  let proposed=await proposal({effectiveDate:date})
+  await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,confirm:'yes',reason:'Closed date must fail'},h.owner,409)
+  await update('financeCase.reject',{proposalId:proposed.id,reason:'Use an open-period correction; preserve the frozen statement.'})
+  assert.deepEqual((await h.state()).ledger.journals,journalsBefore,'Proposing and rejecting do not post')
+  proposed=await proposal()
+  if(screens)await screens(h,'proposal')
+  await h.cmd('booking.details',{id:booking.id,revision:(await h.state()).bookings.find(b=>b.id===booking.id).revision,guestName:'Revised guest'})
+  await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,confirm:'yes',reason:'Stale reservation must fail'},h.owner,409)
+  await update('financeCase.reject',{proposalId:proposed.id,reason:'Reservation changed; review the current source revision.'})
+  proposed=await proposal()
+  await h.restart()
+  row=(await cases()).find(c=>c.id===row.id)
+  assert.equal(row.proposals.at(-1).id,proposed.id)
+  await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,reason:'No consent'},h.owner,400)
+  await update('financeCase.approve',{proposalId:proposed.id,confirm:'yes',reason:'Reviewed retained provider record and exact open-period reversal/replacement.'})
+  await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,confirm:'yes',reason:'Duplicate'},h.owner,409)
+  await update('financeCase.obtain',{requestId:feeRequest,evidenceId:proposed.id})
+  await update('financeCase.request',{kind:'refund',detail:'Installation owner: obtain the later refund settlement.'})
+  const refund=(await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-6','-100.00','0.00','-100.00','Refund',current)})).imported[0]
+  await update('financeCase.obtain',{requestId:row.requests.at(-1).id,evidenceId:refund.id})
+  await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-6','-100.00','0.00','-100.00','Refund',current)})
+  let state=await h.state(),journals=state.ledger.journals
+  assert.equal(cents(journals,'ownerLiability'),87000)
+  const correction=journals.find(j=>j.sourceId===proposed.id),original=journals.find(j=>j.id===proposed.originalJournalId)
+  assert.equal(correction.correctionOf,original.id);assert.equal(correction.ownerKey,original.ownerKey)
+  assert.equal(correction.legalEntity,original.legalEntity);assert.ok(journals.some(j=>j.reversalOf===original.id))
+  assert.equal((await h.send(`/api/cabin/statements/${statement.id}.csv`,undefined,h.owner)).text,frozen)
+  const adjustment=await h.cmd('statement.close.prepare',{propertyId:home.id,month:currentMonth})
+  assert.equal(adjustment.netCents,87000);assert.deepEqual(adjustment.close.adjustsStatementIds,[statement.id])
+  await h.cmd('statement.approve',{id:adjustment.id,revision:adjustment.revision})
+  const account=await h.cmd('bank.account.create',{propertyId:home.id,label:'Cedar guest trust',institution:'Synthetic bank',lastFour:'4821',purpose:'trust',confirm:'yes'})
+  const bankStatement=await h.cmd('bank.statement.import',{id:account.id,reference:'synthetic-cabin-7',from:currentMonth+'-01',until:current,opening:'970.00',closing:'870.00',evidence:'synthetic-cabin-8: bank refund receipt',confirm:'yes',csv:`Transaction ID,Date,Amount,Reference\nsynthetic-cabin-9,${current},-100.00,Refund settlement\n`})
+  const refundJournal=journals.find(j=>j.sourceId===refund.id)
+  await h.cmd('bank.assign',{id:account.id,journalId:refundJournal.id,evidence:'Refund bank receipt'})
+  await h.cmd('bank.match',{id:bankStatement.id,transactionId:'synthetic-cabin-9',journalId:refundJournal.id})
+  await update('financeCase.request',{kind:'bank',detail:'Installation owner: obtain bank receipt for the refund.'})
+  await update('financeCase.obtain',{requestId:row.requests.at(-1).id,evidenceId:bankStatement.id})
+  state=await h.state();const result=state.financialExceptions.find(c=>c.id===row.id)
+  assert.equal(result.evidence.payableCents,87000);assert.equal(result.evidence.bankMatchedDistributionCents,0)
+  assert.equal(result.evidence.recordedDistributionCents,0);assert.ok(result.requests.every(r=>r.evidenceId))
+  assert.equal(result.status,'investigating','No distribution means the case stays open')
+  if(screens)await screens(h,'corrected-awaiting-distribution')
+  const staff=await h.person('FinancialStaff','manager')
+  assert.deepEqual((await h.state(staff.cookie)).financialExceptions,[])
+  await h.cmd('financeCase.review',{id:row.id,revision:row.revision},staff.cookie,403)
+  assert.ok(!(await h.send('/app/ledger',undefined,staff.cookie)).text.includes(row.id))
+  await h.cmd('financeCase.open',{bookingId:booking.id,reason:'Duplicate case'},h.owner,409)
+  const cleaner=await h.person('FinancialCleaner');assert.deepEqual((await h.state(cleaner.cookie)).financialExceptions,[])
+  for(const j of state.ledger.journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
+  return {id:row.id,payableCents:result.evidence.payableCents,distributionCents:0}
+ }finally{await h.close()}
+}

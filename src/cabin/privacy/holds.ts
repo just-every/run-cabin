@@ -12,6 +12,7 @@ export async function retainedRecords(c:Context,s:ErasureScope,p:Record<string,u
  const policy=retentionPolicy(c,p),out:Retained[]=[]
  const operator=s.entity==='member'?await c.db.prepare('SELECT id FROM oa_operators WHERE email=(SELECT email FROM cb_members WHERE id=?) COLLATE NOCASE').bind(s.id).first<{id:string}>():null
  for(const kind of ['statements','rentalAgreements','workExpenses','managementTerms','financialAllocations','sharedCosts'])for(const row of (c.data as any)[kind]??[])if((inScope(s,row)||!!operator&&JSON.stringify(row).includes(operator.id)||s.entity==='property'&&row.shares?.some((v:any)=>v.propertyId===s.id))&&(kind!=='statements'||row.status==='approved'))out.push({table:'cb_records:'+kind,id:row.id,...policy,payload:row})
+ for(const row of (await c.db.prepare("SELECT data FROM cb_records WHERE kind='financialCases'").all<{data:string}>()).results){const data=JSON.parse(row.data);if(inScope(s,data))out.push({table:'cb_records:financialCases',id:data.id,...policy,payload:data})}
  if(s.entity==='property'){
   const row=c.data.properties.find(p=>p.id===s.id)!;out.push({table:'cb_properties',id:row.id,...policy,payload:row})
  }

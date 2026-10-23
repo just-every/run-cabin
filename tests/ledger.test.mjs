@@ -51,3 +51,7 @@ test('a matched channel receipt posts its actual net cash and owner fee once',()
 test('trust accounts reconcile bank, ledger and owner controls and reserve only the approved owner’s funds without executing transfers',{timeout:120000},async()=>{
  const {bankingJourney}=await import('./banking-support.mjs');await bankingJourney()
 })
+
+test('financial exception cases pursue split-payment fee and refund sources, reject and exactly approve a linked frozen-statement correction without inventing a distribution',{timeout:120000},async()=>{
+ const {exceptionJourney}=await import('./financial-exceptions-support.mjs');await exceptionJourney()
+})

@@ -46,6 +46,7 @@ export async function eraseGuest(c:Context,p:Record<string,unknown>,fence:Query[
  for(const b of matched)c.queries.push(query("INSERT OR IGNORE INTO cb_erasure_fences(entity,id_hash,at) VALUES('guest',?,?)",await sha(b.id),c.now))
  scrubOperational(c,scope)
  const receiptId=await completion(c,'guest',booking.id,retained)
+ c.queries.push(query("DELETE FROM cb_records WHERE kind='financialCases' AND json_extract(data,'$.bookingId') IN (SELECT value FROM json_each(?))",JSON.stringify([...ids])))
  c.queries.push(...fence);c.entityId=booking.id;await commit(c,'privacy.guest.erase');return {erased:true,reservations:matched.length,receiptId}
 }
 /** A later feed or background job may update a stay, but cannot restore erased guest identity or re-queue its messages. */

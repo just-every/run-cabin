@@ -94,7 +94,8 @@
       "browser": true,
       "hosted": false,
       "commands": [
-        "node --test --test-concurrency=1 tests/readiness-browser.test.mjs"
+        "node --test --test-concurrency=1 tests/readiness-browser.test.mjs",
+        "node tests/financial-exceptions-browser.mjs"
       ]
     }
   ],

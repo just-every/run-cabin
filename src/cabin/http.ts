@@ -86,6 +86,7 @@ function savedMessage(name:string|null,who:Actor,state:any,record:string|null){
  return undefined
 }
 function actionMessage(name:string,result:any,local:boolean,state:any){
+ if(name.startsWith('financeCase.'))return 'Financial case updated. Review its source records, missing evidence and exact correction below; no funds were sent.'
  if(name==='question.investigate')return 'Investigation approved and assigned. Open the task below to follow its outcome.'
  if(name==='privacy.review')return 'Erasure review saved. Read the exact retention holds and external deletion steps before confirming below.'
  if(name==='privacy.erase')return `Local erasure completed. Receipt ${result.receiptId} lists retained records and external deletion steps under Properties & people.`
