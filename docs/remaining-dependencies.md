@@ -28,7 +28,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | PRICE-003 | missing | Shared nightly rate publisher, channel readback/drift exceptions and approved OTA accounts. |
 | WEB-002 | missing | Embeddable booking engine and real external-site integration. |
 | WEB-005 | partial | Complete hosted owner-statement reconciliation needs source settlement evidence for the original stays and eligible USD payout/bank evidence. The supplied Stripe account settles AUD. API channel/device acknowledgements also retain SYNC/OPS prerequisites. Paid offers, refunds, original-stay/access/work updates and export feeds are implemented and exercised. |
-| PAY-001 | partial | Live-mode authority, US ACH-capable account and documented manual-receipt workflow. Supplied Stripe account is Australian. |
+| PAY-001 | partial | US ACH pending/returned proof needs a US Stripe test account with ACH enabled and live-mode authority. The one authorized test-mode probe verified country US but its request schema was rejected; ACH capability is unproved. Source-backed manual receipts are implemented. See `docs/ach-probe.md`. |
 | PAY-002 | partial | Native direct guest-card schedules and ct-approved consent changes have real Stripe sandbox collection/restart/failure/follow-up acceptance. PAY-005 virtual-card source intake and activation/expiry/loaded-amount execution, plus PAY-006 property-collect guest-card intake/consent, remain unavailable under their own clauses. |
 | PAY-004 | missing | Licensed protection partner, merchant chargeback permissions and real evidence/case lifecycle. |
 | PAY-005 | missing | Booking.com partner account with eligible virtual cards and processor authority. |
