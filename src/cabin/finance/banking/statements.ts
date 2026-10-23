@@ -9,7 +9,7 @@ export async function importStatement(c:Context,data:BankData,account:TrustAccou
  const from=csvDate(text(p.from,'period start'),'period start'),until=csvDate(text(p.until,'period end'),'period end')
  need(from<=until,'Statement period ends before it starts')
  const openingCents=cents(text(p.opening,'opening USD balance',40),'Opening balance'),closingCents=cents(text(p.closing,'closing USD balance',40),'Closing balance')
- const csv=text(p.csv,'bank CSV',2_000_000),[header,...rows]=csvRecords(csv)
+ const csv=text(p.csv,'bank CSV',2_000_000).replace(/\r\n?/g,'\n'),[header,...rows]=csvRecords(csv)
  need(header.join(',')==='Transaction ID,Date,Amount,Reference','Use exactly Transaction ID,Date,Amount,Reference; do not upload account numbers or routing data')
  const transactions=rows.map(cells=>{
   need(cells.length===4,'Every bank CSV row needs four fields')

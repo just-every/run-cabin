@@ -10,7 +10,7 @@ Import an actual bank statement using its source reference, custody evidence, pe
 Transaction ID,Date,Amount,Reference
 ```
 
-Dates use ISO or US calendar dates; amounts use signed USD decimals, positive for deposits and negative for withdrawals. Opening plus all rows must equal closing. Replayed identical evidence returns the original; changed evidence, repeated transactions, overlapping/gapped later periods and inconsistent opening balances refuse publication. The normalized evidence and original CSV digest remain immutable; no original document containing bank credentials is retained.
+Dates use ISO or US calendar dates; amounts use signed USD decimals, positive for deposits and negative for withdrawals. Opening plus all rows must equal closing. Replayed identical evidence returns the original; changed evidence, repeated transactions, overlapping/gapped later periods and inconsistent opening balances refuse publication. The normalized evidence and newline-normalized CSV digest remain immutable; no original document containing bank credentials is retained.
 
 Assign every home journal explicitly to its bank account. Match each bank row to exactly one signed cash journal of the same amount and account. Neither attribution nor matching posts another receipt. Unassigned journals and unmatched bank rows prevent reconciliation. The frozen review explains bank closing, ledger cash, outstanding items and each original owner's payable, cash, receivables, reserves, guest advances, taxes and other liabilities. Journal corrections stay linked and require a new review; old reconciliations remain readable.
 
