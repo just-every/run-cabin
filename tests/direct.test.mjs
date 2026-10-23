@@ -399,3 +399,25 @@ test('only the installation owner can replace the Stripe key or switch the payme
   assert.equal((await h.state()).direct.provider.source,'page')
  }finally{await h.close()}
 })
+
+test('identity-check links stay out of ordinary staff responses and AI reply history',async()=>{
+ const prompts=[]
+ const h=await harness({outbound:async request=>{
+  assert.equal(new URL(request.url).hostname,'api.anthropic.com');prompts.push(await request.text())
+  return Response.json({content:[{type:'text',text:JSON.stringify({reply:'The host will confirm this.',grounds:[],needs_host:true,note:'Synthetic',confidence:0,topic:'other',instruction_id:null})}]})
+ }})
+ try{
+  const manager=await h.person('Morgan','manager'),cfg=await home(h)
+  await h.cmd('direct.configure',{...settings,identityMode:'all',identityReviewerId:(await h.state()).actor.id,identityBlockAccess:true,propertyId:cfg.propertyId,revision:cfg.revision})
+  const staff=await h.cmd('member.save',{name:'Synthetic inbox staff',email:'synthetic-inbox@stay.example',pmsRole:'guest_service',propertyIds:[cfg.propertyId],actions:['inbox:read'],active:true});await h.cmd('member.invite',{id:staff.id});const inbox=await h.signIn('synthetic-inbox@stay.example')
+  await h.cmd('reservation.request',{propertyId:cfg.propertyId,channel:'direct',guestName:'Alex Example',guestEmail:'alex@stay.example',start:day(3),end:day(6)})
+  const mail=(await h.db.prepare('SELECT message FROM rer_mail_development_outbox').all()).results.map(r=>JSON.parse(r.message)).find(m=>m.subject==='Complete your identity check')
+  const link=mail?.text.match(/\/book\/verification\/[\w-]+/)?.[0];assert.ok(link,'the guest receives the identity-check link by email')
+  for(const cookie of [h.owner,manager.cookie,inbox]){const s=await h.state(cookie);assert.ok(s.messages.some(m=>m.subject==='Complete your identity check'));assert.ok(!JSON.stringify(s).includes(link))}
+  await h.cmd('inbox.address',{address:'guests@cabin.example',revision:''})
+  await h.cmd('inbox.ai.save',{revision:(await h.accessState()).inbox.find(r=>r.id==='inbox').revision,key:'synthetic-cabin-1'})
+  await h.cmd('provider.sharing',{id:'anthropic',operation:'grant',securityRevision:'',actions:['reply:draft'],propertyIds:[cfg.propertyId],confirm:'yes'})
+  await h.cmd('inbox.try',{source:['From: alex@stay.example','To: guests@cabin.example','Subject: Identity check','Message-ID: <synthetic-cabin-2@stay.example>','MIME-Version: 1.0','Content-Type: text/plain; charset=utf-8','','Do I need to finish the identity check before arrival?'].join('\r\n')})
+  assert.equal(prompts.length,1);assert.match(prompts[0],/requires an identity check/);assert.ok(!prompts[0].includes(link))
+ }finally{await h.close()}
+})
