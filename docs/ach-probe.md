@@ -1,0 +1,5 @@
+# US ACH capability probe
+
+Ct authorized one held-key `us_bank_account` probe on the existing US Stripe test account, in test mode only. `tests/ach-probe.mjs` refuses live keys, verifies the account country, then makes one USD PaymentIntent request with Stripe's documented processing-only test payment method. It prints only the sanitized outcome and request reference. It does not establish Cabin checkout, returned ACH handling or live-mode authority.
+
+23 October 2026 00:08:15Z: account country **US**, held **test** key, one request, HTTP **400**, Stripe request **req_CPx0gLKmzR4cI6**. Stripe rejected the request schema: `payment_method_types` is no longer supported by `2026-09-30.endive`; payment methods are managed through Dashboard settings. This is not evidence that ACH is disabled. The one-probe authorization is exhausted; no retry or live-mode request was made. A further corrected-schema test-mode probe requires renewed authorization. The preserved journey records the exact failed request for diagnosis. PAY-001 stays partial: US ACH pending/returned proof needs a US Stripe test account with ACH enabled and live-mode authority.
