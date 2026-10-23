@@ -14,7 +14,7 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
  if(name==='financeCase.open'){
   const booking=c.data.bookings.find(b=>b.id===p.bookingId);need(booking,'Reservation not found',404);requireProperty(c.actor,booking.propertyId)
   need(!all.some(r=>r.bookingId===booking.id),'This reservation already has a financial exception case',409)
-  const row:FinancialCase={id:newId(),revision:newId(),propertyId:booking.propertyId,bookingId:booking.id,createdAt:c.now,createdBy:c.actor.id,reason:text(p.reason,'financial discrepancy',1000),status:'investigating',requests:[],proposals:[],history:[{at:c.now,by:c.actor.id,action:'Opened source investigation'}]}
+  const row:FinancialCase={agreement:structuredClone(booking.managementTerms),id:newId(),revision:newId(),propertyId:booking.propertyId,bookingId:booking.id,createdAt:c.now,createdBy:c.actor.id,reason:text(p.reason,'financial discrepancy',1000),status:'investigating',requests:[],proposals:[],history:[{at:c.now,by:c.actor.id,action:'Opened source investigation'}]}
   await caseEvidence(c,row);return saveCase(c,row)
  }
  const row=all.find(r=>r.id===p.id);need(row,'Financial case not found',404);requireProperty(c.actor,row.propertyId)
@@ -40,11 +40,12 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
    request.evidenceId=id;request.resolvedBy=c.actor.id
    row.status=row.requests.some(r=>!r.evidenceId)?'awaiting_records':'investigating'
   }else if(name==='financeCase.propose'){
+   need(evidence.sourceState==='available','The reservation moved or is unavailable. Reconcile its scope before proposing a correction.',409)
    need(!row.proposals.some(v=>v.status==='proposed'),'Approve or reject the existing proposal first',409)
    const payout=evidence.payouts.find(v=>v.id===p.payoutId);need(payout,'Matched settlement source not found',404)
    const original=evidence.journals.find(j=>j.sourceKey==='payout:'+payout.id)
    need(original&&original.lines.every(l=>['cash','ownerLiability','channelFees'].includes(l.account))&&!evidence.journals.some(j=>j.reversalOf===original.id),'This source needs accountant review: no unreversed native payout journal exists',409)
-   need(!c.data.financialAllocations.some(a=>a.bookingId===row.bookingId),'Allocated receipts need their FIN-003 correction workflow; do not replace an allocated posting',409)
+   need(!evidence.agreement?.allocation&&!c.data.financialAllocations.some(a=>a.bookingId===row.bookingId),'Allocated receipts need their FIN-003 correction workflow; do not replace an allocated posting',409)
    const proof=text(p.evidence,'retained provider record reference',500),csv=text(p.csv,'corrected provider CSV',2_000_000),lines=parsePayoutCsv(payout.source,csv,proof)
    need(lines.length===1,'Propose exactly one identified settlement correction')
    const source=lines[0]
@@ -55,6 +56,7 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
   }else if(name==='financeCase.reject'||name==='financeCase.approve'){
    const proposal=row.proposals.find(v=>v.id===p.proposalId&&v.status==='proposed');need(proposal,'Pending correction not found',409)
    if(name==='financeCase.approve'){
+    need(evidence.sourceState==='available','The reservation moved or is unavailable. Reconcile its scope before approving a correction.',409)
     // Conservative default: installation owner approves this exact local posting only.
     owner(c.actor);need(p.confirm==='yes','Explicit approval of this exact correction is required')
     need(proposal.baseline===evidence.digest,'Reservation, settlement, bank, agreement or statement evidence changed. Reject and propose again.',409)

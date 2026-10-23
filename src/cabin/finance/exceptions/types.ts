@@ -1,5 +1,6 @@
 import type { SourceLine } from '../sources'
 export interface FinancialCase {
+ agreement?:import('../../properties/terms').ManagementTerms;
  id:string; revision:string; propertyId:string; bookingId:string; createdAt:string; createdBy:string;
  reason:string; status:'investigating'|'awaiting_records'|'proposed'|'corrected'; restorePaused?:boolean;
  requests:{id:string; kind:'settlement'|'fee'|'refund'|'bank'; detail:string; requestedBy:string; at:string; resolvedBy?:string; evidenceId?:string}[];

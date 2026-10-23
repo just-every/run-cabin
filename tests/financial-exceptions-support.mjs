@@ -101,6 +101,35 @@ export async function exceptionJourney({act,screens}={}){
   await h.cmd('financeCase.open',{bookingId:booking.id,reason:'Duplicate case'},h.owner,409)
   const cleaner=await h.person('FinancialCleaner');assert.deepEqual((await h.state(cleaner.cookie)).financialExceptions,[])
   for(const j of state.ledger.journals)assert.equal(j.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0),0)
+  const second=final.evidence.payouts.find(v=>v.id!==first.id&&v.id!==refund.id)
+  proposed=await proposal({payoutId:second.id,csv:csv('synthetic-cabin-4','500.00','20.00','480.00'),why:'Review an additional retained provider fee before posting.'})
+  const destination=await h.cmd('property.save',{name:'Lake Financial Review',ownerName:'Other Owner',ownerEmail:'other@stay.example',commissionBps:0})
+  await h.cmd('ledger.configure',{propertyId:destination.id,legalEntity:'Lake Historical Trust'})
+  const extraCalendar=await h.cmd('calendar.prepare',{propertyId:destination.id,channel:'airbnb',calendar:`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:synthetic-cabin-20\r\nDTSTART;VALUE=DATE:${day(30).replaceAll('-','')}\r\nDTEND;VALUE=DATE:${day(32).replaceAll('-','')}\r\nSUMMARY:Reserved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`})
+  await h.cmd('calendar.approve',{id:extraCalendar.id,revision:extraCalendar.revision})
+  const extraBooking=(await h.state()).bookings.find(b=>b.propertyId===destination.id)
+  const extraCsv=(fee,net)=>csv('synthetic-cabin-22','100.00',fee,net,'Reservation',current).replaceAll('synthetic-cabin-1,USD','synthetic-cabin-20,USD')
+  const extraPayout=(await h.cmd('payout.import',{propertyId:destination.id,source:'airbnb',csv:extraCsv('0.00','100.00')})).imported[0]
+  const obsolete=await h.cmd('statement.prepare',{propertyId:destination.id,month:currentMonth})
+  let extra=await h.cmd('financeCase.open',{bookingId:extraBooking.id,reason:'Correct explicit provider fee before this month is first released'})
+  const extraEvidence=(await cases()).find(c=>c.id===extra.id).evidence
+  extra=await h.cmd('financeCase.propose',{id:extra.id,revision:extra.revision,payoutId:extraPayout.id,baseline:extraEvidence.digest,csv:extraCsv('5.00','95.00'),evidence:'synthetic-cabin-23',effectiveDate:current,why:'Retained provider detail supplies an explicit five-dollar fee'})
+  await h.cmd('financeCase.approve',{id:extra.id,revision:extra.revision,proposalId:extra.proposals[0].id,confirm:'yes',reason:'Review source and exact correction'})
+  await h.cmd('statement.approve',{id:obsolete.id,revision:obsolete.revision},h.owner,409)
+  await h.cmd('statement.prepare',{propertyId:destination.id,month:currentMonth},h.owner,409)
+  await h.cmd('allocation.prepare',{bookingId:extraBooking.id,rentCents:10000,passThroughCents:0,taxCents:0,evidence:'Original receipt must not bypass its correcting journal'},h.owner,409)
+  const correctClose=await h.cmd('statement.close.prepare',{propertyId:destination.id,month:currentMonth})
+  assert.equal(correctClose.netCents,9500)
+  await h.cmd('statement.approve',{id:correctClose.id,revision:correctClose.revision})
+  const currentBooking=(await h.state()).bookings.find(b=>b.id===booking.id)
+  await h.cmd('reservation.amend',{id:booking.id,revision:currentBooking.revision,propertyId:destination.id,start:currentBooking.start,end:currentBooking.end,guestName:'Revised guest',policyName:'Reviewed source policy',reason:'Reviewed move to another home'})
+  const moved=(await cases()).find(c=>c.id===row.id)
+  assert.equal(moved.evidence.sourceState,'moved');assert.equal(moved.evidence.payableCents,87500)
+  assert.equal(moved.evidence.booking.propertyId,destination.id)
+  assert.equal(moved.evidence.agreement.ownerEmail,'morgan@stay.example','The financial source retains its original effective owner agreement')
+  await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,confirm:'yes',reason:'A moved source must not authorize old-scope postings'},h.owner,409)
+  if(screens)await screens(h,'source-moved')
+
   return {id:row.id,payableCents:final.evidence.payableCents,distributionCents:0}
  }finally{await h.close()}
 }

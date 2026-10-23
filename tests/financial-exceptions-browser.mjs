@@ -48,6 +48,10 @@ try{
     // Capture document coordinates from the top so the fixed phone menu does not cover the case heading.
     await page.evaluate(()=>scrollTo(0,0))
     await page.screenshot({path:join(directory,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
+    if(stage==='source-moved'){
+     await expect(section.getByRole('alert')).toContainText('Reservation moved to another home')
+     await expect(section.getByRole('button',{name:'Approve exact correction',exact:true})).toHaveCount(0)
+    }
     if(stage==='corrected-awaiting-distribution'){
      await expect(section.getByText('This case remains open:',{exact:false})).toBeVisible()
      await page.goto(origin+'/app/statements')

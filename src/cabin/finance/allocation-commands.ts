@@ -1,3 +1,4 @@
+import { requireOriginalSettlementSources } from './exceptions/source-guards'
 import { type Context, type Booking, manager, need, text, integer, exact, newId, sha, approve } from '../model'
 import { allocationTerms } from '../properties/terms'
 import { day } from '../direct/rules'
@@ -26,6 +27,7 @@ export async function allocationCommand(c:Context,name:string,p:Record<string,un
   const booking=c.data.bookings.find(b=>b.id===p.bookingId&&b.status==='confirmed'&&b.kind!=='block');need(booking,'Choose a confirmed guest stay',404)
   need(!c.data.financialAllocations.some(a=>a.bookingId===booking.id&&a.kind==='revenue'&&a.status==='approved'),'This stay already has a frozen revenue allocation. Earlier allocations cannot be rewritten.',409)
   const payouts=sources(c,booking);need(payouts.length,'Import and match the reservation’s settled receipts before allocating.',409)
+  await requireOriginalSettlementSources(c,payouts.map(p=>p.id))
   const terms=allocationTerms(c.data,booking);need(modelFor(terms).mapping.reviewedBy,'Save an accountant-reviewed allocation model in this stay’s management agreement before allocating.',409)
   const gross=payouts.reduce((n,p)=>n+p.grossCents,0),fees=payouts.reduce((n,p)=>n+p.feeCents,0)
   need(gross>0&&fees>=0&&gross>=fees,'Resolve refunds or negative settlement exceptions before allocating this stay.',409)
@@ -39,5 +41,6 @@ export async function allocationCommand(c:Context,name:string,p:Record<string,un
  const row=c.data.financialAllocations.find(a=>a.id===p.id);need(row&&row.kind==='revenue','Revenue allocation not found',404);exact(row,p.revision)
  const booking=c.data.bookings.find(b=>b.id===row.bookingId);need(booking&&await baseline(c,booking)===row.baseline,'Reservation or receipts changed. Prepare the allocation again.',409)
  need(!c.data.financialAllocations.some(a=>a.id!==row.id&&a.bookingId===row.bookingId&&a.kind==='revenue'&&a.status==='approved'),'This stay already has an approved allocation',409)
+ await requireOriginalSettlementSources(c,row.sourceIds)
  approve(c,'financial-allocation',row,p.revision);await postRevenue(c,row);c.entityId=row.id;return row
 }

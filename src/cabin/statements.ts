@@ -1,3 +1,4 @@
+import { requireOriginalSettlementSources } from './finance/exceptions/source-guards'
 import { prepareClose, approveClose } from './finance/month-close'
 import { closeScheduleCommand } from './finance/close-schedule'
 import { closeRows } from './finance/close-presentation'
@@ -13,6 +14,7 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  if(name==='statement.prepare'){
   preparer(c.actor);const prop=property(c,p.propertyId),month=text(p.month,'statement month',7);need(/^\d{4}-(0[1-9]|1[0-2])$/.test(month),'Use a YYYY-MM month')
   if(p.lines===undefined){
+   await requireOriginalSettlementSources(c,c.data.payouts.filter(r=>r.propertyId===prop.id&&r.date.startsWith(month)&&!r.statementId).map(r=>r.id))
    const allocated=await allocatedStatement(c,p,prop,month);if(allocated){c.data.statements.push(allocated);c.entityId=allocated.id;return allocated}
    const allPayouts=c.data.payouts.filter(r=>r.propertyId===prop.id&&r.date.startsWith(month)&&!r.statementId)
    need(allPayouts.every(r=>r.match==='matched'&&r.bookingId),'Match every imported payout in this home and month before preparing a statement',409)
@@ -46,6 +48,7 @@ export async function statementCommand(c:Context,name:string,p:Record<string,unk
  }
  if(name==='statement.approve'){
   manager(c.actor);const row=c.data.statements.find(s=>s.id===text(p.id,'statement ID'));need(row,'Statement not found',404)
+  if(row.source==='imported'||row.source==='allocated')await requireOriginalSettlementSources(c,row.payoutIds??[])
   need(property(c,row.propertyId).revision===row.propertyRevision,'Property or fee terms changed. Prepare the statement again.',409)
   need(row.source==='ledger'||!c.data.statements.some(s=>s.id!==row.id&&s.source!=='recovery'&&s.propertyId===row.propertyId&&s.month===row.month&&s.ownerEmail===row.ownerEmail&&s.status==='approved'),'This property month already has an approved statement',409)
   if(row.source==='ledger')await approveClose(c,row)
