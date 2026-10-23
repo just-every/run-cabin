@@ -18,7 +18,7 @@ import { refundCommand } from './refunds'
 import { loadVerifications,mayReview,synchronizeVerification } from '../verification/records'
 export async function directState(env:Bindings,actor:Actor) {
  if(!['owner','manager'].includes(actor.role)||actor.isAgent)return {homes:[],stays:[]}
- await assertLive(env.DB,actor);const verifications=await loadVerifications(env.DB);const data={collections:(await collectionPlans(env.DB)).map(publicCollection),site:await bookingSite(env.DB),homes:await homes(env.DB),stays:(await stays(env.DB)).map(({bookingLinkSealed,...row})=>{const v=verifications.find(v=>v.bookingId===row.bookingId);if(v&&!mayReview(actor,v))delete row.identity;return row}),provider:await providerState(env)};await assertLive(env.DB,actor);return data
+ await assertLive(env.DB,actor);const verifications=await loadVerifications(env.DB);const data={collections:(await collectionPlans(env.DB)).map(publicCollection),site:await bookingSite(env.DB),homes:await homes(env.DB),stays:(await stays(env.DB)).map(({bookingLinkSealed,visitorHash,...row})=>{const v=verifications.find(v=>v.bookingId===row.bookingId);if(v&&!mayReview(actor,v))delete row.identity;return row}),provider:await providerState(env)};await assertLive(env.DB,actor);return data
 }
 export async function directCommand(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>) {
  manager(actor);await assertLive(env.DB,actor)

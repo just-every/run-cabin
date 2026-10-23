@@ -9,7 +9,8 @@ import type { Bindings } from '../../auth.server'
 import { need,text,newId,sha,query } from '../model'
 import { mutate } from '../storage'
 import { managedInstall } from '../channels'
-import { homes,stay,saveStay,DIRECT_SYSTEM } from './store'
+import { homes,stays,stay,saveStay,DIRECT_SYSTEM } from './store'
+import { holdQuota,visitorHash } from './holds'
 import { quote } from './rules'
 import { offeredRate,redeemOffer } from '../guests/offers'
 import { createCheckout,stripeCredentials,MANAGED_STRIPE_LINE } from './stripe'
@@ -20,16 +21,17 @@ import type { DirectStay } from './types'
 import { policyFor,riskReasons } from '../verification/policy'
 import { createVerification,saveVerification } from '../verification/records'
 const currentStaff=(row:Parameters<typeof currentQuote>[0])=>currentQuote(row).price
-export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>) {
+export async function checkout(env:Bindings,slug:string,input:Record<string,unknown>,address:string|null) {
  if(input.staffQuoteToken){const accepted=await acceptedQuote(env,input.staffQuoteToken);if(accepted)return accepted}
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
  const returnUrl=embedReturn(await bookingSite(env.DB),input.embedReturnUrl)?.href
  const credentials=await stripeCredentials(env)
- const token=newId()+newId(),tokenHash=await sha(token),id=newId(),bookingId=newId()
+ const token=newId()+newId(),tokenHash=await sha(token),id=newId(),bookingId=newId(),visitor=await visitorHash(env.SESSION_SECRET,address)
  const row=await mutate(env.DB,DIRECT_SYSTEM,'direct.checkout',async c=>{
-  const home=(await homes(env.DB)).find(h=>h.enabled&&h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
+  const enabled=(await homes(env.DB)).filter(h=>h.enabled),home=enabled.find(h=>h.slug===slug);need(home,'Booking page not found',404);need(input.homeRevision===home.revision,'The home’s terms changed. Review a fresh quote before signing.',409)
   const staff=input.staffQuoteToken?await quoteByToken(c.data,input.staffQuoteToken):undefined
   if(staff){need(staff.propertyId===home.propertyId,'Quote home changed',409);await validateQuote(c,staff,input.staffQuoteRevision);need(String(input.guestName).trim()===staff.guestName&&String(input.email).trim().toLowerCase()===staff.email,'Use the quote recipient name and email',409);need(input.start===currentStaff(staff).start&&input.end===currentStaff(staff).end&&Number(input.guests)===currentStaff(staff).guests&&!input.offerToken&&!input.couponCode,'Review the quoted dates, guests and price',409);acceptQuote(c,staff,input.staffQuoteRevision,bookingId,id)}
+  else holdQuota(await stays(env.DB),visitor,enabled.length,Date.parse(c.now))
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
   const price=quote(home,c.data.bookings,input,localDay(Date.now(),homeSettings(c,home.propertyId).timeZone),offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
   await applyBookingCoupon(c.db,c.data,home,price,input)
@@ -43,7 +45,7 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   const settings=homeSettings(c,home.propertyId),arrivalAt=new Date(instant(price.start+'T'+settings.checkInTime,settings.timeZone)).toISOString(),departureAt=new Date(instant(price.end+'T'+settings.checkOutTime,settings.timeZone)).toISOString()
   const rentalTemplate=c.data.rentalTemplates.find(t=>t.propertyId===home.propertyId),version=rentalTemplate?templateVersion(rentalTemplate):undefined
   const agreement=bookingAgreement(home,price,version)
-  const row:DirectStay={embedReturnUrl:returnUrl,id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(requiresIdentity?'consented to identity verification with a manual-review alternative.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
+  const row:DirectStay={embedReturnUrl:returnUrl,...(staff?{}:{visitorHash:visitor}),id,propertyId:home.propertyId,bookingId,revision:newId(),homeRevision:home.revision,phase:'held',start:price.start,end:price.end,guestName,email,quote:price,createdAt:c.now,holdUntil:new Date(Date.parse(c.now)+31*60_000).toISOString(),signature:{name:signed,at:c.now,version:version?.id??home.revision,text:agreement,sha256:await sha(agreement),consent:'Guest accepted the exact rental agreement, payment and separate damage authorization; '+(requiresIdentity?'consented to identity verification with a manual-review alternative.':'identity not required.')},requireIdentity:home.requireIdentity,releaseHours:home.releaseHours,paymentMode:credentials.mode,bookingLinkSealed:await seal(env.SESSION_SECRET,'direct-booking-link',token),timeZone:settings.timeZone,arrivalAt,departureAt,depositDueAt:new Date(Date.parse(arrivalAt)-48*3_600_000).toISOString()}
   c.data.bookings.push({id:bookingId,revision:newId(),uid:`cabin-direct-${id}`,propertyId:home.propertyId,channel:'direct',managementTerms:structuredClone(managementTerms),kind:'block',start:price.start,end:price.end,summary:'Direct checkout hold',status:'confirmed',cancelled:false,approvedAt:c.now,source:'request'})
   row.requireIdentity=requiresIdentity
   const verification=createVerification(c,bookingId,home.propertyId,identityPolicy,identityReasons,price.end);if(requiresIdentity){verification.consentAt=c.now;verification.consentMethod='stripe';saveVerification(c,verification)}

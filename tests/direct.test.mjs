@@ -421,3 +421,21 @@ test('identity-check links stay out of ordinary staff responses and AI reply his
   assert.equal(prompts.length,1);assert.match(prompts[0],/requires an identity check/);assert.ok(!prompts[0].includes(link))
  }finally{await h.close()}
 })
+
+test('unpaid checkout holds are limited for each visitor and across the installation',async()=>{
+ let sessions=0
+ const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:['sk','test','synthetic-cabin-1'.replaceAll('-','')].join('_')},outbound:async request=>{
+  const u=new URL(request.url);assert.equal(u.hostname,'api.stripe.com');assert.equal(u.pathname,'/v1/checkout/sessions')
+  sessions++;return Response.json({id:'cs_test_hold_'+sessions,url:'https://checkout.stripe.com/c/pay/cs_test_hold_'+sessions})
+ }})
+ try{
+  const cfg=await home(h)
+  const hold=(n,visitor)=>h.send('/book/pine-ridge/checkout',{start:day(n),end:day(n+3),guests:2,homeRevision:cfg.revision,guestName:`Synthetic Guest ${n}`,email:`guest-${n}@synthetic.example`,signature:`Synthetic Guest ${n}`,consent:'yes',identityConsent:'yes'},'',{'cf-connecting-ip':visitor})
+  for(const n of [10,20])assert.equal((await hold(n,'203.0.113.7')).status,200)
+  const refused=await hold(30,'203.0.113.7');assert.equal(refused.status,429,refused.text)
+  assert.equal((await h.send('/book/pine-ridge/quote',{start:day(30),end:day(33),guests:2})).status,200,'a refused checkout holds no nights')
+  assert.equal((await hold(40,'198.51.100.4')).status,200,'another visitor can still check out')
+  assert.equal((await hold(50,'192.0.2.9')).status,429,'unpaid holds across the installation stay bounded')
+  assert.equal(sessions,3)
+ }finally{await h.close()}
+})

@@ -32,7 +32,7 @@ export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYS
   const session=await readCheckout(paymentEnv(env,s),s.checkoutId)
   if(session.payment_status==='paid'){
    const pi=session.payment_intent;need(pi&&typeof pi==='object'&&pi.status==='succeeded'&&pi.amount_received===s.quote.totalCents&&pi.currency==='usd'&&session.metadata?.stayId===s.id,'Stripe payment does not match this stay',409)
-   s=await mutate(env.DB,DIRECT_SYSTEM,'direct.paid',async c=>{const row=await stay(env.DB,id);if(row.paymentId)return row;row.paymentId=pi.id;row.customerId=typeof session.customer==='string'?session.customer:session.customer?.id;row.paymentMethod=typeof pi.payment_method==='string'?pi.payment_method:pi.payment_method?.id;row.phase='paid';delete row.error;saveStay(c,row);return row})
+   s=await mutate(env.DB,DIRECT_SYSTEM,'direct.paid',async c=>{const row=await stay(env.DB,id);if(row.paymentId)return row;row.paymentId=pi.id;row.customerId=typeof session.customer==='string'?session.customer:session.customer?.id;row.paymentMethod=typeof pi.payment_method==='string'?pi.payment_method:pi.payment_method?.id;row.phase='paid';delete row.error;delete row.visitorHash;saveStay(c,row);return row})
   }else if(session.status==='expired')return expire(env,id)
  }
  if(!s.paymentId){if(!s.checkoutId&&Date.now()>Date.parse(s.holdUntil))return expire(env,id);return s}
@@ -54,7 +54,7 @@ export async function refresh(env:Bindings,id:string,actor:AuditActor=DIRECT_SYS
  await deliverGuestMessages(env)
  return s
 }
-async function expire(env:Bindings,id:string) {return mutate(env.DB,DIRECT_SYSTEM,'direct.expired',async c=>{const row=await stay(env.DB,id);need(!row.paymentId,'A paid stay cannot expire',409);row.phase='expired';const b=c.data.bookings.find(b=>b.id===row.bookingId);if(b)Object.assign(b,{status:'cancelled',cancelled:true,revision:newId()});saveStay(c,row);return row})}
+async function expire(env:Bindings,id:string) {return mutate(env.DB,DIRECT_SYSTEM,'direct.expired',async c=>{const row=await stay(env.DB,id);need(!row.paymentId,'A paid stay cannot expire',409);row.phase='expired';delete row.visitorHash;const b=c.data.bookings.find(b=>b.id===row.bookingId);if(b)Object.assign(b,{status:'cancelled',cancelled:true,revision:newId()});saveStay(c,row);return row})}
 export async function identity(env:Bindings,id:string,token:string) {
  let s=await stay(env.DB,id);need(s.paymentId&&s.requireIdentity,'Pay for the stay before starting the required ID check',409)
  const verification=verificationOf(await load(env.DB),s.bookingId)

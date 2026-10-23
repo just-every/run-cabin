@@ -27,7 +27,7 @@ export interface DirectStay {
  signature:{name:string; at:string; version:string; text:string; sha256:string; consent:string};
  requireIdentity:boolean; identity?:{id:string; status:string}; checkoutId?:string; checkoutUrl?:string;
  paymentId?:string; customerId?:string; paymentMethod?:string; paymentMode?:'test'|'live';
- bookingLinkSealed?:string; timeZone?:string; arrivalAt?:string; departureAt?:string; depositDueAt?:string; depositAttempt?:string;
+ bookingLinkSealed?:string; visitorHash?:string; timeZone?:string; arrivalAt?:string; departureAt?:string; depositDueAt?:string; depositAttempt?:string;
  depositCheckout?:{id:string;url:string;attempt:string;status:'open'|'complete'|'expired'};
  depositRequestedAt?:string; depositUncertain?:boolean; depositCheckoutPending?:{attempt:string;at:string};
  previousDeposit?:NonNullable<DirectStay['deposit']>;
