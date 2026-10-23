@@ -11,8 +11,8 @@ export function sensitiveTextRedactor(secrets: readonly string[] = []) {
   .replace(/\b(?:sk_(?:test|live)_[a-z0-9]+|sk-ant-[a-z0-9_-]+|Bearer\s+[a-z0-9._~-]+)/gi, '[credential]')
   .replace(/((?:door|guest|cleaner|entry|access)\s*(?:code|PIN)\s*[:#]?\s*)\d{4,10}\b/gi, '$1[restricted]')
   .replace(/((?:tax\s*ID|SSN|EIN|bank\s*(?:account|details)|routing\s*(?:number)?|account\s*number)\s*[:#]?\s*)[\d -]{4,30}/gi, '$1[restricted]')
-  .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[tax ID]')
-  .replace(/\b(?:\d[ -]?){13,19}\b/g, '[restricted number]')
+  .replace(/(?<![A-Za-z0-9_-])\d{3}-\d{2}-\d{4}(?![A-Za-z0-9_-])/g, '[tax ID]')
+  .replace(/(?<![A-Za-z0-9_-])\d(?:[ -]?\d){12,18}(?![A-Za-z0-9_-])/g, '[restricted number]')
 }
 }
 export function redactSensitiveText(value:string,secrets:readonly string[]=[]){return sensitiveTextRedactor(secrets)(value)}

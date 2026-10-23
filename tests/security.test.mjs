@@ -46,6 +46,11 @@ test('SECURITY-001: owner grants, encrypted rotation, forged events, private AI 
   assert.equal((await post(initial,'SMvalid','What is check-in time?')).status,200)
   assert.equal((await post(initial,'SMvalid','What is check-in time?')).status,200)
   assert.equal((await h.state()).messages.filter(m=>m.providerId==='twilio:SMvalid').length,1)
+  // Long numeric UUID segments used to match the payment-number redactor.
+  const identifier='40581136-1821-4419-8775-4c69847e40c6'
+  assert.equal((await post(initial,'SMidentifier',`Source ${identifier}; payment 4111 1111 1111 1111; tax 123-45-6789.`)).status,200)
+  const protectedText=(await h.state()).messages.find(m=>m.providerId==='twilio:SMidentifier').text
+  assert.equal(protectedText,`Source ${identifier}; payment [restricted number]; tax [tax ID].`)
   const stale=(await security('twilio')).revision
   await save(rotated,stale)
   await h.cmd('provider.sharing',{id:'twilio',operation:'revoke',securityRevision:stale},h.owner,409)
