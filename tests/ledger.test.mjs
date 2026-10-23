@@ -46,3 +46,8 @@ test('a matched channel receipt posts its actual net cash and owner fee once',()
  assert.equal(rows[0].lines.filter(l=>l.account==='cash').reduce((n,l)=>n+l.debitCents-l.creditCents,0),97000)
  assert.equal(rows[0].lines.filter(l=>l.account==='ownerLiability').reduce((n,l)=>n+l.creditCents-l.debitCents,0),97000)
 }))
+
+
+test('trust accounts reconcile bank, ledger and owner controls and reserve only the approved owner’s funds without executing transfers',{timeout:120000},async()=>{
+ const {bankingJourney}=await import('./banking-support.mjs');await bankingJourney()
+})

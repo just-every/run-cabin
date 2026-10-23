@@ -43,7 +43,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | OPS-007 | missing | Supported hub/offline-PIN provider accounts and physical devices for time/revocation proof. |
 | OPS-008 | partial | Guest/lock checkout events, provider-confirmed code state and complete departures list. |
 | FIN-002 | partial | Eligible automatic USD payout, partner settlement APIs, FX, actual bank receipt and exception closure. Supplied Stripe test account settles AUD. |
-| FIN-006 | missing | Licensed US banking/ACH partner, trust bank accounts, receipt reconciliation and approved distributions. |
+| FIN-006 | partial | Native source-backed trust-bank model and reconciliation exist. Actual distributions and returned ACH need selected licensed US partner approval, authorized funded trust accounts, verified payees and execution authority; the owner-only unexecuted planning boundary awaits ct. |
 | FIN-007 | partial | QBO OAuth company/account and conflict reconciliation. Pantry posting and manual export paths already exist. |
 | FIN-008 | partial | Authorized statutory filing/remittance partner; nonmonthly periods, taxable-base differences and jurisdiction/rate lookup. |
 | FIN-009 | missing | Authorized US tax-reporting partner/account, taxpayer identity custody, filing/correction acceptance. |

@@ -1,3 +1,4 @@
+import { populateBankArchive,checkBankArchive } from './banking-archive.mjs'
 import { collectionBooking,createCollection } from './collection-support.mjs'
 import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
@@ -62,14 +63,16 @@ export async function populateArchive(h,p,cleaner) {
  const portal=(await h.accessState()).guestPortalLinks.find(l=>l.bookingId===booking.bookingId),guestCookie=await h.verifyGuest(portal.token)
  const pending=await h.send('/stay/'+portal.token+'/send-code',{},guestCookie);assert.equal(pending.status,200)
  const authSecrets=[...(await h.db.prepare('SELECT token_hash FROM cb_guest_sessions').all()).results.map(r=>r.token_hash),...(await h.db.prepare('SELECT code_hash,browser_hash FROM cb_guest_challenges').all()).results.flatMap(r=>[r.code_hash,r.browser_hash])]
+ const bank=await populateBankArchive(h)
  const state=await h.accessState(), codes=state.codes.filter(c=>c.link).map(c=>c.link)
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
  const channelAgent=await populateChannelArchive(h,p)
- return {collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
+ return {bank,collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
+ await checkBankArchive(h,owner,proof.bank)
  assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_provider_security').first()).n,0,'provider credentials and grants stay installation-local')
  for(const table of ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits'])assert.equal((await h.db.prepare('SELECT count(*) AS n FROM '+table).first()).n,0,'guest authentication is never restored')
  assert.equal((await h.send('/stay/'+proof.portal.token,undefined,proof.portal.cookie)).status,404)
