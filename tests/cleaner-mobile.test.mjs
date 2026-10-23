@@ -183,3 +183,30 @@ test('AUTH-002: desktop and phone team invitations enforce a single home and off
     }
   } finally { if (browser) await browser.close(); await h.close() }
 })
+
+test('desktop and phone Sign out ends the workspace session and reports a sign-out that did not finish', {timeout:120000}, async () => {
+  const h = await harness({assets:true})
+  let browser
+  try {
+    browser = await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+    for (const width of [1440,390]) {
+      const cookie = await h.signIn(h.auth.OWNER_EMAIL), context = await browser.newContext({viewport:{width,height:1000}})
+      try {
+        const [name,value] = cookie.split('='); await context.addCookies([{name,value,url:h.origin}])
+        const page = await context.newPage(); page.setDefaultTimeout(12000)
+        await page.goto(h.origin+'/app/calendar')
+        const signOut = page.getByRole('button',{name:'Sign out',exact:true})
+        if (!await signOut.isVisible()) await page.locator('label.rail-menu').click()
+        await page.route('**/auth/signout', route => route.fulfill({status:503,body:''}))
+        await signOut.click()
+        await expect(page.getByRole('alert')).toBeInViewport()
+        assert.equal(new URL(page.url()).pathname,'/app/calendar')
+        assert.equal((await h.send('/api/cabin/state',undefined,cookie)).status,200,'a sign-out that did not finish is not reported as done')
+        await page.unroute('**/auth/signout')
+        await signOut.click()
+        await expect(page).toHaveURL(/\/signin/)
+        assert.equal((await h.send('/api/cabin/state',undefined,cookie)).status,401)
+      } finally { await context.close() }
+    }
+  } finally { if (browser) await browser.close(); await h.close() }
+})

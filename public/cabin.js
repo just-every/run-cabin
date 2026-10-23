@@ -5,11 +5,19 @@ if (location.pathname === '/app/action' && document.body.dataset.page) history.r
 // A saved-photo confirmation (?done=, with the saved ?record=) shows once; a reload does not repeat it.
 if (new URLSearchParams(location.search).has('done')) { const here = new URL(location.href); here.searchParams.delete('done'); here.searchParams.delete('record'); history.replaceState(null, '', here.pathname + here.search + here.hash) }
 
-document.querySelector('[data-signout]')?.addEventListener('click', async () => {
-  await clearDrafts()
-  sessionStorage.removeItem('cabin:submitted-form')
-  const response = await fetch('/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
-  if (response.ok) location.assign('/signin')
+const signOut = document.querySelector('[data-signout]')
+signOut?.addEventListener('click', async () => {
+  try {
+    await clearDrafts()
+    sessionStorage.removeItem('cabin:submitted-form')
+    const response = await fetch('/auth/signout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+    if (response.ok) return location.assign('/signin')
+  } catch {}
+  // A sign-out that did not finish leaves this browser signed in: say so.
+  let notice = signOut.parentElement.querySelector('[data-signout-failed]')
+  if (!notice) { notice = document.createElement('p'); notice.className = 'notice error'; notice.setAttribute('role', 'alert'); notice.dataset.signoutFailed = ''; notice.tabIndex = -1; signOut.after(notice) }
+  notice.textContent = 'Sign out did not finish, so this browser is still signed in. Try again.'
+  notice.focus()
 })
 
 // Add real statement lines; the server converts decimal USD exactly to cents.
