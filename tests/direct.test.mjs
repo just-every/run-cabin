@@ -379,3 +379,23 @@ test('source-backed cash and cleared-check receipts post once, retain evidence a
 test('scoped financial roles can use their own payment doors and cannot read or mutate another property schedule or manual receipt',async()=>{
  const {collectionScopedJourney}=await import('./collection-support.mjs');await collectionScopedJourney()
 })
+
+test('only the installation owner can replace the Stripe key or switch the payment mode',async()=>{
+ const key=(mode,n)=>['sk',mode,`synthetic-cabin-${n}`.replaceAll('-','')].join('_'),used=[]
+ const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:key('test',1),STRIPE_SECRET_KEY:key('live',2)},outbound:async request=>{
+  const u=new URL(request.url);assert.equal(u.hostname,'api.stripe.com');used.push(request.headers.get('authorization'))
+  if(u.pathname==='/v1/balance')return Response.json({object:'balance',available:[],pending:[]})
+  assert.fail('Unexpected provider call '+u.pathname)
+ }})
+ try{
+  const manager=await h.person('Morgan','manager')
+  await h.cmd('direct.stripe.save',{mode:'test',key:key('test',3)},manager.cookie,403)
+  await h.cmd('direct.stripe.save',{mode:'live',key:key('live',4),liveConsent:'yes'},manager.cookie,403)
+  await h.cmd('direct.stripe.mode',{mode:'live',liveConsent:'yes'},manager.cookie,403)
+  assert.deepEqual(used,[],'a refused change never reaches Stripe')
+  assert.equal(await h.db.prepare('SELECT data FROM cb_direct_provider WHERE id=1').first(),null)
+  await h.cmd('direct.stripe.save',{mode:'test',key:key('test',5)})
+  assert.deepEqual(used,['Bearer '+key('test',5)])
+  assert.equal((await h.state()).direct.provider.source,'page')
+ }finally{await h.close()}
+})

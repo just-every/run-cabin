@@ -1,6 +1,6 @@
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
-import { need,text,newId,type Actor } from '../model'
+import { need,owner,text,newId,type Actor } from '../model'
 import { managedInstall } from '../channels'
 import { stripe,stripeCredentials,MANAGED_STRIPE_LINE,CARD_ONLY } from './stripe'
 import { providerSettings,saveProvider,sealKey,type StripeMode } from './provider-store'
@@ -23,6 +23,8 @@ export async function checkTest(env:Bindings){
 }
 export async function providerCommand(env:Bindings,actor:Actor,name:string,p:Record<string,unknown>){
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
+ // The saved key and mode decide which Stripe account receives guest payments.
+ if(name==='direct.stripe.save'||name==='direct.stripe.mode')owner(actor)
  if(name==='direct.stripe.save'){
   const mode=text(p.mode,'payment mode');need(mode==='test'||mode==='live','Choose test or live mode')
   const key=text(p.key,'Stripe secret key',500);need(new RegExp('^sk_'+mode+'_[A-Za-z0-9]+$').test(key),`Use an sk_${mode}_ secret key from Stripe’s API keys page`)
