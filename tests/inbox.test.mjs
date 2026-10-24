@@ -107,7 +107,7 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
     assert.deepEqual([new URLSearchParams(sms.body).get('To'), new URLSearchParams(sms.body).get('Body')], ['+18285550142', 'No problem, see you soon.'])
 
     // A reply through a forwarding relay names Ana in Reply-To: it joins her thread, and the install's AI key drafts the answer.
-    await h.cmd('inbox.ai.save', { key: 'sk-ant-fixture-key', revision: (await settings()).revision })
+    await h.cmd('inbox.ai.save', { key: 'synthetic-cabin-101', revision: (await settings()).revision })
     assert.ok(!Object.hasOwn((await settings()).ai,'keySealed'),'the sealed key never leaves the server')
     await email(mime({ from: 'Relay <relay@forward.example>', replyTo: 'Ana Ruiz <ana@guest.example>', subject: 'Bags', id: 'reply-2@forward.example', text: 'Could we drop our bags early?' }))
     s = await h.accessState()
@@ -115,7 +115,7 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
     assert.deepEqual([bags.email, bags.bookingId, aiDraft.status, aiDraft.source], ['ana@guest.example', stay.id, 'draft', 'ai'])
     assert.match(aiDraft.text, /confirm with the cleaner/); assert.match(aiDraft.detail, /Needs you/)
     const asking = calls.find(c => c.host === 'api.anthropic.com')
-    assert.equal(asking.headers['x-api-key'], 'sk-ant-fixture-key'); assert.equal(JSON.parse(asking.body).model, 'claude-opus-5-5')
+    assert.equal(asking.headers['x-api-key'], 'synthetic-cabin-101'); assert.equal(JSON.parse(asking.body).model, 'claude-opus-5-5')
     assert.equal(await mail('ana@guest.example').then(m => m.length), 2, 'an AI draft is not sent either')
 
     // A Booking.com guest's message arrives on the Cron and the reply goes back through Booking.com's API.
