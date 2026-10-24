@@ -3,7 +3,7 @@ import { harness } from './harness.mjs'
 import { homeDay } from './home-calendar.mjs'
 const day=n=>homeDay(n,'America/New_York')
 const cents=(rows,account)=>rows.reduce((n,j)=>n+j.lines.filter(l=>l.account===account).reduce((v,l)=>v+l.creditCents-l.debitCents,0),0)
-export async function exceptionJourney({act,screens}={}){
+export async function exceptionJourney({act,screens,legacy=false}={}){
  const h=await harness({assets:true,outbound:()=>assert.fail('Source investigation and approved local corrections must not call providers')})
  const action=async(name,input)=>act?act(h,name,input):h.cmd(name,input)
  const cases=async()=>(await h.state()).financialExceptions
@@ -19,7 +19,7 @@ export async function exceptionJourney({act,screens}={}){
   const csv=(id,gross,fee,net,type='Reservation',when=date)=>`Date,Type,Confirmation code,Currency,Gross earnings,Host service fee,Amount,Payout ID,Transaction ID\n${when},${type},synthetic-cabin-1,USD,${gross},${fee},${net},synthetic-cabin-2,${id}\n`
   const first=(await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-3','500.00','0.00','500.00')})).imported[0]
   await h.cmd('payout.import',{propertyId:home.id,source:'airbnb',csv:csv('synthetic-cabin-4','500.00','15.00','485.00')})
-  let statement=await h.cmd('statement.close.prepare',{propertyId:home.id,month})
+  let statement=await h.cmd(legacy?'statement.prepare':'statement.close.prepare',{propertyId:home.id,month})
   await h.cmd('statement.approve',{id:statement.id,revision:statement.revision})
   const frozen=(await h.send(`/api/cabin/statements/${statement.id}.csv`,undefined,h.owner)).text
   assert.equal(statement.netCents,98500)
@@ -28,6 +28,7 @@ export async function exceptionJourney({act,screens}={}){
   const update=async(name,input={})=>{row=await action(name,{id:row.id,revision:row.revision,...input});return row}
   await update('financeCase.request',{kind:'fee',detail:'Installation owner: obtain explicit fee detail for synthetic-cabin-3 from the provider.'})
   const feeRequest=row.requests[0].id
+  assert.ok((await cases()).find(c=>c.id===row.id).evidence.statements.some(s=>s.id===statement.id),'The original frozen statement is part of exact source review, including imported statements')
   await h.cmd('financeCase.obtain',{id:row.id,revision:row.revision,requestId:feeRequest,evidenceId:'not-obtained'},h.owner,409)
   await h.cmd('financeCase.obtain',{id:row.id,revision:row.revision,requestId:feeRequest,evidenceId:first.id},h.owner,409)
   if(screens)await screens(h,'missing-record')
@@ -66,13 +67,18 @@ export async function exceptionJourney({act,screens}={}){
   assert.equal((await h.send(`/api/cabin/statements/${statement.id}.csv`,undefined,h.owner)).text,frozen)
   const adjustment=await h.cmd('statement.close.prepare',{propertyId:home.id,month:currentMonth})
   assert.equal(adjustment.netCents,87000);assert.deepEqual(adjustment.close.adjustsStatementIds,[statement.id])
+  assert.equal(adjustment.close.openingCents,98500);assert.equal(adjustment.close.movementCents,-11500)
+  if(legacy)await h.cmd('statement.close.prepare',{propertyId:home.id,month},h.owner,409)
+  assert.ok((await h.send('/api/cabin/statements/'+statement.id+'.csv',undefined,h.owner)).text===frozen,'The imported or ledger statement is never rewritten')
   await h.cmd('statement.approve',{id:adjustment.id,revision:adjustment.revision})
   const account=await h.cmd('bank.account.create',{propertyId:home.id,label:'Cedar guest trust',institution:'Synthetic bank',lastFour:'4821',purpose:'trust',confirm:'yes'})
   const bankStatement=await h.cmd('bank.statement.import',{id:account.id,reference:'synthetic-cabin-7',from:currentMonth+'-01',until:current,opening:'970.00',closing:'870.00',evidence:'synthetic-cabin-8: bank refund receipt',confirm:'yes',csv:`Transaction ID,Date,Amount,Reference\nsynthetic-cabin-9,${current},-100.00,Refund settlement\n`})
   const refundJournal=journals.find(j=>j.sourceId===refund.id)
   await h.cmd('bank.assign',{id:account.id,journalId:refundJournal.id,evidence:'Refund bank receipt'})
-  await h.cmd('bank.match',{id:bankStatement.id,transactionId:'synthetic-cabin-9',journalId:refundJournal.id})
   await update('financeCase.request',{kind:'bank',detail:'Installation owner: obtain bank receipt for the refund.'})
+  await h.cmd('financeCase.obtain',{id:row.id,revision:row.revision,requestId:row.requests.at(-1).id,evidenceId:bankStatement.id},h.owner,409)
+  assert.equal((await cases()).find(c=>c.id===row.id).status,'awaiting_records','An unmatched bank statement does not establish receipt for this reservation')
+  await h.cmd('bank.match',{id:bankStatement.id,transactionId:'synthetic-cabin-9',journalId:refundJournal.id})
   await update('financeCase.obtain',{requestId:row.requests.at(-1).id,evidenceId:bankStatement.id})
   state=await h.state();const result=state.financialExceptions.find(c=>c.id===row.id)
   assert.equal(result.evidence.payableCents,87000);assert.equal(result.evidence.bankMatchedDistributionCents,0)
@@ -133,6 +139,7 @@ export async function exceptionJourney({act,screens}={}){
   await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposed.id,confirm:'yes',reason:'A moved source must not authorize old-scope postings'},h.owner,409)
   if(screens)await screens(h,'source-moved')
 
+  console.log('Financial exception correction PASS: '+(legacy?'legacy imported frozen statement':'native ledger frozen statement'))
   return {id:row.id,payableCents:final.evidence.payableCents,distributionCents:0}
  }finally{await h.close()}
 }

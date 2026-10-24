@@ -3,7 +3,6 @@ import { hasAction,requireProperty } from '../../permissions/policy'
 import { parsePayoutCsv } from '../sources'
 import { post } from '../../ledger/store'
 import { debit,credit } from '../../ledger/types'
-import { bankData } from '../banking/store'
 import { financialCases,saveCase } from './store'
 import { caseEvidence } from './evidence'
 import type { FinancialCase } from './types'
@@ -31,9 +30,9 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
    row.requests.push({id:newId(),kind:p.kind as FinancialCase['requests'][number]['kind'],detail:text(p.detail,'record to obtain and responsible follow-up',1000),requestedBy:c.actor.id,at:c.now});row.status='awaiting_records'
   }else if(name==='financeCase.obtain'){
    const request=row.requests.find(r=>r.id===p.requestId);need(request&&!request.evidenceId,'Open record request not found',409)
-   const id=text(p.evidenceId,'imported source id'),bank=await bankData(c.db)
-   const source=request.kind==='bank'?bank.statements.find(s=>s.id===id&&s.propertyId===row.propertyId&&s.transactions.length):row.proposals.find(v=>v.id===id&&v.status==='approved')??evidence.payouts.find(v=>v.id===id&&(request.kind!=='refund'||v.grossCents<0))
-   need(source,'Obtain the record through payout import, approved source correction or bank-statement import first',409)
+   const id=text(p.evidenceId,'imported source id')
+   const source=request.kind==='bank'?evidence.bankStatements.find(s=>s.id===id):row.proposals.find(v=>v.id===id&&v.status==='approved')??evidence.payouts.find(v=>v.id===id&&(request.kind!=='refund'||v.grossCents<0))
+   need(source,'Obtain the record through payout import, approved source correction or a bank statement matched to this reservation first',409)
    const amounts='source'in source&&typeof source.source==='object'?source.source:source
    if(request.kind==='fee')need('feeCents'in amounts&&amounts.feeCents!==0,'This record supplies no missing fee; keep pursuing the explicit provider record',409)
    if(request.kind==='refund')need('grossCents'in amounts&&amounts.grossCents<0,'This record is not a refund settlement',409)

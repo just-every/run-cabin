@@ -10,7 +10,7 @@ export async function caseEvidence(c:Context,row:Pick<FinancialCase,'propertyId'
  const payouts=c.data.payouts.filter(p=>p.bookingId===row.bookingId&&p.propertyId===row.propertyId)
  const journals=(await contextJournals(c)).filter(j=>j.bookingId===row.bookingId&&j.propertyId===row.propertyId)
  const bank=await bankData(c.db),assignments=bank.assignments.filter(a=>journals.some(j=>j.id===a.journalId)),matches=bank.matches.filter(m=>journals.some(j=>j.id===m.journalId))
- const statements=c.data.statements.filter(s=>s.propertyId===row.propertyId&&s.status==='approved'&&s.close?.journals.some(j=>j.bookingId===row.bookingId))
+ const statements=c.data.statements.filter(s=>s.propertyId===row.propertyId&&s.status==='approved'&&(s.close?.journals.some(j=>j.bookingId===row.bookingId)||s.source==='imported'&&s.payoutIds?.some(id=>payouts.some(p=>p.id===id))))
  const bankStatements=bank.statements.filter(s=>matches.some(m=>m.statementId===s.id))
  const distribution=journals.filter(j=>j.sourceType==='distribution'&&!journals.some(r=>r.reversalOf===j.id))
  // Read-only payment balances are projections, never part of saved revision equality.
