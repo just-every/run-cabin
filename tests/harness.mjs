@@ -12,8 +12,10 @@ const bundles = new Map()
 export async function harness(options = {}) {
   // The demo entry keeps the app's own mail sender: a demo suppresses mail itself.
   const entry = options.entry ?? 'tests/worker.ts', plugins = options.entry ? [] : [{ name: 'mail-network-edge', setup(builder) { builder.onResolve({filter:/^(?:\.\.?\/)+mail\.server\.mjs$/}, () => ({path: join(process.cwd(),'tests/mail-edge.mjs')})) } }]
-  if (!bundles.has(entry)) bundles.set(entry, await build({ entryPoints: [entry], bundle: true, write: false, format: 'esm', platform: 'neutral', mainFields: ['module','main'], conditions: ['workerd', 'worker', 'browser'], external: ['node:*', 'cloudflare:*'], target: 'es2023', plugins }))
-  const bundle = bundles.get(entry)
+  const key = JSON.stringify([entry, options.now ?? null])
+  const banner = options.now ? { js: `const RealDate = globalThis.Date; const pinnedNow = ${Date.parse(options.now)}; globalThis.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [pinnedNow])) } static now() { return pinnedNow } };` } : undefined
+  if (!bundles.has(key)) bundles.set(key, await build({ banner, entryPoints: [entry], bundle: true, write: false, format: 'esm', platform: 'neutral', mainFields: ['module','main'], conditions: ['workerd', 'worker', 'browser'], external: ['node:*', 'cloudflare:*'], target: 'es2023', plugins }))
+  const bundle = bundles.get(key)
   const socket = createServer(); await new Promise(r => socket.listen(0, '127.0.0.1', r)); const port = socket.address().port; await new Promise(r => socket.close(r))
   const dir = options.root ? join(options.root, '.wrangler/state/v3') : await mkdtemp(join(tmpdir(), 'cabin-test-')), origin = `http://${options.hostname??'127.0.0.1'}:${port}`, setup = randomBytes(32).toString('hex')
   const auth = { AUTH_LOCAL: 'true', OWNER_EMAIL: 'owner@stay.example', SESSION_SECRET: randomBytes(32).toString('hex'), SETUP_TOKEN: setup, MAIL_PROVIDER: 'development', MAIL_FROM: 'auth@stay.example', ...options.auth, AUTH_ORIGIN: origin }

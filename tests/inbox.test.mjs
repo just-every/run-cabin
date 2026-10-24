@@ -153,10 +153,11 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
 })
 
 test('a reviewed returning guest’s question is answered for their upcoming stay, and a new check-out time re-sends the corrected door-code hours', async () => {
-  const h = await harness({})
+ for (const now of ['2026-10-24T16:00:00Z', '2026-10-25T16:00:00Z', '2026-10-26T16:00:00Z', '2026-10-24T02:00:00Z', '2026-10-25T02:00:00Z', '2026-10-26T02:00:00Z']) {
+  const h = await harness({now})
   try {
-    // The home's own date: its first stay checked out at midnight there today, so it is over whatever the hour.
-    const local = n => new Date(Date.parse(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date()) + 'T12:00:00Z') + n * 86_400_000).toISOString().slice(0, 10)
+    // Keep prior stays over even when the home later moves checkout to 3 am.
+    const local = n => homeDay(n, 'America/New_York', Date.parse(now))
     const mail = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('megan@guest.example'))
     const settings = async () => (await h.accessState()).inbox.find(r => r.id === 'inbox') ?? { revision: '' }
     const home = await h.cmd('property.save', { name: 'Saltbox on the Bay', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 2000 })
@@ -164,10 +165,10 @@ test('a reviewed returning guest’s question is answered for their upcoming sta
     await hours('00:00')
     await h.cmd('inbox.address', { address: INBOX, revision: '' })
     await h.cmd('inbox.schedule', { checkinEnabled: true, checkinHours: 48, checkoutEnabled: false, checkoutHours: 14, reviewEnabled: true, reviewHours: 4, revision: (await settings()).revision })
-    await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Rowan Price', guestEmail: 'rowan@guest.example', start: local(-6), end: local(-2) })
+    await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Rowan Price', guestEmail: 'rowan@guest.example', start: local(-7), end: local(-3) })
     const thanks = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('rowan@guest.example') && m.subject.includes('Thank you for staying'))
     assert.equal((await thanks()).length, 1)
-    const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-2), end: local(0) })
+    const past = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(-3), end: local(-1) })
     const next = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Megan Hale', guestEmail: 'megan@guest.example', start: local(1), end: local(3) })
     assert.equal(past.status, 'accepted'); assert.equal(next.status, 'accepted')
     assert.notEqual(past.bookingId, next.bookingId)
@@ -196,7 +197,9 @@ test('a reviewed returning guest’s question is answered for their upcoming sta
     await hours('03:00')
     assert.equal((await mail()).filter(m => m.subject.includes('Check-in details')).length, 2, 'sent once per change')
     assert.equal((await thanks()).length, 1, 'a review request whose words did not change is not sent again')
+    console.log(`Returning guest clock proof PASS: ${now}; home date ${local(0)}`)
   } finally { await h.close() }
+ }
 })
 
 test('guest search covers retained message history and explicit guest/message pages without merging shared contacts', async () => {
