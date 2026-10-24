@@ -7,14 +7,15 @@ import { exceptionJourney } from './financial-exceptions-support.mjs'
 const directory=process.env.CABIN_EXCEPTION_SHOTS??'./test-results/financial-exceptions';await mkdir(directory,{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
 try{
- for(const width of [1440,390]){
+ for(const legacy of [false,true])for(const width of [1440,390]){
+  const shots=join(directory,legacy?'legacy-imported':'native-ledger');await mkdir(shots,{recursive:true})
   const context=await browser.newContext({viewport:{width,height:1000}});let page,origin
   const visit=async h=>{
    if(origin!==h.origin){origin=h.origin;const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:origin}]);page=await context.newPage()}
    await page.goto(origin+'/app/ledger');await expect(page.getByRole('heading',{name:'Financial exception cases',exact:true})).toBeVisible()
   }
   try{
-   await exceptionJourney({act:async(h,name,input)=>{
+   await exceptionJourney({legacy,act:async(h,name,input)=>{
     await visit(h)
     let form=page.locator(`form[action*="name=${name}"]`)
     for(const key of ['id','proposalId','requestId'])if(input[key])form=form.filter({has:page.locator(`input[type="hidden"][name="${key}"][value="${input[key]}"]`)})
@@ -47,23 +48,28 @@ try{
     assert.deepEqual(axe.violations.filter(v=>v.impact==='serious'||v.impact==='critical').map(v=>v.id),[])
     // Capture document coordinates from the top so the fixed phone menu does not cover the case heading.
     await page.evaluate(()=>scrollTo(0,0))
-    await page.screenshot({path:join(directory,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
+    await page.screenshot({path:join(shots,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
     if(stage==='source-moved'){
      await expect(section.getByRole('alert')).toContainText('Reservation moved to another home')
      await expect(section.getByRole('button',{name:'Approve exact correction',exact:true})).toHaveCount(0)
     }
     if(stage==='corrected-awaiting-distribution'){
+     await section.getByText('Settlement and accounting evidence',{exact:true}).click()
+     await expect(section.getByRole('link',{name:/Frozen/})).toHaveCount(3)
+     await page.evaluate(()=>scrollTo(0,0))
+     await page.screenshot({path:join(shots,`frozen-source-links-${width}.png`),fullPage:true,clip:await section.boundingBox()})
+     await section.getByText('Settlement and accounting evidence',{exact:true}).click()
      await expect(section.getByText('This case remains open:',{exact:false})).toBeVisible()
      await page.goto(origin+'/app/statements')
      await expect(page.locator('details.statement-month > summary').filter({hasText:'2 approved'})).toHaveText(/ · 2 approved · owner payouts \$875\.00$/)
-     await page.screenshot({path:join(directory,`frozen-statements-${width}.png`),fullPage:true})
+     await page.screenshot({path:join(shots,`frozen-statements-${width}.png`),fullPage:true})
      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Frozen statement forms fit '+width)
      for(const basis of ['cash','accrual']){
       await page.goto(origin+'/app/reports?'+new URLSearchParams({...scope,basis}))
       await expect(page.getByRole('heading',{name:'Reports',exact:true})).toBeVisible()
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Corrected report fits '+width)
       for(const control of await page.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Report icon-only controls require tooltips')
-      await page.screenshot({path:join(directory,`corrected-report-${basis}-${width}.png`),fullPage:true})
+      await page.screenshot({path:join(shots,`corrected-report-${basis}-${width}.png`),fullPage:true})
      }
     }
    }})

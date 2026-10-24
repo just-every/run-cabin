@@ -6,7 +6,11 @@ A corrected provider CSV must contain exactly one transaction with the original 
 
 The first slice corrects unallocated native cash and owner-liability payout postings. Allocated receipts, transferred source scopes and processor-funded postings require their existing accounting workflows; the case refuses to substitute a different posting model. A reversed source cannot be corrected again through this door.
 
-Use **Statements → Reconciled monthly ledger close** for the linked adjustment after approval. Older imported-statement and allocation writers refuse records with correcting journals so they cannot silently reuse the original source amounts; an obsolete imported draft cannot be approved. A later-period correction links back to the prior frozen statement; a same-month supplement names its latest statement ID. Review and approve the exact statement separately. Financial-case approval does not approve a statement, reopen a period, send a refund or transfer funds.
+Use **Statements → Reconciled monthly ledger close** for the linked adjustment after approval. Older imported-statement and allocation writers refuse records with correcting journals so they cannot silently reuse the original source amounts; an obsolete imported draft cannot be approved. An imported frozen statement is included in the exact case evidence when it contains this reservation’s settlement. A later-period correction links back to both ledger and imported frozen statements through the original payout journal; a same-month supplement names its latest statement ID. Review and approve the exact statement separately. Financial-case approval does not approve a statement, reopen a period, send a refund or transfer funds.
+
+A bank request is obtained only after an imported bank transaction is matched to a journal for this reservation. Importing a statement alone leaves the request open.
+
+Legacy statement commission or paid-cost amounts that were never posted to the ledger still require accounting reconciliation; retaining a statement link does not manufacture those postings.
 
 The case displays recorded owner payable, recorded distribution and the portion matched to bank evidence separately. It remains open. Matching local records does not establish an actual provider transfer, completeness of a source export, physical receipt of money or FIN-006 execution authority. The full AGENT-002 acceptance still requires actual owner-distribution evidence and the remaining provider workflows.
 

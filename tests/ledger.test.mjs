@@ -53,5 +53,5 @@ test('trust accounts reconcile bank, ledger and owner controls and reserve only 
 })
 
 test('financial exception cases pursue split-payment fee and refund sources, reject and exactly approve a linked frozen-statement correction without inventing a distribution',{timeout:120000},async()=>{
- const {exceptionJourney}=await import('./financial-exceptions-support.mjs');await exceptionJourney()
+ const {exceptionJourney}=await import('./financial-exceptions-support.mjs');for(const legacy of [false,true])await exceptionJourney({legacy})
 })
