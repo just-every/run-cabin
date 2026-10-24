@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "4bbeb8390a43f9875944bd6fbfb0268060469bc5546eff0e6c8fe81611f89cc8",
+      "sha256": "c123d9d862d9bfb0ae0172eab4bd63622d7e42c76a95f60709ddd08de83b2d60",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8a0fcecde395a2b7a9ea5a70c46fba4bf393ae28c5ae56540a9621969ef4b34a",
+      "sha256": "9b7102d7bdf3367f26f6d6ebe343008cdaa9c389e5d252add31d59e31e8a678d",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "5bcc75d3fedb0c0fca89aa5005fdbc36478fc74f655d4f925fa8aad10776eab4",
+      "sha256": "d372dc5afd290dd519e641997642edd2b01799a4ac0a3bdc77ee56dbd432c5c7",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -647,12 +647,16 @@
       "sha256": "26912f5693e858ff88f50f41327131b5fd28142f9370cdb2577538f9c3605a5a",
       "executable": false
     },
+    "public/cabin-tooltips.js": {
+      "sha256": "19d2bb51e2fce8b3032a3d98a7cbf0bac75b2133d4e13be87affd72dd0dcc6e0",
+      "executable": false
+    },
     "public/cabin.css": {
-      "sha256": "101a5e3cbbb9a53bd86bca5f12ad887a40ebb2a7dbf2a2d7b2cd657892291430",
+      "sha256": "80f9c2694f135f5018cbbb14306ad0fb0cdc29d51f3290e9f42ca11c9c95e43c",
       "executable": false
     },
     "public/cabin.js": {
-      "sha256": "dfb2e560c98eb3fd54bca1b5ad6f65eeb10f1a2d5bd1b84f55df8ca571b87cf7",
+      "sha256": "84043d948951868fb7b235f42b36907457428c1fd0a5116e83a4e24011d831da",
       "executable": false
     },
     "public/calendar.css": {
@@ -5028,7 +5032,7 @@
       "executable": false
     },
     "tests/launch.test.mjs": {
-      "sha256": "192cbce5954ea1c611ae218156cd29fb19e41caaced69cc811b02c130c9fe80d",
+      "sha256": "b53cbf1ea2486e4dcbf8463692ea2bb005c9a162747c825b96b4b579634faf61",
       "executable": false
     },
     "tests/ledger.test.mjs": {
@@ -5092,7 +5096,7 @@
       "executable": false
     },
     "tests/readiness-browser.test.mjs": {
-      "sha256": "66c338678b0598c0e1562201f11c90b717e43d6e24ba0d28d229d1bc944da3c5",
+      "sha256": "b6bfd88485bc0093e2ce59d38159919391d8139ba0e44ac6f4779db3a066c9c1",
       "executable": false
     },
     "tests/readiness-helpers.mjs": {
