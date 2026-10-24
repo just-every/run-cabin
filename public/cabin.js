@@ -1,3 +1,4 @@
+import './cabin-tooltips.js'
 import './photo-upload.js'
 import { clearDrafts } from './cleaner-draft-store.js'
 // Keep successful form responses on their workspace page, including one-time credentials.
