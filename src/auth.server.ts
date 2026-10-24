@@ -44,8 +44,9 @@ export interface Bindings {
  INSTALLATION_KEY?: string
  INSTALLATION_KEY_PREVIOUS?: string
  SETUP_TOKEN?: string
- MAIL_PROVIDER?: 'development' | 'resend' | 'sendgrid' | 'cloudflare'
+ MAIL_PROVIDER?: 'development' | 'resend' | 'sendgrid' | 'cloudflare' | 'rer' | 'later'
  MAIL_FROM?: string
+ MAIL_RELAY_URL?: string
  MAIL_API_KEY?: string
  MAIL_ACCOUNT_ID?: string
  /** The owner's Seam API key: door codes go to connected smart locks (src/cabin/locks.ts). */

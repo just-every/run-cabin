@@ -1,14 +1,14 @@
 {
   "id": "cabin",
   "name": "Cabin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "maturity": "first-release-seed",
   "category": "operations",
   "spine": {
     "id": "holiday-rental",
     "record": "Property, calendar snapshot, turnover and owner statement"
   },
-  "description": "Vacation-rental operations for US hosts and managers: Airbnb, Vrbo and Booking.com calendars synced both ways by iCal with overlapping requests declined, a direct-booking page with Stripe payment, signed agreement, ID check and damage hold, turnovers with door codes, cleaner email, checklists and photos, a guest inbox with scheduled messages and drafted replies, stay recovery, payout-matched owner statements with an owner portal, books posted to Pantry or exported for QuickBooks, move-in from Guesty, Hostaway or OwnerRez, and backup and restore.",
+  "description": "Vacation-rental operations for US hosts and managers: iCal channel calendars, direct bookings with payment and damage holds, turnovers with door codes and cleaner photos, scheduled guest messages, stay recovery, payout-matched owner statements and an owner portal, accounting exports, reviewed move-in, and backup and restore.",
   "capabilities": [
     {
       "id": "homes-and-people",
@@ -309,5 +309,13 @@
       "operator-auth",
       "owner-claim"
     ]
-  }
+  },
+  "replaces": [
+    "Guesty",
+    "Hostaway",
+    "OwnerRez",
+    "Lodgify",
+    "Hospitable",
+    "Breezeway"
+  ]
 }

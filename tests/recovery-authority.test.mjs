@@ -84,7 +84,7 @@ test('AGENT-006: separate native grants fence scopes/windows and exact approvals
 test('AGENT-006: revocation during an uncertain provider write survives later executions and requires evidence before any retry', async () => {
  let interrupt = false, writes = 0, started, release
  const reached = new Promise(resolve => { started = resolve }), response = new Promise(resolve => { release = resolve })
- const h = await harness({ auth: { SEAM_API_KEY: 'network-edge-seam-key' }, outbound: async request => {
+ const h = await harness({ auth: { SEAM_API_KEY: 'synthetic-cabin-1' }, outbound: async request => {
   const url = new URL(request.url), body = await request.json()
   assert.equal(url.hostname, 'connect.getseam.com')
   writes++

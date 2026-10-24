@@ -3,5 +3,20 @@
   "projectId": "just-every/run-cabin",
   "name": "Cabin",
   "sourceRepository": "https://github.com/just-every/run-cabin",
-  "license": "MIT"
+  "license": "MIT",
+  "deployment": {
+    "target": "cloudflare-workers",
+    "artifactFile": "rer-worker-artifact.json"
+  },
+  "operations": {
+    "setup": "pnpm install --frozen-lockfile && pnpm exec rer install",
+    "build": "pnpm run build",
+    "verify": "pnpm exec rer check --profile first-party && pnpm check:deployment-spec && pnpm run verify",
+    "artifact": "node scripts/delivery/base/cli.mjs artifact --config packaging.json",
+    "recovery": "Follow OPERATIONS.md and RUN-LOCALLY.md: pause writes and scheduled work, retain exact source and private settings, use rer export for a local copy or rer run backup:hosted for a hosted copy, restore into fresh empty resources, re-export and compare domain records and photos, then verify owner access before routing traffic. Preserve applied migration names and bytes."
+  },
+  "setup": {
+    "path": "rer-setup.json",
+    "sha256": "afe42986588ab0132fb63c1f2947b77da91a9fad6d8aec841f868ad8e61ec642"
+  }
 }

@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "project": {
+    "schema": 1,
+    "projectId": "just-every/run-cabin",
+    "name": "Cabin",
+    "sourceRepository": "https://github.com/just-every/run-cabin",
+    "license": "MIT",
+    "deployment": {
+      "target": "cloudflare-workers",
+      "artifactFile": "rer-worker-artifact.json"
+    },
+    "operations": {
+      "setup": "pnpm install --frozen-lockfile && pnpm exec rer install",
+      "build": "pnpm run build",
+      "verify": "pnpm exec rer check --profile first-party && pnpm check:deployment-spec && pnpm run verify",
+      "artifact": "node scripts/delivery/base/cli.mjs artifact --config packaging.json",
+      "recovery": "Follow OPERATIONS.md and RUN-LOCALLY.md: pause writes and scheduled work, retain exact source and private settings, use rer export for a local copy or rer run backup:hosted for a hosted copy, restore into fresh empty resources, re-export and compare domain records and photos, then verify owner access before routing traffic. Preserve applied migration names and bytes."
+    }
+  },
+  "managed": {
+    "workflowRef": "runeditrun/delivery/.github/workflows/trusted-build.yml@86c8b37399c901bffd9a240dbd1148a65ec83b34",
+    "artifactFile": "rer-worker-artifact.json",
+    "buildProfile": "project",
+    "verificationProfiles": [
+      "full"
+    ]
+  },
+  "artifact": {
+    "specInputs": {
+      "publicVariableNames": [
+        "AUTH_LOCAL",
+        "AUTH_ORIGIN",
+        "IDENTITY_PROVIDER",
+        "MAIL_PROVIDER",
+        "MAIL_FROM",
+        "MAIL_RELAY_URL",
+        "MAIL_ACCOUNT_ID",
+        "OWNER_EMAIL"
+      ],
+      "secretNames": [
+        "SESSION_SECRET",
+        "INSTALLATION_KEY",
+        "SETUP_TOKEN"
+      ],
+      "optionalSecretNames": [
+        "INSTALLATION_KEY_PREVIOUS",
+        "MAIL_API_KEY",
+        "STRIPE_TEST_SECRET_KEY",
+        "STRIPE_SECRET_KEY",
+        "SEAM_API_KEY",
+        "TWILIO_ACCOUNT_SID",
+        "TWILIO_AUTH_TOKEN",
+        "TWILIO_FROM",
+        "CABIN_WORKER_NAME",
+        "BOOKING_MESSAGING_USER",
+        "BOOKING_MESSAGING_PASSWORD"
+      ],
+      "healthPath": "/health",
+      "recovery": "Follow OPERATIONS.md and RUN-LOCALLY.md: pause writes and scheduled work, retain exact source and private settings, use rer export for a local copy or rer run backup:hosted for a hosted copy, restore into fresh empty resources, re-export and compare domain records and photos, then verify owner access before routing traffic. Preserve applied migration names and bytes.",
+      "providerEffects": [
+        "outbound-mail",
+        "ai",
+        "outbound-webhooks"
+      ],
+      "mail": {
+        "providers": [
+          "sendgrid",
+          "resend",
+          "cloudflare",
+          "rer"
+        ]
+      },
+      "surfaces": {
+        "app": {
+          "path": "/signin",
+          "originVariable": "AUTH_ORIGIN",
+          "signIn": {
+            "path": "/signin",
+            "loginHint": false
+          }
+        }
+      }
+    }
+  },
+  "setup": {
+    "manifestFile": "rer-setup.json"
+  }
+}

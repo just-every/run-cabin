@@ -64,3 +64,19 @@ instructions under `node_modules/@runeditrun/rer/modules/deploy-kit`; account sc
 resource ownership, migrations, receipt and health checks are defined there.
 Local validation does not prove hosted acceptance, provider delivery or remote
 health.
+
+## Hosted installation package
+
+`packaging.json` declares Cabin's hosted build, D1 migrations, required private
+settings, recovery instructions and mail providers. After the real
+`pnpm run build`, run `pnpm delivery:spec` to refresh the committed deployment
+specification. `pnpm check:deployment-spec` verifies that it still matches the
+build and policy. Package with `node scripts/delivery/base/cli.mjs package
+--config packaging.json --output rer-package` in an absent output directory;
+`node scripts/delivery/base/cli.mjs artifact --config packaging.json` emits the
+delivery artifact. Generated packages and local runtime state stay out of Git.
+
+Managed hosting supplies the RER mail relay URL and a private installation key.
+Assisted hosting asks for the selected mail provider, sender and private API key,
+plus the account ID for Cloudflare or the relay URL for RER. Direct providers
+continue using their own transports. Local development suppresses outbound mail.
