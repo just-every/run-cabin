@@ -1,14 +1,14 @@
-Cabin runs on your own computer or server. You need Git, and macOS, Linux or Windows with WSL2. Nothing else: the installer brings Node when it is missing, and `rer` brings pnpm.
+Cabin runs on your own computer or server, on macOS, Linux or Windows with WSL2. Git is required; rer brings Node and pnpm. Nothing else is needed.
 
 ## Start Cabin
 
-Run one line to install the `rer` launcher, clone Cabin and start it:
+Run one line to install the `rer` launcher, clone Cabin into `run-cabin` and start it:
 
 ```sh
-npx -y @runeditrun/rer dev just-every/run-cabin
+curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin
 ```
 
-No Node? `curl -fsSL https://runeditrun.com/install.sh | sh -s -- dev just-every/run-cabin` does the same and brings its own Node; it does not edit your shell files itself. If it ends by printing a line to run, run it: that line puts `rer` on your PATH now and appends the same `export PATH=…` setting to your shell's startup file (`~/.zshrc` for zsh, otherwise `~/.profile` or `~/.bash_profile`), so `rer` also works in new terminals. To set Cabin up without starting it, use `setup` in place of `dev`.
+Already have Node 22 or later? `npx -y @runeditrun/rer dev just-every/run-cabin` does the same. The installer does not edit your shell files itself. If it prints a line to run, run it: that line puts `rer` on your PATH now and appends the same `export PATH=…` setting to your shell's startup file (`~/.zshrc` for zsh, otherwise `~/.profile` or `~/.bash_profile`), so `rer` also works in new terminals. To set Cabin up without starting it, use `setup` in place of `dev`.
 
 The first launch installs dependencies, sets up the local database and prepares a local owner. It can take several minutes. Run the same command again if it is interrupted.
 

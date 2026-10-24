@@ -18,15 +18,16 @@
 .import-rows .dot { width: calc(var(--u) * 17); height: calc(var(--u) * 17); margin-right: calc(var(--u) * 18); }
 .import-rows li > span:last-child { color: #33404a; }
 
-.terminal-chip { position: absolute; left: calc(var(--u) * 386); top: calc(var(--u) * 505); display: grid; gap: calc(var(--u) * 10); width: calc(var(--u) * 224); padding: calc(var(--u) * 14) calc(var(--u) * 18) calc(var(--u) * 14); border-radius: calc(var(--u) * 12); background: var(--terminal); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 32) calc(var(--u) * -16) rgba(0, 0, 0, .5); }
+.terminal-chip { position: absolute; left: calc(var(--u) * 386); top: calc(var(--u) * 505); display: grid; gap: calc(var(--u) * 10); width: calc(var(--u) * 470); padding: calc(var(--u) * 14) calc(var(--u) * 18) calc(var(--u) * 14); border-radius: calc(var(--u) * 12); background: var(--terminal); box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 32) calc(var(--u) * -16) rgba(0, 0, 0, .5); }
 .terminal-lights { display: flex; gap: calc(var(--u) * 8); }
 .terminal-lights span { width: calc(var(--u) * 13); height: calc(var(--u) * 13); border-radius: 50%; background: #ff5f57; }
 .terminal-lights span:nth-child(2) { background: #febc2e; }
 .terminal-lights span:nth-child(3) { background: #28c840; }
-.terminal-chip code { display: grid; gap: calc(var(--u) * 4); font: 400 calc(var(--u) * 19.5)/1.35 var(--font-mono); color: var(--rer-code-text); white-space: nowrap; }
+.terminal-chip code { display: grid; gap: calc(var(--u) * 4); font: 400 calc(var(--u) * 15.5)/1.4 var(--font-mono); color: var(--rer-code-text); }
+.terminal-chip .chip-comment, .terminal-chip .chip-comment b { color: #a3aab4; }
 .terminal-chip b { margin-right: .5em; font-weight: 400; color: var(--terminal-green); }
 
-.not-yet { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u) * 6) calc(var(--u) * 22); margin-top: calc(var(--u) * 62); padding: calc(var(--u) * 30) calc(var(--u) * 38); border-radius: calc(var(--u) * 14); }
+.not-yet { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u) * 6) calc(var(--u) * 22); margin-top: calc(var(--u) * 94); padding: calc(var(--u) * 30) calc(var(--u) * 38); border-radius: calc(var(--u) * 14); }
 .not-yet b { font-size: calc(var(--u) * 25); font-weight: 700; letter-spacing: -.02em; color: #0b1f1b; }
 .not-yet span { font-size: calc(var(--u) * 20.5); color: #4b5560; }
 
@@ -34,13 +35,13 @@
   .moving { padding: 88px 0 72px; }
   .moving .side-row { grid-template-columns: minmax(0, 1fr); }
   .moving .stage-head { padding-top: 0; }
-  .moving-art { max-width: 640px; padding-bottom: 32px; }
-  .terminal-chip { top: auto; bottom: 0; left: auto; right: 24px; }
+  .moving-art { max-width: 640px; }
+  /* In the column the chip follows the card and overlaps only its bottom padding, whatever its height. */
+  .terminal-chip { position: relative; top: auto; left: auto; width: min(470px, calc(100% - 48px)); margin: -56px 24px 0 auto; }
   .not-yet { margin-top: 48px; }
 }
 @media (max-width: 760px) {
   .moving { padding: 64px 0 56px; }
-  .moving-art { padding-bottom: 54px; }
   .import { padding: 20px 14px 30px; }
   .import h3 { font-size: 20px; }
   .import-progress { gap: 12px; margin-top: 12px; font-size: 14px; }
@@ -51,7 +52,7 @@
   .import-rows li > span:nth-child(2) { grid-area: label; font-weight: 500; }
   .import-rows li > span:last-child { grid-area: value; font-size: 14.5px; color: var(--soft); }
   .import-rows .dot { width: 12px; height: 12px; margin-right: 10px; }
-  .terminal-chip { right: 12px; width: 190px; padding: 12px 14px; gap: 8px; }
+  .terminal-chip { width: auto; margin: -16px 12px 0; padding: 12px 14px; gap: 8px; }
   .terminal-lights span { width: 10px; height: 10px; }
   .terminal-chip code { font-size: 15.5px; }
   .not-yet { margin-top: 36px; padding: 18px 18px; }
