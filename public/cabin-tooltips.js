@@ -17,7 +17,10 @@ const show = element => {
  // The tooltip must also appear above an open stay popover.
  tip.setAttribute('popover', 'manual'); document.body.append(tip); tip.showPopover()
  control.setAttribute('aria-describedby', [control.getAttribute('aria-describedby'), tip.id].filter(Boolean).join(' '))
- const box = element.getBoundingClientRect(), size = tip.getBoundingClientRect()
+ place()
+}
+const place = () => {
+ const box = control.getBoundingClientRect(), size = tip.getBoundingClientRect()
  tip.style.left = Math.max(8, Math.min(innerWidth - size.width - 8, box.left + (box.width - size.width) / 2)) + 'px'
  tip.style.top = (box.bottom + size.height + 8 < innerHeight ? box.bottom + 6 : Math.max(8, box.top - size.height - 6)) + 'px'
 }
@@ -31,5 +34,7 @@ for (const element of document.querySelectorAll('a[aria-label], button[aria-labe
  element.addEventListener('click', hide)
 }
 document.addEventListener('keydown', event => { if (event.key === 'Escape') hide() })
-window.addEventListener('scroll', hide, true)
-window.addEventListener('resize', hide)
+// Opening or focusing a popover can scroll its page after the focus event.
+const moved = () => { if (tip && control === document.activeElement) place(); else hide() }
+window.addEventListener('scroll', moved, true)
+window.addEventListener('resize', moved)

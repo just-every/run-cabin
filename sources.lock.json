@@ -648,7 +648,7 @@
       "executable": false
     },
     "public/cabin-tooltips.js": {
-      "sha256": "19d2bb51e2fce8b3032a3d98a7cbf0bac75b2133d4e13be87affd72dd0dcc6e0",
+      "sha256": "bbef592fdac732d52107539a9f2eb200bf31884df09e24d9a276847d4a32dbe1",
       "executable": false
     },
     "public/cabin.css": {
@@ -5096,7 +5096,7 @@
       "executable": false
     },
     "tests/readiness-browser.test.mjs": {
-      "sha256": "b6bfd88485bc0093e2ce59d38159919391d8139ba0e44ac6f4779db3a066c9c1",
+      "sha256": "c6ac219515e29e101a75f3428100cc480667c42f9ed855fe00de8635917a0a73",
       "executable": false
     },
     "tests/readiness-helpers.mjs": {

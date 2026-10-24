@@ -134,6 +134,7 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
     await page.locator('button[popovertarget="stay-'+booking.id+'"]:visible').first().click()
     const close=page.getByRole('button',{name:'Close',exact:true});await close.focus()
     await expect(page.getByRole('tooltip')).toHaveText('Close details')
+    await page.mouse.wheel(0,100);await expect(page.getByRole('tooltip')).toHaveText('Close details')
     await page.screenshot({path:join(evidence,'stay-tooltip-'+width+'.png')});await close.click();await expect(page.getByRole('tooltip')).toHaveCount(0)
 
     await page.goto(h.origin+'/app/inbox');await page.getByRole('link',{name:'Next guests',exact:true}).click();await expect(page.getByRole('navigation',{name:'Guest pages',exact:true})).toContainText('page 2');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'guest pagination fits viewport');await page.screenshot({path:join(evidence,'inbox-page-two-'+width+'.png'),fullPage:true});const search=page.getByRole('searchbox',{name:'Search guests and messages'});await search.fill('Megan Ortiz '+width);await page.keyboard.press('Enter');await expect(page.locator('.threads')).toContainText('of 1 guests');await page.screenshot({path:join(evidence,'inbox-search-'+width+'.png'),fullPage:true});await page.locator('.thread-row').click()
