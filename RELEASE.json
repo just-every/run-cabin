@@ -1,7 +1,7 @@
 {
   "version": "0.1.1",
-  "date": "2026-10-24",
-  "publicReleaseNotes": "Prepare Cabin for hosted installation with a digest-bound setup manifest, a deployment specification, dispatch-only Managed delivery, hosted mail configuration and concise listing metadata. Existing reservation, turnover, statement and backup workflows remain available. This metadata prepares a future native release; no release has been created.",
+  "date": "2026-10-25",
+  "publicReleaseNotes": "Prepare Cabin for hosted installation with rer 0.2.80, a digest-bound setup manifest, a deployment specification, dispatch-only Managed delivery, hosted mail configuration and concise listing metadata. Cabin-specific deployment instructions now live in their own guide alongside shared hosting options. Existing reservation, turnover, statement and backup workflows remain available. This metadata prepares a future native release; no release has been created.",
   "extensionPointChanges": [],
   "migrations": [
     "migrations/core/0022_ledger.sql",

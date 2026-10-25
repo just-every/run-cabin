@@ -402,7 +402,7 @@
       "executable": false
     },
     "docs/site.json": {
-      "sha256": "5c6202acfa863a153a3370cf90c09b06b3603ff43dc588cacba7f97d5a1d9a79",
+      "sha256": "8cdb9a0a32454cde302c832133a5be53236c0322cee78d305e93333cb6ac8983",
       "executable": false
     },
     "docs/source-notes.md": {
@@ -1026,7 +1026,7 @@
       "executable": false
     },
     "RELEASE.json": {
-      "sha256": "bebdfadad5982d4c2d0d04f273b25a405c8fa32cc88cf76775e0d7cc986042ab",
+      "sha256": "07b48c6b3ad38d32e882b36b86ba42ce5947da57d522f189e01ca420d4c3a5dc",
       "executable": false
     },
     "rer-project.json": {
