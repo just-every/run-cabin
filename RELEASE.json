@@ -1,7 +1,7 @@
 {
   "version": "0.1.1",
   "date": "2026-10-25",
-  "publicReleaseNotes": "Prepare Cabin for hosted installation with rer 0.2.80, a digest-bound setup manifest, a deployment specification, dispatch-only Managed delivery, hosted mail configuration and concise listing metadata. Cabin-specific deployment instructions now live in their own guide alongside shared hosting options. Existing reservation, turnover, statement and backup workflows remain available. This metadata prepares a future native release; no release has been created.",
+  "publicReleaseNotes": "Prepare Cabin for hosted installation with rer 0.2.81, a digest-bound setup manifest, a deployment specification, dispatch-only Managed delivery, hosted mail configuration and concise listing metadata. Cabin-specific deployment instructions now live in their own guide alongside shared hosting options. Existing reservation, turnover, statement and backup workflows remain available. This metadata prepares a future native release; no release has been created.",
   "extensionPointChanges": [],
   "migrations": [
     "migrations/core/0022_ledger.sql",
@@ -23,6 +23,6 @@
     "migrations/core/0063_dependency_keys_sealed.sql"
   ],
   "breaking": false,
-  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md. Adopt this source with its pinned rer 0.2.80, apply only forward migrations, configure the selected hosted mail provider and verify before routing traffic. The native release follows in a later round.",
+  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md. Adopt this source with its pinned rer 0.2.81, apply only forward migrations, configure the selected hosted mail provider and verify before routing traffic. The native release follows in a later round.",
   "previousVersion": "0.1.0"
 }

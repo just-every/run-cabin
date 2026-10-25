@@ -4,6 +4,7 @@
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { contractPageHtml } from '../base/contract-page'
+import { hostingPageHtml } from '../base/hosting-page'
 import { runPageHtml, siteNotFoundHtml, type RunData, type SiteBuild, type SiteContext } from '../base/run-site'
 import type { EditionIdentity } from '../base/identity'
 import { identity } from '../identity'
@@ -21,7 +22,7 @@ const COPY = "document.querySelectorAll('.docs-copy').forEach(b=>{b.hidden=false
 const siteIdentity: EditionIdentity = { ...identity, theme: '/site/theme.css', band: undefined }
 const SHARE_IMAGE = `${identity.runSite}/site/share.jpg`
 
-export function sitePages({ styles, contract }: SiteContext): SiteBuild {
+export function sitePages({ styles, contract, hosting }: SiteContext): SiteBuild {
   const data: RunData = run
   const document = (title: string, description: string, body: ReactElement, script = '') => '<!doctype html>' + renderToStaticMarkup(
     <html lang="en">
@@ -56,6 +57,7 @@ export function sitePages({ styles, contract }: SiteContext): SiteBuild {
     pages: [
       { path: '/', html: document('Cabin — Ready before they arrive', identity.tagline, <Landing />, STAGE_SCRIPT) },
       { path: '/run', html: runPageHtml(siteIdentity, data, contract) },
+      ...(hosting !== undefined ? [{ path: '/docs/hosting', html: hostingPageHtml(siteIdentity, data, hosting, contract) }] : []),
       ...(contract ? [{ path: '/contract', html: contractPageHtml(siteIdentity, data, contract) }] : []),
       { path: '/docs', html: document(...head(), <DocsIndex />) },
       ...docsPages.filter(page => page.slug !== 'hosting').map(page => ({ path: `/docs/${page.slug}`, html: document(...head(page.slug), <DocsArticle slug={page.slug} />, COPY) })),
