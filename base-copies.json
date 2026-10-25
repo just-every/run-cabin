@@ -535,7 +535,8 @@
       },
       "adapted": {
         "scripts/edition-authoring/adopt.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544",
-        "scripts/edition-authoring/lock.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+        "scripts/edition-authoring/lock.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544",
+        "scripts/edition-authoring/runtime-dependencies.mjs": "631bb343db00777d8db98a91f1964e127d219d62"
       },
       "acknowledged": {
         "scripts/edition-authoring/adopt.mjs": {
@@ -544,6 +545,10 @@
         },
         "scripts/edition-authoring/lock.mjs": {
           "sha256": "4c719411ecbe7133e7beee0b69c46b385e0388435e4958769a08d22ce240401f",
+          "mode": "100644"
+        },
+        "scripts/edition-authoring/runtime-dependencies.mjs": {
+          "sha256": "403901f9e30460a44f4d4f52cbfc254a07316c72c2794630d40fb2e95c0344e8",
           "mode": "100644"
         }
       }
@@ -652,6 +657,15 @@
       },
       "modes": {
         "src/base/contract-page.ts": "100644"
+      },
+      "adapted": {
+        "src/base/contract-page.ts": "631bb343db00777d8db98a91f1964e127d219d62"
+      },
+      "acknowledged": {
+        "src/base/contract-page.ts": {
+          "sha256": "49d1fa3a9ed22ce0d7256d16b48c42555b05c932e7c0f774e1468204c232c5fa",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -826,6 +840,15 @@
       },
       "modes": {
         "src/base/run-chooser-style.ts": "100644"
+      },
+      "adapted": {
+        "src/base/run-chooser-style.ts": "631bb343db00777d8db98a91f1964e127d219d62"
+      },
+      "acknowledged": {
+        "src/base/run-chooser-style.ts": {
+          "sha256": "213d1d782a23e161521674d8cf6e152c60dfd1918d76a87ac0d186c106654698",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -1489,6 +1512,30 @@
         "src/modules/import-kit/src/storage/schema.ts": "100644",
         "src/modules/import-kit/src/storage/sqlite.ts": "100644",
         "src/modules/import-kit/src/types.ts": "100644"
+      },
+      "adapted": {
+        "src/modules/import-kit/src/door/ADOPTING.md": "631bb343db00777d8db98a91f1964e127d219d62",
+        "src/modules/import-kit/src/door/README.md": "631bb343db00777d8db98a91f1964e127d219d62",
+        "src/modules/import-kit/src/door/failures.ts": "631bb343db00777d8db98a91f1964e127d219d62",
+        "src/modules/import-kit/src/door/intake-upload.ts": "631bb343db00777d8db98a91f1964e127d219d62"
+      },
+      "acknowledged": {
+        "src/modules/import-kit/src/door/ADOPTING.md": {
+          "sha256": "1fd52b5fe3b44c99e3af9b4afbba2c5313159d23886fe2d74c5831ed5be9942c",
+          "mode": "100644"
+        },
+        "src/modules/import-kit/src/door/README.md": {
+          "sha256": "8d3e32a9f0138f1f04825f67ccaaefd03d8cb9b415289759ccba115e17bb4b50",
+          "mode": "100644"
+        },
+        "src/modules/import-kit/src/door/failures.ts": {
+          "sha256": "4521d157e3c69ea59404f9c1900703f8aa65860124d6ab3859712ceb4cf89c65",
+          "mode": "100644"
+        },
+        "src/modules/import-kit/src/door/intake-upload.ts": {
+          "sha256": "1e3a9be935bd7d127db58a6e08146e8903d365007bf80adbe80a8e362c9ef2f9",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -1857,6 +1904,25 @@
         "src/modules/operator-auth/signin/index.d.mts": "100644",
         "src/modules/operator-auth/signin/index.mjs": "100644",
         "src/modules/operator-auth/signin/one-click.mjs": "100644"
+      },
+      "adapted": {
+        "src/modules/operator-auth/README.md": "631bb343db00777d8db98a91f1964e127d219d62",
+        "src/modules/operator-auth/docs/vite-spa.md": "631bb343db00777d8db98a91f1964e127d219d62",
+        "src/modules/operator-auth/identity/oidc/admin-audit.mjs": "631bb343db00777d8db98a91f1964e127d219d62"
+      },
+      "acknowledged": {
+        "src/modules/operator-auth/README.md": {
+          "sha256": "d692d582307abae7e7567a68be6c512615e8f3b1739d29f973dae7b5a24f0048",
+          "mode": "100644"
+        },
+        "src/modules/operator-auth/docs/vite-spa.md": {
+          "sha256": "0c9cb19046087f55390368e9983be52a24ce8804cda0a621c7f74d12b90288b6",
+          "mode": "100644"
+        },
+        "src/modules/operator-auth/identity/oidc/admin-audit.mjs": {
+          "sha256": "7e67e6bde0054d3ae2683bcde4dff7e1862b2411cdb236f6cf5f84ad113cfdcf",
+          "mode": "100644"
+        }
       }
     },
     {

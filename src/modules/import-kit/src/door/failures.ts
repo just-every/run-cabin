@@ -36,7 +36,7 @@ export function requireNewPlan(planId: string, reason: string): never {
 export async function recordApplyFailure(request: DoorRequest, snapshot: DoorSnapshot, job: ImportJob, error: unknown): Promise<never> {
   const g = request.access, reason = reasonCode(error);
   // A preserving reversal journal starts at the last published apply fence.
-  // A refused batch published no progress: its terminal failed state/error
+  // A refused batch published no progress: its terminal failed state and error
   // fence stale applies without introducing an unjournaled publication fence.
   const fence = job.fence + Number(reversalState(job).policy !== 'preserve-conflicts');
   // This is server bookkeeping for an already accepted attempt, including when

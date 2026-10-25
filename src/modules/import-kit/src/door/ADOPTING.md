@@ -199,7 +199,7 @@ Owner history and undo must include jobs from either authority.
    With intake, POST the full raw stream to the same uploads route with
    `Content-Type: application/octet-stream`, `X-Import-Format` and `X-Import-Name`;
    custody and response hashes then describe sanitized NDJSON. Do not send
-   JSON chunk envelopes or a client sanitizer/hash for that source. Show the
+   JSON chunk envelopes or a client sanitizer or hash for that source. Show the
    returned counts, rejections, differences and each
    `CREDENTIAL_REMOVED` diagnostic (a credential value the door removed from that
    record), and each named source refusal's `details.reason`, then
@@ -278,7 +278,7 @@ const oktaIntake = {
 Auth0's CSV and NDJSON lists contain only those four fields. Okta's Users API
 JSON array retains email with login as fallback, displayName with firstName
 plus lastName as fallback, and department for review only. Those choices stay
-in the product parser/mapping; intake only drops fields and preserves values.
+in the product parser or mapping; intake only drops fields and preserves values.
 
 Return each declaration with its source's `{parse, mapping, ownerPrincipalId?,
 intake?}`. The operator mount spreads that source entry and the grant mount
@@ -378,7 +378,7 @@ covers settings, revocation, native edits and erasure as above.
 The chunk-upload portion below is for a source **without** an intake
 declaration. For declared intake, replace it with one authenticated streaming
 upload using the headers in [README.md](README.md#optional-intake-before-custody).
-Take `bundleSha256` and received sizes from that response/inventory and compare
+Take `bundleSha256` and received sizes from that response or inventory and compare
 those custody hashes across plan and reconcile; do not assert the raw input's
 hash or size. Assert `intake.sanitized`, `inputFormat`, `custodyFormat` and the
 server-derived `allowlistSha256`, and exercise forbidden-field exclusion,

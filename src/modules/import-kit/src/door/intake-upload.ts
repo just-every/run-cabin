@@ -41,7 +41,7 @@ export async function streamUpload(request: DoorRequest, incoming: Request) {
     const bytes = buffered.subarray(0, used);
     rows.push({ordinal: ordinal++, sha256: sha256(bytes), size: bytes.length, base64: bytes.toString('base64')});
     buffered = Buffer.alloc(CHUNK_BYTES); used = 0;
-    // One bounded D1 value/batch, never an unbounded list of row statements.
+    // One bounded D1 value per batch, never an unbounded list of row statements.
     if (rows.length === 16) await flush();
   };
   const reader = incoming.body.getReader();
@@ -80,7 +80,7 @@ export async function streamUpload(request: DoorRequest, incoming: Request) {
     return progress(request, await uploadRow(request, id));
   } catch (error) {
     // No raw bytes reached SQLite, even its freed pages or rollback journal.
-    // If authority/erasure wins, the same fence refuses this cleanup too; any
+    // If authority revocation or erasure wins, the same fence refuses this cleanup too; any
     // surviving partial custody is sanitized and remains visibly incomplete.
     await transact(request.options.database, request.authority, [
       sql('DELETE FROM ik_door_chunks WHERE upload_id=?', id),

@@ -268,7 +268,7 @@ POST the complete raw file stream to the same
 `/api/operator/import/uploads` or `/api/rer/import/uploads` route. Set
 `Content-Type: application/octet-stream`, `X-Import-Format` to a declared
 `csv`, `ndjson` or `json`, and `X-Import-Name` to a safe file name. Use the same
-owner authentication, Origin/CSRF checks or action-bound grant and quotas as
+owner authentication, Origin and CSRF checks or action-bound grant and quotas as
 other door requests. Unknown or undeclared formats fail closed. A declared
 source refuses JSON chunk envelopes; JSON `{uploadId}` remains the progress
 read. A source without `intake` keeps the original chunk protocol byte-for-byte.
@@ -379,7 +379,7 @@ locate it; no source value is reflected:
 | `source_byte_limit`, `source_record_limit`, `source_record_byte_limit`, `source_effect_limit`, `source_import_plan_too_large` / 413 | A source or plan bound. |
 
 JSON bodies are limited to 100,000 bytes; intake streams use their source and
-grant byte/record quotas instead. The 1,024-chunk bound limits one bundle to
+grant byte and record quotas instead. The 1,024-chunk bound limits one bundle to
 64 MiB even if a grant's byte quota is larger. A smaller grant quota wins.
 
 Adapters for large records must implement a compact `matchesMany`, because plan,

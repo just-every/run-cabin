@@ -1,4 +1,4 @@
-// /run only. Shared document/header styles remain in run-site.ts.
+// /run only. Shared document and header styles remain in run-site.ts.
 export const RUN_CHOOSER = `
 body{--art:max(20vh,150px);overflow-x:visible;--code-bg:var(--rer-code-background,var(--site-ink));--code-ink:var(--rer-code-text,var(--rer-page,#f3f5f8));--surface:var(--rer-surface,#fff);--done:var(--rer-done,var(--site-ink));--done-ink:color-mix(in srgb,var(--rer-done-ink,var(--site-ink)) 80%,var(--site-ink))}
 main{max-width:1360px;margin:0 auto;padding:0 56px calc(var(--art) + 40px)}

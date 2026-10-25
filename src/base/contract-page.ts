@@ -55,7 +55,7 @@ const kindWord = (clause: ContractClause) => clause.kind === 'push-further' ? 'p
 const fileName = String.raw`[\w@.-]+\.(?:[cm]js|[cm]?tsx?|sql|jsonc?|toml|md|ya?ml|sh|html)\b`
 const roots = String.raw`(?:scripts|docs|modules|packages|foundation|cli|migrations|schema|public|config|deploy|operations|evidence)`
 // A source root or explicit directory marker identifies an extensionless path.
-// Generic slash-separated product terms (public/private, CLI/MCP, Docs/Sheets)
+// Generic slash-separated product terms (public or private, CLI or MCP, Docs or Sheets)
 // supply neither marker and remain prose.
 const sourcePath = new RegExp(String.raw`(?<![\w/])(?:src|tests|secrets|\.github)/[\w@.*?/[\]-]*(?::\d+(?::\d+)?)?|(?<![\w/])${roots}/[\w@.*?/[\]-]*/(?![\w@./-])|(?<![\w/])${roots}/[\w@.*?/[\]-]*\.(?:[cm]?[jt]sx?|sql|jsonc?|toml|md|ya?ml|sh|css|html|py|png|svg|pdf|ppt|csv|exs)\b(?::\d+(?::\d+)?)?|(?<![\w/])(?:~?/|\.{1,2}/)?(?:[\w@.-]+/)+${fileName}(?::\d+(?::\d+)?)?|\b[\w@.-]+\.(?:[cm]?[jt]sx?|sql|jsonc?|toml|md|ya?ml|sh|css|html):\d+(?::\d+)?\b`, 'gi')
 const bareSourceFile = /(?<![\w/\\.-])[\w@.-]+\.(?:[cm]js|[cm]?tsx?|sql|jsonc?|toml|md|ya?ml|sh|html)\b(?![\w./\\-])/gi
@@ -80,8 +80,8 @@ const publicUrl = (token: string) => {
   return sourceUrl.test(citation) ? token.slice(citation.length) : token
 }
 
-// URLs are whole tokens: a public document/feed URL is product prose, whereas
-// a GitHub blob/raw URL explicitly identifies a repository file. Never run a
+// URLs are whole tokens: a public document or feed URL is product prose, whereas
+// a GitHub blob or raw URL explicitly identifies a repository file. Never run a
 // filename recognizer inside a kept URL or reconstruct it from placeholders.
 export const publicText = (value: string) => value
   .split(/(https?:\/\/[^\s<>"'`]+)/gi)

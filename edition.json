@@ -115,6 +115,83 @@
           }
         ]
       }
+    },
+    {
+      "id": "runeditrun/base-081-publication-wording",
+      "role": "module",
+      "source": {
+        "kind": "local",
+        "paths": [
+          "scripts/edition-authoring/runtime-dependencies.mjs",
+          "src/base/contract-page.ts",
+          "src/base/run-chooser-style.ts",
+          "src/modules/import-kit/src/door/ADOPTING.md",
+          "src/modules/import-kit/src/door/README.md",
+          "src/modules/import-kit/src/door/failures.ts",
+          "src/modules/import-kit/src/door/intake-upload.ts",
+          "src/modules/operator-auth/README.md",
+          "src/modules/operator-auth/docs/vite-spa.md",
+          "src/modules/operator-auth/identity/oidc/admin-audit.mjs"
+        ],
+        "origin": {
+          "repository": "https://github.com/runeditrun/base",
+          "revision": "631bb343db00777d8db98a91f1964e127d219d62",
+          "paths": [
+            "edition-authoring/runtime-dependencies.mjs",
+            "foundation/runtime/contract-page.ts",
+            "foundation/runtime/run-chooser-style.ts",
+            "modules/import-kit/src/door/ADOPTING.md",
+            "modules/import-kit/src/door/README.md",
+            "modules/import-kit/src/door/failures.ts",
+            "modules/import-kit/src/door/intake-upload.ts",
+            "modules/operator-auth/README.md",
+            "modules/operator-auth/docs/vite-spa.md",
+            "modules/operator-auth/identity/oidc/admin-audit.mjs"
+          ]
+        },
+        "mappings": [
+          {
+            "path": "scripts/edition-authoring/runtime-dependencies.mjs",
+            "originPath": "edition-authoring/runtime-dependencies.mjs"
+          },
+          {
+            "path": "src/base/contract-page.ts",
+            "originPath": "foundation/runtime/contract-page.ts"
+          },
+          {
+            "path": "src/base/run-chooser-style.ts",
+            "originPath": "foundation/runtime/run-chooser-style.ts"
+          },
+          {
+            "path": "src/modules/import-kit/src/door/ADOPTING.md",
+            "originPath": "modules/import-kit/src/door/ADOPTING.md"
+          },
+          {
+            "path": "src/modules/import-kit/src/door/README.md",
+            "originPath": "modules/import-kit/src/door/README.md"
+          },
+          {
+            "path": "src/modules/import-kit/src/door/failures.ts",
+            "originPath": "modules/import-kit/src/door/failures.ts"
+          },
+          {
+            "path": "src/modules/import-kit/src/door/intake-upload.ts",
+            "originPath": "modules/import-kit/src/door/intake-upload.ts"
+          },
+          {
+            "path": "src/modules/operator-auth/README.md",
+            "originPath": "modules/operator-auth/README.md"
+          },
+          {
+            "path": "src/modules/operator-auth/docs/vite-spa.md",
+            "originPath": "modules/operator-auth/docs/vite-spa.md"
+          },
+          {
+            "path": "src/modules/operator-auth/identity/oidc/admin-audit.mjs",
+            "originPath": "modules/operator-auth/identity/oidc/admin-audit.mjs"
+          }
+        ]
+      }
     }
   ]
 }

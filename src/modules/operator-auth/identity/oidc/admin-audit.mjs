@@ -1,7 +1,7 @@
 import { auditMutation } from '../../accounts/audit.mjs';
 
 // Only the authorized OA administration door supplies this context. Provider
-// discovery/first-use pinning and native account adapters retain their own paths.
+// discovery or first-use pinning and native account adapters retain their own paths.
 export async function adminProviderChange(db, id, provider, metadata, previous, { audit, actorId, fence, now }) {
   const store = { batch: statements => db.batch(statements.map(([sql, args]) => db.prepare(sql).bind(...args))) };
   const snapshot = previous
