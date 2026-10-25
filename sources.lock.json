@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "parent": null,
   "edition": "just-every/run-cabin",
-  "manifest": "f93ba2ad7814f79f811bd4975cd8f59fef1597030d3eaa460e1fcb160bd35b5e",
+  "manifest": "7e6ca28aba432a55b06a456f840fcb383764c83ac24e88e9d26f4e718d55b3d8",
   "toolchain": {
     "id": "runeditrun/edition-authoring",
     "version": "1.1.0",
-    "sha256": "3ce2f4bc6357b80a2a744ab7572160ca73eea08c5c627402957bce492f22b6a5"
+    "sha256": "d89f8f581fcd76eac97db05361272d3e860c35c4332ec3f42d4770dce0f69bcb"
   },
   "components": [
     {
@@ -68,6 +68,69 @@
         ]
       },
       "baseline": null
+    },
+    {
+      "id": "runeditrun/base-publication-wording",
+      "source": {
+        "kind": "local",
+        "paths": [
+          "VERIFY-WORKFLOW.md",
+          "scripts/edition-authoring/adopt.mjs",
+          "scripts/edition-authoring/lock.mjs",
+          "scripts/install-chromium-deps.py",
+          "scripts/verify-ci.mjs",
+          "src/base/contract-style.ts",
+          "src/modules/operator-auth/representation.mjs"
+        ],
+        "origin": {
+          "repository": "https://github.com/runeditrun/base",
+          "revision": "11f94fec479228d71ba6d7dd6ea7796c0d42c544",
+          "paths": [
+            "export/VERIFY-WORKFLOW.md",
+            "edition-authoring/adopt.mjs",
+            "edition-authoring/lock.mjs",
+            "export/install-chromium-deps.py",
+            "export/verify-ci.mjs",
+            "foundation/runtime/contract-style.ts",
+            "modules/operator-auth/representation.mjs"
+          ]
+        },
+        "mappings": [
+          {
+            "path": "VERIFY-WORKFLOW.md",
+            "originPath": "export/VERIFY-WORKFLOW.md"
+          },
+          {
+            "path": "scripts/edition-authoring/adopt.mjs",
+            "originPath": "edition-authoring/adopt.mjs"
+          },
+          {
+            "path": "scripts/edition-authoring/lock.mjs",
+            "originPath": "edition-authoring/lock.mjs"
+          },
+          {
+            "path": "scripts/install-chromium-deps.py",
+            "originPath": "export/install-chromium-deps.py"
+          },
+          {
+            "path": "scripts/verify-ci.mjs",
+            "originPath": "export/verify-ci.mjs"
+          },
+          {
+            "path": "src/base/contract-style.ts",
+            "originPath": "foundation/runtime/contract-style.ts"
+          },
+          {
+            "path": "src/modules/operator-auth/representation.mjs",
+            "originPath": "modules/operator-auth/representation.mjs"
+          }
+        ]
+      },
+      "baseline": {
+        "key": "96badcaa322bde46d88d578e111efa91d58b952208c7398f63424f72f282fc9b",
+        "digest": "6c4f86d4a15ee6fec1b932fee97fc6b32d97868520ce4448cc000dbc4800a842",
+        "sha256": "6f109dc0dd677d5d54574d55e87fa763a0e40006a772521bb6d29ba0d30ebf8c"
+      }
     }
   ],
   "files": {
@@ -112,7 +175,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "f3f1c44a4d0b9507648e95182331b46b953b7f008c0946404636d6b5a8797a33",
+      "sha256": "0b8cfc5ffab717366daf24cb705cd7d38fdba0f15154d8d49b5b65b4a0ce6edb",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -388,7 +451,7 @@
       "executable": false
     },
     "edition.json": {
-      "sha256": "f93ba2ad7814f79f811bd4975cd8f59fef1597030d3eaa460e1fcb160bd35b5e",
+      "sha256": "7e6ca28aba432a55b06a456f840fcb383764c83ac24e88e9d26f4e718d55b3d8",
       "executable": false
     },
     "fixtures/airbnb-cancelled.ics": {
@@ -1148,7 +1211,7 @@
       "executable": false
     },
     "scripts/edition-authoring/adopt.mjs": {
-      "sha256": "c9cf80207b5f14164ce18cce63e08e0fcbb254d93b66263911ba74cdd4079c8f",
+      "sha256": "5371f1877e82035acdb668e1e50508130a3c224b2dfe88768cf39aeadcf48490",
       "executable": false
     },
     "scripts/edition-authoring/base-acknowledgements.mjs": {
@@ -1172,7 +1235,7 @@
       "executable": false
     },
     "scripts/edition-authoring/lock.mjs": {
-      "sha256": "255b570052a8e3cd785043c82e2088445d8e181a92c35c397444eafebe2ec1e4",
+      "sha256": "4c719411ecbe7133e7beee0b69c46b385e0388435e4958769a08d22ce240401f",
       "executable": false
     },
     "scripts/edition-authoring/manifest.mjs": {
@@ -1204,7 +1267,7 @@
       "executable": false
     },
     "scripts/install-chromium-deps.py": {
-      "sha256": "5fdf0266ba333677288d3db15c053d48e5fc048f1de19c43006f26cf10b49a52",
+      "sha256": "d887d60b9b52b3d42603660d065565ada935ca807ab790943311d2f00a52c986",
       "executable": false
     },
     "scripts/install.mjs": {
@@ -1236,7 +1299,7 @@
       "executable": false
     },
     "scripts/verify-ci.mjs": {
-      "sha256": "869b3eb0dd41a034002133d4c18ad20a345c752571989f087b5902fed3485984",
+      "sha256": "7d1e143ef033041b095d8b1496d229492d9fddf146b6a4c0e200dce10f030ab9",
       "executable": false
     },
     "SEED-COMMAND-CONTRACT.md": {
@@ -1260,7 +1323,7 @@
       "executable": false
     },
     "src/base/contract-style.ts": {
-      "sha256": "915ec4aeb742e883cb5c041fffb96b156a6a07ce37d19402a47742beb2efeb37",
+      "sha256": "7999c3f928e87765f4716fc4bcdf20f7dc36674c2663c856e6d893961d0db6ac",
       "executable": false
     },
     "src/base/deployment-health.ts": {
@@ -4544,7 +4607,7 @@
       "executable": false
     },
     "src/modules/operator-auth/representation.mjs": {
-      "sha256": "206c3ae542e00687c2ee6c09a2e3466827c7eb58a97d10779cbeca1af945dcb3",
+      "sha256": "4dc602fe73ce6fa83ade350ca4bd8a1b86dfa96e743598eb7379d2382de8445f",
       "executable": false
     },
     "src/modules/operator-auth/routes.mjs": {
@@ -5236,7 +5299,7 @@
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
-      "sha256": "7d9e29a787387ce643e96f74e4b1764332b94733ceea1541c84e4633be1cf85e",
+      "sha256": "a9a21f39f2b8ce484541f8352bceb70f342e681cf5b18aaf4080e91b88268d90",
       "executable": false
     },
     "vite.config.ts": {
