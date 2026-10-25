@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "parent": null,
   "edition": "just-every/run-cabin",
-  "manifest": "7e6ca28aba432a55b06a456f840fcb383764c83ac24e88e9d26f4e718d55b3d8",
+  "manifest": "95ee4bc3a7fdde4aadee33eb890daaab6b2791f33516b3b64ab20bd5cd4b5b47",
   "toolchain": {
     "id": "runeditrun/edition-authoring",
     "version": "1.1.0",
@@ -79,8 +79,7 @@
           "scripts/edition-authoring/lock.mjs",
           "scripts/install-chromium-deps.py",
           "scripts/verify-ci.mjs",
-          "src/base/contract-style.ts",
-          "src/modules/operator-auth/representation.mjs"
+          "src/base/contract-style.ts"
         ],
         "origin": {
           "repository": "https://github.com/runeditrun/base",
@@ -119,10 +118,6 @@
           {
             "path": "src/base/contract-style.ts",
             "originPath": "foundation/runtime/contract-style.ts"
-          },
-          {
-            "path": "src/modules/operator-auth/representation.mjs",
-            "originPath": "modules/operator-auth/representation.mjs"
           }
         ]
       },
@@ -175,7 +170,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "0b8cfc5ffab717366daf24cb705cd7d38fdba0f15154d8d49b5b65b4a0ce6edb",
+      "sha256": "0f4b27a0d60cbdba7e88be3bfbe691b298391e342240dabf0567826e6953f62d",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -451,7 +446,7 @@
       "executable": false
     },
     "edition.json": {
-      "sha256": "7e6ca28aba432a55b06a456f840fcb383764c83ac24e88e9d26f4e718d55b3d8",
+      "sha256": "95ee4bc3a7fdde4aadee33eb890daaab6b2791f33516b3b64ab20bd5cd4b5b47",
       "executable": false
     },
     "fixtures/airbnb-cancelled.ics": {
@@ -4607,7 +4602,7 @@
       "executable": false
     },
     "src/modules/operator-auth/representation.mjs": {
-      "sha256": "4dc602fe73ce6fa83ade350ca4bd8a1b86dfa96e743598eb7379d2382de8445f",
+      "sha256": "206c3ae542e00687c2ee6c09a2e3466827c7eb58a97d10779cbeca1af945dcb3",
       "executable": false
     },
     "src/modules/operator-auth/routes.mjs": {

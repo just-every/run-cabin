@@ -73,8 +73,7 @@
           "scripts/edition-authoring/lock.mjs",
           "scripts/install-chromium-deps.py",
           "scripts/verify-ci.mjs",
-          "src/base/contract-style.ts",
-          "src/modules/operator-auth/representation.mjs"
+          "src/base/contract-style.ts"
         ],
         "origin": {
           "repository": "https://github.com/runeditrun/base",
@@ -113,10 +112,6 @@
           {
             "path": "src/base/contract-style.ts",
             "originPath": "foundation/runtime/contract-style.ts"
-          },
-          {
-            "path": "src/modules/operator-auth/representation.mjs",
-            "originPath": "modules/operator-auth/representation.mjs"
           }
         ]
       }
