@@ -23,6 +23,6 @@
     "migrations/core/0063_dependency_keys_sealed.sql"
   ],
   "breaking": false,
-  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md. Adopt this source with its pinned rer 0.2.79, apply only forward migrations, configure the selected hosted mail provider and verify before routing traffic. The native release and the rer 0.2.80 update follow in a later round.",
+  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md. Adopt this source with its pinned rer 0.2.80, apply only forward migrations, configure the selected hosted mail provider and verify before routing traffic. The native release follows in a later round.",
   "previousVersion": "0.1.0"
 }

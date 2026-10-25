@@ -5,6 +5,7 @@
       "pages": [
         { "slug": "getting-started", "title": "Getting started", "file": "getting-started.md", "summary": "Start Cabin on your own computer in one line, confirm yourself as the owner and open the app." },
         { "slug": "homes-and-people", "title": "Homes and people", "file": "homes-and-people.md", "summary": "Add each home with its owner and commission, then give managers and cleaners their own access." },
+        { "slug": "self-hosting", "title": "Deploy your own Cabin", "file": "self-hosting.md", "summary": "Configure required private inputs, mail and optional integrations in your own Cloudflare account." },
         { "slug": "hosting", "title": "Put Cabin online", "file": "hosting.md", "summary": "Configure private mail and Stripe settings, deploy to your Cloudflare account, back up hosted data and remove a deployment." }
       ]
     },
