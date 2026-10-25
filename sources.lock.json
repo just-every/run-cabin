@@ -5012,7 +5012,7 @@
       "executable": false
     },
     "tests/inbox.test.mjs": {
-      "sha256": "5681d1c3fa64df5f573a019fca89f830de85f5608473efe29fbbc03618cf690a",
+      "sha256": "3f087f0adeca2d1185b8d35bee36ba7fdd21806ec77dbfd749fb45f51bce7902",
       "executable": false
     },
     "tests/interface-accessibility.mjs": {

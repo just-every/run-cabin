@@ -10,12 +10,15 @@ import { harness } from './harness.mjs'
 // Booking.com's messaging APIs answering in their documented shapes
 // (tests/fixtures/twilio, tests/fixtures/booking).
 const fixture = async path => JSON.parse(await readFile(`tests/fixtures/${path}.json`, 'utf8'))
-const day = n => homeDay(n, 'America/New_York'), ymd = n => day(n).replace(/-/g, '')
 const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documented fixture//EN\r\n' + events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART;VALUE=DATE:${e.start}\r\nDTEND;VALUE=DATE:${e.end}\r\nSUMMARY:${e.summary}\r\nEND:VEVENT\r\n`).join('') + 'END:VCALENDAR\r\n'
 const ADDRESS = '18 Fernwood Lane, Boone, NC 28607', INBOX = 'guests@cabin.example', TWILIO = 'twilio-fixture-token'
 const mime = ({ from, replyTo, subject, id, text }) => [`From: ${from}`, `To: Fernwood Cabin <${INBOX}>`, ...(replyTo ? [`Reply-To: ${replyTo}`] : []), `Subject: ${subject}`, `Message-ID: <${id}>`, 'Date: Sat, 17 Oct 2026 09:00:00 -0400', 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=utf-8', '', text].join('\r\n')
 
 test('a stay’s check-in message withholds unverified access and goes out on time, the guest’s replies by email and text join one thread, and drafted replies wait for the host', async () => {
+  // This journey asserts four elapsed 24-hour days, so keep its home dates
+  // within one UTC offset. DST-crossing moves have exact-instant coverage below.
+  const now = '2026-10-24T16:00:00Z'
+  const day = n => homeDay(n, 'America/New_York', Date.parse(now)), ymd = n => day(n).replace(/-/g, '')
   const calls = []
   const outbound = async request => {
     const url = new URL(request.url), body = await request.text()
@@ -30,7 +33,7 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
     }
     return new Response('unexpected', { status: 599 })
   }
-  const h = await harness({ outbound, auth: { TWILIO_ACCOUNT_SID: 'ACfixture00000000000000000000000000', TWILIO_AUTH_TOKEN: TWILIO, TWILIO_FROM: '+18285550100', BOOKING_MESSAGING_USER: 'fixture-machine', BOOKING_MESSAGING_PASSWORD: 'fixture-secret' } })
+  const h = await harness({ now, outbound, auth: { TWILIO_ACCOUNT_SID: 'ACfixture00000000000000000000000000', TWILIO_AUTH_TOKEN: TWILIO, TWILIO_FROM: '+18285550100', BOOKING_MESSAGING_USER: 'fixture-machine', BOOKING_MESSAGING_PASSWORD: 'fixture-secret' } })
   try {
     const mail = async to => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes(to))
     const email = (raw, to = INBOX) => h.mf.dispatchFetch(`${h.origin}/cdn-cgi/local/email?from=${encodeURIComponent('bounces+42@relay.example')}&to=${encodeURIComponent(to)}`, { method: 'POST', body: raw })
@@ -149,6 +152,43 @@ test('a stay’s check-in message withholds unverified access and goes out on ti
     const cleaner = await h.person('Taylor')
     const theirs = await h.accessState(cleaner.cookie)
     assert.deepEqual([theirs.messages.length, theirs.scheduled.length], [0, 0])
+  } finally { await h.close() }
+})
+
+// Expected instants are independent fixtures: New York changes from UTC-4 to
+// UTC-5 on November 1 and from UTC-5 to UTC-4 on March 8. Four calendar days
+// can therefore move a message by 97 or 95 hours, while its local anchor stays put.
+for (const [now, before, after] of [
+  ['2026-10-27T16:00:00Z', ['2026-10-26T20:00:00.000Z', '2026-10-30T00:00:00.000Z'], ['2026-10-30T21:00:00.000Z', '2026-11-03T01:00:00.000Z']],
+  ['2026-03-03T17:00:00Z', ['2026-03-02T21:00:00.000Z', '2026-03-06T01:00:00.000Z'], ['2026-03-06T20:00:00.000Z', '2026-03-10T00:00:00.000Z']],
+  ['2026-11-01T17:00:00Z', ['2026-10-31T21:00:00.000Z', '2026-11-04T01:00:00.000Z'], ['2026-11-04T21:00:00.000Z', '2026-11-08T01:00:00.000Z']],
+  ['2026-03-08T16:00:00Z', ['2026-03-07T20:00:00.000Z', '2026-03-11T00:00:00.000Z'], ['2026-03-11T20:00:00.000Z', '2026-03-15T00:00:00.000Z']],
+]) test(`scheduled messages keep exact home-zone due times when a stay moves (${now})`, async () => {
+  const h = await harness({ now })
+  try {
+    const day = n => homeDay(n, 'America/New_York', Date.parse(now))
+    const home = await h.cmd('property.save', { name: 'DST Cabin', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 2000 })
+    await h.cmd('home.settings', { propertyId: home.id, address: ADDRESS, timeZone: 'America/New_York', checkInTime: '16:00', checkOutTime: '10:00', checklist: ['Beds made'], photosRequired: 1 })
+    await h.cmd('inbox.address', { address: INBOX, revision: '' })
+    const settings = (await h.accessState()).inbox.find(r => r.id === 'inbox')
+    await h.cmd('inbox.schedule', { checkinEnabled: true, checkinHours: 48, checkoutEnabled: true, checkoutHours: 14, reviewEnabled: true, reviewHours: 4, revision: settings.revision })
+    const request = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Ana Ruiz', guestEmail: 'ana@guest.example', start: day(1), end: day(3) })
+    const rows = async () => {
+      const state = await h.accessState()
+      return ['checkin', 'checkout'].map(rule => state.scheduled.find(r => r.bookingId === request.bookingId && r.rule === rule))
+    }
+    const mailCount = async () => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes('ana@guest.example')).length
+    const original = await rows()
+    assert.deepEqual(original.map(r => r.dueAt), before)
+    assert.deepEqual(original.map(r => r.status), ['sent', 'scheduled'])
+    assert.equal(await mailCount(), 1)
+    const stay = (await h.accessState()).bookings.find(b => b.id === request.bookingId)
+    await h.cmd('reservation.move', { id: stay.id, revision: stay.revision, start: day(5), end: day(7) })
+    const moved = await rows()
+    assert.deepEqual(moved.map(r => r.id), original.map(r => r.id), 'move the existing scheduled records')
+    assert.deepEqual(moved.map(r => r.dueAt), after)
+    assert.deepEqual(moved.map(r => r.status), ['scheduled', 'scheduled'])
+    assert.equal(await mailCount(), 1, 'the changed check-in message waits for its exact new time')
   } finally { await h.close() }
 })
 
