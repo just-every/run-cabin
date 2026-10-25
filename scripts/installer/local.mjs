@@ -19,13 +19,7 @@ const lifecycle = operatorInstaller({
 });
 export const adapter = lifecycle;
 export const { install } = lifecycle;
-// Hosted provider answers are retained by rer; the native local runtime always suppresses mail.
-const localLifecycle = { ...lifecycle, run(root, input, store, onApp, signal, options = {}) {
- const localInput = ['setup', 'installer'].includes(options.verb)
-  ? { ...input, MAIL_PROVIDER: 'development', MAIL_FROM: 'auth@localhost.test' } : input
- return lifecycle.run(root, localInput, store, onApp, signal, options)
-} }
-export const commandAdapter = createCommandAdapter(localLifecycle, {
+export const commandAdapter = createCommandAdapter(lifecycle, {
  dev: developmentTarget, preview: previewTarget, verify: ['pnpm', ['run', 'verify:app']], deploy: ownerDeploy('deploy.json', lifecycle),
  portability: localPortability({ database: 'foundation', policyModule: 'src/cabin/archive-policy.mjs', transient: ['local runtime caches and logs'] }),
  setup: { manifestFile: 'rer-setup.json' }, browserModule: 'scripts/installer/ui/seed.mjs',
