@@ -1904,25 +1904,6 @@
         "src/modules/operator-auth/signin/index.d.mts": "100644",
         "src/modules/operator-auth/signin/index.mjs": "100644",
         "src/modules/operator-auth/signin/one-click.mjs": "100644"
-      },
-      "adapted": {
-        "src/modules/operator-auth/README.md": "631bb343db00777d8db98a91f1964e127d219d62",
-        "src/modules/operator-auth/docs/vite-spa.md": "631bb343db00777d8db98a91f1964e127d219d62",
-        "src/modules/operator-auth/identity/oidc/admin-audit.mjs": "631bb343db00777d8db98a91f1964e127d219d62"
-      },
-      "acknowledged": {
-        "src/modules/operator-auth/README.md": {
-          "sha256": "d692d582307abae7e7567a68be6c512615e8f3b1739d29f973dae7b5a24f0048",
-          "mode": "100644"
-        },
-        "src/modules/operator-auth/docs/vite-spa.md": {
-          "sha256": "0c9cb19046087f55390368e9983be52a24ce8804cda0a621c7f74d12b90288b6",
-          "mode": "100644"
-        },
-        "src/modules/operator-auth/identity/oidc/admin-audit.mjs": {
-          "sha256": "7e67e6bde0054d3ae2683bcde4dff7e1862b2411cdb236f6cf5f84ad113cfdcf",
-          "mode": "100644"
-        }
       }
     },
     {

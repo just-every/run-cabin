@@ -425,7 +425,7 @@ Two hooks on `createOperatorAuth({hooks})` keep a seed's own sign-in work in pla
 Promise of those pairs. The callback must be pure: return SQL for the module to
 append to the administrative mutation's own D1 batch, with no external writes. A raced
 request may generate statements and then be refused by its transaction fence.
-Authorization, actor and version fences, the mutation and audit statements retain
+Authorization, actor/version fences, the mutation and audit statements retain
 their transaction guards. A refused or rolled-back mutation leaves no audit row;
 a thrown hook or failed audit SQL fails the action closed. With no hook,
 administrative behavior is unchanged. This hook covers the OA-backed
@@ -461,7 +461,7 @@ subjects, tokens, record data or file paths. The seed owns audit storage,
 migrations, retention and erasure; Base creates no audit table. For example,
 Cradle can return an insert into its `company_identity_audit` table after its
 seed migration adds nullable `detail` and supports nullable `operator_id` for
-domain or provider events:
+domain/provider events:
 
 ```js
 hooks: {
@@ -794,5 +794,5 @@ accepted account, invalidating its sessions. Re-adding an unaccepted account
 requires its invitation; accepted accounts reactivate. Existing unowned
 operators return `conflict`, and owner operators are never changed or granted.
 Audit rows retain the claimed owner as actor and record `via: "via Business by <owner email>"`. Native account compositions
-supply their own team adapter and can use the same optional branding and settings
+supply their own team adapter and can use the same optional branding/settings
 integration.

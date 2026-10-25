@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "parent": null,
   "edition": "just-every/run-cabin",
-  "manifest": "9dca27f5c62d5781373a14ffd8576650f5b32e6b732032efea4b59e2864de38e",
+  "manifest": "b45685c16348dc2ed1afb96b58561b8b10b665018fa0ee730b893f85ca26db5d",
   "toolchain": {
     "id": "runeditrun/edition-authoring",
     "version": "1.1.0",
@@ -138,10 +138,7 @@
           "src/modules/import-kit/src/door/ADOPTING.md",
           "src/modules/import-kit/src/door/README.md",
           "src/modules/import-kit/src/door/failures.ts",
-          "src/modules/import-kit/src/door/intake-upload.ts",
-          "src/modules/operator-auth/README.md",
-          "src/modules/operator-auth/docs/vite-spa.md",
-          "src/modules/operator-auth/identity/oidc/admin-audit.mjs"
+          "src/modules/import-kit/src/door/intake-upload.ts"
         ],
         "origin": {
           "repository": "https://github.com/runeditrun/base",
@@ -153,10 +150,7 @@
             "modules/import-kit/src/door/ADOPTING.md",
             "modules/import-kit/src/door/README.md",
             "modules/import-kit/src/door/failures.ts",
-            "modules/import-kit/src/door/intake-upload.ts",
-            "modules/operator-auth/README.md",
-            "modules/operator-auth/docs/vite-spa.md",
-            "modules/operator-auth/identity/oidc/admin-audit.mjs"
+            "modules/import-kit/src/door/intake-upload.ts"
           ]
         },
         "mappings": [
@@ -187,25 +181,13 @@
           {
             "path": "src/modules/import-kit/src/door/intake-upload.ts",
             "originPath": "modules/import-kit/src/door/intake-upload.ts"
-          },
-          {
-            "path": "src/modules/operator-auth/README.md",
-            "originPath": "modules/operator-auth/README.md"
-          },
-          {
-            "path": "src/modules/operator-auth/docs/vite-spa.md",
-            "originPath": "modules/operator-auth/docs/vite-spa.md"
-          },
-          {
-            "path": "src/modules/operator-auth/identity/oidc/admin-audit.mjs",
-            "originPath": "modules/operator-auth/identity/oidc/admin-audit.mjs"
           }
         ]
       },
       "baseline": {
-        "key": "fd2f1828fb7574e8bc19326efbd72ad3f687375f5ce37cdc2a310da2e2586887",
-        "digest": "41834da437952ca709353c9335c7ec7a5bf5d5a5439120cfa2b07480785da423",
-        "sha256": "ac661527c7feea990ea777a2fb4734678592c64cf818c07ceb78aa032582f612"
+        "key": "9bfb34de35f52f98afe2a6a64c4c1c7fde687ce7f2e1c7a9f44b01e26bfa61a8",
+        "digest": "ef844eb42371acf9d6d7f048c2506916211cfc72a1e74e105214994494666f35",
+        "sha256": "8d7891c9debdab7911b46c7bb6f4c8256585fada5e50cbcd37213afb666c4eb4"
       }
     }
   ],
@@ -251,7 +233,7 @@
       "executable": false
     },
     "base-copies.json": {
-      "sha256": "cf04b3f20d3ae4373074edc6b1124bed2b9fe10e285e70fe6e7c7f7793970bc9",
+      "sha256": "7c148b46b067a481395f2797942ce631f3b6a89fbf0db9ab6f6e5e657378405f",
       "executable": false
     },
     "CHANGELOG.md": {
@@ -527,7 +509,7 @@
       "executable": false
     },
     "edition.json": {
-      "sha256": "9dca27f5c62d5781373a14ffd8576650f5b32e6b732032efea4b59e2864de38e",
+      "sha256": "b45685c16348dc2ed1afb96b58561b8b10b665018fa0ee730b893f85ca26db5d",
       "executable": false
     },
     "fixtures/airbnb-cancelled.ics": {
@@ -4587,7 +4569,7 @@
       "executable": false
     },
     "src/modules/operator-auth/docs/vite-spa.md": {
-      "sha256": "0c9cb19046087f55390368e9983be52a24ce8804cda0a621c7f74d12b90288b6",
+      "sha256": "37e2d7aab9fd1987c7c381c7c0a91724109e2e1a6c0af7f4fbbb528e2b603f3b",
       "executable": false
     },
     "src/modules/operator-auth/errors.mjs": {
@@ -4643,7 +4625,7 @@
       "executable": false
     },
     "src/modules/operator-auth/identity/oidc/admin-audit.mjs": {
-      "sha256": "7e67e6bde0054d3ae2683bcde4dff7e1862b2411cdb236f6cf5f84ad113cfdcf",
+      "sha256": "666db8c483d4c3a1f24d87a67ececf36863c60da855f809ae738f88cd9afd8cd",
       "executable": false
     },
     "src/modules/operator-auth/identity/oidc/aes-gcm.mjs": {
@@ -4739,7 +4721,7 @@
       "executable": false
     },
     "src/modules/operator-auth/README.md": {
-      "sha256": "d692d582307abae7e7567a68be6c512615e8f3b1739d29f973dae7b5a24f0048",
+      "sha256": "59b4c3ec244d2ed043f587f5a4622ed3dc1ddcc4cb5b21b6a52a64d1bd364016",
       "executable": false
     },
     "src/modules/operator-auth/rejected-response.mjs": {

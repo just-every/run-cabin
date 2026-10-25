@@ -128,10 +128,7 @@
           "src/modules/import-kit/src/door/ADOPTING.md",
           "src/modules/import-kit/src/door/README.md",
           "src/modules/import-kit/src/door/failures.ts",
-          "src/modules/import-kit/src/door/intake-upload.ts",
-          "src/modules/operator-auth/README.md",
-          "src/modules/operator-auth/docs/vite-spa.md",
-          "src/modules/operator-auth/identity/oidc/admin-audit.mjs"
+          "src/modules/import-kit/src/door/intake-upload.ts"
         ],
         "origin": {
           "repository": "https://github.com/runeditrun/base",
@@ -143,10 +140,7 @@
             "modules/import-kit/src/door/ADOPTING.md",
             "modules/import-kit/src/door/README.md",
             "modules/import-kit/src/door/failures.ts",
-            "modules/import-kit/src/door/intake-upload.ts",
-            "modules/operator-auth/README.md",
-            "modules/operator-auth/docs/vite-spa.md",
-            "modules/operator-auth/identity/oidc/admin-audit.mjs"
+            "modules/import-kit/src/door/intake-upload.ts"
           ]
         },
         "mappings": [
@@ -177,18 +171,6 @@
           {
             "path": "src/modules/import-kit/src/door/intake-upload.ts",
             "originPath": "modules/import-kit/src/door/intake-upload.ts"
-          },
-          {
-            "path": "src/modules/operator-auth/README.md",
-            "originPath": "modules/operator-auth/README.md"
-          },
-          {
-            "path": "src/modules/operator-auth/docs/vite-spa.md",
-            "originPath": "modules/operator-auth/docs/vite-spa.md"
-          },
-          {
-            "path": "src/modules/operator-auth/identity/oidc/admin-audit.mjs",
-            "originPath": "modules/operator-auth/identity/oidc/admin-audit.mjs"
           }
         ]
       }
