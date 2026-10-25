@@ -61,6 +61,65 @@
           "CONTRACT.md"
         ]
       }
+    },
+    {
+      "id": "runeditrun/base-publication-wording",
+      "role": "foundation",
+      "source": {
+        "kind": "local",
+        "paths": [
+          "VERIFY-WORKFLOW.md",
+          "scripts/edition-authoring/adopt.mjs",
+          "scripts/edition-authoring/lock.mjs",
+          "scripts/install-chromium-deps.py",
+          "scripts/verify-ci.mjs",
+          "src/base/contract-style.ts",
+          "src/modules/operator-auth/representation.mjs"
+        ],
+        "origin": {
+          "repository": "https://github.com/runeditrun/base",
+          "revision": "11f94fec479228d71ba6d7dd6ea7796c0d42c544",
+          "paths": [
+            "export/VERIFY-WORKFLOW.md",
+            "edition-authoring/adopt.mjs",
+            "edition-authoring/lock.mjs",
+            "export/install-chromium-deps.py",
+            "export/verify-ci.mjs",
+            "foundation/runtime/contract-style.ts",
+            "modules/operator-auth/representation.mjs"
+          ]
+        },
+        "mappings": [
+          {
+            "path": "VERIFY-WORKFLOW.md",
+            "originPath": "export/VERIFY-WORKFLOW.md"
+          },
+          {
+            "path": "scripts/edition-authoring/adopt.mjs",
+            "originPath": "edition-authoring/adopt.mjs"
+          },
+          {
+            "path": "scripts/edition-authoring/lock.mjs",
+            "originPath": "edition-authoring/lock.mjs"
+          },
+          {
+            "path": "scripts/install-chromium-deps.py",
+            "originPath": "export/install-chromium-deps.py"
+          },
+          {
+            "path": "scripts/verify-ci.mjs",
+            "originPath": "export/verify-ci.mjs"
+          },
+          {
+            "path": "src/base/contract-style.ts",
+            "originPath": "foundation/runtime/contract-style.ts"
+          },
+          {
+            "path": "src/modules/operator-auth/representation.mjs",
+            "originPath": "modules/operator-auth/representation.mjs"
+          }
+        ]
+      }
     }
   ]
 }

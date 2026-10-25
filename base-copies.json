@@ -528,6 +528,20 @@
         "scripts/edition-authoring/release.mjs": "100644",
         "scripts/edition-authoring/sources.mjs": "100644",
         "scripts/edition-authoring/updates.mjs": "100644"
+      },
+      "adapted": {
+        "scripts/edition-authoring/adopt.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544",
+        "scripts/edition-authoring/lock.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "scripts/edition-authoring/adopt.mjs": {
+          "sha256": "5371f1877e82035acdb668e1e50508130a3c224b2dfe88768cf39aeadcf48490",
+          "mode": "100644"
+        },
+        "scripts/edition-authoring/lock.mjs": {
+          "sha256": "4c719411ecbe7133e7beee0b69c46b385e0388435e4958769a08d22ce240401f",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -539,6 +553,15 @@
       },
       "modes": {
         "scripts/install-chromium-deps.py": "100644"
+      },
+      "adapted": {
+        "scripts/install-chromium-deps.py": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "scripts/install-chromium-deps.py": {
+          "sha256": "d887d60b9b52b3d42603660d065565ada935ca807ab790943311d2f00a52c986",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -594,6 +617,15 @@
       },
       "modes": {
         "scripts/verify-ci.mjs": "100644"
+      },
+      "adapted": {
+        "scripts/verify-ci.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "scripts/verify-ci.mjs": {
+          "sha256": "7d1e143ef033041b095d8b1496d229492d9fddf146b6a4c0e200dce10f030ab9",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -627,6 +659,15 @@
       },
       "modes": {
         "src/base/contract-style.ts": "100644"
+      },
+      "adapted": {
+        "src/base/contract-style.ts": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "src/base/contract-style.ts": {
+          "sha256": "7999c3f928e87765f4716fc4bcdf20f7dc36674c2663c856e6d893961d0db6ac",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -1766,6 +1807,15 @@
         "src/modules/operator-auth/signin/index.d.mts": "100644",
         "src/modules/operator-auth/signin/index.mjs": "100644",
         "src/modules/operator-auth/signin/one-click.mjs": "100644"
+      },
+      "adapted": {
+        "src/modules/operator-auth/representation.mjs": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "src/modules/operator-auth/representation.mjs": {
+          "sha256": "4dc602fe73ce6fa83ade350ca4bd8a1b86dfa96e743598eb7379d2382de8445f",
+          "mode": "100644"
+        }
       }
     },
     {
@@ -1817,6 +1867,15 @@
       },
       "modes": {
         "VERIFY-WORKFLOW.md": "100644"
+      },
+      "adapted": {
+        "VERIFY-WORKFLOW.md": "11f94fec479228d71ba6d7dd6ea7796c0d42c544"
+      },
+      "acknowledged": {
+        "VERIFY-WORKFLOW.md": {
+          "sha256": "a9a21f39f2b8ce484541f8352bceb70f342e681cf5b18aaf4080e91b88268d90",
+          "mode": "100644"
+        }
       }
     }
   ]
