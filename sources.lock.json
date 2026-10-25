@@ -1359,7 +1359,7 @@
       "executable": false
     },
     "scripts/installer/local.mjs": {
-      "sha256": "15a5c3001a64ce330b523ace8158cbfc700401c5f654da73f7fd641d3aef4214",
+      "sha256": "21ac177807e524168994e35b7920bd85c74bb562c47d76eeb80a747629f5d9ba",
       "executable": false
     },
     "scripts/installer/seed.mjs": {

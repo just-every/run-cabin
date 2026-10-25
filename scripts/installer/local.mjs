@@ -19,7 +19,13 @@ const lifecycle = operatorInstaller({
 });
 export const adapter = lifecycle;
 export const { install } = lifecycle;
-export const commandAdapter = createCommandAdapter(lifecycle, {
+// Hosted answers remain installer choices; local runtime mail is always suppressed.
+const localLifecycle = { ...lifecycle, run(root, input, store, onApp, signal, options = {}) {
+ const localInput = ['setup', 'installer'].includes(options.verb)
+  ? { ...input, MAIL_PROVIDER: 'development', MAIL_FROM: 'auth@localhost.test' } : input
+ return lifecycle.run(root, localInput, store, onApp, signal, options)
+} }
+export const commandAdapter = createCommandAdapter(localLifecycle, {
  dev: developmentTarget, preview: previewTarget, verify: ['pnpm', ['run', 'verify:app']], deploy: ownerDeploy('deploy.json', lifecycle),
  portability: localPortability({ database: 'foundation', policyModule: 'src/cabin/archive-policy.mjs', transient: ['local runtime caches and logs'] }),
  setup: { manifestFile: 'rer-setup.json' }, browserModule: 'scripts/installer/ui/seed.mjs',
@@ -30,5 +36,5 @@ export const commandAdapter = createCommandAdapter(lifecycle, {
  // scans for the dev layer.
  devIdentity: { entry: 'src/server.dev.ts', output: ['dist'] },
  localOnlyKeys: ['RER_DEV_ORIGIN', 'RER_DEV_IDENTITY'],
- product: model.product.name, input: { names: { email: 'OWNER_EMAIL', name: 'displayName' }, async defaults(root) { const { readFile } = await import('node:fs/promises'); const branding = JSON.parse(await readFile(join(root, 'src/branding.json'), 'utf8')); return { APP_NAME: branding.name, PRIMARY_COLOR: branding.primaryColor }; } },
+ product: model.product.name, input: { names: { email: 'OWNER_EMAIL', name: 'displayName' }, async defaults(root) { const { readFile } = await import('node:fs/promises'); const branding = JSON.parse(await readFile(join(root, 'src/branding.json'), 'utf8')); return { APP_NAME: branding.name, PRIMARY_COLOR: branding.primaryColor, MAIL_PROVIDER: 'later' }; } },
 });
