@@ -48,13 +48,16 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   await screens.capture('linked-profiles')
   await sourceRoom(h,a,dates.start,dates.end)
   const roomClosures=(await h.state()).channelAgent.actions.filter(a=>a.kind==='close'&&a.status==='queued')
-  assert.equal(roomClosures.length,3,'room A closes the whole home on every channel, including Airbnb')
+  assert.deepEqual(roomClosures.filter(job=>job.propertyId===home.id).map(job=>job.channel).sort(),['airbnb','booking.com','vrbo'])
+  assert.deepEqual(roomClosures.filter(job=>job.propertyId===a.id).map(job=>job.channel).sort(),['booking.com','vrbo'])
+  assert.ok(roomClosures.every(job=>job.propertyId!==b.id),'independent room B has no closure')
+  const sharedClosure=roomClosures.find(job=>job.propertyId===home.id)
   const roomB=await h.cmd('reservation.request',{propertyId:b.id,channel:'direct',guestName:'Independent room B',...dates});assert.equal(roomB.status,'accepted')
-  for(let n=0;n<6;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
+  for(let n=0;n<11;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
   await sourceRoom(h,a,dates.start,dates.end,true)
-  await h.cmd('channelAgent.undo',{id:roomClosures[0].id},h.owner,409)
+  await h.cmd('channelAgent.undo',{id:sharedClosure.id},h.owner,409)
   const roomBStay=(await h.state()).bookings.find(row=>row.id===roomB.bookingId);await h.cmd('reservation.cancel',{id:roomBStay.id,revision:roomBStay.revision})
-  await h.cmd('channelAgent.undo',{id:roomClosures[0].id});const reopening=(await runner({op:'claim'})).job;assert.equal(reopening.kind,'open');const reopened=await edge.run(reopening);assert.equal(reopened.outcome,'succeeded');await runner({op:'complete',id:reopening.id,lease:reopening.lease,...reopened})
+  await h.cmd('channelAgent.undo',{id:sharedClosure.id});const reopening=(await runner({op:'claim'})).job;assert.equal(reopening.kind,'open');const reopened=await edge.run(reopening);assert.equal(reopened.outcome,'succeeded');await runner({op:'complete',id:reopening.id,lease:reopening.lease,...reopened})
   // A direct booking enters the identical commit hook and closes all three OTAs.
   const direct=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
   const wholeClosures=(await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close')
