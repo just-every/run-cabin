@@ -4896,7 +4896,7 @@
       "executable": false
     },
     "tests/channel-agent-edge.mjs": {
-      "sha256": "8222ed68d359a08e36ff9deb946db24154af1148396063cd21c0a031f3f3b831",
+      "sha256": "ca32861f20b7c8451df4b4f655052cd1af9195f01fa1dd1db03f87a77c6c1baa",
       "executable": false
     },
     "tests/channel-agent.test.mjs": {

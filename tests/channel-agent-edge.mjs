@@ -8,6 +8,7 @@ const recorded=await readFile(new URL('./fixtures/channel-pages/calendar.html',i
 const reads=await readFile(new URL('./fixtures/channel-pages/reads.html',import.meta.url),'utf8')
 export async function channelEdge(){
  let mode='',writes=0,authorize,checkpoint,sourceEdits={}
+ const remoteNights=new Map()
  const server=createServer((_request,response)=>{response.writeHead(200,{'content-type':'text/html'});response.end(recorded)})
  await new Promise(r=>server.listen(0,'127.0.0.1',r))
  const origin=`http://127.0.0.1:${server.address().port}`
@@ -19,15 +20,8 @@ export async function channelEdge(){
    await route.fulfill({response:undefined,status:200,contentType:'text/html',body:job.kind.startsWith('read-')&&!mode?reads:job.start?(await response.text()).replace(/2026-12-1[012]/g,date=>new Date(Date.parse(job.start+'T00:00:00Z')+(Number(date.slice(-2))-10)*86400000).toISOString().slice(0,10)):await response.text()})
   })
   await context.addInitScript(edits=>localStorage.setItem('sourceEdits',JSON.stringify(edits)),sourceEdits)
-  await context.exposeFunction('cabinEdgeAcceptance',()=>{writes++})
-  await context.addInitScript(()=>{
-   document.addEventListener('click',event=>{
-    const button=event.target instanceof Element?event.target.closest('button'):null
-    if(!button||!/^(Block|Reopen)/.test(button.textContent.trim()))return
-    const snapshot=()=>[...document.querySelectorAll('td')].map(el=>el.textContent).join('|'),before=snapshot()
-    queueMicrotask(()=>{if(snapshot()!==before)window.cabinEdgeAcceptance()})
-   },true)
-  })
+  const remoteKey=job.channel+'|'+job.listingUrl,beforeRemote=remoteNights.get(remoteKey)??'{}'
+  await context.addInitScript(({remote,key})=>{if(!sessionStorage.getItem(key)){localStorage.setItem('nights',remote);sessionStorage.setItem(key,'yes')}},{remote:beforeRemote,key:'synthetic-cabin-'+crypto.randomUUID()})
   const page=await context.newPage()
   try{
    const listingUrl=job.listingUrl+(mode?'?mode='+mode:'')
@@ -68,6 +62,8 @@ export async function channelEdge(){
      return await viewer.result
     }finally{await host.close();await viewer.close()}
    }:undefined})
+   const accepted=await page.evaluate(()=>localStorage.getItem('nights')).catch(()=>null)
+   if(accepted!==null&&accepted!==beforeRemote){remoteNights.set(remoteKey,accepted);writes++}
    const storageState=await context.storageState({indexedDB:true})
    return {...result,storageState}
   }finally{await context.close()}
