@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import {chromium} from '@playwright/test'
 assert.ok(process.env.SEAM_API_KEY)
 assert.ok(process.env.SEAM_SANDBOX_LOGIN&&process.env.SEAM_SANDBOX_PASSWORD)
+// Prove mail independently before the virtual lock can delay readiness.
+await import('./recovery-mail-sandbox.mjs')
 async function api(path,body={}){const deleting=path.endsWith('/delete'),url=new URL('https://connect.getseam.com'+path);if(deleting)for(const [key,value]of Object.entries(body))url.searchParams.set(key,String(value));const r=await fetch(url,{method:deleting?'DELETE':'POST',headers:{authorization:'Bearer '+process.env.SEAM_API_KEY,'content-type':'application/json'},...(deleting?{}:{body:JSON.stringify(body)})});assert.ok(r.ok,'Sandbox connection HTTP '+r.status);return r.json()}
 assert.equal((await api('/workspaces/get')).workspace.is_sandbox,true)
 const existing=new Set((await api('/connected_accounts/list')).connected_accounts.map(a=>a.connected_account_id))
