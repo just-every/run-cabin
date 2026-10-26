@@ -1,8 +1,11 @@
 import { type Context, type StoredPhoto, exact, integer, manager, need, newId, property, query, text } from '../model'
 import { homeCommand, homeSettings } from '../homes'
+import { units } from '../capacity'
+import { permitsProperty } from '../permissions/policy'
 import { photoList, storePhotos } from '../photos'
 
 export type PropertyProfile = {
+ inventoryUnits?: string[]
  id: string; revision: string; propertyId: string; buildingName: string; unitName: string
  occupancyLimit: number; amenities: string[]; houseRules: string; emergencyName: string; emergencyPhone: string
  listingIds: { airbnb: string; vrbo: string; 'booking.com': string }; photos: StoredPhoto[]
@@ -33,6 +36,24 @@ export async function propertyProfileCommand(c: Context, name: string, p: Record
  const prop = property(c, p.propertyId), old = c.data.propertyProfiles.find(r => r.propertyId === prop.id)
  if (old) exact(old, p.revision)
  const settings = homeSettings(c, prop.id)
+ let inventoryUnits = old?.inventoryUnits
+ if ('inventoryUnits' in p) {
+  const value = p.inventoryUnits
+  const selected = value === '' ? [] : Array.isArray(value) ? value : [value]
+  need(selected.length <= 100, 'Choose at most 100 physical units')
+  const ids = selected.filter(id => id !== '').map(id => property(c, id).id).sort()
+  need(new Set(ids).size === ids.length, 'Choose each physical unit once')
+  inventoryUnits = ids.length ? ids : [prop.id]
+  for (const id of inventoryUnits) {
+   need(permitsProperty(c.actor, id), 'Physical unit is outside your property grant', 403)
+   need(id === prop.id || JSON.stringify(units(c.data, id)) === JSON.stringify([id]), 'Choose physical rooms, not another combined listing')
+  }
+  if (JSON.stringify([...units(c.data, prop.id)].sort()) !== JSON.stringify(inventoryUnits)) {
+   need(!c.data.propertyProfiles.some(r => r.propertyId !== prop.id && r.inventoryUnits?.includes(prop.id)), 'This physical room is used by another listing. Remove that assignment first.', 409)
+   need(!c.data.bookings.some(b => b.propertyId === prop.id && b.status === 'confirmed' && b.end.slice(0, 10) > c.now.slice(0, 10)), 'End or move this listing’s future stays and holds before changing physical units.', 409)
+  }
+ }
+
  const listing = p.listingIds
  need(listing === undefined || (listing !== null && typeof listing === 'object' && !Array.isArray(listing)), 'Enter listing IDs as an object')
  const ids = listing as Record<string, unknown> | undefined
@@ -45,6 +66,7 @@ export async function propertyProfileCommand(c: Context, name: string, p: Record
  const retained = previousPhotos.filter(photo => !removeIds.includes(photo.id)), uploads = photoList(p, 0, 12)
  need(retained.length + uploads.length <= 12, 'Keep at most 12 property photos; remove an existing photo before adding more')
  const row: PropertyProfile = {
+  ...(inventoryUnits ? { inventoryUnits } : {}),
   id: old?.id ?? newId(), revision: newId(), propertyId: prop.id,
   buildingName: optional(p.buildingName ?? old?.buildingName, 'building name', 160),
   unitName: optional(p.unitName ?? old?.unitName, 'unit name', 160),

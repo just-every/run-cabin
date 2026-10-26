@@ -1,3 +1,5 @@
+import { sharesCapacity } from './capacity'
+import { load } from './storage'
 import { sharingAllowed } from './connections/guard'
 import type { Bindings } from '../auth.server'
 import { type Booking, type Context, type ExportFeed, manager, newId, property } from './model'
@@ -36,8 +38,8 @@ export async function icalExportResponse(request: Request, env: Bindings): Promi
  const { propertyId } = JSON.parse(feed.data) as ExportFeed
  try { await sharingAllowed(env.DB, 'calendars','calendar:publish',propertyId) } catch { return new Response('Calendar sharing is disconnected', { status: 503, headers }) }
  const skip = FROM_SLUG[match[2]]
- const rows = (await env.DB.prepare("SELECT data FROM cb_records WHERE kind='bookings' AND json_extract(data,'$.propertyId')=?").bind(propertyId).all<{ data: string }>()).results
- const held = rows.map(r => JSON.parse(r.data) as Booking).filter(b => b.status === 'confirmed' && b.channel !== skip).sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id))
+ const data = await load(env.DB)
+ const held = data.bookings.filter(b => sharesCapacity(data,b.propertyId,propertyId) && b.status === 'confirmed' && (b.propertyId !== propertyId || b.channel !== skip)).sort((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id))
  const body = calendarExport(held, new Date().toISOString())
  return new Response(request.method === 'HEAD' ? null : body, { headers: { ...headers, 'content-type': 'text/calendar; charset=utf-8', 'content-disposition': 'inline; filename="cabin.ics"' } })
 }

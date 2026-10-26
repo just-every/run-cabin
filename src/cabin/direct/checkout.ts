@@ -31,7 +31,9 @@ export async function checkout(env:Bindings,slug:string,input:Record<string,unkn
   const staff=input.staffQuoteToken?await quoteByToken(c.data,input.staffQuoteToken):undefined
   if(staff){need(staff.propertyId===home.propertyId,'Quote home changed',409);await validateQuote(c,staff,input.staffQuoteRevision);need(String(input.guestName).trim()===staff.guestName&&String(input.email).trim().toLowerCase()===staff.email,'Use the quote recipient name and email',409);need(input.start===currentStaff(staff).start&&input.end===currentStaff(staff).end&&Number(input.guests)===currentStaff(staff).guests&&!input.offerToken&&!input.couponCode,'Review the quoted dates, guests and price',409);acceptQuote(c,staff,input.staffQuoteRevision,bookingId,id)}
   const offer=await offeredRate(c.data,home,input.offerToken,Date.parse(c.now))
-  const price=quote(home,c.data.bookings,input,localDay(Date.now(),homeSettings(c,home.propertyId).timeZone),offer),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
+  const price=quote(home,c.data.bookings,input,localDay(Date.now(),homeSettings(c,home.propertyId).timeZone),offer,c.data),guestName=text(input.guestName,'guest name',120),email=text(input.email,'email',254).toLowerCase(),signed=text(input.signature,'signature',120)
+  const assignment=c.data.propertyProfiles.find(p=>p.propertyId===home.propertyId)?.inventoryUnits
+  need(!assignment||assignment.length===1&&assignment[0]===home.propertyId||input.inventoryRevision===price.inventoryRevision,'The physical-room assignment changed. Review a fresh quote before signing.',409)
   await applyBookingCoupon(c.db,c.data,home,price,input)
   need(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),'Enter a valid email');need(signed===guestName,'Sign using the guest’s full name');need(input.consent==='yes','Agree to the rental agreement and payment mandate')
   const owner=await c.db.prepare("SELECT id,email FROM oa_operators WHERE status='active' AND role='owner' LIMIT 1").first<{id:string;email:string}>();need(owner,'Installation owner unavailable',409)

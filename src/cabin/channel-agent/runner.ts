@@ -4,7 +4,7 @@ import type { Bindings } from '../../auth.server'
 import { need,sha,newId,type Actor,type Context } from '../model'
 import { assertLive,mutate } from '../storage'
 import { seal,unseal } from '../seal'
-import { overlaps } from '../inventory'
+import { held, overlaps } from '../inventory'
 import { rows,save } from './store'
 import { PROFILE,ACTION,KEY,EVIDENCE,type Profile,type Action,type RunnerKey } from './types'
 const domains:Record<string,string>={airbnb:'airbnb.com',vrbo:'vrbo.com','booking.com':'booking.com'}
@@ -69,7 +69,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
     const booking=c.data.bookings.find(b=>b.id===candidate.bookingId)
     if(!booking||booking.status!=='confirmed'||booking.cancelled||booking.restorePaused||booking.start.slice(0,10)!==candidate.start||booking.end.slice(0,10)!==candidate.end){candidate.status='cancelled';save(c,ACTION,candidate);return {job:null}}
    }
-   if(candidate.kind==='open'&&c.data.bookings.some(b=>b.propertyId===candidate.propertyId&&b.status==='confirmed'&&!b.cancelled&&overlaps(b,{start:candidate.start!,end:candidate.end!}))){candidate.status='cancelled';save(c,ACTION,candidate);return {job:null}}
+   if(candidate.kind==='open'&&held(c,candidate.propertyId).some(b=>b.status==='confirmed'&&!b.cancelled&&overlaps(b,{start:candidate.start!,end:candidate.end!}))){candidate.status='cancelled';save(c,ACTION,candidate);return {job:null}}
    await authorizeEffect(env,candidate,profile)
    const state=profile.stateSealed?await unseal(env.SESSION_SECRET,`channel-profile:${profile.id}`,profile.stateSealed):null
    if(profile.stateSealed&&!state){profile.status='needs_you';profile.challenge='signin';save(c,PROFILE,profile);return {job:null}}

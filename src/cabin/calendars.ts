@@ -1,12 +1,13 @@
 import { type Context, type Booking, type CalendarDraft, type CalendarEvent, type CalendarChange, type Channel, type Clash, need, text, newId, preparer, manager, property, approve, sha } from './model'
+import { sharesCapacity } from './capacity'
 import { parseCalendar } from './calendar-file'
 import { channel as channelOf } from './inventory'
-export async function calendarBaseline(c: Context, propertyId: string) { return sha(JSON.stringify(c.data.bookings.filter(b => b.propertyId === propertyId).sort((a,b) => a.id.localeCompare(b.id)))) }
-function clashes(bookings: { id: string; start: string; end: string }[]): Clash[] {
+export async function calendarBaseline(c: Context, propertyId: string) { return sha(JSON.stringify({capacity:c.data.propertyProfiles.map(p=>[p.propertyId,p.inventoryUnits]),bookings:c.data.bookings.filter(b => sharesCapacity(c.data,b.propertyId,propertyId)).sort((a,b) => a.id.localeCompare(b.id))})) }
+function clashes(bookings: { id: string; propertyId: string; start: string; end: string }[], data: Context['data']): Clash[] {
  const found: Clash[] = []
  for (let i=0;i<bookings.length;i++) for (let j=i+1;j<bookings.length;j++) {
   const a=bookings[i],b=bookings[j]
-  if (Date.parse(a.start)<Date.parse(b.end) && Date.parse(b.start)<Date.parse(a.end)) found.push({a:a.id,b:b.id,start:a.start>b.start?a.start:b.start,end:a.end<b.end?a.end:b.end})
+  if (sharesCapacity(data,a.propertyId,b.propertyId) && Date.parse(a.start)<Date.parse(b.end) && Date.parse(b.start)<Date.parse(a.end)) found.push({a:a.id,b:b.id,start:a.start>b.start?a.start:b.start,end:a.end<b.end?a.end:b.end})
  }
  return found
 }
@@ -46,8 +47,8 @@ export async function calendarCommand(c: Context, name: string, p: Record<string
   preparer(c.actor); const prop = property(c,p.propertyId), channel = channelOf(p.channel,false)
   const old = channelBookings(c,prop.id,channel)
   const events=parseCalendar(p.calendar,old), changes=reconcile(old,events)
-  const resulting=[...c.data.bookings.filter(b=>b.propertyId===prop.id&&b.channel!==channel&&b.status==='confirmed'&&b.kind!=='block'),...events.filter(e=>!e.cancelled&&e.kind!=='block').map(e=>({...e,id:`${channel}:${e.uid}`}))]
-  const row: CalendarDraft={id:newId(),revision:newId(),propertyId:prop.id,channel,importedAt:c.now,events,changes,clashes:clashes(resulting),baseline:await calendarBaseline(c,prop.id),status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
+  const resulting=[...c.data.bookings.filter(b=>sharesCapacity(c.data,b.propertyId,prop.id)&&(b.propertyId!==prop.id||b.channel!==channel)&&b.status==='confirmed'&&b.kind!=='block'),...events.filter(e=>!e.cancelled&&e.kind!=='block').map(e=>({...e,propertyId:prop.id,id:`${channel}:${e.uid}`}))]
+  const row: CalendarDraft={id:newId(),revision:newId(),propertyId:prop.id,channel,importedAt:c.now,events,changes,clashes:clashes(resulting,c.data),baseline:await calendarBaseline(c,prop.id),status:'draft',preparedBy:c.actor.id,preparedAt:c.now}
   c.data.calendarDrafts.push(row);c.entityId=row.id;return row
  }
  if(name==='calendar.approve') {

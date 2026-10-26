@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "07a5d253096e61cd1dcd3df70ea45458450d9bd209df9a79f95b81ec195d5f49",
+      "sha256": "9268d848ced09634e2ac22c5b2cb7769b9f5425ae946d0795b1577cc4cffb3c4",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "ed40e97718af39b1bfa10a779a576a476ff24c8b9e99339d8909ea5749272dd2",
+      "sha256": "d9afd81cf4751b03a596292c9d060bef0be138944840fd2be75a1b4619331525",
       "executable": false
     },
     "DEMO.md": {
@@ -337,6 +337,10 @@
     },
     "docs/scheduled-collection.md": {
       "sha256": "12f938e1b194d2e80fed99106135c65ce613b780cd327f0af3d0fb741c97a134",
+      "executable": false
+    },
+    "docs/shared-inventory.md": {
+      "sha256": "e2f00b53465b54d5e9daf4cb5707ea2259b87428d69b8ca8ceefb74ae838a164",
       "executable": false
     },
     "docs/site.json": {
@@ -748,7 +752,7 @@
       "executable": false
     },
     "public/ops.css": {
-      "sha256": "2472ddccfee73681c0f22913c0af4ca8ccb077b5ff0af58e15d7b44559769e7b",
+      "sha256": "c8869cea271c681636883c9694e4bdfe693c4e49adfbb40e0c424e17346fec8d",
       "executable": false
     },
     "public/owners.css": {
@@ -756,7 +760,7 @@
       "executable": false
     },
     "public/photo-files.js": {
-      "sha256": "d926c3e995678c1f2252322d56714e800064be2504f39ca16c75186c945eddd5",
+      "sha256": "6e13ec17a98a9c5306e41fa611a24d0f5d4b9df1db9c007168c7708b0a7cf1bf",
       "executable": false
     },
     "public/photo-upload.js": {
@@ -1336,7 +1340,7 @@
       "executable": false
     },
     "src/cabin/agreements/commands.ts": {
-      "sha256": "6b7028449bcd2472a1017d5d7ccc4d892c14876cf0f70e4c26f732fd1adae836",
+      "sha256": "11089e8c305efbc9e453a55bfd79a414a4dce873579dd6f857b4d430c031638d",
       "executable": false
     },
     "src/cabin/agreements/http.ts": {
@@ -1416,23 +1420,27 @@
       "executable": false
     },
     "src/cabin/calendars.ts": {
-      "sha256": "192a0eb1a7272c984fac0dc7edcd6275fdd4f7bd45cb1e25bbac538d454e4080",
+      "sha256": "5de604f620c138b140acc71aeece4474a511c6ee6df4801324042b456a6aaf38",
+      "executable": false
+    },
+    "src/cabin/capacity.ts": {
+      "sha256": "299d6eb0c4ed73dfa55e86fcb17b8b50087813dc4f4f979e43a9f0e413c188c6",
       "executable": false
     },
     "src/cabin/channel-agent/authorization.ts": {
-      "sha256": "ee074f8acd12692a057e730c21f7fcbc16b4c3c8fd1d1b409d543f4683bb1c31",
+      "sha256": "e9324ade2d951847078ec7d217c1fa1162560af36d37525ed3d13befde83cd3b",
       "executable": false
     },
     "src/cabin/channel-agent/commands.ts": {
-      "sha256": "f74782e9cd6624134eec4709f90e877d3729a6094a7fd32fc383afdcecd1c11a",
+      "sha256": "57b6cf12673f3edee5b8d87871c0e8e33a5de141ef21f73e4655ed3f3a9dde35",
       "executable": false
     },
     "src/cabin/channel-agent/queue.ts": {
-      "sha256": "06836bd052da3fc099c01c73b7e56a9535ef292d81d8f3b26f49789f1aa71030",
+      "sha256": "3702cf9aa13f4d0d801163db8286e3861afb2180a255938d6108d0603fb73645",
       "executable": false
     },
     "src/cabin/channel-agent/read-import.ts": {
-      "sha256": "e2d2ceb920ecbedb43f637666e1c27ac1605863fb2c358db77f0515a9b2c0580",
+      "sha256": "ed1047a2182b1ac5c4d7f7509bbc093d4bfe529117d26166397fee06ab798dea",
       "executable": false
     },
     "src/cabin/channel-agent/read-types.ts": {
@@ -1444,7 +1452,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/runner.ts": {
-      "sha256": "8b66f46f24a0108fe94ba9f0a6c6ea4b5329cd6cbd778265a170b23aa737c5ff",
+      "sha256": "48336c5ed0dc010e5f8226d70685732cec26439bba00e412abb9707e25ff4597",
       "executable": false
     },
     "src/cabin/channel-agent/store.ts": {
@@ -1540,7 +1548,7 @@
       "executable": false
     },
     "src/cabin/direct/checkout.ts": {
-      "sha256": "a26781b14f89a607803618788ef916dd1d56602bed7604758e52016eec0802d7",
+      "sha256": "031ed83f35b59c121a73b336d4d6f9fb1977a4c5fc8ae8f8b1d944f5edbf8a51",
       "executable": false
     },
     "src/cabin/direct/collection-followup.ts": {
@@ -1584,7 +1592,7 @@
       "executable": false
     },
     "src/cabin/direct/http.ts": {
-      "sha256": "afaeae7a928844676ada68b87dad486c5db9c5f0cc0f0239b60c9b6bff8989fd",
+      "sha256": "1cc1a011e6df2e11a9dd3004af2edc2c67371f7f795479723c1bc31b9a8faaec",
       "executable": false
     },
     "src/cabin/direct/manual-receipts.ts": {
@@ -1608,7 +1616,7 @@
       "executable": false
     },
     "src/cabin/direct/public-ui.ts": {
-      "sha256": "7a92bffc3f6cb0bb16dc3cee5af75ca42b3781d3ba7ed80627006574d08de18a",
+      "sha256": "1228610c2925fdb04be2f0ea196ff73dafa2215f5dce668c2fac4a70206bb747",
       "executable": false
     },
     "src/cabin/direct/refund-calculation.ts": {
@@ -1624,7 +1632,7 @@
       "executable": false
     },
     "src/cabin/direct/rules.ts": {
-      "sha256": "6e89020a81fcc4cbb7368257af6c8942bec37258bf4a018ec7e538cf3e803bdf",
+      "sha256": "ea6d60c86862f326fff45e048df696fd28762b3b60ea8836dfd5a14fd7158fa7",
       "executable": false
     },
     "src/cabin/direct/settlement-ledger.ts": {
@@ -1648,7 +1656,7 @@
       "executable": false
     },
     "src/cabin/direct/types.ts": {
-      "sha256": "600b33d076aa14e9fa4d269921906488c4fa29ee00d6b9da6d93c102db4a8ca9",
+      "sha256": "1e9f9bcfa3ef0cef2b0d370edbfaa74205d1ab977dc9ab384dd67f18f63031c7",
       "executable": false
     },
     "src/cabin/dispatch.ts": {
@@ -1904,11 +1912,11 @@
       "executable": false
     },
     "src/cabin/http.ts": {
-      "sha256": "691cce6483ee8e1fb6c45b4610db390ed35418f0634e98b533ecf49b8e8e550a",
+      "sha256": "9307a3db8a66a359bbd491fd8adc6395126ba03abf5069905fff83a43e86f2be",
       "executable": false
     },
     "src/cabin/ical-export.ts": {
-      "sha256": "bc58d06b97e3138c70b4ae6b69d82fe4d8d2740dcf94d561575e0131b76df2f3",
+      "sha256": "880bc142b1cd28c4ae313bed5c4e82a1e1a4e02969e7030414b6436e19dca0b3",
       "executable": false
     },
     "src/cabin/inbox/adapters/booking.ts": {
@@ -2040,7 +2048,7 @@
       "executable": false
     },
     "src/cabin/inventory.ts": {
-      "sha256": "651306e0a4bc3c74616fcb90a99597161b4dcadefbf25dbed79e77a40aff6131",
+      "sha256": "919d7cc6ec4ce0002dd6a72904f4531bfd17eb9eff6c0fa5aa3b0a535b8892ab",
       "executable": false
     },
     "src/cabin/issues/commands.ts": {
@@ -2224,7 +2232,7 @@
       "executable": false
     },
     "src/cabin/pages/calendar.ts": {
-      "sha256": "50dd493256a0e594142f8bcbaa17059a3282cbdf803762b22218ee9f456c335e",
+      "sha256": "4788ea837158b8c63b51d6decd660f2442b33db633d13f0e830c9f25240c87eb",
       "executable": false
     },
     "src/cabin/pages/core.ts": {
@@ -2404,7 +2412,7 @@
       "executable": false
     },
     "src/cabin/promotions/eligibility.ts": {
-      "sha256": "f4bdb3f7a3f131e6d82d8057fecd4eb8514a97b2851cad616688c4535a3faf03",
+      "sha256": "b51a971055d2c17dd9e34d85a4313ceee8f55acaf23af3d392421e75113a712f",
       "executable": false
     },
     "src/cabin/promotions/guest.ts": {
@@ -2444,7 +2452,7 @@
       "executable": false
     },
     "src/cabin/properties/profile.ts": {
-      "sha256": "4142af917768d367cbbfe86c3c0c94fc251b7d92085fcfdf0754800ed8bdc5bd",
+      "sha256": "5f4780f4ba413dd5162717a9f6188e9a4238fe4ab83033863c366f1654fd6a62",
       "executable": false
     },
     "src/cabin/properties/terms-ui.ts": {
@@ -2456,7 +2464,7 @@
       "executable": false
     },
     "src/cabin/properties/ui.ts": {
-      "sha256": "0d5b1ba6acd493fc98a7cdd64e809252c18a6066243e9e021effcf3b95747bb6",
+      "sha256": "bac578ce0cd2043f3251a3ba4db05801087b98bba30fb76270d234b3b13e086a",
       "executable": false
     },
     "src/cabin/questions/commands.ts": {
@@ -2532,7 +2540,7 @@
       "executable": false
     },
     "src/cabin/recovery/monitor.ts": {
-      "sha256": "0f26c2395e98b567a9bf4e31702a9d366a6026a953f1912524b14c7aa04c7875",
+      "sha256": "4cef66c4f0b2d1e47317b05fcf536eeacc4f354720053f2114aa6fe34205335a",
       "executable": false
     },
     "src/cabin/recovery/reconcile.ts": {
@@ -2640,7 +2648,7 @@
       "executable": false
     },
     "src/cabin/reservations/quotes.ts": {
-      "sha256": "13b5469d78ce07a3af8a50f391be2641a1358d0e56911b3ab2b4eee721412b89",
+      "sha256": "564bd1356f91f1f21740d10edc658fa025c43571a3bdfc690d357e26536543b6",
       "executable": false
     },
     "src/cabin/reservations/types.ts": {
@@ -2740,15 +2748,15 @@
       "executable": false
     },
     "src/cabin/ui/calendar-detail.ts": {
-      "sha256": "6df193f46159c7559b74620150e9805cf4bc2fed41f5d11463412d152ccc1244",
+      "sha256": "3eee78d3c9e9db5fdd65a3f6d5653f2ab49b70f349a999edccbf5f5c8802d509",
       "executable": false
     },
     "src/cabin/ui/calendar-grid.ts": {
-      "sha256": "441d7e3793026ae22de5385fd93777f22c19e086df0b84560357fa9cbef277d9",
+      "sha256": "c401b8994cee54a470a9eaee00376073bfb329badc3b4bcaa60fd98c9ca37a96",
       "executable": false
     },
     "src/cabin/ui/calendar-items.ts": {
-      "sha256": "251ad78b4340c0c17fec03ac771cc167383c68ddef065f49f070b68463583faf",
+      "sha256": "e837d3135db14474dabae3a7680aab9d77bf082961998edde14a7c8d22961fa8",
       "executable": false
     },
     "src/cabin/ui/calendar-state.ts": {
@@ -2756,11 +2764,11 @@
       "executable": false
     },
     "src/cabin/ui/calendar-view.ts": {
-      "sha256": "6f1f8292815c269607d6d2e9ef9841368d036c841708f39137d1d134b823305b",
+      "sha256": "46255b813a0f3222b2445b923af5cc8b0d9b38ca7f9876c4c90d79418e2f6873",
       "executable": false
     },
     "src/cabin/ui/calendar.ts": {
-      "sha256": "61b86e888a24a16af6390388723fe33091632100eb763eba47975f43fa819475",
+      "sha256": "431fa113bb392f16cea3dd0da945628fd02d7ff348ce50db8f12410dcdd89768",
       "executable": false
     },
     "src/cabin/ui/channels.ts": {
@@ -2916,7 +2924,7 @@
       "executable": false
     },
     "src/cabin/website/pages.ts": {
-      "sha256": "2d4818c031f7b7a0fee6d23197ea70be3dd310defddde8709544ab8895a868fe",
+      "sha256": "500b85129e5f53b08907472fb0ed4237bce29d53fd35361ba4700980c6a36d64",
       "executable": false
     },
     "src/cabin/website/store.ts": {
@@ -2928,7 +2936,7 @@
       "executable": false
     },
     "src/cabin/work-orders/commands.ts": {
-      "sha256": "181ee56e94afe992ad3ae261a55c14183194e0c6c89db47ac48877e8f39911a4",
+      "sha256": "65f7dc5bcf2bbaf740f91b2a11e34ed003883c530538fea83b5d1ceb6ec0425b",
       "executable": false
     },
     "src/cabin/work-orders/expenses.ts": {
@@ -4888,7 +4896,7 @@
       "executable": false
     },
     "tests/cabin.test.mjs": {
-      "sha256": "b9d1f3233dec913351d2f9dbd88230390599605703faa0cb4d9a158a1b25a95f",
+      "sha256": "a7317406be6d8842471b2c492a9ad359ad35769a83d0e22035731f292e3de66d",
       "executable": false
     },
     "tests/calendar.test.mjs": {
@@ -4899,12 +4907,16 @@
       "sha256": "0babedfaefad0702908c4c48c5f4ab9184315c9d18cf1b40445e9599f2bff2ff",
       "executable": false
     },
+    "tests/capacity-support.mjs": {
+      "sha256": "b44761ae826758a5afc2a67cfd4a0a6d0b5935c73ffb44af95ea56a3837fb5dc",
+      "executable": false
+    },
     "tests/channel-agent-edge.mjs": {
-      "sha256": "ca32861f20b7c8451df4b4f655052cd1af9195f01fa1dd1db03f87a77c6c1baa",
+      "sha256": "4e5f83bf5701fcd10c4a1f0cab10d3e8c2ccb57749cb1c32bd76ef0951da4a2a",
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "e13cabde8db6f6782c2b8d1abcc29907ce0e741a3288c0b01a7bb8ecefa31036",
+      "sha256": "023d2d969b85485f389a3be4259e7a20993aa5838956e1a4bf810784aa87a1be",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
@@ -5188,11 +5200,11 @@
       "executable": false
     },
     "tests/quotes-archive.test.mjs": {
-      "sha256": "6039a4fda9b9df0ae83ebaedacdf678c24d96f983db2d393b414c8a4be748b6a",
+      "sha256": "f54ee2e6d14ba6dfa80139f63af1ac1166ec3a6d39a0cb01588b6272649e4034",
       "executable": false
     },
     "tests/quotes-browser.test.mjs": {
-      "sha256": "d8c848a3a1a0b45d150f91069ef4b16a1c00fac23dd54be771c1a520849e0b62",
+      "sha256": "1d6181805e732860c172c8ff5a5d61f58c14af1a25dab478af6740ab3f22e24b",
       "executable": false
     },
     "tests/quotes-support.mjs": {

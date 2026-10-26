@@ -59,3 +59,5 @@
 .cabin [data-tooltip]::after{content:attr(data-tooltip);position:absolute;z-index:30;bottom:calc(100% + 8px);left:0;max-width:240px;padding:6px 10px;border-radius:6px;background:#243a32;color:#fff;font:500 13px/1.4 system-ui,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity 80ms ease 300ms,visibility 0s linear 300ms}
 .cabin [data-tooltip]:hover::after,.cabin [data-tooltip]:focus-visible::after{opacity:1;visibility:visible}
 .cabin [data-tooltip]:focus-visible::after{transition:none}
+
+.cabin .step[data-tooltip]::after{top:calc(100% + 4px);bottom:auto}

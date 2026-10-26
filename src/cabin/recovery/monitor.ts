@@ -1,3 +1,4 @@
+import { sharesCapacity } from '../capacity'
 import { type Context, type Data, need, text } from '../model'
 import { overlaps, channelName } from '../inventory'
 import { liveTurnover } from '../dispatch'
@@ -7,7 +8,7 @@ import type { Recovery } from './types'
 /** Conflicts are actual held inventory, including blocks; a declined request is never a booking. */
 export function recoveryConflicts(data: Data, bookingId: string) {
  const b = data.bookings.find(b => b.id === bookingId)
- return b?.status === 'confirmed' ? data.bookings.filter(other => other.id !== b.id && other.propertyId === b.propertyId && other.status === 'confirmed' && overlaps(other, b)) : []
+ return b?.status === 'confirmed' ? data.bookings.filter(other => other.id !== b.id && sharesCapacity(data,other.propertyId,b.propertyId) && other.status === 'confirmed' && overlaps(other, b)) : []
 }
 export function synchronizeRecoveryCollisions(c: Context) {
  for (const b of c.data.bookings) {

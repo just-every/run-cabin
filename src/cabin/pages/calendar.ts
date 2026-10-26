@@ -8,7 +8,7 @@ import { records, inIds, scoped } from './core'
 interface BookingIndex { id:string; propertyId:string; start:string; end:string; status:string; kind:string; channel:string; connectionId?:string }
 export async function calendarData(db:D1Database, _actor:Actor, data:Data, url:URL) {
  const homes = scoped(data)
- await records(db,data,['homeSettings','feeds','connections','calendarDrafts','readinessPlans','readinessRecords','recoveries','recoveryPolicies','statements'],inIds("json_extract(data,'$.propertyId')"),[homes])
+ await records(db,data,['propertyProfiles','homeSettings','feeds','connections','calendarDrafts','readinessPlans','readinessRecords','recoveries','recoveryPolicies','statements'],inIds("json_extract(data,'$.propertyId')"),[homes])
  const index = (await db.prepare(`SELECT id,json_extract(data,'$.propertyId') propertyId,json_extract(data,'$.start') start,json_extract(data,'$.end') end,json_extract(data,'$.status') status,COALESCE(json_extract(data,'$.kind'),'stay') kind,json_extract(data,'$.channel') channel,json_extract(data,'$.connectionId') connectionId FROM cb_records WHERE kind='bookings' AND ${inIds("json_extract(data,'$.propertyId')")}`).bind(homes).all<BookingIndex>()).results
  const one = data.properties.find(p => p.id === url.searchParams.get('home'))
  const today = data.properties.length ? localDay(Date.now(),homeSettings(data,one?.id ?? data.properties[0].id).timeZone) : new Date().toISOString().slice(0,10)

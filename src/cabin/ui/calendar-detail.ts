@@ -1,3 +1,4 @@
+import { sharesCapacity } from '../capacity'
 import { reservationEditor } from '../reservations/ui'
 import { h, propertyName, memberName } from './shared'
 import { homeSettings } from '../homes'
@@ -11,7 +12,7 @@ export function reservationBody(s: any, b: any) {
   const jobs = s.turnovers.filter((t: any) => t.propertyId === b.propertyId && t.status !== 'cancelled' && (t.bookingId === b.id || t.nextBookingId === b.id || t.id === readiness?.turnover?.id))
   const issues = s.tasks.filter((t: any) => t.propertyId === b.propertyId && t.status === 'open')
   const cases = (s.recoveries ?? []).filter((r: any) => r.bookingId === b.id && !['closed', 'undone'].includes(r.status))
-  const clash = s.bookings.filter((other: any) => other.id !== b.id && other.propertyId === b.propertyId && other.status === 'confirmed' && b.status === 'confirmed' && overlaps(b, other))
+  const clash = s.bookings.filter((other: any) => other.id !== b.id && sharesCapacity(s,other.propertyId,b.propertyId) && other.status === 'confirmed' && b.status === 'confirmed' && overlaps(b, other))
   const links = s.connections.filter((c: any) => c.propertyId === b.propertyId && c.channel === b.channel && (!b.connectionId || c.id === b.connectionId))
   const allLinks = s.connections.filter((c: any) => c.propertyId === b.propertyId)
   const source = b.source === 'request' ? 'Created in Cabin' : b.source === 'migration' ? 'Imported from the previous system' : 'Imported from a channel calendar'

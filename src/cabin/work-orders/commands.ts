@@ -1,3 +1,4 @@
+import { sharesCapacity } from '../capacity'
 import { inspectionNotice } from './notices'
 import { type Context, type Task, type StoredPhoto, need, text, integer, newId, manager, owner, exact, property } from '../model'
 import { photoList, storePhotos } from '../photos'
@@ -74,7 +75,7 @@ function configure(c: Context, task: Task, p: Record<string, unknown>) {
   const start = day(p.unavailableStart), end = day(p.unavailableEnd)
   need(start < end, 'Unavailable end must follow its start')
   need(Date.parse(end) - Date.parse(start) <= 365 * 86_400_000, 'Block at most 365 nights')
-  need(!c.data.bookings.some(b => b.propertyId === task.propertyId && b.status === 'confirmed' && b.id !== work.blockId && overlaps(b, { start, end })), 'Those nights overlap confirmed inventory', 409)
+  need(!c.data.bookings.some(b => sharesCapacity(c.data,b.propertyId,task.propertyId) && b.status === 'confirmed' && b.id !== work.blockId && overlaps(b, { start, end })), 'Those nights overlap confirmed inventory', 409)
   const existing = work.blockId ? c.data.bookings.find(b => b.id === work.blockId) : undefined
   need(!work.blockId || existing?.status === 'confirmed', 'The work inventory block changed; review inventory before continuing', 409)
   if (existing) Object.assign(existing, { start, end, revision: newId() })

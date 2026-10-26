@@ -1,9 +1,9 @@
 import { type Context, type Booking, type Channel, type Request, need, text, newId, manager, property, exact } from './model'
+import { capacityBookings } from './capacity'
 import { blockUse, changeBlock, cancelBlock } from './blocks'
 import { emailOf, phoneOf } from './inbox/threads'
-// One unit/night inventory per home: every confirmed booking or block holds its
-// nights [first night, checkout). Commits are serialised by cb_meta's version
-// guard, so two requests for the same night cannot both be accepted.
+// Listings consume explicit physical units for nights [first night, checkout).
+// The metadata version guard serializes competing reservations.
 export const CHANNELS: Channel[] = ['airbnb', 'vrbo', 'booking.com', 'direct']
 const NAMES: Record<string, string> = { airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com', direct: 'Direct', ical: 'External calendar' }
 export const channelName = (c: string) => NAMES[c] ?? c
@@ -16,7 +16,7 @@ export const addDays = (day: string, n: number) => new Date(Date.parse(day + 'T0
 /** Nights as calendar dates: a timed checkout still frees that day's night. */
 export const nights = (b: { start: string; end: string }) => ({ first: b.start.slice(0, 10), checkout: b.end.slice(0, 10) })
 export function overlaps(a: { start: string; end: string }, b: { start: string; end: string }) { const x = nights(a), y = nights(b); return x.first < y.checkout && y.first < x.checkout }
-export const held = (c: { data: { bookings: Booking[] } }, propertyId: string) => c.data.bookings.filter(b => b.propertyId === propertyId && b.status === 'confirmed')
+export const held = (c: { data: Parameters<typeof capacityBookings>[0] }, propertyId: string) => capacityBookings(c.data, propertyId)
 const short = (day: string) => new Date(day + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
 export const span = (b: { start: string; end: string }) => { const n = nights(b); return `${short(n.first)} → ${short(n.checkout)}` }
 export const describe = (b: Booking) => `${channelName(b.channel)} ${(b.kind ?? 'stay') === 'block' ? 'block' : 'stay'} ${span(b)}`

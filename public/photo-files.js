@@ -21,6 +21,6 @@ export async function encoded(blob) {
 }
 export function fields(form) {
   const input = {}
-  for (const [key, value] of new FormData(form)) if (key !== 'photoFiles') input[key] = ['checks', 'removePhotoIds'].includes(key) ? [...(input[key] ?? []), value] : value
+  for (const [key, value] of new FormData(form)) if (key !== 'photoFiles') input[key] = ['checks', 'removePhotoIds', 'inventoryUnits'].includes(key) ? [...(input[key] ?? []), value] : value
   return input
 }

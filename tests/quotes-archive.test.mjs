@@ -1,3 +1,4 @@
+import { rooms } from './capacity-support.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {cp,mkdir,mkdtemp,readFile,rm,symlink} from 'node:fs/promises'
@@ -18,14 +19,14 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   }
   const env={...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'};delete env.RER_LOCAL_OPERATION;delete env.RER_LOCAL_STATE_PATH
   await exec(process.execPath,[resolve('node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','foundation','--local'],{cwd:source,env,maxBuffer:2e6})
-  h=await quoteHarness({root:source});const quote=await h.cmd('quote.issue',h.input),path=await h.link(quote),identity={auth:h.auth,owner:h.owner};await h.close();h=null
+  h=await quoteHarness({root:source});const {a,b}=await rooms(h,h.p);const quote=await h.cmd('quote.issue',h.input),path=await h.link(quote),identity={auth:h.auth,owner:h.owner};await h.close();h=null
   const cli=resolve('node_modules/@runeditrun/rer/global/rer.mjs')
   await exec(process.execPath,[cli,'export','--output',archive],{cwd:source,env,maxBuffer:2e6})
   const bytes=await readFile(archive,'utf8');assert.ok(!bytes.includes(path.split('/').at(-1)),'archive omits the private quote capability');assert.match(bytes,/Alex Rivera/,'business terms remain portable')
   await exec(process.execPath,[cli,'import','--input',archive,'--yes'],{cwd:restored,env,maxBuffer:2e6})
   let outbound=0;h=await harness({root:restored,...identity,outbound:()=>{outbound++;assert.fail('Restored quotes must cause no external action')}})
   const cookie=await h.signIn(h.auth.OWNER_EMAIL),saved=await h.state(cookie)
-  assert.equal(saved.staffQuotes.length,1);assert.equal(saved.staffQuotes[0].versions[0].price.totalCents,58300);assert.equal(saved.staffQuotes[0].versions[0].price.cancellationPolicy.retainedBps,5000)
+  assert.deepEqual(saved.propertyProfiles.find(p=>p.propertyId===saved.staffQuotes[0].propertyId).inventoryUnits,[a.id,b.id].sort());assert.equal(saved.staffQuotes.length,1);assert.equal(saved.staffQuotes[0].versions[0].price.totalCents,58300);assert.equal(saved.staffQuotes[0].versions[0].price.cancellationPolicy.retainedBps,5000)
   assert.equal((await h.send(path)).status,404,'old quote link cannot be accepted after restore');assert.equal(saved.bookings.filter(b=>b.status==='confirmed').length,0,'restored quote holds cannot block new inventory')
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}

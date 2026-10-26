@@ -11,7 +11,8 @@ export function propertyEditor(s: any, p: any): string {
  const profile = s.propertyProfiles.find((r: any) => r.propertyId === p.id), home = homeSettings(s, p.id)
  const currentPhotos = profile?.photos ?? [], listingIds = profile?.listingIds
  const body = hidden('propertyId', p.id) + hidden('revision', profile?.revision ?? '') + hidden('homeRevision', home.revision)
-  + '<p class="muted">Each property is one independently rentable home or unit with its own calendar. Use the same building name to group units in one building; add a separate property for each rentable unit.</p>'
+  + '<p class="muted">Each listing has its own calendar. Assign the physical rooms it consumes; a whole home consumes every room selected. Leave empty for an independent unit. Interchangeable rooms require an explicit assignment before booking.</p>'
+  + '<fieldset><legend>Physical rooms used by this listing</legend>' + s.properties.map((unit: any) => `<label class="check"><input type="checkbox" name="inventoryUnits" value="${h(unit.id)}" ${(profile?.inventoryUnits ?? []).includes(unit.id) ? 'checked' : ''}> ${h(unit.name)}</label>`).join('') + hidden('inventoryUnits', '') + '</fieldset>'
   + input('buildingName', 'Building name (optional)', profile?.buildingName ?? '', 'maxlength="160"')
   + input('unitName', 'Unit name or number (optional)', profile?.unitName ?? '', 'maxlength="160"')
   + input('address', 'Property address', home.address, 'required maxlength="300" autocomplete="street-address"')

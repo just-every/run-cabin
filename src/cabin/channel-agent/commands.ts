@@ -1,6 +1,6 @@
 import type { Bindings } from '../../auth.server'
 import { need,text,newId,sha,type Actor } from '../model'
-import { channel,overlaps } from '../inventory'
+import { held,channel,overlaps } from '../inventory'
 import { mutate } from '../storage'
 import { rows,save } from './store'
 import { PROFILE,ACTION,KEY,type Profile,type Action,type RunnerKey } from './types'
@@ -60,7 +60,7 @@ export async function channelAgentCommand(env:Bindings,actor:Actor,name:string,p
    const old=actions.find(a=>a.id===p.id),profile=profiles.find(r=>r.id===old?.profileId)
    need(old?.kind==='close'&&old.status==='succeeded'&&old.canUndo&&profile?.status==='connected','Undo is unavailable for this action',409)
    need(!actions.some(a=>a.undoOf===old.id&&a.status!=='failed'&&a.status!=='cancelled'),'Reopening already requested',409)
-   need(!c.data.bookings.some(b=>b.propertyId===old.propertyId&&b.status==='confirmed'&&!b.cancelled&&overlaps(b,{start:old.start!,end:old.end!})),'These nights are still held by a reservation or block. Release it before reopening.',409)
+   need(!held(c,old.propertyId).some(b=>b.status==='confirmed'&&!b.cancelled&&overlaps(b,{start:old.start!,end:old.end!})),'These nights are still held by a reservation or block. Release it before reopening.',409)
    const row:Action={id:newId(),profileId:old.profileId,channel:old.channel,propertyId:old.propertyId,kind:'open',bookingId:old.bookingId,start:old.start,end:old.end,undoOf:old.id,requestedBy:actor.email||actor.id,status:'queued',attempts:0,createdAt:c.now,nextAt:c.now};save(c,ACTION,row);return {id:row.id,status:row.status}
   }
   need(false,'Unknown channel agent command',404)

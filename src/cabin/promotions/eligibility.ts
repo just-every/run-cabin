@@ -1,3 +1,4 @@
+import { sharesCapacity } from '../capacity'
 import { type Context,type Booking,need,sha } from '../model'
 import { homeSettings } from '../homes'
 import { dispatch } from '../dispatch'
@@ -67,7 +68,7 @@ export async function eligible(c:Context,o:PromotionOffer){
  need(calculated.managementRevision===o.managementRevision&&JSON.stringify(calculated.parts)===JSON.stringify(o.parts),'Owner allocation changed. Prepare a new offer.',409)
  need(c.data.ledgerSettings.some(s=>s.propertyId===b.propertyId),'Configure the home’s ledger before charging',409)
  need(!await c.db.prepare('SELECT 1 FROM cb_ledger_periods WHERE month=?').bind(c.now.slice(0,7)).first(),'The accounting period is closed',409)
- need(!c.data.bookings.some(other=>other.id!==b.id&&other.id!==o.holdId&&other.propertyId===b.propertyId&&other.status==='confirmed'&&overlaps(other,o.target)),'The extension overlaps another reservation or inventory hold',409)
+ need(!c.data.bookings.some(other=>other.id!==b.id&&other.id!==o.holdId&&sharesCapacity(c.data,other.propertyId,b.propertyId)&&other.status==='confirmed'&&overlaps(other,o.target)),'The extension overlaps another reservation or inventory hold',409)
  const rows=await offers(c)
  if(o.kind==='extra'){
   const used=rows.filter(other=>other.id!==o.id&&other.propertyId===o.propertyId&&other.kind==='extra'&&other.title===o.title&&['sent','checkout','applied'].includes(other.status)&&(other.status==='applied'||Date.parse(other.expiresAt)>Date.parse(c.now))&&overlaps(other.target,o.target)).reduce((n,other)=>n+other.quantity,0)

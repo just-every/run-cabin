@@ -12,7 +12,7 @@ export async function channelEdge(){
  const server=createServer((_request,response)=>{response.writeHead(200,{'content-type':'text/html'});response.end(recorded)})
  await new Promise(r=>server.listen(0,'127.0.0.1',r))
  const origin=`http://127.0.0.1:${server.address().port}`
- const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+ const browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
  async function run(job,{human=false,onViewer}={}){
   const context=await browser.newContext({storageState:job.storageState??undefined,viewport:{width:1440,height:900}})
   await context.route(/https:\/\/(?:www\.)?(?:airbnb|vrbo|booking)\.com\//,async route=>{

@@ -1,3 +1,4 @@
+import { rooms, sourceRoom } from './capacity-support.mjs'
 import { erase } from './privacy-flow.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
@@ -34,11 +35,21 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   await runner({op:'complete',id:job.id,lease:job.lease,...result})
   assert.equal((await h.state()).channelAgent.actions.find(a=>a.id===job.id).status,'succeeded')
   const page=await h.send('/app/channels',undefined,h.owner);assert.equal(page.status,200);assert.ok(page.text.includes('side=before'));assert.ok(page.text.includes('side=after'))
+  const {a,b}=await rooms(h,home)
+  await sourceRoom(h,a,dates.start,dates.end)
+  const roomClosures=(await h.state()).channelAgent.actions.filter(a=>a.kind==='close'&&a.status==='queued')
+  assert.equal(roomClosures.length,3,'room A closes the whole home on every channel, including Airbnb')
+  const roomB=await h.cmd('reservation.request',{propertyId:b.id,channel:'direct',guestName:'Independent room B',...dates});assert.equal(roomB.status,'accepted')
+  for(let n=0;n<6;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
+  await sourceRoom(h,a,dates.start,dates.end,true)
+  await h.cmd('channelAgent.undo',{id:roomClosures[0].id},h.owner,409)
+  const roomBStay=(await h.state()).bookings.find(row=>row.id===roomB.bookingId);await h.cmd('reservation.cancel',{id:roomBStay.id,revision:roomBStay.revision})
+  await h.cmd('channelAgent.undo',{id:roomClosures[0].id});const reopening=(await runner({op:'claim'})).job;assert.equal(reopening.kind,'open');const reopened=await edge.run(reopening);assert.equal(reopened.outcome,'succeeded');await runner({op:'complete',id:reopening.id,lease:reopening.lease,...reopened})
   // A direct booking enters the identical commit hook and closes all three OTAs.
   const direct=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
   assert.equal((await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close').length,3)
   const original=await h.person('Original'),backup=await h.person('Backup')
-  await h.cmd('home.settings',{propertyId:home.id,address:'12 Lake Road',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:original.id,checklist:['Ready']})
+  await h.cmd('home.settings',{propertyId:home.id,revision:(await h.state()).homeSettings.find(s=>s.propertyId===home.id).revision,address:'12 Lake Road',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:original.id,checklist:['Ready']})
   await h.cmd('recovery.settings',{propertyId:home.id,cleanerIds:[original.id,backup.id],auto:false,creditLimitCents:0,cleaningLimitCents:0})
   let recovery=await h.cmd('recovery.open',{bookingId:direct.bookingId,trigger:'cleaner_cancelled',reason:'Replacement preparation must not skip pending channel closure'})
   recovery=await h.cmd('recovery.propose',{id:recovery.id,revision:recovery.revision,cleanerId:backup.id,creditCents:0,extraCleaningCents:0,why:'Approved backup; channel acknowledgements remain outstanding'})

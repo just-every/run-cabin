@@ -1,3 +1,4 @@
+import { rooms as capacityRooms, sourceRoom } from './capacity-support.mjs'
 import { seamEdge } from './seam-edge.mjs'
 import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
@@ -268,5 +269,31 @@ test('PMS team invitations enforce each role’s property/actions, private read 
   assert.equal(refused.status,'refused');assert.ok(!refused.artifact);assert.ok(sharing.value.reportFollowups.some(f=>f.runId===refused.id))
 
   for(const person of people){await h.state(person.cookie,403);await h.cmd('task.raise',{propertyId:p.id,title:'Offboarded',note:'Must not run'},person.cookie,403)}
+ }finally{await h.close()}
+})
+
+test('linked physical rooms preserve independent capacity through source cancellation and whole-home sale',async()=>{
+ const h=await harness({now:'2026-10-26T12:00:00Z'})
+ try{
+  const whole=await property(h),{a,b,profile}=await capacityRooms(h,whole),start='2026-12-10',end='2026-12-13'
+  const links=[];for(const p of [a,b,whole])links.push(await h.cmd('export.publish',{propertyId:p.id}))
+  const out=async(i,slug='airbnb')=>(await h.send(`/ical/${links[i].token}/${slug}.ics`)).text
+  await sourceRoom(h,a,start,end)
+  assert.match(await out(2),/20261210/,'same-channel whole-home export includes room closure')
+  assert.doesNotMatch(await out(1),/20261210/,'independent room B stays open')
+  const rival=await h.cmd('reservation.request',{propertyId:b.id,channel:'direct',guestName:'Room B guest',start,end});assert.equal(rival.status,'accepted')
+  const denied=await h.cmd('reservation.request',{propertyId:whole.id,channel:'direct',guestName:'Whole guest',start,end});assert.equal(denied.status,'declined')
+  await h.cmd('property.profile',{propertyId:a.id,occupancyLimit:2,inventoryUnits:[b.id]},h.owner,409)
+  await sourceRoom(h,a,start,end,true)
+  assert.match(await out(2),/20261210/,'room B still holds the whole home')
+  let row=(await h.state()).bookings.find(r=>r.id===rival.bookingId);await h.cmd('reservation.cancel',{id:row.id,revision:row.revision})
+  assert.doesNotMatch(await out(2),/20261210/)
+  const sold=await h.cmd('reservation.request',{propertyId:whole.id,channel:'direct',guestName:'Whole guest',start,end});assert.equal(sold.status,'accepted')
+  assert.match(await out(0),/20261210/);assert.match(await out(1),/20261210/)
+  assert.equal((await h.cmd('reservation.request',{propertyId:a.id,channel:'direct',kind:'block',note:'Maintenance',start,end})).status,'declined')
+  const boundary=await h.cmd('reservation.request',{propertyId:a.id,channel:'direct',guestName:'Next guest',start:end,end:'2026-12-15'});assert.equal(boundary.status,'accepted')
+  const conflict=await sourceRoom(h,a,start,end);assert.equal(conflict.clashes.length,1,'authoritative conflicting source stays remain visible')
+  assert.equal((await h.state()).bookings.filter(r=>r.status==='confirmed'&&r.start===start).length,2)
+  const page=await h.send('/app/calendar?from=2026-12-01',undefined,h.owner);assert.equal(page.status,200);assert.match(page.text,/Shared inventory/)
  }finally{await h.close()}
 })

@@ -1,3 +1,4 @@
+import { sharesCapacity } from '../capacity'
 import type { Bindings } from '../../auth.server'
 import { type Context,type Actor,manager,need,text,newId,exact,property } from '../model'
 import { mutate } from '../storage'
@@ -44,7 +45,7 @@ export async function agreementCommand(env:Bindings,actor:Actor,name:string,inpu
   need(end>start,'Checkout must follow arrival');need(Date.parse(end)-Date.parse(start)<=365*86_400_000,'A stay may span at most 365 nights')
   const changed=start!==b.start.slice(0,10)||end!==b.end.slice(0,10)
   need(!changed||b.source==='request','Change a channel reservation’s dates on that channel first; Cabin requests renewed consent after sync',409)
-  need(!c.data.bookings.some(other=>other.id!==b.id&&other.propertyId===b.propertyId&&other.status==='confirmed'&&overlaps(other,{start,end})),'These amended nights overlap another reservation or block',409)
+  need(!c.data.bookings.some(other=>other.id!==b.id&&sharesCapacity(c.data,other.propertyId,b.propertyId)&&other.status==='confirmed'&&overlaps(other,{start,end})),'These amended nights overlap another reservation or block',409)
   const direct=(await stays(env.DB)).find(s=>s.bookingId===b.id)
   if(direct){need(direct.phase==='confirmed'&&!direct.checkedOutAt,'Amend a direct stay after confirmation and before checkout',409);need(input.keepPrice==='yes','Confirm that the paid price and damage authorization amount stay unchanged')}
   if(changed)Object.assign(b,{start,end,revision:newId()})

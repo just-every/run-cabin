@@ -4,6 +4,7 @@ import { assertContactsAllowed } from '../privacy/contacts'
 import { sharingAllowed } from '../connections/guard'
 import { mutate } from '../storage'
 import { reservationCommand } from '../inventory'
+import { applyChanges } from '../calendars'
 import { lifecycle } from '../reservations/history'
 import { financeImport } from '../finance/import'
 import { cents, csvDate, sumCents } from '../finance/csv'
@@ -86,15 +87,16 @@ async function reservations(c:Context,p:Profile,a:ReadAction,payload:ReadPayload
   if(old?.fingerprint===hash){save(c,READ_SOURCE,{...old,observedAt:payload.observedAt});if(b)ids.push(b.id);continue}
   need(!old||old.status!=='cancelled','Cancelled source reservation changed; owner review required',409)
   if(!b&&r.status==='confirmed'){
-   const request=await reservationCommand(c,'reservation.request',{propertyId:p.propertyId,channel:p.channel,guestName:r.guestName,start:r.start,end:r.end,...('guestEmail'in r?{guestEmail:r.guestEmail}:{}),...('guestPhone'in r?{guestPhone:r.guestPhone}:{})})
-   need(request&&'bookingId'in request&&request.bookingId,'Source reservation overlaps held inventory; owner review required',409)
-   b=c.data.bookings.find(b=>b.id===request.bookingId)!
+   const uid='channel-source-'+ref
+   applyChanges(c,p.propertyId,p.channel,[{kind:'add',uid,after:{uid,start:r.start,end:r.end,summary:r.guestName,guestName:r.guestName,cancelled:false}}])
+   b=c.data.bookings.find(b=>b.uid===uid&&b.propertyId===p.propertyId)!
    b.channelRef=r.reservationId;lifecycle(b).sourceId=r.reservationId
+   await reservationCommand(c,'booking.details',{id:b.id,revision:b.revision,guestName:r.guestName,guestEmail:r.guestEmail,guestPhone:r.guestPhone})
   }else if(b){
    need(b.status==='confirmed'&&!b.cancelled,'Source reservation has locally ended; owner review required',409)
-   if(b.start!==r.start||b.end!==r.end){need(r.status==='confirmed','Cancellation dates changed; owner review required',409);await reservationCommand(c,'reservation.move',{id:b.id,revision:b.revision,start:r.start,end:r.end})}
+   if(b.start!==r.start||b.end!==r.end)need(r.status==='confirmed','Cancellation dates changed; owner review required',409)
+   applyChanges(c,p.propertyId,p.channel,[{kind:r.status==='cancelled'?'cancel':'change',uid:b.uid,before:b,after:{uid:b.uid,start:r.start,end:r.end,summary:r.guestName,guestName:r.guestName,cancelled:r.status==='cancelled'}}])
    if(r.status==='confirmed')await reservationCommand(c,'booking.details',{id:b.id,revision:b.revision,guestName:r.guestName,arrivalTime:b.arrivalTime,guestEmail:r.guestEmail??b.guestEmail,guestPhone:r.guestPhone??b.guestPhone})
-   else await reservationCommand(c,'reservation.cancel',{id:b.id,revision:b.revision})
    b.revision=newId()
   }
   const row={...anchor(p,a,id,payload.observedAt,hash),status:r.status,...(b?{bookingId:b.id,bookingRevision:b.revision}:{})}
