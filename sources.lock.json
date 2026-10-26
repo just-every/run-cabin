@@ -5219,8 +5219,12 @@
       "sha256": "09be7a93e9507f75d1a30dde31e9271f76127b25b0d45375a82b1be8a9201b76",
       "executable": false
     },
+    "tests/recovery-sandbox-connection.mjs": {
+      "sha256": "06117f37adce0fe7ccadaec2a73c3ea9c7f08da41d76b1cddbb17262f68d5b7c",
+      "executable": false
+    },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "2504f1bf6fa04663184a1abc0682ce7c33021bae16dc233bf8f2bd1bd5ad3531",
+      "sha256": "e94628d2042b5b4d076b1b99f499db668fce8521419ea17e9d7d4fd55f1aafa1",
       "executable": false
     },
     "tests/recovery.test.mjs": {
