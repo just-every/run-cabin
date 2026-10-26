@@ -19,11 +19,11 @@ try{
  const existingAccounts=await query('Account'),accountIds={}
  const specs={cash:['Bank','Checking'],receivable:['Other Current Asset','OtherCurrentAssets'],advances:['Other Current Liability','OtherCurrentLiabilities'],damageAuthorization:['Other Current Asset','OtherCurrentAssets'],damageHolds:['Other Current Liability','OtherCurrentLiabilities'],ownerLiability:['Other Current Liability','OtherCurrentLiabilities'],managerRevenue:['Income','ServiceFeeIncome'],channelFees:['Expense','OtherMiscellaneousServiceCost'],expenses:['Expense','OtherMiscellaneousServiceCost'],taxes:['Other Current Liability','OtherCurrentLiabilities'],guestCredits:['Other Current Liability','OtherCurrentLiabilities'],vendorPayable:['Other Current Liability','OtherCurrentLiabilities'],processorFunds:['Other Current Asset','OtherCurrentAssets'],allocationClearing:['Other Current Asset','OtherCurrentAssets'],ownerReserves:['Other Current Liability','OtherCurrentLiabilities'],managerExpenses:['Expense','OtherMiscellaneousServiceCost']}
  for(const [key,[AccountType,AccountSubType]]of Object.entries(specs)){const Name='Synthetic Cabin '+key,old=existingAccounts.find(a=>a.Name===Name);const a=old??(await api('account',{Name,AccountType,AccountSubType})).Account;accountIds[key]=a.Id}
+ const preferences=(await api('preferences')).Preferences
+ if(!preferences.AccountingInfoPrefs?.ClassTrackingPerTxnLine)await api('preferences',{...preferences,AccountingInfoPrefs:{...preferences.AccountingInfoPrefs,TrackDepartments:preferences.AccountingInfoPrefs?.TrackDepartments??false,ClassTrackingPerTxnLine:true,ClassTrackingPerTxn:false}})
  const classes=await query('Class'),vendors=await query('Vendor')
  const cls=classes.find(c=>c.Name==='Synthetic Cabin Cedar Creek')??(await api('class',{Name:'Synthetic Cabin Cedar Creek'})).Class
  const vendor=vendors.find(v=>v.DisplayName==='Synthetic Cabin Morgan Carter')??(await api('vendor',{DisplayName:'Synthetic Cabin Morgan Carter'})).Vendor
- const preferences=(await api('preferences')).Preferences
- if(!preferences.AccountingInfoPrefs?.ClassTrackingPerTxnLine)await api('preferences',{...preferences,AccountingInfoPrefs:{...preferences.AccountingInfoPrefs,TrackDepartments:preferences.AccountingInfoPrefs?.TrackDepartments??false,ClassTrackingPerTxnLine:true,ClassTrackingPerTxn:false}})
  const catalog=await h.cmd('qbo.catalog',{}),b=await qboBooks(h)
  await h.cmd('qbo.mapping.approve',{propertyId:b.home.id,classId:cls.Id,vendorId:vendor.Id,accounts:accountIds,consent:true})
  const preview=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'}),sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true})
