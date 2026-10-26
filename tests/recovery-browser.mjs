@@ -34,8 +34,18 @@ try{
    return name.startsWith('message.')?(await h.state()).messages.find(r=>r.id===input.id):(await h.state()).recoveries.find(r=>r.id===input.id)
   }
   async function screenshot(target,name){
-   assert.ok(await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Screen fits '+width)
+   await target.screenshot({path:`${directory}/${name}-${width}.png`,fullPage:true})
+   const fit=await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)
+   if(!fit)console.log(JSON.stringify(await target.locator('main *').evaluateAll(els=>els.filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,15).map(el=>({tag:el.tagName,class:el.className,name:el.getAttribute('name'),width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right}))))
+   assert.ok(fit,'Screen fits '+width)
    for(const control of await target.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Icon-only controls need a tooltip')
+   const tooltip=target.locator('[data-tooltip]').filter({visible:true}).first()
+   if(await tooltip.count()){
+    await tooltip.hover();await target.waitForTimeout(400)
+    assert.equal(await tooltip.evaluate(el=>getComputedStyle(el,'::after').visibility),'visible')
+    await target.mouse.move(0,0);await tooltip.focus()
+    assert.equal(await tooltip.evaluate(el=>getComputedStyle(el,'::after').opacity),'1','Keyboard focus shows the tooltip immediately')
+   }
    const axe=await new AxeBuilder({page:target}).include('main').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()
    assert.deepEqual(axe.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[])
    await target.screenshot({path:`${directory}/${name}-${width}.png`,fullPage:true})

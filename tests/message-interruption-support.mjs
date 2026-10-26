@@ -4,7 +4,7 @@ export async function interruptedMessageJourney({screens=async()=>{},act}={}){
  let hold=false,started,release,phase='before',noticeEmail='';const accepted=[]
  let reached,response
  const arm=()=>{reached=new Promise(r=>{started=r});response=new Promise(r=>{release=r});hold=true}
- const h=await harness({now:'2026-10-26T14:00:00Z',auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{
+ const h=await harness({now:'2026-10-26T14:00:00Z',assets:true,auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{
   assert.equal(new URL(request.url).hostname,'mail.cabin.test')
   const message=await request.json()
   if(hold&&(message.subject==='Recovery follow-up'||noticeEmail&&message.to.includes(noticeEmail))){

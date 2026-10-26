@@ -204,7 +204,7 @@
       "executable": false
     },
     "docs/financial-exceptions.md": {
-      "sha256": "ea819299f0120eb079692145f37007c209e358417295750bdfaf8efe94fa9fbc",
+      "sha256": "0f756e4e82864a26805c5db95d697c9d0f5694aa825cf174292b5c48d5331d10",
       "executable": false
     },
     "docs/free-source.md": {
@@ -356,7 +356,7 @@
       "executable": false
     },
     "docs/stay-recovery.md": {
-      "sha256": "e9b5146081f287bddf7850531306e727281c1c510898a91cf96cd4238f89fc95",
+      "sha256": "2e1daff6b7e897eeff0579ab406a4d81a392fe1ec1aa08956ffdd183f2e2dfaf",
       "executable": false
     },
     "docs/taxes.md": {
@@ -748,7 +748,7 @@
       "executable": false
     },
     "public/ops.css": {
-      "sha256": "fa6eaf1bd0856e3e6ce7652cd57341d6f495f90507de36cdf16face730d9edb0",
+      "sha256": "2472ddccfee73681c0f22913c0af4ca8ccb077b5ff0af58e15d7b44559769e7b",
       "executable": false
     },
     "public/owners.css": {
@@ -4900,7 +4900,7 @@
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "98b50374da1d17164af00d6a5c48bfbc2833832d140ea1c3e52a2246affa6f4b",
+      "sha256": "e13cabde8db6f6782c2b8d1abcc29907ce0e741a3288c0b01a7bb8ecefa31036",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
@@ -5124,7 +5124,7 @@
       "executable": false
     },
     "tests/message-interruption-support.mjs": {
-      "sha256": "290da384ad01e1e41fa36fd9d36ce55c222602626875e0a0b12b280af733cbfa",
+      "sha256": "066299822b709946e7ab7ec0b7c003e6e5e6195080eb4dee7cbe920b4eb6de88",
       "executable": false
     },
     "tests/month-close.test.mjs": {
@@ -5208,7 +5208,7 @@
       "executable": false
     },
     "tests/recovery-alternative-support.mjs": {
-      "sha256": "942cf3e5ccc8ee07abff18f6dd0349cc59e5cda01c3eb435dddb500fad3a4783",
+      "sha256": "563a5efbbd0ac3b9a4a85faa09392af4a1c61bfde914cc0b974d1d69bd3711ae",
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
@@ -5216,11 +5216,11 @@
       "executable": false
     },
     "tests/recovery-browser.mjs": {
-      "sha256": "ee3099babfee1f505fac98556aef2e5817e3c65ceac7e729f105353d4b6e1698",
+      "sha256": "f3b1cd4c63f0d5636de72c0c37323d21074fbf8991882fbbc7a47bf67c679dc9",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "4a78d5459334cc31c2fdad845f36953a04540162a2fc35576fcbe01228161304",
+      "sha256": "d792fcf5508ff993c6f533c47cab5f4927e70fcf2829f75a47706acaae93ee36",
       "executable": false
     },
     "tests/recovery.test.mjs": {

@@ -6,7 +6,7 @@ const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64')
 const now='2026-10-26T14:00:00Z',start='2026-10-26',end='2026-10-29'
 const calendar='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:synthetic-cabin-1\r\nDTSTART;VALUE=DATE:20261026\r\nDTEND;VALUE=DATE:20261028\r\nSUMMARY:Channel collision\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'
 export async function alternativeRecoveryJourney({screens=async()=>{},act,guestAct}={}){
- const h=await harness({now})
+ const h=await harness({now,assets:true})
  try{
   const command=(name,input,cookie=h.owner,status=200)=>act&&cookie===h.owner&&status===200&&name.startsWith('recovery.')?act(h,name,input):h.cmd(name,input,cookie,status)
   const home=await h.cmd('property.save',{name:'Cedar Creek Cabin',ownerName:'Morgan Carter',ownerEmail:'morgan@stay.example',commissionBps:2000})

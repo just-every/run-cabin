@@ -37,6 +37,15 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   // A direct booking enters the identical commit hook and closes all three OTAs.
   const direct=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
   assert.equal((await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close').length,3)
+  const original=await h.person('Original'),backup=await h.person('Backup')
+  await h.cmd('home.settings',{propertyId:home.id,address:'12 Lake Road',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:original.id,checklist:['Ready']})
+  await h.cmd('recovery.settings',{propertyId:home.id,cleanerIds:[original.id,backup.id],auto:false,creditLimitCents:0,cleaningLimitCents:0})
+  let recovery=await h.cmd('recovery.open',{bookingId:direct.bookingId,trigger:'cleaner_cancelled',reason:'Replacement preparation must not skip pending channel closure'})
+  recovery=await h.cmd('recovery.propose',{id:recovery.id,revision:recovery.revision,cleanerId:backup.id,creditCents:0,extraCleaningCents:0,why:'Approved backup; channel acknowledgements remain outstanding'})
+  await h.cmd('recovery.approve',{id:recovery.id,revision:recovery.revision});recovery=(await h.state()).recoveries.find(r=>r.id===recovery.id)
+  const refused=await h.cmd('recovery.close',{id:recovery.id,revision:recovery.revision},h.owner,409)
+  assert.match(refused.error,/has not confirmed the current closure/)
+
  }finally{await edge.close();await h.close()}
 })
 
