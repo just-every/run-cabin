@@ -352,7 +352,7 @@
       "executable": false
     },
     "docs/statements.md": {
-      "sha256": "b7e05490b62697aa868847e1ff705fb8141a0ca2c9372fd366a700fa90c9f0af",
+      "sha256": "0d7b6c7f68e59647dc4b0c7c035d2ec0275a4c3b532e22b72c405c7f0e02792e",
       "executable": false
     },
     "docs/stay-recovery.md": {
@@ -2696,7 +2696,7 @@
       "executable": false
     },
     "src/cabin/ui/books.ts": {
-      "sha256": "846b4b2069b760e1749487296f6023c8b15692fd819a823fd68f3603958356c1",
+      "sha256": "b06f96b71da5aafcbaa5f2cfff5d855f5c33557e491ef1408e63afcda55481ca",
       "executable": false
     },
     "src/cabin/ui/calendar-detail.ts": {
