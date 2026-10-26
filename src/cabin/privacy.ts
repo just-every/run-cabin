@@ -49,7 +49,7 @@ export async function privacyCommand(c:Context,p:Record<string,unknown>,name='pr
   for(const g of c.data.guests){g.facts=g.facts.filter(f=>!f.propertyIds.includes(id));g.consents=g.consents.filter(v=>v.propertyId!==id)}
   const ids=[] as string[];for(const kind of kinds)for(const row of c.data[kind])if('propertyId' in row&&row.propertyId===id)ids.push(row.id)
   for(const bookingId of bookingIds)c.queries.push(query('DELETE FROM cb_guest_challenges WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_sessions WHERE booking_id=?',bookingId),query('DELETE FROM cb_guest_limits WHERE booking_id=?',bookingId))
-  c.queries.push(query('DELETE FROM cb_guest_guide_files WHERE property_id=?',id))
+  c.queries.push(query('DELETE FROM cb_guest_guide_files WHERE property_id=?',id),query('DELETE FROM cb_qbo_catalog'))
   await eraseVerification(c,bookingIds)
   for(const v of cases(c.data).filter(v=>bookingIds.has(v.bookingId))){ids.push(v.id,'guest:'+v.bookingId)}
   for(const subject of [id,...ids])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))

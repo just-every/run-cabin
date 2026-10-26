@@ -352,7 +352,7 @@
       "executable": false
     },
     "docs/statements.md": {
-      "sha256": "d046ae2addd72d6270df1e2da81483d9640cb6255d2e3d38f7b72e52d8d91c96",
+      "sha256": "b7e05490b62697aa868847e1ff705fb8141a0ca2c9372fd366a700fa90c9f0af",
       "executable": false
     },
     "docs/stay-recovery.md": {
@@ -1348,7 +1348,7 @@
       "executable": false
     },
     "src/cabin/archive-policy.mjs": {
-      "sha256": "abf931202d60355716e7cf2aa107ca2a560dd0804af816e505fcbdb2a49afce7",
+      "sha256": "9e5615af4cc894a99184bd36bf4c65768ca6adb9e275636a3db6a46e3e3d274c",
       "executable": false
     },
     "src/cabin/archive/inter-font.json": {
@@ -2328,7 +2328,7 @@
       "executable": false
     },
     "src/cabin/privacy.ts": {
-      "sha256": "d83737d2b2e92a27a8302e1adb37d56e65691906c7ca2f48fa0d4d75d2d72e1f",
+      "sha256": "2799a425481b98264830f2dba13d11002f7b4c0bc2c4da050ba76689b65a621c",
       "executable": false
     },
     "src/cabin/privacy/attachments.ts": {
