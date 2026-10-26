@@ -1472,7 +1472,7 @@
       "executable": false
     },
     "src/cabin/connections/credentials.ts": {
-      "sha256": "02a4f64801b91cd761ac7e3bdbd70e73792a20e5dc1bdce2632c9477b742e1c5",
+      "sha256": "967991ae9fdd574601ab7fce6afb911e54da94e2cf812365f4d76e79eb9b74de",
       "executable": false
     },
     "src/cabin/connections/guard.ts": {
@@ -1492,7 +1492,7 @@
       "executable": false
     },
     "src/cabin/connections/security-ui.ts": {
-      "sha256": "804fef3b542b968679ea331dbd92ec94449d86d63e71f18a9451f648348ecb96",
+      "sha256": "68b61da469a3af1b80f5e168dd6909f8e2b0da9ea25cfe31034afb9d76ac10a2",
       "executable": false
     },
     "src/cabin/connections/store.ts": {

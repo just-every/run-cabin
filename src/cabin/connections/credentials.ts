@@ -87,6 +87,7 @@ export async function securityCommand(env: Bindings, actor: Actor, input: Record
   }
   if (operation === 'revoke') credential = null
   const revision = newId(), enabled = operation === 'revoke' ? 0 : 1
+  if(id==='quickbooks'&&operation==='revoke')c.queries.push(query('DELETE FROM cb_qbo_connection'),query('DELETE FROM cb_qbo_app'),query('DELETE FROM cb_qbo_oauth'))
   c.queries.push(query('INSERT INTO cb_provider_security(id,revision,enabled,actions,property_ids,credential_sealed,changed_by,changed_at) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,enabled=excluded.enabled,actions=excluded.actions,property_ids=excluded.property_ids,credential_sealed=excluded.credential_sealed,changed_by=excluded.changed_by,changed_at=excluded.changed_at', id, revision, enabled, JSON.stringify([...new Set(actions)]), JSON.stringify([...new Set(properties)]), credential, actor.id, c.now))
   c.queries.push(query('INSERT INTO cb_provider_sharing(id,enabled,revision,changed_at) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET enabled=excluded.enabled,revision=excluded.revision,changed_at=excluded.changed_at', id, enabled, newId(), c.now))
   c.audit = [{kind:'provider-connection', id, revision, result:operation === 'revoke' ? 'revoked' : operation === 'credential' ? 'credential-rotated' : 'scoped-grant'}]
