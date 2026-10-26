@@ -23,6 +23,7 @@ try{for(const width of [1440,390]){
   const sync=batches.locator('form[action*="qbo.sync"]');await expect(sync.getByRole('checkbox')).not.toBeChecked();await sync.getByRole('checkbox').check();await sync.getByRole('button',{name:'Sync approved batch'}).click();await expect(batches).toContainText('reconciled');await shot('posted',batches)
   await batches.getByText('Journal identities and reconciliation',{exact:true}).click();await expect(batches).toContainText(edge.entries[0].Id);await shot('identities',batches)
   edge.entries[0].PrivateNote='Synthetic external accountant edit';edge.entries[0].SyncToken='1';await batches.getByRole('button',{name:'Reconcile QuickBooks',exact:true}).click();await batches.getByText('Journal identities and reconciliation',{exact:true}).click();await expect(batches).toContainText('externally edited');await shot('conflict',batches);assert.equal(edge.entries.length,data.source.length)
+  await page.goto(h.origin+'/app/channels');const sharing=page.locator('section').filter({has:page.getByRole('heading',{name:'Your data & connected providers',exact:true})});await sharing.locator('summary').filter({hasText:'QuickBooks Online'}).click();await expect(sharing).toContainText('owner vendor references');await shot('connections',sharing)
   const saved=await h.send('/api/cabin/qbo/state',undefined,h.owner);assert.equal(saved.value.batches[0].reconciled,false)
  }finally{await context.close();await h.close()}
 }}finally{await browser.close()}
