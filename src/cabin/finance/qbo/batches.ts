@@ -70,7 +70,7 @@ export async function sync(env:Bindings,actor:Actor,input:Record<string,unknown>
   need(input.revision===b.revision,'Review this exact batch revision',409);need(input.consent===true||input.consent==='on','Explicit approval is required before posting to QuickBooks')
   need(await sha(JSON.stringify(await sources(env,b.propertyId,b.month)))===b.sourceSha256,'The month changed. Preview a new batch; saved source identities will be reused.',409)
   const mappings=await rows<Mapping>(env.DB,'mappings')
-  for(const id of b.entryIds){const e=await entry(env.DB,id);if(e.status==='preview')need(mappings.some(m=>m.propertyId===b.propertyId&&m.realm===b.realm&&m.mode===b.mode&&m.revision===e.mappingRevision),'The approved mapping changed. Reconcile this saved preview before sending.',409)}
+  for(const id of b.entryIds){const e=await entry(env.DB,id);need(await fingerprint(e.payload)===b.entrySha256[id],'The preview mapping changed. Review a new batch before continuing.',409);if(e.status==='preview')need(mappings.some(m=>m.propertyId===b.propertyId&&m.realm===b.realm&&m.mode===b.mode&&m.revision===e.mappingRevision),'The approved mapping changed. Reconcile this saved preview before sending.',409)}
   b.approvedAt=new Date().toISOString();b.approvedBy=actor.id;await env.DB.prepare('UPDATE cb_qbo_batches SET data=? WHERE id=?').bind(JSON.stringify(b),b.id).run();await audit(env.DB,actor,'qbo.sync.approve',b.id,b.propertyId,'approved')
  }
  // Bounded work per request; explicit repeat resumes the same durable identities.

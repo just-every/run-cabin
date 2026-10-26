@@ -1804,7 +1804,7 @@
       "executable": false
     },
     "src/cabin/finance/qbo/batches.ts": {
-      "sha256": "cf28d9b79ecec02213fba710e173842afea472173aebea5efc0c3a8043900662",
+      "sha256": "fb41ec47fa8638e54e1363c81c7b58a0cdc1e0a935df70ea70858a8f0b4179dd",
       "executable": false
     },
     "src/cabin/finance/qbo/client.ts": {
