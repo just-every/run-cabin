@@ -115,7 +115,7 @@ export async function deliverGuestMessages(env: Bindings) {
    m.status='failed';m.detail=UNCERTAIN_SEND;m.revision=newId()
    if(scheduled?.status==='sending'&&scheduled.messageId===m.id){scheduled.status='failed';scheduled.reason=UNCERTAIN_SEND;scheduled.revision=newId();const b=c.data.bookings.find(b=>b.id===scheduled.bookingId);if(b)lifecycleEscalation(c,b,scheduled.id,UNCERTAIN_SEND,env.OWNER_EMAIL)}
   }
-  for (const r of c.data.scheduled.filter(r=>r.status==='sending'&&!c.data.messages.some(m=>m.id===r.messageId)&&(!r.attemptedAt||!Number.isFinite(Date.parse(r.attemptedAt))||Date.parse(r.attemptedAt)<=Date.parse(c.now)-5*60_000))) {
+  for (const r of c.data.scheduled.filter(r=>r.status==='sending'&&!c.data.messages.some(m=>m.id===r.messageId&&m.status==='sending'&&m.send?.state==='started'&&m.send.expiresAt>c.now)&&(!r.attemptedAt||!Number.isFinite(Date.parse(r.attemptedAt))||Date.parse(r.attemptedAt)<=Date.parse(c.now)-5*60_000))) {
    r.status='failed';r.reason=UNCERTAIN_SEND;r.revision=newId()
    const b=c.data.bookings.find(b=>b.id===r.bookingId);if(b)lifecycleEscalation(c,b,r.id,UNCERTAIN_SEND,env.OWNER_EMAIL)
   }

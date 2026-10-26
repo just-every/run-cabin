@@ -99,7 +99,10 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='recovery.ai.test')return result.message
  if(name==='recovery.wording')return 'Wording drafted. Review this exact revision before approval.'
  if(name==='recovery.open')return 'Recovery case opened. Review and propose the next action below.'
- if(name==='recovery.close')return 'Readiness checked. The case closes when the guest confirmation is accepted.'
+ if(name==='recovery.close')return 'Readiness checked. The guest confirms the home and access on their stay page, then a person records the follow-up check.'
+ if(name==='recovery.recurrence')return result.status==='closed'?'Guest confirmation and follow-up verified. Recovery closed.':'Follow-up recorded. Resolve the remaining evidence before closing.'
+ if(name==='message.reconcile')return 'Provider outcome recorded. Accepted attempts are not resent; a confirmed absent effect still requires an explicit retry.'
+ if(name==='recovery.approve'&&result.status==='escalated')return 'Alternative remains escalated for source reconciliation. The reservation, access and owner balance were not changed.'
  if(name==='recovery.approve'&&state.turnovers.find((t:any)=>t.id===result.turnoverId)?.status==='unassigned')return 'Recovery approved. The replacement cleaner has an offer and must accept after capacity and travel checks. The guest update and owner adjustment are recorded.'
  if(name==='recovery.approve')return 'Approved and applied. The replacement cleaner is assigned and emailed, the guest has a new door code and the update, and the owner adjustment is frozen.'
  if(name==='recovery.reject')return 'Proposal rejected. Nothing was applied; the case is open for a new plan.'

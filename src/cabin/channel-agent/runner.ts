@@ -58,7 +58,8 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
   const actions=await rows<Action>(env.DB,ACTION),profiles=await rows<Profile>(env.DB,PROFILE)
   if(p.op==='claim'){
    for(const a of actions.filter(a=>a.status==='running'&&a.leaseUntil!<c.now)){
-    a.status='uncertain';a.completedAt=c.now;delete a.lease;save(c,ACTION,a)
+    a.status='uncertain';a.completedAt=c.now;a.detail='Browser work was interrupted before its completion receipt. Check the source outcome; Cabin will not repeat it.';delete a.lease;delete a.leaseUntil;save(c,ACTION,a)
+    if(!c.data.notices.some(n=>n.recordId===a.id&&n.subject==='Interrupted channel work'))c.data.notices.push({id:newId(),revision:newId(),propertyId:a.propertyId,memberId:actor.id,email:env.OWNER_EMAIL,kind:'inbox',recordId:a.id,subject:'Interrupted channel work',text:a.detail,status:'pending',detail:null,createdAt:c.now,sentAt:null})
     const profile=profiles.find(r=>r.id===a.profileId);if(profile){profile.status='needs_you';profile.challenge='uncertain';profile.updatedAt=c.now;save(c,PROFILE,profile)}
    }
    const candidate=actions.find(a=>a.status==='queued'&&a.nextAt<=c.now&&!actions.some(o=>o.profileId===a.profileId&&o.status==='running')&&profiles.some(r=>r.id===a.profileId&&(a.kind==='connect'?r.status==='connecting':r.status==='connected')))

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import {harness} from './harness.mjs'
 export async function interruptedMessageJourney({screens=async()=>{},act}={}){
- let hold=false,started,release,phase='before';const accepted=[]
+ let hold=false,started,release,phase='before',noticeEmail='';const accepted=[]
  let reached,response
  const arm=()=>{reached=new Promise(r=>{started=r});response=new Promise(r=>{release=r});hold=true}
  const h=await harness({now:'2026-10-26T14:00:00Z',auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{
   assert.equal(new URL(request.url).hostname,'mail.cabin.test')
   const message=await request.json()
-  if(hold&&message.subject==='Recovery follow-up'){
+  if(hold&&(message.subject==='Recovery follow-up'||noticeEmail&&message.to.includes(noticeEmail))){
    hold=false;if(phase==='after')accepted.push(message.deliveryId);started();await response
    if(phase==='before')return new Response('Interrupted before acceptance',{status:503})
   }else accepted.push(message.deliveryId)
@@ -50,6 +50,19 @@ export async function interruptedMessageJourney({screens=async()=>{},act}={}){
     row=(await h.state()).messages.find(m=>m.id===id);assert.equal(row.status,'sent');assert.equal(accepted.filter(value=>value===id).length,1)
    }
    await screens(h,'reconciled-'+phase,row)
+  }
+  // Team notices use the same acceptance boundary and remain assigned without a blind resend.
+  for(phase of ['before','after']){
+   const cleaner=await h.person('Notice'+phase);noticeEmail=cleaner.email
+   const turnover=(await h.state()).turnovers.find(t=>t.status==='unassigned'||t.status==='approved')
+   arm();sending=h.cmd('turnover.assign',{id:turnover.id,revision:turnover.revision,cleanerId:cleaner.id})
+   await Promise.race([reached,new Promise((_,reject)=>setTimeout(()=>reject(Error('Team notice did not reach its provider boundary')),15000))])
+   let row=(await h.state()).notices.find(n=>n.status==='sending'&&n.email===noticeEmail);assert.ok(row.send.attemptId)
+   await h.db.prepare("UPDATE cb_records SET data=json_set(data,'$.send.expiresAt',?) WHERE id=?").bind('2026-10-26T13:59:00Z',row.id).run()
+   await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});release();await sending;sending=null
+   row=(await h.state()).notices.find(n=>n.id===row.id);assert.equal(row.status,'failed');assert.equal(row.send.state,'uncertain');assert.equal(row.send.assignedEmail,h.auth.OWNER_EMAIL)
+   const count=accepted.filter(id=>id===row.id).length;await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(accepted.filter(id=>id===row.id).length,count)
+   noticeEmail=''
   }
  }finally{release?.();if(sending)await sending.catch(()=>{});await h.close()}
 }

@@ -165,3 +165,27 @@ test('SYNC-011 SYNC-007: changed source identity, future payouts, unavailable pa
   edge.sourceEdits={reservationId:'STAY-200',guestName:'Taylor Wilson',email:'taylor@stay.example',start:'2026-12-20',end:'2026-12-23'};await read('reservations');const later=(await h.state()).bookings.find(b=>b.channelRef==='STAY-200');await h.cmd('booking.details',{id:later.id,revision:later.revision,guestName:'Taylor Wilson corrected by host'});await read('reservations','needs_you');assert.equal((await h.state()).bookings.find(b=>b.id===later.id).guestName,'Taylor Wilson corrected by host')
  }finally{await edge.close();await h.close()}
 })
+
+test('interrupted browser work before or after channel acceptance expires into assigned uncertainty and never repeats the action',async()=>{
+ for(const phase of ['before','after']){
+  const h=await harness({now:'2026-10-26T14:00:00Z'}),edge=await channelEdge()
+  try{
+   const {home,runner}=await provision(h,edge,['vrbo'])
+   await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
+   const {job}=await runner({op:'claim'}),before=edge.writes
+   if(phase==='before')edge.authorize=async()=>{throw Error('Runner interrupted before the channel action')}
+   const result=await edge.run(job)
+   assert.equal(result.outcome,phase==='after'?'succeeded':'failed')
+   assert.equal(edge.writes>before,phase==='after')
+   // Drop the runner completion response at the process boundary; only the provider retains any accepted effect.
+   await h.db.prepare("UPDATE cb_records SET data=json_set(data,'$.leaseUntil',?) WHERE id=?").bind('2026-10-26T13:59:00Z',job.id).run()
+   await h.restart();const attempts=edge.writes
+   assert.equal((await runner({op:'claim'})).job,null);assert.equal((await runner({op:'claim'})).job,null)
+   assert.equal(edge.writes,attempts)
+   const state=await h.state(),current=state.channelAgent.actions.find(a=>a.id===job.id)
+   assert.equal(current.status,'uncertain');assert.ok(state.notices.some(n=>n.recordId===job.id&&n.email===h.auth.OWNER_EMAIL))
+   await runner({op:'complete',id:job.id,lease:job.lease,...result},409)
+   await h.cmd('channelAgent.retry',{id:job.id},h.owner,409)
+  }finally{await edge.close();await h.close()}
+ }
+})

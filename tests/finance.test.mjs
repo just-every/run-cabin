@@ -96,7 +96,7 @@ test('REPORT-001: filtered mixed-channel reports reconcile occupancy, bases, exc
 }))
 
 
-const sharingMail={fail:false,attempts:[]}
+const sharingMail={fail:false,attempts:[],interrupt:false,accepted:[]}
 test('REPORT-002: approved owner and team schedules freeze scoped artifacts, refuse changed access and assign failed delivery',()=>run(async h=>{
  sharingMail.fail=false;sharingMail.attempts=[]
  const {reportBooks,reportMonth}=await import('./reports-support.mjs'),b=await reportBooks(h),manager=await h.person('SharingManager','manager'),cleaner=await h.person('SharingCleaner')
@@ -143,6 +143,20 @@ test('REPORT-002: approved owner and team schedules freeze scoped artifacts, ref
  await h.db.prepare('INSERT INTO cb_report_runs(id,schedule_id,due_at,data) VALUES(?,?,?,?)').bind(interrupted.id,interrupted.scheduleId,interrupted.dueAt,JSON.stringify(interrupted)).run()
  const sentBefore=sharingMail.attempts.length;await h.restart();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});state=await sharing()
  assert.equal(state.reportRuns.find(r=>r.id===interrupted.id).status,'generation_failed');assert.ok(state.reportFollowups.some(f=>f.runId===interrupted.id&&f.assignedTo));assert.equal(sharingMail.attempts.length,sentBefore)
+ // Actual submission interruption on either side of provider acceptance never replays a scheduled occurrence.
+ for(const phase of ['before','after']){
+  const boundarySaved=await h.cmd('report.save',{name:'Interrupted delivery '+phase,filters})
+  const boundarySchedule=await h.cmd('report.schedule',{...base,savedReportId:boundarySaved.id,savedReportRevision:boundarySaved.revision,recipientKind:'member',recipientMemberId:manager.id})
+  sharingMail.interrupt=phase;await due([boundarySchedule.id]);sharingMail.interrupt=false
+  const boundaryRun=(await sharing()).reportRuns.find(r=>r.scheduleId===boundarySchedule.id)
+  assert.equal(boundaryRun.status,'delivery_failed');assert.ok(boundaryRun.artifact)
+  assert.equal(sharingMail.accepted.filter(id=>id===boundaryRun.id).length,phase==='after'?1:0)
+  const attempts=sharingMail.attempts.filter(m=>m.deliveryId===boundaryRun.id).length
+  await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal(sharingMail.attempts.filter(m=>m.deliveryId===boundaryRun.id).length,attempts)
+  const assigned=(await sharing()).reportFollowups.find(f=>f.runId===boundaryRun.id);assert.ok(assigned.assignedEmail)
+  await h.cmd('report.followup.resolve',{id:assigned.id,revision:assigned.revision,resolution:phase==='after'?'Provider receipt confirms one accepted delivery; do not send again.':'Provider history confirms no accepted delivery; retain the paused occurrence for a fresh explicit scheduling decision.'})
+ }
  // Owner and member revocation also apply to the already-frozen download doors.
  await h.cmd('property.save',{...(await h.state()).properties.find(p=>p.id===b.p.id),ownerEmail:'changed@stay.example'});assert.equal((await h.send('/owners/reports/'+a.id,undefined,ownerCookie)).status,403)
  await h.cmd('member.save',{id:manager.id,revision:manager.revision,name:manager.name,email:manager.email,role:'manager',active:false});assert.ok([401,403].includes((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,manager.cookie)).status))
@@ -150,7 +164,7 @@ test('REPORT-002: approved owner and team schedules freeze scoped artifacts, ref
  await erase(h,{entity:'property',id:current.id,revision:current.revision})
  assert.equal((await h.send('/api/cabin/report-artifacts/'+team.id,undefined,h.owner)).status,404)
  assert.equal((await sharing()).reportSchedules.filter(s=>s.propertyIds.includes(b.p.id)).length,0)
-},{auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{assert.equal(new URL(request.url).origin,'https://mail.cabin.test');const message=await request.json();sharingMail.attempts.push(message);return sharingMail.fail?new Response('Synthetic refusal',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-mail-'+sharingMail.attempts.length})}}))
+},{auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{assert.equal(new URL(request.url).origin,'https://mail.cabin.test');const message=await request.json();sharingMail.attempts.push(message);if(sharingMail.interrupt){if(sharingMail.interrupt==='after')sharingMail.accepted.push(message.deliveryId);return new Response('Interrupted submission',{status:503})}return sharingMail.fail?new Response('Synthetic refusal',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-mail-'+sharingMail.attempts.length})}}))
 
 test('portfolio questions reconcile a falling owner net to current and comparison report sources without changing the books',()=>run(async h=>{
  const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h),input={question:'Why did this property’s owner net fall?',filters:b.filters},before=await h.state()

@@ -6,7 +6,7 @@ import { ZONES, time12 } from '../clock'
 import { knownGuest } from './calendar-grid'
 import { channelName } from '../inventory'
 import { checkoutInstant, checkoutTime, finishedLate } from '../turnover-window'
-import { when } from '../clock'
+import { when, instant } from '../clock'
 import { turnoverLockSetup } from './turnover-lock-setup'
 import { dispatchSettings, driveSettings, dispatchStatus, cleanerOffer, cleanerCancellation } from '../dispatch/ui'
 // Managers see every stay's turnover as Cabin dispatched it, with its window,
@@ -21,6 +21,7 @@ const codeOf = (s: any, t: any, holder: string) => {
 const stayOf = (s: any, id: string | null) => s.bookings.find((b: any) => b.id === id)
 const checkoutWait = (s: any, t: any) => {
   const b = stayOf(s, t.bookingId), settings = homeSettings(s, t.propertyId)
+  if(t.purpose==='arrival')return t.windowStart&&Date.now()<instant(t.windowStart,settings.timeZone)?`<p class="muted">Arrival preparation opens ${h(when(t.windowStart))} (${h(zoneName(settings.timeZone))} time).</p>`:''
   return b && Date.now() < checkoutInstant(settings, b) ? `<p class="muted">Guests have left and Mark ready open after check-out: ${h(when(checkoutTime(settings, b)))} (${h(zoneName(settings.timeZone))} time).</p>` : ''
 }
 /** A job reopened after it was marked ready says when and why. */
@@ -37,6 +38,7 @@ export function readyMessage(s: any, id: string | null) {
 }
 function after(s: any, t: any) {
   const stay = stayOf(s, t.bookingId), next = stayOf(s, t.nextBookingId)
+  if(t.purpose==='arrival')return `Arrival preparation before ${h(knownGuest(stay)??'the guest')} checks in. Complete this vacant-home checklist and photos within the approved window.`
   // Airbnb's calendar names no guest: say whose stay it is, never "Reserved" as a name.
   return `${stay ? `After ${h(knownGuest(stay) ?? `the ${channelName(stay.channel)} stay`)} checks out` : 'After check-out'} · ${next ? `next arrival ${h(knownGuest(next) ?? `(${channelName(next.channel)})`)}${t.windowEnd ? ` at ${h(time12(t.windowEnd.slice(11, 16)))}` : ''}` : 'no next arrival booked'}`
 }
@@ -48,7 +50,7 @@ function managerJob(s: any, t: any) {
   <p class="when"><strong>${h(windowText(t))}</strong> <span class="muted">${h(zoneName(homeSettings(s, t.propertyId).timeZone))}</span></p><p class="muted">${after(s, t)}${t.source === 'manual' ? ' · prepared by hand' : ''}</p>
   ${t.status === 'cancelled' ? `<p class="muted">${h(t.cancelReason ?? '')}</p>` : `<p>${t.cleanerId ? `Cleaner: <strong>${h(memberName(s, t.cleanerId))}</strong>` : '<strong>No cleaner assigned.</strong> Assign one, or set a default cleaner for this home below.'}</p>${noticeLine(s, t.id, t.cleanerId)}`}
   ${open || t.status === 'completed' ? `<div class="doors">${guest ? codeLine(s, guest, 'Guest code') : ''}${mine ? codeLine(s, mine, 'Cleaner code') : ''}</div>${guest?.link && guest.status === 'issued' ? `<p class="muted">Guest stay page with the code: <a href="/stay/${h(guest.link)}">${h(s.origin)}/stay/${h(guest.link.slice(0, 8))}…</a></p>` : ''}${lockNote(s, guest)}` : ''}
-  ${dispatchStatus(s, t)}${reopened(s, t)}${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : open ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), 'Record check-out now', 'class="quiet"') : ''}
+  ${dispatchStatus(s, t)}${reopened(s, t)}${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : open ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), t.purpose==='arrival'?'Confirm home is vacant':'Record check-out now', 'class="quiet"') : ''}
   ${assign && t.cleanerId ? `<details class="reassign"><summary>Reassign to another cleaner</summary>${assign}</details>` : assign}
   ${t.status === 'completed' ? `<p>Marked ready ${h(atHome(s, t.propertyId, t.completion?.completedAt))}${late(s, t) ? ` · <strong>${h(late(s, t))}</strong>` : ''} · photos ${t.completion?.photos?.length ?? 1} / ${t.photosRequired ?? 1}${t.completion?.caption ? ` · “${h(t.completion.caption)}”` : ''}</p>${photos(t.completion?.photos ?? [{ id: t.completion?.photoId }], 'Turnover photo')}` : ''}
   ${t.status === 'draft' && manager(s) ? `<p>Assigned to ${h(memberName(s, t.cleanerId))} · ${h(t.checklist.length)} checklist items</p>` + approve('turnover.approve', 'turnovers', t, 'Approve and assign turnover') : ''}
@@ -63,8 +65,8 @@ function cleanerJob(s: any, t: any) {
   const reported = s.tasks.filter((k: any) => k.turnoverId === t.id).map((k: any) => `<li>${h(k.title)} · ${h(k.status === 'open' ? `reported ${atHome(s, k.propertyId, k.raisedAt)}${k.blocking ? ', blocks the next arrival' : ''}` : 'fixed')}</li>`).join('')
   return `<article class="record job mine" id="turnover-${h(t.id)}"><div class="record-title"><h3>${h(propertyName(s, t.propertyId))}</h3>${turnoverChip(t)}</div>
   <p class="when"><strong>${h(windowText(t))}</strong></p><p class="address">${address(s, t.propertyId)}</p>${t.dispatch ? `<p>Accepted · ${h(t.dispatch.templateName)} · ${h(t.dispatch.durationMinutes)} work minutes · USD ${(t.dispatch.rateCents / 100).toFixed(2)}</p><p>${h(t.dispatch.instructions)}</p>` : ''}
-  ${t.status === 'approved' && code ? `<div class="doors">${codeLine(s, code, 'Your door code')}</div><p class="muted">Your code lasts up to six hours after check-out, ending sooner if the next guests arrive. For later cleaning, arrange access with your manager.</p>${lockNote(s, code)}` : ''}
-  ${reopened(s, t)}${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : t.status === 'approved' ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), 'Guests have left', 'class="quiet"') : ''}
+  ${t.status === 'approved' && code ? `<div class="doors">${codeLine(s, code, 'Your door code')}</div><p class="muted">Your code follows this approved work window and ends before guests arrive. For later cleaning, arrange access with your manager.</p>${lockNote(s, code)}` : ''}
+  ${reopened(s, t)}${t.checkedOut ? `<p class="checked-out">${h(checkedOut(s, t))}</p>` : t.status === 'approved' ? wait || form('turnover.checkout', 'turnovers', hidden('id', t.id), t.purpose==='arrival'?'The home is vacant':'Guests have left', 'class="quiet"') : ''}
   ${t.status === 'approved' ? (!wait ? done : '') + `<details class="report"><summary>Report something broken</summary>${report}</details>` : ''}
   ${t.status === 'completed' ? `<p>Marked ready · ${h(t.completion?.photos?.length ?? 1)} photos${late(s, t) ? ` · <strong>${h(late(s, t))}</strong>` : ''}</p>${photos(t.completion?.photos ?? [{ id: t.completion?.photoId }], 'Your photo')}<details class="report"><summary>Report something broken</summary>${report}</details>` : ''}
   ${cleanerCancellation(s, t)}${reported ? `<div class="reported"><p><strong>You reported</strong> · saved; your manager sees these under Maintenance</p><ul>${reported}</ul></div>` : ''}
