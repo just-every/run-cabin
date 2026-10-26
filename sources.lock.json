@@ -572,7 +572,7 @@
       "executable": false
     },
     "migrations/core/0064_quickbooks.sql": {
-      "sha256": "bbdecb9e79bd56020347c9118aae8d891d7fb498b66f4e29375218d6906fdba1",
+      "sha256": "477c8ea1566c90834292cdfebaec966fc55b81e5b3c4fb07cd37918681ac0f45",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -4908,7 +4908,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "2bff62154e7ff9e8ba4b2d883edfe6d551ce0103310d52b999c5e514c5246c5a",
+      "sha256": "48976637247b6f0d3ad629a136ddbe3f3b82ffe9f3e1be30d8be3b8f8e253677",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {

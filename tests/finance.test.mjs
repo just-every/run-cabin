@@ -242,7 +242,7 @@ test('QuickBooks owner-approved month sync reconciles source journals, survives 
  await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});assert.equal(qbo.entries.length,b.source.length);assert.equal(qbo.writes.length,writes)
  const raw=await h.send('/api/cabin/state',undefined,h.owner);assert.ok(!raw.text.includes('synthetic-cabin-access-'));assert.ok(!raw.text.includes('synthetic-cabin-refresh-'));assert.equal((await h.state(manager.cookie)).qbo,null)
  const connection=await h.db.prepare('SELECT sealed FROM cb_qbo_connection').first();assert.ok(!connection.sealed.includes('synthetic-cabin-access-'))
- await h.cmd('provider.sharing',{id:'quickbooks',enabled:false,revision:''})
+ await h.cmd('provider.sharing',{id:'quickbooks',enabled:false,revision:'initial'})
  await h.cmd('qbo.reconcile',{id:preview.id},h.owner,409)
  await h.cmd('provider.sharing',{id:'quickbooks',enabled:true,revision:(await h.state()).sharing.find(s=>s.id==='quickbooks').revision,confirm:'yes'})
  // A revoked grant cannot authorize a new journal and cannot duplicate accepted work.

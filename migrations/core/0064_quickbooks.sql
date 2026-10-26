@@ -5,3 +5,4 @@ CREATE TABLE cb_qbo_entries (id TEXT PRIMARY KEY, realm TEXT NOT NULL, source_id
 CREATE TABLE cb_qbo_batches (id TEXT PRIMARY KEY, property_id TEXT NOT NULL, data TEXT NOT NULL);
 CREATE TABLE cb_qbo_catalog (realm TEXT PRIMARY KEY, data TEXT NOT NULL);
 CREATE TABLE cb_qbo_app (id INTEGER PRIMARY KEY CHECK(id=1), sealed TEXT NOT NULL);
+INSERT INTO cb_provider_sharing(id,enabled,revision,changed_at) VALUES('quickbooks',1,'initial','1970-01-01T00:00:00.000Z');
