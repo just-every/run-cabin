@@ -52,3 +52,21 @@ export function confirmRecurrence(c: Context, row: Recovery, input: Record<strin
  note(c,row,'Follow-up verified',row.recurrence.note)
  return row
 }
+
+/** Connected channel work must have an accepted receipt, including reopening obsolete closures. */
+export async function recoveryChannelReasons(c:Context,row:Recovery) {
+ const {rows}=await import('../channel-agent/store'),{ACTION,PROFILE}=await import('../channel-agent/types')
+ const actions=await rows<import('../channel-agent/types').Action>(c.db,ACTION),profiles=await rows<import('../channel-agent/types').Profile>(c.db,PROFILE),b=c.data.bookings.find(b=>b.id===row.bookingId)
+ if(!b)return ['The channel reservation is unavailable']
+ const reasons:string[]=[]
+ for(const p of profiles.filter(p=>p.propertyId===b.propertyId&&p.status!=='disconnected'&&p.channel!==b.channel)){
+  if(p.status!=='connected'){reasons.push(p.channel+' connection requires the host');continue}
+  if(!actions.some(a=>a.profileId===p.id&&a.kind==='close'&&a.bookingId===b.id&&a.start===b.start.slice(0,10)&&a.end===b.end.slice(0,10)&&a.status==='succeeded'))reasons.push(p.channel+' has not confirmed the current closure')
+ }
+ for(const action of actions.filter(a=>a.bookingId===b.id&&a.kind==='close')){
+  const current=action.propertyId===b.propertyId&&action.start===b.start.slice(0,10)&&action.end===b.end.slice(0,10)
+  if(['running','uncertain','needs_you','failed'].includes(action.status))reasons.push(action.channel+' has an unresolved external outcome')
+  if(!current&&action.status==='succeeded'&&!actions.some(open=>open.kind==='open'&&open.undoOf===action.id&&open.status==='succeeded'))reasons.push(action.channel+' still needs approved reopening of the previous dates')
+ }
+ return [...new Set(reasons)]
+}

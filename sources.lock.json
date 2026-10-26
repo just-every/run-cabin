@@ -748,7 +748,7 @@
       "executable": false
     },
     "public/ops.css": {
-      "sha256": "14f1e281a514254e9f9aace57eda09bc841c7c48f7a6a565cda67d74f33e9c0a",
+      "sha256": "fa6eaf1bd0856e3e6ce7652cd57341d6f495f90507de36cdf16face730d9edb0",
       "executable": false
     },
     "public/owners.css": {
@@ -2484,7 +2484,7 @@
       "executable": false
     },
     "src/cabin/recovery/actions.ts": {
-      "sha256": "ffa4ea124d228532b7762bfa133e90d59874e56be423fcd00980254665c4c265",
+      "sha256": "18e0538249cfa762caea864cc1f9b49d595af98eda0d044176981018cf1688c3",
       "executable": false
     },
     "src/cabin/recovery/alternative.ts": {
@@ -2504,7 +2504,7 @@
       "executable": false
     },
     "src/cabin/recovery/commands.ts": {
-      "sha256": "17382a091011a54e9c36b0aeb06ea20b43a8e95c4870c3594c7927a6db8dbf9e",
+      "sha256": "87e0c8c4bf41eff07910892165140a6d955abbbcd3d2db27ed11588ab4488b17",
       "executable": false
     },
     "src/cabin/recovery/effects.ts": {
@@ -2528,7 +2528,7 @@
       "executable": false
     },
     "src/cabin/recovery/monitor.ts": {
-      "sha256": "5b5db248e64cda058797e8ffe56aa5ef0e9c8f1e81379faf836b175cfc60c261",
+      "sha256": "0f26c2395e98b567a9bf4e31702a9d366a6026a953f1912524b14c7aa04c7875",
       "executable": false
     },
     "src/cabin/recovery/reconcile.ts": {
@@ -2804,7 +2804,7 @@
       "executable": false
     },
     "src/cabin/ui/ops.ts": {
-      "sha256": "be90399ab9bc6d801e8f1d411d5ac3456b3804363ee8435ebfded6081c14a9cf",
+      "sha256": "69f517efa78e239b33388dbb57ed6a6fc752df9235e81f01841bdcfa06ce3924",
       "executable": false
     },
     "src/cabin/ui/owners-operations.ts": {
@@ -5208,7 +5208,7 @@
       "executable": false
     },
     "tests/recovery-alternative-support.mjs": {
-      "sha256": "5ec46b8e048259515d458357f767bc1e4193dd629ffc6762bc2d857c826c011f",
+      "sha256": "942cf3e5ccc8ee07abff18f6dd0349cc59e5cda01c3eb435dddb500fad3a4783",
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {

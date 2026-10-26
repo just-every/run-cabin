@@ -19,7 +19,7 @@ export const zoneName = (zone: string) => ZONES.find(([z]) => z === zone)?.[1] ?
 export const address = (s: any, propertyId: string) => { const a = homeSettings(s, propertyId).address; return a ? `<a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(a)}" rel="noreferrer" target="_blank">${h(a)}</a>` : '<span class="muted">No address entered yet</span>' }
 export function photos(list: any[] = [], alt: string) {
   if (!list.length) return ''
-  return `<div class="photos">${list.map((p, i) => `<a href="/api/cabin/photos/${h(p.id)}" target="_blank"><img src="/api/cabin/photos/${h(p.id)}" alt="${h(alt)} ${i + 1} of ${list.length}"></a>`).join('')}</div>`
+  return `<div class="photos">${list.map((p, i) => `<a href="/api/cabin/photos/${h(p.id)}" target="_blank" data-tooltip="View photo"><img src="/api/cabin/photos/${h(p.id)}" alt="${h(alt)} ${i + 1} of ${list.length}"></a>`).join('')}</div>`
 }
 /** The latest email about a record, to its current assignee when there is one. */
 export function noticeLine(s: any, recordId: string, memberId?: string | null) {

@@ -1,5 +1,5 @@
 import { prepareAlternative } from './alternative'
-import { synchronizeRecoveryCollisions, recoveryUnresolved, confirmRecurrence, recoveryCheckBaseline } from './monitor'
+import { synchronizeRecoveryCollisions, recoveryChannelReasons, recoveryUnresolved, confirmRecurrence, recoveryCheckBaseline } from './monitor'
 import { homeReadiness } from '../readiness'
 import { offerCommand } from '../dispatch/offers'
 import { planAssignment } from '../dispatch/planner'
@@ -84,6 +84,7 @@ export async function recoveryCommand(c: Context, name: string, p: Record<string
   row.manualAckAt = c.now; note(c, row, 'Keypad confirmed by person', `The host confirmed setting code ending ${code.code.slice(-2)} for ${code.validFrom} to ${code.validUntil}`); return row
  }
  if (name === 'recovery.close') {
+  const channels=await recoveryChannelReasons(c,row);need(!channels.length,channels.join('; '),409)
   need(row.status === 'active', 'This case is not awaiting readiness confirmation', 409)
   need(!recoveryUnresolved(c.data,row).length,recoveryUnresolved(c.data,row).join('; '),409)
   need(!unresolvedRecoveryEffects(row).length, 'Reconcile blocked or uncertain recovery effects before confirming readiness', 409)
@@ -119,6 +120,7 @@ export async function finishRecoveries(c: Context) {
    }
   }
   if (row.status !== 'ready') continue
+  if ((await recoveryChannelReasons(c,row)).length) continue
   if (!row.guestConfirmedAt || !row.recurrence || row.recurrence.baseline !== recoveryCheckBaseline(c.data,row) || recoveryUnresolved(c.data,row).length) continue
   if (unresolvedRecoveryEffects(row).length) continue
   const m = c.data.messages.find(m => m.id === row.confirmationMessageId)

@@ -19,7 +19,7 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  need(within || c.actor.role === 'owner', 'Only the owner can approve spending above the saved limits', 403)
  need(policy?.cleanerIds.includes(p.cleanerId), 'Choose a cleaner from this home’s recovery list')
  need(c.data.members.some(m => m.id === p.cleanerId && m.active && m.role === 'cleaner'), 'Cleaner is no longer active', 409)
- need(!c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === p.cleanerId && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!), 'This cleaner has another turnover in this window. Review another backup.', 409)
+ need(!!p.alternative || !c.data.turnovers.some(job => job.id !== t.id && job.cleanerId === p.cleanerId && job.status === 'approved' && job.windowStart! < t.windowEnd! && job.windowEnd! > t.windowStart!), 'This cleaner has another turnover in this window. Review another backup.', 409)
  if (automatic) requireRecoveryAuthority(c, row)
  const old = c.data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')
  need(old, 'This stay has no active code to replace. Review access first.', 409)
