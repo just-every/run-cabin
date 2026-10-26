@@ -73,6 +73,16 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   for(let n=0;n<9;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
   const accepted=(await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close')
   assert.ok(accepted.every(job=>job.status==='succeeded'&&job.result==='closed'&&job.before&&job.after))
+  const profiles=(await h.state()).channelAgent.profiles,roomProfile=profiles.find(p=>p.propertyId===a.id&&p.channel==='airbnb'),sibling=profiles.find(p=>p.propertyId===b.id&&p.channel==='airbnb')
+  await h.cmd('channelAgent.disconnect',{id:roomProfile.id})
+  assert.equal((await h.state()).channelAgent.profiles.filter(p=>p.status==='connected').length,8)
+  await screens.connect(a,'airbnb',1440)
+  const connecting=(await runner({op:'claim'})).job;assert.equal(connecting.kind,'connect');assert.equal(connecting.profileId,roomProfile.id)
+  const connected=await edge.run(connecting,{human:true});assert.equal(connected.outcome,'succeeded');await runner({op:'complete',id:connecting.id,lease:connecting.lease,...connected})
+  const replacement=(await runner({op:'claim'})).job;assert.equal(replacement.kind,'close');assert.equal(replacement.propertyId,a.id)
+  const replaced=await edge.run(replacement);assert.equal(replaced.outcome,'succeeded');await runner({op:'complete',id:replacement.id,lease:replacement.lease,...replaced})
+  const unchanged=(await h.state()).channelAgent.profiles.find(p=>p.id===sibling.id);assert.equal(unchanged.generation,sibling.generation);assert.equal(unchanged.status,'connected')
+  assert.equal((await runner({op:'claim'})).job,null)
   await screens.capture('whole-home-closures')
 
  }finally{await screens.close();await edge.close();await h.close()}
