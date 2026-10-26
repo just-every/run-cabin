@@ -5236,7 +5236,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "8086de38f58fe3314db36cc6953f90d04d5b270ff63e50a2543357f5a3092cd4",
+      "sha256": "69347335637c88399a31dafd4fbbaf5967481c36650eeee85483c0a5764454b1",
       "executable": false
     },
     "tests/recovery.test.mjs": {

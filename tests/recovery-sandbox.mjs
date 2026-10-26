@@ -18,7 +18,15 @@ const anchorDay=proofNow.toLocaleDateString('en-CA',{timeZone:'America/New_York'
 const [hour,minute]=proofNow.toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}).split(':').map(Number),departureMinute=Math.max(0,hour*60+minute-60),departureTime=String(Math.floor(departureMinute/60)).padStart(2,'0')+':'+String(departureMinute%60).padStart(2,'0')
 const date=(offset=0)=>new Date(Date.parse(anchorDay+'T00:00:00Z')+offset*86400000).toISOString().slice(0,10)
 const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64'),marker='Cabin recovery '+crypto.randomUUID()
-const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
+const outbound=async request=>{
+ const response=await fetch(request)
+ if(new URL(request.url).hostname==='connect.getseam.com'&&!response.ok){
+  const body=await response.clone().json().catch(()=>({})),safe=value=>typeof value==='string'&&/^[a-z_]{1,80}$/.test(value)?value:null
+  console.log(JSON.stringify({stage:'provider-refusal',path:new URL(request.url).pathname,httpStatus:response.status,errorType:safe(body.error?.type),errorCode:safe(body.error?.code)}))
+ }
+ return response
+}
+const h=await harness({now:proofNow.toISOString(),outbound,auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
 let home,stayId,oldId,newId,providerMessageId,mailboxId,failure,live,stage='setup'
 const ownedIds=new Set()
 async function refresh(){const s=await h.accessState();for(const c of s.codes)if(c.lock.providerId)ownedIds.add(c.lock.providerId);return s}
@@ -37,7 +45,7 @@ try{
  stage='approved-recovery';let row=await h.cmd('recovery.open',{bookingId:stayId,trigger:'cleaner_cancelled',reason:'Sandbox cleaner cancellation followed by failed guest access'})
  row=await h.cmd('recovery.propose',{id:row.id,revision:row.revision,cleanerId:backup.id,creditCents:7500,extraCleaningCents:2500,why:'Exact approved backup, guest credit and replacement access'})
  await h.cmd('recovery.approve',{id:row.id,revision:row.revision})
- stage='replacement-code';s=await refresh();row=s.recoveries.find(r=>r.id===row.id);newId=row.codeId
+ stage='replacement-code';s=await refresh();row=s.recoveries.find(r=>r.id===row.id);newId=row.codeId;const started=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:started.lock.state,detail:started.lock.error,operation:started.lock.job?.operation,jobStage:started.lock.job?.stage,acknowledged:!!started.lock.job?.acceptedAt,providerResourceKnown:!!started.lock.providerId,starts:started.lock.job?.starts_at,ends:started.lock.job?.ends_at}))
  for(let n=0;n<180&&!(s.codes.find(c=>c.id===newId).lock.state==='set'&&s.codes.find(c=>c.id===oldId).lock.state==='removed');n++){await new Promise(r=>setTimeout(r,2000));s=await advance()}
  stage='replacement-code';const replacement=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:replacement.lock.state,detail:replacement.lock.error,oldState:s.codes.find(c=>c.id===oldId).lock.state}));assert.equal(replacement.lock.state,'set');assert.equal(s.codes.find(c=>c.id===oldId).lock.state,'removed');assert.notEqual(replacement.code,old.code)
  await h.restart();s=await advance();assert.equal(s.codes.find(c=>c.id===newId).lock.providerId,replacement.lock.providerId)
