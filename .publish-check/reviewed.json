@@ -40,6 +40,22 @@
       "reason": "Historical test-only scratch-checkout git identity uses the documented public fleet address, not a guest contact or credential. The current fixture replaces it with a synthetic-prefixed example-domain address; the exact historical source blobs remain to preserve published branch history.",
       "reviewer": "Run Edit Run fleet",
       "date": "2026-10-22"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/recovery-sandbox.mjs",
+      "blob": "676780159da2296f7789fd2e09d89c5aa3909b1a",
+      "reason": "Historical live-proof source named the public fleet QA mailbox and the Run Edit Run notification sender authorized by main on 21 October. They are controlled service endpoints, not guest contacts, owner personal information or credentials. The current journey receives both addresses as named environment inputs.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-26"
+    },
+    {
+      "rule": "hygiene.email",
+      "path": "tests/recovery-sandbox.mjs",
+      "blob": "67bfbab28e87770503a4e66c6374511c85d272e2",
+      "reason": "Historical live-proof source named the public fleet QA mailbox and the Run Edit Run notification sender authorized by main on 21 October. They are controlled service endpoints, not guest contacts, owner personal information or credentials. The current journey receives both addresses as named environment inputs.",
+      "reviewer": "Run Edit Run fleet",
+      "date": "2026-10-26"
     }
   ]
 }

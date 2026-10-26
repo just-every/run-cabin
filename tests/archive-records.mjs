@@ -1,3 +1,5 @@
+import {seamEdge} from './seam-edge.mjs'
+const locks=seamEdge()
 import {qboEdge} from './qbo-edge.mjs'
 import {populateQboArchive,checkQboArchive} from './qbo-archive.mjs'
 const qbo=qboEdge()
@@ -10,6 +12,7 @@ import { readFile } from 'node:fs/promises'
 const day=n=>homeDay(n, 'America/New_York')
 export async function archiveEdge(request) {
  const u=new URL(request.url)
+ if(u.hostname==='connect.getseam.com')return locks.outbound(request)
  if(u.hostname==='sandbox-quickbooks.api.intuit.com')return qbo.outbound(request)
  if(u.hostname==='calendar.stay.example')return new Response('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n')
  if(u.hostname==='api.stripe.com'&&u.pathname==='/v1/balance')return Response.json({object:'balance',available:[],pending:[],livemode:false})
@@ -44,7 +47,7 @@ async function populateChannelArchive(h,p) {
 }
 export async function populateArchive(h,p,cleaner) {
  const imported=await h.cmd('import.provider.preview',{provider:'guesty',asOf:day(0),files:[{name:'cabin-cutover.csv',text:'Record type,Provider,Listing ID,Listing name,Owner name,Owner email,Commission percent,Channel,iCal URL\n'+'home,guesty,archive-listing,Archive Lodge,Karen Ortiz,karen@stay.example,20,,\n'+'link,guesty,archive-listing,,,,,airbnb,https://calendar.stay.example/private-import-link.ics\n'}]})
- await h.cmd('home.settings',{propertyId:p.id,address:'14 Lake View Drive, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:cleaner.id,checklist:['Linen changed'],photosRequired:1})
+ await h.cmd('home.settings',{propertyId:p.id,address:'14 Lake View Drive, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:cleaner.id,checklist:['Linen changed'],photosRequired:1,lockDeviceId:'synthetic-cabin-1'})
  await h.cmd('ledger.configure',{propertyId:p.id,legalEntity:'Lake Loft Rentals LLC'})
  const collection=await createCollection(h,await collectionBooking(h,p,100))
  await h.cmd('payout.import',{propertyId:p.id,source:'airbnb',csv:'Date,Type,Confirmation code,Start date,Nights,Currency,Gross earnings,Host service fee,Amount,Payout ID\n2026-01-06,Reservation,archive-stay,2026-01-01,4,USD,1000.00,30.00,970.00,ARCHIVE-PAYOUT\n'})
@@ -52,7 +55,7 @@ export async function populateArchive(h,p,cleaner) {
  await h.cmd('statement.approve',{id:statement.id,revision:statement.revision})
  await h.cmd('channel.connect',{propertyId:p.id,channel:'ical',name:'Partner inventory',url:'https://calendar.stay.example/secret-calendar.ics'})
  await h.cmd('export.publish',{propertyId:p.id})
- await h.cmd('provider.sharing',{id:'seam',operation:'credential',securityRevision:'',actions:['access:write'],propertyIds:[p.id],confirm:'yes',SEAM_API_KEY:'archive-seam-network-edge'})
+ await h.cmd('provider.sharing',{id:'seam',operation:'credential',securityRevision:'',actions:['access:write'],propertyIds:[p.id],confirm:'yes',SEAM_API_KEY:'synthetic-cabin-2'})
  const booking=await h.cmd('reservation.request',{propertyId:p.id,channel:'direct',guestName:'Megan Ortiz',start:day(10),end:day(13)})
  await h.cmd('booking.details',{id:booking.bookingId,revision:(await h.accessState()).bookings.find(row=>row.id===booking.bookingId).revision,guestName:'Megan Ortiz',guestEmail:'megan@stay.example'})
  await h.cmd('inbox.address',{address:'guests@stay.example',revision:''})
@@ -71,7 +74,8 @@ export async function populateArchive(h,p,cleaner) {
  const financialCase=await populateExceptionArchive(h,p)
  const qbo=await populateQboArchive(h)
  const bank=await populateBankArchive(h)
- const state=await h.accessState(), codes=state.codes.filter(c=>c.link).map(c=>c.link)
+ const state=await h.accessState();assert.ok(state.codes.some(c=>c.lock.job?.startedAt&&c.lock.providerId),'The archive source includes real claimed provider work through its network boundary')
+ const codes=state.codes.filter(c=>c.link).map(c=>c.link)
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
@@ -88,6 +92,7 @@ export async function checkRestored(h,owner,proof) {
  const guideFile=await h.db.prepare('SELECT hex(bytes) AS bytes,sha256 FROM cb_guest_guide_files WHERE id=?').bind(proof.portal.file.id).first();assert.equal(Buffer.from(guideFile.bytes,'hex').toString(),proof.portal.guideBytes);assert.equal(guideFile.sha256,proof.portal.file.sha256)
  const collection=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(proof.collectionId).first()).data);assert.equal(collection.restored,true);assert.equal(collection.status,'paused');assert.equal(collection.customerId,undefined);assert.equal(collection.paymentMethod,undefined);assert.equal(collection.setup,undefined)
  let s=await h.accessState(owner)
+ assert.ok(s.codes.every(c=>!c.lock.job),'Restored access cannot retain a live provider claim or its PIN and request identity')
  const imported=await h.db.prepare('SELECT plan,fingerprint FROM cb_provider_moveins WHERE id=?').bind(proof.importedId).first();assert.equal(JSON.parse(imported.plan).homes[0].links.length,0);await h.cmd('import.provider.apply',{id:proof.importedId,fingerprint:imported.fingerprint},owner,409)
  assert.equal(s.restore.reviewed,0)
  assert.ok(s.sharing.every(p=>!p.enabled))

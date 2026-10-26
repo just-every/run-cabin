@@ -100,7 +100,7 @@
       "executable": false
     },
     ".publish-check/reviewed.json": {
-      "sha256": "fecba78435b1908f9eadd4320913f5db807d1e76e0052b499ca9098b997ffed5",
+      "sha256": "3a5885c5fc2a9dc3ac76af9912443b0483b51898cf96d013a9ce348e9d5fa746",
       "executable": false
     },
     "ACCEPTANCE.md": {
@@ -4860,7 +4860,7 @@
       "executable": false
     },
     "tests/archive-records.mjs": {
-      "sha256": "3136cccb5d0812bd75b8789b18f6c66a4513c361c873e3aef191bb5ff2bf4498",
+      "sha256": "ce37dd9cfbdcc1d005963f5251174fe357d32fe9c3b0ceb8c1d60ac5c18c3ccf",
       "executable": false
     },
     "tests/archive.test.mjs": {
@@ -5220,7 +5220,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "d792fcf5508ff993c6f533c47cab5f4927e70fcf2829f75a47706acaae93ee36",
+      "sha256": "d52d12f52fe48aa6ba49b035f6dcc613dde6410b8c73c5592d819c278c380e93",
       "executable": false
     },
     "tests/recovery.test.mjs": {
