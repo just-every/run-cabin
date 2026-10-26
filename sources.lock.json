@@ -2788,7 +2788,7 @@
       "executable": false
     },
     "src/cabin/ui/qbo.ts": {
-      "sha256": "d987ab1bedbda8fc9817d7b635aedf3e1fd31003015ccb82fab16423a468c7d0",
+      "sha256": "ea7cda9f2e76dd166cc109b86b3305d81b05f1c5f39b4181f1dfd5c4acde5cdd",
       "executable": false
     },
     "src/cabin/ui/readiness.ts": {
@@ -5124,7 +5124,7 @@
       "executable": false
     },
     "tests/qbo-browser.mjs": {
-      "sha256": "1b438fe40d7f3ee1d702e90d22ff088b7ada4e69a4a5b390664a321745e2e896",
+      "sha256": "b46609c92a6002128fed6a18b5a29c3e60f8d54805451ce64c4af09f118de86b",
       "executable": false
     },
     "tests/qbo-edge.mjs": {
