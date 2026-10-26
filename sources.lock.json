@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "4bbeb8390a43f9875944bd6fbfb0268060469bc5546eff0e6c8fe81611f89cc8",
+      "sha256": "8aad82f040f84a143c6288bdd5c389742aa96d1189e1552c78ec2bb2967a76fc",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "8a0fcecde395a2b7a9ea5a70c46fba4bf393ae28c5ae56540a9621969ef4b34a",
+      "sha256": "25e8c4773c36b849c7d81f45857b674980be583472cc1f587208f26e78f50c5f",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "5bcc75d3fedb0c0fca89aa5005fdbc36478fc74f655d4f925fa8aad10776eab4",
+      "sha256": "615aed07d0852c72f431d7f83160a36d0632a08e1a08b84019c69aea94b01c81",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -312,7 +312,7 @@
       "executable": false
     },
     "docs/remaining-dependencies.md": {
-      "sha256": "076e93bbc3289e4bbca1da25f9b1003325acb151f0315a0969bfdf44dc0a8a7c",
+      "sha256": "db55e1e44f3227c6b28de140b6a972a453816d8d24a24c6e5397a09116021259",
       "executable": false
     },
     "docs/rental-agreements.md": {
@@ -385,6 +385,10 @@
     },
     "edition.json": {
       "sha256": "f93ba2ad7814f79f811bd4975cd8f59fef1597030d3eaa460e1fcb160bd35b5e",
+      "executable": false
+    },
+    "evidence/fin-007-qbo-sandbox-2026-10-26.json": {
+      "sha256": "c0cb6be7fa4f59b6c4ec83faa232108b68f1a3460304e944c925cdb00afc01e5",
       "executable": false
     },
     "fixtures/airbnb-cancelled.ics": {
@@ -960,7 +964,7 @@
       "executable": false
     },
     "README.md": {
-      "sha256": "6b4b960db2f88e981ac5681e376c823056a1df2c5cca52f3f4dcc8190e48e636",
+      "sha256": "5e185a4ba320d5432064b413a2657fe91b687bd0820d8253b7a4b569d2e79aa9",
       "executable": false
     },
     "release-history/0.1.0.json": {

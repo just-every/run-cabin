@@ -1,0 +1,119 @@
+{
+  "format": "cabin-qbo-sandbox-v1",
+  "candidateSha": "2c7f78d62887afede532d93d0bd23c34a043632b",
+  "at": "2026-10-26T07:26:45.361Z",
+  "companyName": "Sandbox Company US 86ae",
+  "country": "US",
+  "environment": "sandbox",
+  "realmSha256": "96b132e12c22045b9f6dd79a8cb5ca1950dfa28c5443cf2f4b6e8aaa39045cb5",
+  "authorization": "Owner-consented Accounting OAuth grant validated with company read; refreshed grant preserved locally before this journey.",
+  "month": "2026-10",
+  "sourceTypes": [
+    "deposit",
+    "earn",
+    "applyAdvance",
+    "tax",
+    "payment",
+    "channelFee",
+    "expense",
+    "refund",
+    "commission"
+  ],
+  "mapping": {
+    "classId": "740030",
+    "vendorId": "63",
+    "accounts": {
+      "cash": "1150040000",
+      "receivable": "1150040001",
+      "advances": "1150040002",
+      "damageAuthorization": "1150040003",
+      "damageHolds": "1150040004",
+      "ownerLiability": "1150040005",
+      "managerRevenue": "1150040006",
+      "channelFees": "1150040007",
+      "expenses": "1150040008",
+      "taxes": "1150040009",
+      "guestCredits": "1150040010",
+      "vendorPayable": "1150040011",
+      "processorFunds": "1150040012",
+      "allocationClearing": "1150040013",
+      "ownerReserves": "1150040014",
+      "managerExpenses": "1150040015"
+    }
+  },
+  "batchId": "86d38119-955d-47c6-b2ab-de179c9068bb",
+  "totals": {
+    "debitCents": 371500,
+    "creditCents": 371500,
+    "accountTotals": {
+      "1150040000": 88500,
+      "1150040001": 0,
+      "1150040002": 0,
+      "1150040005": -59500,
+      "1150040006": -20000,
+      "1150040007": 0,
+      "1150040008": 0,
+      "1150040009": -9000
+    }
+  },
+  "reconciled": true,
+  "repeatReconciled": true,
+  "externalConflict": "169",
+  "externalIds": [
+    {
+      "sourceId": "16c215a0-98d1-48f0-b59b-7a8697db659e",
+      "externalId": "169",
+      "docNumber": "CBc854c389a43497f14c3",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "25ba07ed-3650-4722-affa-7cdf11bd6243",
+      "externalId": "170",
+      "docNumber": "CB82f9ceb302f29b9b974",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "312807e9-84a3-445e-ae2c-63d3906cbad5",
+      "externalId": "171",
+      "docNumber": "CB335a0c7e9042044a8f6",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "40c57c8d-c774-4feb-bda7-88c64c48a71c",
+      "externalId": "172",
+      "docNumber": "CBf1dc820caf6fc37bd5e",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "693c4a51-0a7b-4d5e-a2b1-e1cd3ea16f7a",
+      "externalId": "173",
+      "docNumber": "CB6e3bf68c48dd662c19d",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "86d66581-3f20-4be1-9935-c9146b28f440",
+      "externalId": "174",
+      "docNumber": "CBbe45c72bb3ba98dd688",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "a46c7b01-8f4e-4b85-9b9d-c0c02fbb30e0",
+      "externalId": "175",
+      "docNumber": "CBdb859e25077fe915c15",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "a4c6b434-da14-45fe-b853-632070cbb71d",
+      "externalId": "176",
+      "docNumber": "CBcbdf74a0f0ba1084bb0",
+      "syncToken": "0"
+    },
+    {
+      "sourceId": "d7fe5a4b-f48b-449f-87e9-59353dcde4f7",
+      "externalId": "177",
+      "docNumber": "CB51d3f4d544ecdff5781",
+      "syncToken": "0"
+    }
+  ],
+  "duplicates": 0
+}

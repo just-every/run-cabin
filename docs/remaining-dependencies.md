@@ -4,7 +4,7 @@
 
 19 October 2026. WEB-001 was selected because a complete host website and portable domain can be proven using the supplied Cloudflare, Stripe test and mail accounts. WEB-005 was next because paid extensions and arrival changes affect the original reservation, operations and owner balance. Its implemented flows are documented in [promotions.md](https://github.com/just-every/run-cabin/blob/main/docs/promotions.md), but its complete hosted financial acceptance remains partial.
 
-Homepage rows 5 and 31 require eligible USD payout evidence; 12, 15, 16, 42 and 46 require OTA partner accounts; 17 requires channel messaging, US A2P and WhatsApp access; 26 requires live locks and channel recovery; 33 requires QBO; 35 requires an authorized filing partner; and 14 requires pricing-provider access. None changed status. The expanded brief therefore selected CONTRACT clauses beyond those rows.
+Homepage rows 5 and 31 require eligible USD payout evidence; 12, 15, 16, 42 and 46 require OTA partner accounts; 17 requires channel messaging, US A2P and WhatsApp access; 26 requires live locks and channel recovery; 33 is proved by the 26 October QBO sandbox journey; 35 requires an authorized filing partner; and 14 requires pricing-provider access. None changed status. The expanded brief therefore selected CONTRACT clauses beyond those rows.
 
 These are all remaining target/push-further clauses: **27 partial and 25 missing** (including the 19 October SYNC-011 launch route). A dependency can be unfinished product work, permissioned source evidence, another clause, or an outside account. This table does not imply that every remaining task requires an account. The round selected partial clauses; missing clauses remain separate product work.
 
@@ -44,7 +44,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | OPS-008 | partial | Guest/lock checkout events, provider-confirmed code state and complete departures list. |
 | FIN-002 | partial | Eligible automatic USD payout, partner settlement APIs, FX, actual bank receipt and exception closure. Supplied Stripe test account settles AUD. |
 | FIN-006 | partial | Native source-backed trust-bank model and reconciliation exist. Actual distributions and returned ACH need selected licensed US partner approval, authorized funded trust accounts, verified payees and execution authority; the owner-only unexecuted planning boundary awaits ct. |
-| FIN-007 | partial | QBO OAuth company/account and conflict reconciliation. Pantry posting and manual export paths already exist. |
+| FIN-007 | done | Closed 26 October: native authorized QBO month, refund, expense, exact totals, repeat and external-edit handling proved by `tests/qbo-sandbox.mjs` and `evidence/fin-007-qbo-sandbox-2026-10-26.json`. |
 | FIN-008 | partial | Authorized statutory filing/remittance partner; nonmonthly periods, taxable-base differences and jurisdiction/rate lookup. |
 | FIN-009 | missing | Authorized US tax-reporting partner/account, taxpayer identity custody, filing/correction acceptance. |
 | REPORT-001 | missing | Source-linked operational/revenue/owner report implementation, complete exports and scale proof. |
