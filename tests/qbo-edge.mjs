@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 export function qboEdge(){
  const entries=[],requests=new Map(),writes=[];let revoke=false,lose=false,reject=false,refreshes=0
  const accounts=['cash','receivable','advances','damageAuthorization','damageHolds','ownerLiability','managerRevenue','channelFees','expenses','taxes','guestCredits','vendorPayable','processorFunds','allocationClearing','ownerReserves','managerExpenses'].map((Id,i)=>({Id,Name:'Synthetic Cabin Account '+i,AccountType:'Other Current Asset',Active:true}))
- const classes=[{Id:'synthetic-cabin-class-1',Name:'Synthetic Cabin Class',Active:true}],vendors=[{Id:'synthetic-cabin-vendor-1',DisplayName:'Synthetic Cabin Owner',Active:true}]
+ const classes=[{Id:'synthetic-cabin-class-1',Name:'Synthetic Cabin Class',Active:true}],vendors=[{Id:'synthetic-cabin-vendor-1',DisplayName:'Synthetic Cabin Owner',Active:true,TaxIdentifier:'synthetic-cabin-private-tax-1',AcctNum:'synthetic-cabin-private-account-1',PrimaryEmailAddr:{Address:'synthetic-cabin-private-vendor@stay.example'}}]
  const outbound=async request=>{
   const url=new URL(request.url)
   if(url.hostname==='oauth.platform.intuit.com'){refreshes++;return Response.json({access_token:'synthetic-cabin-access-'+refreshes,refresh_token:'synthetic-cabin-refresh-'+refreshes,expires_in:3600})}

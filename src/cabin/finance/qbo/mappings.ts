@@ -11,7 +11,7 @@ export async function catalog(env:Bindings,propertyId?:string) {
  const [a,classes,vendors,company,preferences]=await Promise.all([query(env,c,'Account','',propertyId),query(env,c,'Class','',propertyId),query(env,c,'Vendor','',propertyId),import('./client').then(({api})=>api(env,c,'companyinfo/'+c.realm,undefined,propertyId)),import('./client').then(({api})=>api(env,c,'preferences',undefined,propertyId))])
  need(company.CompanyInfo?.Country==='US','QuickBooks synchronization requires a US company',409)
  const currency=preferences.Preferences?.CurrencyPrefs?.HomeCurrency?.value??'USD';need(currency==='USD','QuickBooks synchronization requires USD home currency',409)
- return {realm:c.realm,mode:c.mode,companyName:company.CompanyInfo.CompanyName,accounts:a as RemoteAccount[],classes:classes as RemoteName[],vendors:vendors as RemoteName[]}
+ return {realm:c.realm,mode:c.mode,companyName:company.CompanyInfo.CompanyName,accounts:a.map((r:any)=>({Id:r.Id,Name:r.Name,AccountType:r.AccountType,Active:r.Active!==false})) as RemoteAccount[],classes:classes.map((r:any)=>({Id:r.Id,Name:r.Name,Active:r.Active!==false})) as RemoteName[],vendors:vendors.map((r:any)=>({Id:r.Id,DisplayName:r.DisplayName,Active:r.Active!==false})) as RemoteName[]}
 }
 export async function approveMapping(env:Bindings,actor:Actor,input:Record<string,unknown>) {
  await requireOwner(env.DB,actor);need(input.consent===true||input.consent==='on','Confirm accountant review of these exact mappings')
