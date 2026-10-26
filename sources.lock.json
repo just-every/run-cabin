@@ -5220,7 +5220,11 @@
       "executable": false
     },
     "tests/recovery-mail-sandbox.mjs": {
-      "sha256": "0fe9c20f65b47a708caeddbb87f2cc0bc2e1763c802b1108e3676af08214e116",
+      "sha256": "8109e72aac73ab7cc7f53ccde5e5d952e3954f885b43a9cf928a9c65e956dc08",
+      "executable": false
+    },
+    "tests/recovery-production-mail.mjs": {
+      "sha256": "d52fd5d8a8b091a86d12133456fff5e9e93b7d663f52a4fa4d24411c60451054",
       "executable": false
     },
     "tests/recovery-sandbox-connection.mjs": {
@@ -5228,7 +5232,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "397c3080fe959c4863fa8d3a7e1cb9277956593b7436339f6298cf248cc488cd",
+      "sha256": "8086de38f58fe3314db36cc6953f90d04d5b270ff63e50a2543357f5a3092cd4",
       "executable": false
     },
     "tests/recovery.test.mjs": {
