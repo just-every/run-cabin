@@ -19,6 +19,7 @@ export async function eraseAttachments(c:Context,s:ErasureScope){
 export async function fenceSending(c:Context,s:ErasureScope){
  const matches=(r:any)=>inScope(s,r)||s.values.some(v=>v.toLowerCase()===r.email?.toLowerCase()||v===r.phone)
  need(![...c.data.messages,...c.data.notices,...c.data.scheduled,...c.data.deliveries].some(r=>matches(r)&&r.status==='sending'),'A scoped delivery is in flight. Wait for its result before erasing.',409)
+ if(s.entity==='property')need(!await c.db.prepare("SELECT 1 FROM cb_qbo_entries WHERE json_extract(data,'$.propertyId')=? AND json_extract(data,'$.status')='sending' LIMIT 1").bind(s.id).first(),'A QuickBooks posting is in flight. Reconcile its result before erasing.',409)
  const tax=(await c.db.prepare("SELECT d.data,r.property_id FROM cb_tax_deliveries d JOIN cb_tax_reports r ON r.id=d.report_id WHERE d.status='sending'").all<any>()).results
  need(!tax.some(r=>s.properties.has(r.property_id)||s.values.some(v=>r.data.toLowerCase().includes(v.toLowerCase()))),'A scoped tax packet is in flight. Wait for its result before erasing.',409)
 }

@@ -3,6 +3,9 @@ import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
 import {pantryEdge} from './pantry-edge.mjs'
 const pantry=pantryEdge()
+import {qboEdge} from './qbo-edge.mjs'
+import {qboAuth} from './qbo-support.mjs'
+const qbo=qboEdge()
 
 test('channel payouts match stays, freeze expenses, email the owner, isolate their portal and post once to Pantry',()=>run(async h=>{
  const p=await h.cmd('property.save',{name:'Pine Ridge Cabin',ownerName:'Alex Carter',ownerEmail:'alex@stay.example',commissionBps:2000})
@@ -215,3 +218,33 @@ test('an exact approved portfolio investigation assigns one durable task and ref
  await h.restart();const durable=await h.state(b.manager.cookie);assert.equal(durable.tasks.filter(t=>t.id===task.id).length,1);assert.equal(durable.tasks.find(t=>t.id===task.id).assigneeId,b.manager.id);assert.equal((await h.send('/app/maintenance#task-'+task.id,undefined,b.manager.cookie)).status,200)
  const notices=durable.notices.filter(n=>n.recordId===task.id);assert.equal(notices.length,1);assert.equal(notices[0].email,b.manager.email)
 }))
+
+test('QuickBooks owner-approved month sync reconciles source journals, survives response loss and detects external edits without duplicates',()=>run(async h=>{
+ const {qboBooks,qboMapping,syntheticGrant,assertBatch}=await import('./qbo-support.mjs'),b=await qboBooks(h)
+ const manager=await h.person('SyntheticQboManager','manager'),cleaner=await h.person('SyntheticQboCleaner')
+ await h.cmd('qbo.connect',syntheticGrant,manager.cookie,403);await h.cmd('qbo.connect',syntheticGrant,cleaner.cookie,403)
+ assert.equal((await h.send('/api/cabin/qbo/state')).status,401)
+ const authorize=await h.cmd('qbo.authorize',{mode:'sandbox',consent:true}),url=new URL(authorize.url),state=url.searchParams.get('state')
+ assert.equal(url.origin,'https://appcenter.intuit.com');assert.equal(url.searchParams.get('scope'),'com.intuit.quickbooks.accounting')
+ assert.equal((await h.send('/api/cabin/qbo/callback?state=synthetic-cabin-bad&code=synthetic-cabin-code&realmId=123456789',undefined,h.owner)).status,403)
+ assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,303)
+ assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,403)
+ const c=await h.cmd('qbo.catalog');await qboMapping(h,b.home,c)
+ const preview=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'});assert.equal(qbo.entries.length,0)
+ await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:false},h.owner,400)
+ qbo.loseResponse();let sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});assert.ok(sent.entries.some(e=>e.status==='uncertain'))
+ await h.restart();sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});await assertBatch(h,sent,b.source)
+ const writes=qbo.writes.length;assert.equal(qbo.entries.length,b.source.length)
+ const repeated=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});await assertBatch(h,repeated,b.source);assert.equal(qbo.writes.length,writes)
+ const again=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'});await h.cmd('qbo.sync',{id:again.id,revision:again.revision,consent:true});assert.equal(qbo.entries.length,b.source.length)
+ qbo.entries[0].PrivateNote='Synthetic external accountant edit';qbo.entries[0].SyncToken='1'
+ const conflict=await h.cmd('qbo.reconcile',{id:preview.id});assert.equal(conflict.reconciled,false);assert.equal(conflict.entries.filter(e=>e.status==='conflict').length,1)
+ await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});assert.equal(qbo.entries.length,b.source.length);assert.equal(qbo.writes.length,writes)
+ const raw=await h.send('/api/cabin/state',undefined,h.owner);assert.ok(!raw.text.includes('synthetic-cabin-access-'));assert.ok(!raw.text.includes('synthetic-cabin-refresh-'));assert.equal((await h.state(manager.cookie)).qbo,null)
+ const connection=await h.db.prepare('SELECT sealed FROM cb_qbo_connection').first();assert.ok(!connection.sealed.includes('synthetic-cabin-access-'))
+ await h.cmd('provider.sharing',{id:'quickbooks',enabled:false,revision:''})
+ await h.cmd('qbo.reconcile',{id:preview.id},h.owner,409)
+ await h.cmd('provider.sharing',{id:'quickbooks',enabled:true,revision:(await h.state()).sharing.find(s=>s.id==='quickbooks').revision,confirm:'yes'})
+ // A revoked grant cannot authorize a new journal and cannot duplicate accepted work.
+ qbo.revoke();const revoked=await h.cmd('qbo.reconcile',{id:preview.id});assert.ok(revoked.entries.every(e=>e.status==='conflict'));assert.equal(qbo.writes.length,writes)
+},{auth:qboAuth,outbound:request=>qbo.outbound(request),now:'2026-10-26T12:00:00Z'}))

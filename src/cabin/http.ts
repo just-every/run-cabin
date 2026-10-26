@@ -36,6 +36,7 @@ import { ledgerState } from './ledger/store'
 import { csvCell } from './statements'
 import { recoveryWording } from './recovery/wording'
 import { authResponse } from '../auth.server'
+import { qboCommand, callback as qboCallback, qboState } from './finance/qbo'
 import { quickBooksCommand } from './finance/quickbooks'
 import { booksCommand, exportBooks } from './finance/books'
 import { portalState } from './owners/access'
@@ -74,7 +75,7 @@ async function execute(request:Request,env:Bindings,who:Actor,name:string,input:
  if(name==='question.ask')return answerQuestion(env.DB,{actor:who},input)
  if(name.startsWith('agent.')||name==='member.invite')return credentialCommand(request,env,who,name,input)
  if(name.startsWith('import.'))return importHistory(env.DB,who,name,input,()=>importCommand(env.DB,who,name,input))
- const result=name.startsWith('quote.')?await staffQuoteCommand(env,who,name,input):name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')||name.startsWith('thread.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
+ const result=name.startsWith('qbo.')?await qboCommand(env,who,name,input):name.startsWith('quote.')?await staffQuoteCommand(env,who,name,input):name.startsWith('channelAgent.')?await channelAgentCommand(env,who,name,input):name.startsWith('promotion.')?await promotionCommand(env,who,name,input):name.startsWith('restore.')?await restoreCommand(env,who,name,input):name==='provider.sharing'?await sharingCommand(env,who,input):name.startsWith('tax.')?await taxCommand(env,who,name,input):name==='recovery.wording'||name==='recovery.ai.test'?await recoveryWording(env,who,name,input):name==='books.export.prepare'?await quickBooksCommand(env,who,input):name.startsWith('books.')?await booksCommand(env,who,name,input):name.startsWith('payout.')?await financeImport(env,who,name,input):name==='statement.deliver'?await resendStatement(env,who,input):name.startsWith('direct.')?await directCommand(env,who,name,input):name.startsWith('channel.')?await channelCommand(env,who,name,input):name.startsWith('message.')||name.startsWith('inbox.')||name.startsWith('thread.')?await inboxCommand(env,who,name,input):await command(env.DB,who,name,input)
  if(name==='privacy.review'||name==='privacy.hold.read')return result
  await settle(env);return result
 }
@@ -108,6 +109,7 @@ function actionMessage(name:string,result:any,local:boolean,state:any){
  if(name==='import.provider.signoff')return 'Cutover signed off. Your totals and explanations are recorded.'
  if(name==='import.provider.undo')return 'Move-in undone. Imported listings, stays, guests, balances and calendar links were removed.'
  if(name==='privacy.erase'&&result.reservations)return `Guest operational identity erased from ${result.reservations} reservation${result.reservations===1?'':'s'}. History keeps anonymous action references.`
+ if(name.startsWith('qbo.'))return 'QuickBooks operation saved. Review the connection, mapping and batch status below.'
  if(name==='books.export.prepare')return 'QuickBooks files ready. Download the CSV or IIF file below and import it into QuickBooks.'
  if(name.endsWith('.prepare'))return 'Draft prepared. Review this revision before approval.'
  if(name==='payout.import'||name==='payout.stripe')return `${result.imported.length} payout lines imported; ${result.matched} matched to stays. ${result.duplicates.length} already imported lines skipped.`
@@ -217,6 +219,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   who=await principal(request,env,isAgent)
   if((path==='/app'||path==='/app/rental-owner'||path.startsWith('/app/rental-owner/'))&&who.scope?.pmsRole==='rental_owner')return rentalOwnerResponse(request,env,who)
   if(path==='/app'&&who.scope&&who.scope.pmsRole!=='rental_owner'){const first=[['calendar:read','calendar'],['inbox:read','inbox'],['reports:read','reports'],['operations:read','maintenance'],['finance:read','statements']].find(([action])=>hasAction(who!,action));if(first)return new Response(null,{status:303,headers:{...headers,location:'/app/'+first[1]}})}
+  if(path==='/api/cabin/qbo/callback'&&request.method==='GET'){await qboCallback(env,who,url);return new Response(null,{status:303,headers:{...headers,location:'/app/books'}})}
+  if(path==='/api/cabin/qbo/state'&&request.method==='GET'){await import('./finance/qbo/store').then(m=>m.requireOwner(env.DB,who!));return json(await qboState(env,who))}
   if(request.method==='GET'){
    await readScope(env.DB,who,url)
    if(path==='/app/owners/preview'){manager(who);const state=await snapshot(env,who),home=state.properties.find(p=>p.id===url.searchParams.get('property'));need(home,'Home not found',404);return portalPage(await portalState(env,home.ownerEmail),true)}
@@ -256,6 +260,7 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
    return renderApp(await snapshot(env,who),'/app/questions',{questionAnswer:answer})
   }else if(path==='/app/action'){
    const input=await inputBody(request),name=url.searchParams.get('name')??'',result=await execute(request,env,who,name,input)
+   if(name==='qbo.authorize'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
    if(name==='direct.stripe.test'&&(result as {url?:string}).url)return new Response(null,{status:303,headers:{...headers,location:(result as {url:string}).url}})
    if(name.startsWith('rentalOwner.'))return new Response(null,{status:303,headers:{...headers,location:'/app'}})
    const state=await snapshot(env,who);return renderApp(state,back,{report:back==='/app/reports'?await readReport(env.DB,who,new URLSearchParams()):undefined,reportSharing:back==='/app/reports'?await reportSharingState(env.DB,who):undefined,activity:back==='/app/activity'?await history(env.DB,who,new URLSearchParams()):undefined,message:actionMessage(name,result,env.AUTH_LOCAL==='true',state),result,thread})

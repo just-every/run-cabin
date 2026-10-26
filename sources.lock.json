@@ -352,7 +352,7 @@
       "executable": false
     },
     "docs/statements.md": {
-      "sha256": "0d35bfd7e6931d94b9fc25b32c31185f30e481fe65ad0ba8959651b7ac1d92e2",
+      "sha256": "d046ae2addd72d6270df1e2da81483d9640cb6255d2e3d38f7b72e52d8d91c96",
       "executable": false
     },
     "docs/stay-recovery.md": {
@@ -569,6 +569,10 @@
     },
     "migrations/core/0063_dependency_keys_sealed.sql": {
       "sha256": "9c8fa5f94c48a230f326cd4d666cbc2bd1e7d5a18327b89e65b339ac6a533d9a",
+      "executable": false
+    },
+    "migrations/core/0064_quickbooks.sql": {
+      "sha256": "bbdecb9e79bd56020347c9118aae8d891d7fb498b66f4e29375218d6906fdba1",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1216,7 +1220,7 @@
       "executable": false
     },
     "src/auth.server.ts": {
-      "sha256": "b3f4ee272cbe21529aa2fd24ea59d866fed580552adabb7cdbc014d9b458480b",
+      "sha256": "f7f778444b4b1ea4dd3efff44943b259b69bbf686b2b6547df18e68dc9c3b662",
       "executable": false
     },
     "src/base/contract-filter.ts": {
@@ -1344,7 +1348,7 @@
       "executable": false
     },
     "src/cabin/archive-policy.mjs": {
-      "sha256": "a5fa302c7a2e967ad3c5323a7db6cedcbf4e02c001a90eb263c199d71cb7c12b",
+      "sha256": "abf931202d60355716e7cf2aa107ca2a560dd0804af816e505fcbdb2a49afce7",
       "executable": false
     },
     "src/cabin/archive/inter-font.json": {
@@ -1364,7 +1368,7 @@
       "executable": false
     },
     "src/cabin/archive/transform.mjs": {
-      "sha256": "f66e4d04348cdae697c7bdd18ea4e7931472dc547020233f1ab8f993396da663",
+      "sha256": "7d2854e7683196f4e81609e682f96c7da4b8c0ba433ac5bfb817f156be2a6444",
       "executable": false
     },
     "src/cabin/archive/ui.ts": {
@@ -1372,7 +1376,7 @@
       "executable": false
     },
     "src/cabin/archive/validate.mjs": {
-      "sha256": "44a73d5efb1838c4ccad22db6e874efe10463704186a4e3f6337efec4d315aaf",
+      "sha256": "7dd739afee9fee8bb1c9b5d1ed4f35ffffee5eec1ff77bf47cc384dc4990abb2",
       "executable": false
     },
     "src/cabin/audit/imports.ts": {
@@ -1480,7 +1484,7 @@
       "executable": false
     },
     "src/cabin/connections/policy.ts": {
-      "sha256": "c82bcb86ff0ebf60a01562bf25b27730c05b5105135597c9fcb6d77adf84b1e5",
+      "sha256": "2c53fd9635094619bf125061ad16be01216f7ab2fcfe7ffab5b523e29607463f",
       "executable": false
     },
     "src/cabin/connections/redaction.ts": {
@@ -1492,7 +1496,7 @@
       "executable": false
     },
     "src/cabin/connections/store.ts": {
-      "sha256": "50eeb80e85b2ece2ce38225bc72d88d9ec2fbb4b6ec4a58751c97295165d3d88",
+      "sha256": "ee6ffd736bff2b69b47da46ad7bfdeaaf0d859181e396baf99fe51857b8719ba",
       "executable": false
     },
     "src/cabin/connections/ui.ts": {
@@ -1668,7 +1672,7 @@
       "executable": false
     },
     "src/cabin/domain.ts": {
-      "sha256": "f9253913ea42b07c3a333d5bcec0f4a42425148b97ec580f06687abaaaf5b493",
+      "sha256": "a1370a18c18892af6cede77f40dc9a8c28b6730683cfb54170a21dce4dfcbfcc",
       "executable": false
     },
     "src/cabin/finance/allocation-calculation.ts": {
@@ -1799,6 +1803,38 @@
       "sha256": "059634b50d7155153bbb2281ce9450be5c33017842c4894ab9b255730cb4a01b",
       "executable": false
     },
+    "src/cabin/finance/qbo/batches.ts": {
+      "sha256": "3003d45cdbd708c49dd8ed85537984d172a4f9f5b9c8a146cf52caf5ca2e2e2d",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/client.ts": {
+      "sha256": "d272c97190117ac04f507dd97e9a08f1194b50f1287cb3197008f88cdf43a4c3",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/connection.ts": {
+      "sha256": "735313cfaf11f003dc756be51f1c79bede0842f4c79ecebca7febf769cf13846",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/index.ts": {
+      "sha256": "4557e8526a8299cba8b870b4d5f2f2205cb8764370bd855b9eca1582ffc79d41",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/mappings.ts": {
+      "sha256": "9f67691ab4b210c3f09be026214d9453209fc63485a7eb3692dad142f97d89a9",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/payload.ts": {
+      "sha256": "7a80e46d51724bdafc81972190bc8b655373fee2d7ecf3f3077613059c1b33b4",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/store.ts": {
+      "sha256": "af883e68a79b97df4cb71f31c5b709a4b0975f8fc82c67a2ac7ed9cafba8b710",
+      "executable": false
+    },
+    "src/cabin/finance/qbo/types.ts": {
+      "sha256": "48d3c74ae861176dd994d2a949cad6dcff5a035074d113dd41a415cb05aac8d0",
+      "executable": false
+    },
     "src/cabin/finance/quickbooks.ts": {
       "sha256": "79be1fa812c2802e450d3343eb76aff685f43d8b9796cc5701661654bcf018ab",
       "executable": false
@@ -1860,7 +1896,7 @@
       "executable": false
     },
     "src/cabin/http.ts": {
-      "sha256": "58ffbb747b456418348738f28103cfee381fce4da6f37b0e3b7f2881a1dddf31",
+      "sha256": "6bfdc8864e3956c46d8dd0888599c9a4c7dd6f921a18d291cb04b32da3bb7c09",
       "executable": false
     },
     "src/cabin/ical-export.ts": {
@@ -2296,7 +2332,7 @@
       "executable": false
     },
     "src/cabin/privacy/attachments.ts": {
-      "sha256": "806f5b092afc87e613fec160360928b146a0fe12c698097bde7e2d404a61f6f8",
+      "sha256": "9998b8cba79a60949e7e9e41689d3ad17da2a4ed5d97de21f00566f76fe0ead1",
       "executable": false
     },
     "src/cabin/privacy/contacts.ts": {
@@ -2308,7 +2344,7 @@
       "executable": false
     },
     "src/cabin/privacy/holds.ts": {
-      "sha256": "66b67f05a072284a422ca03ac89b350c5dde5f6c89323720791abfc82a85999f",
+      "sha256": "cc6f27b5bf4956afce58025207c1af219def428a876a9ed4db6a2fd6af626327",
       "executable": false
     },
     "src/cabin/privacy/inventory.ts": {
@@ -2320,7 +2356,7 @@
       "executable": false
     },
     "src/cabin/privacy/records.ts": {
-      "sha256": "557d961f1d66cbe665295af66f8771b6631ed3d7fe3b8bd70f4fadb990e9afea",
+      "sha256": "4dd8670709dcb403e21357cf8187ee43c526cef595eeaf869efa9a2aa008e8d8",
       "executable": false
     },
     "src/cabin/privacy/scope.ts": {
@@ -2660,7 +2696,7 @@
       "executable": false
     },
     "src/cabin/ui/books.ts": {
-      "sha256": "7a018730409fb0852efd6e17e70a0c350bfd9061fe33a53416187ef4e33ec90a",
+      "sha256": "846b4b2069b760e1749487296f6023c8b15692fd819a823fd68f3603958356c1",
       "executable": false
     },
     "src/cabin/ui/calendar-detail.ts": {
@@ -2749,6 +2785,10 @@
     },
     "src/cabin/ui/private-setting.ts": {
       "sha256": "8e8cfe8fe43514b1752a0c5b1d026f2694e2f45aac65b839a1bacf7762def95c",
+      "executable": false
+    },
+    "src/cabin/ui/qbo.ts": {
+      "sha256": "ac190fcd036966cda181630a5848883fce969f99698c8dd41c4e9183e07a4b64",
       "executable": false
     },
     "src/cabin/ui/readiness.ts": {
@@ -4868,7 +4908,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "81351b3cfceb4ed80519e9a6dc5bbe47b61404c07bb6d2442ed4f0ae4f8b2e11",
+      "sha256": "1aea69a27fcab32c62c597b6b852cb2388891bd3af0f654cc0b5e8fa7becaff9",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {
@@ -5079,6 +5119,22 @@
       "sha256": "d7e2d84709b070a42353696bba857beef8940cd0779d383a34cb548b32ddc2b4",
       "executable": false
     },
+    "tests/qbo-browser.mjs": {
+      "sha256": "92fc64ba6bb64448c303da2499e00d5bd2436631ac338a5eedc2e97e3ad9de44",
+      "executable": false
+    },
+    "tests/qbo-edge.mjs": {
+      "sha256": "27ead71f86aad5757e2c937225fc4f648eefd343093b34fc81bee6c6cb0818ae",
+      "executable": false
+    },
+    "tests/qbo-sandbox.mjs": {
+      "sha256": "9325c8293da325c94c98e7d55ef62f67c3d95383c458fff96451559d91c3d806",
+      "executable": false
+    },
+    "tests/qbo-support.mjs": {
+      "sha256": "9e612c71e3ed839f8bfbdc557fbd5a6186691bca8cd09205d34fe5b8778b979b",
+      "executable": false
+    },
     "tests/quotes-archive.test.mjs": {
       "sha256": "6039a4fda9b9df0ae83ebaedacdf678c24d96f983db2d393b414c8a4be748b6a",
       "executable": false
@@ -5164,7 +5220,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "fec2da2e34f817e71a9e1e24c7792238dc8ea8a41d968e3fb09f8e554be50855",
+      "sha256": "bbc5c6c9e83e21db711ffdeaf9522e5fe5704f12a7716605ead8c7cf594f0a03",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {

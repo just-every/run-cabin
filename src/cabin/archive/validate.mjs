@@ -9,7 +9,7 @@ export async function validateStaged({ db, tables }) {
  }
  const review=await db.prepare(`SELECT restored,reviewed FROM ${table('cb_restore_review')} WHERE id=1`).first()
  if (!review || review.restored !== 1 || review.reviewed !== 0) throw Error('Restored outbound work must be paused.')
- for (const name of ['cb_records','cb_direct_stays','cb_verifications','cb_provider_sharing','cb_direct_homes','cb_tax_deliveries','cb_provider_moveins']) {
+ for (const name of ['cb_qbo_mappings','cb_qbo_entries','cb_qbo_batches','cb_records','cb_direct_stays','cb_verifications','cb_provider_sharing','cb_direct_homes','cb_tax_deliveries','cb_provider_moveins']) {
   for await (const row of rows(name)) if (JSON.stringify(exportRow(name,row)) !== JSON.stringify(row)) throw Error('Archive contains active provider work or private capabilities: '+name)
  }
  for await (const row of rows('cb_ledger_journals')) {

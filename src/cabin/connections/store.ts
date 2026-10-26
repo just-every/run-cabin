@@ -13,6 +13,7 @@ export const PROVIDERS = [
  { id: 'twilio', name: 'Twilio', destination: 'api.twilio.com', purpose: 'Guest texts', data: 'Phone numbers and message text', costs: 'Twilio messaging and registration fees', source: 'https://www.twilio.com/en-us/sms/pricing/us' },
  { id: 'booking', name: 'Booking.com messaging', destination: 'supply-xml.booking.com', purpose: 'Read and send reservation messages', data: 'Property/reservation IDs and conversation text', costs: 'Your Booking.com partner agreement', source: 'https://partner.booking.com/' },
  { id: 'anthropic', name: 'Anthropic', destination: 'api.anthropic.com', purpose: 'Draft replies for human review', data: 'Scoped stay facts, approved instructions and the last twelve messages; recovery wording has no guest facts', costs: 'Your Anthropic API usage', source: 'https://platform.claude.com/docs/en/about-claude/pricing' },
+ { id: 'quickbooks', name: 'QuickBooks Online', destination: 'The Intuit company selected in Books', purpose: 'Post explicitly approved native accounting journals', data: 'USD journal amounts, source references, property classes and owner vendor references', costs: 'Your QuickBooks plan and API limits', source: 'https://developer.intuit.com/' },
  { id: 'pantry', name: 'Pantry', destination: 'Your connected Pantry installation', purpose: 'Post approved owner accounting', data: 'Approved journal and matched booking, payout, fee and expense evidence', costs: 'Your hosting costs; Cabin collects nothing', source: 'https://github.com/just-every/run-pantry' },
 ] as const
 

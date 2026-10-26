@@ -4,7 +4,7 @@ import { erasureScope } from './scope'
 import { retainedRecords, retentionPolicy, saveHolds, type Retained } from './holds'
 import { erasureInventory } from './inventory'
 export const externalSteps=[
- 'Ask each connected booking channel, Stripe, messaging provider and lock provider to delete its independent records and revoke previously delivered access. Stripe Identity redaction is tracked separately until the provider confirms it.',
+ 'Ask each connected booking channel, QuickBooks Online, Stripe, messaging provider and lock provider to delete its independent records and revoke previously delivered access. Stripe Identity redaction is tracked separately until the provider confirms it.',
  'Ask recipients to delete delivered email, attachments and exported accounting files. Cabin cannot recall those deliveries.',
  'Delete old downloaded backups, device copies and exports. Export the later erasure journal and supply it with rer import --journal LATER.rer; isolated old backups cannot discover future erasures.'
 ]

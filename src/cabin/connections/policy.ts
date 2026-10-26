@@ -10,6 +10,7 @@ export const ACTIONS: Record<string, readonly string[]> = {
  booking: ['message:send', 'message:receive'],
  anthropic: ['reply:draft'],
  pantry: ['journal:read', 'journal:write'],
+ quickbooks: ['journal:read', 'journal:write'],
 }
 export interface ProviderPolicy {
  id: string

@@ -27,6 +27,7 @@ function scrub(value) {
  return result
 }
 export function exportRow(table, row) {
+ if(['cb_qbo_mappings','cb_qbo_entries','cb_qbo_batches'].includes(table)){const data=JSON.parse(row.data);data.restored=true;return {...row,data:JSON.stringify(data)}}
  if(table==='cb_saved_reports'||table==='cb_report_schedules'||table==='cb_report_runs'){
   const data=JSON.parse(row.data),invalidate=a=>a?{...a,operatorVersion:-1}:a
   data.creator=invalidate(data.creator)

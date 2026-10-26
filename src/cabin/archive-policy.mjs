@@ -6,7 +6,7 @@ export default {
  exportRow, validateStaged,
  product: 'holiday/cabin',
  includeTables: ['cb_verifications','oa_operators', 'oa_bootstrap', 'oa_invitation_cancellations', 'oa_auth_audit'],
- excludeTables: ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits','cb_agent_keys', 'cb_owner_links', 'cb_owner_sessions', 'cb_finance_connections','cb_direct_provider','cb_provider_security'],
+ excludeTables: ['cb_qbo_app','cb_qbo_connection','cb_qbo_oauth','cb_guest_challenges','cb_guest_sessions','cb_guest_limits','cb_agent_keys', 'cb_owner_links', 'cb_owner_sessions', 'cb_finance_connections','cb_direct_provider','cb_provider_security'],
  replaceableTables: ['cb_meta'],
  requiredConfiguration: ['OWNER_EMAIL','SESSION_SECRET','SETUP_TOKEN','AUTH_ORIGIN','MAIL_PROVIDER','MAIL_FROM'],
 }

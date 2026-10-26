@@ -24,6 +24,9 @@ export async function retainedRecords(c:Context,s:ErasureScope,p:Record<string,u
   const where=table==='cb_tax_evidence'?'report_id IN (SELECT id FROM cb_tax_reports WHERE property_id=?)':table==='cb_tax_reports'?'property_id=?':'property_id=? OR booking_id IN (SELECT value FROM json_each(?))'
   selections.push([table,where,table==='cb_tax_evidence'||table==='cb_tax_reports'?[property]:[property,bookings]])
  }
+ if(s.entity==='property'){
+  for(const table of ['cb_qbo_batches','cb_qbo_entries','cb_qbo_mappings'])for(const row of (await c.db.prepare(`SELECT data FROM ${table} WHERE json_extract(data,'$.propertyId')=?`).bind(s.id).all<{data:string}>()).results){const d=JSON.parse(row.data);out.push({table,id:d.id??d.revision,reason:'Immutable QuickBooks accounting identity and reconciliation history',until:permanent})}
+ }
  for(const [table,where,args] of selections)for(const row of (await c.db.prepare(`SELECT * FROM ${table} WHERE ${where}`).bind(...args).all<any>()).results)out.push({table,id:row.id,reason:'Posted accounting/tax evidence is immutable; operational contacts and pending deliveries are removed separately',until:permanent})
  if(s.entity==='property')for(const table of ['cb_owner_documents','cb_owner_expenses','cb_owner_reserve_reports'])for(const row of (await c.db.prepare(`SELECT * FROM ${table} WHERE property_id=?`).bind(s.id).all<any>()).results)out.push({table,id:row.id,...policy,payload:row})
  return structuredClone(out)
