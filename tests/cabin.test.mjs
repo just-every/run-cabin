@@ -1,3 +1,4 @@
+import { seamEdge } from './seam-edge.mjs'
 import { homeDay } from './home-calendar.mjs'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -210,11 +211,7 @@ test('an overlapping request is declined with its reason and the night is never 
 })
 
 test('PMS team invitations enforce each role’s property/actions, private read scopes and immediate offboarding',async()=>{
- const requests=[],h=await harness({auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:async request=>{
-  const u=new URL(request.url);if(u.host!=='connect.getseam.com')return new Response('Unexpected edge',{status:599})
-  const body=await request.json();requests.push({path:u.pathname,body})
-  return Response.json(u.pathname.endsWith('/create')?{access_code:{access_code_id:'synthetic-cabin-'+requests.length}}:{ok:true})
- }})
+ const edge=seamEdge(),requests=edge.calls,h=await harness({auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
  try{
   const p=await property(h,{name:'Pine Ridge Private',ownerEmail:'rentalowner@stay.example'}),other=await property(h,{name:'Lake Loft Confidential',ownerEmail:'otherowner@stay.example'})
   for(const home of [p,other])await h.cmd('home.settings',{propertyId:home.id,address:'200 Synthetic Road',timeZone:'America/New_York',checklist:['Ready']})

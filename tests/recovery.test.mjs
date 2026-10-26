@@ -14,7 +14,7 @@ const plus = (date, n) => new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_
 const photo = (await readFile('tests/fixtures/checklist.png')).toString('base64')
 
 test('cancelled cleaner recovery binds approval, rebooks, rotates only changed messages, credits, verifies photos and posts a reversible owner balance', async () => {
- const h = await harness()
+ const h = await harness({now:'2026-10-26T14:00:00Z'})
  try {
   assert.equal((await h.send('/app/recovery/setup', undefined, h.owner)).status, 200)
   await h.cmd('recovery.ai.test', {}, h.owner, 409)
@@ -22,7 +22,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   await h.cmd('ledger.configure', { propertyId: home.id, legalEntity: 'Fernwood Rentals LLC' })
   const original = await h.person('Taylor'), replacement = await h.person('Casey'), outsider = await h.person('Dale')
   const manager = await h.person('Riley', 'manager')
-  const today = local(Date.now()).date, arrival = local(Date.now() + 7_200_000)
+  const now=Date.parse('2026-10-26T14:00:00Z'),today = local(now).date, arrival = local(now + 7_200_000)
   await h.cmd('home.settings', { propertyId: home.id, address: '18 Fernwood Lane, Boone, NC', timeZone: zone, checkInTime: arrival.time, checkOutTime: '00:00', cleanerId: original.id, checklist: ['Beds made', 'Kitchen clean'], photosRequired: 1 })
   let policy = await h.cmd('recovery.settings', { propertyId: home.id, cleanerIds: [original.id, replacement.id], auto: false, creditLimitCents: 10_000, cleaningLimitCents: 5000 })
   const prior = await h.cmd('reservation.request', { propertyId: home.id, channel: 'direct', kind: 'stay', guestName: 'Jo', start: plus(today, -1), end: today })
@@ -44,7 +44,7 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   await h.cmd('recovery.approve', { id: recovery.id, revision: recovery.revision }, manager.cookie, 403)
   recovery = await h.cmd('recovery.reject', { id: recovery.id, revision: recovery.revision })
   policy = await h.cmd('recovery.settings', { ...policy, auto: true })
-    policy=await h.cmd('recovery.authority.save',{propertyId:home.id,revision:policy.revision,actions:['cleaner:assign','credit:post','access:write','guest:send','owner:notify'],providers:['cabin','mail'],startsAt:new Date(Date.now()-60000).toISOString(),endsAt:new Date(Date.now()+86400000).toISOString()})
+    policy=await h.cmd('recovery.authority.save',{propertyId:home.id,revision:policy.revision,actions:['cleaner:assign','credit:post','access:write','guest:send','owner:notify'],providers:['cabin','mail'],startsAt:new Date(now-60000).toISOString(),endsAt:new Date(now+86400000).toISOString()})
   recovery = await propose()
   assert.equal(recovery.status, 'active')
   s = await h.accessState(); turnover = s.turnovers.find(t => t.id === turnover.id)
@@ -78,6 +78,16 @@ test('cancelled cleaner recovery binds approval, rebooks, rotates only changed m
   await attestArrival(h,stay.bookingId)
   await h.cmd('recovery.close', { id: recovery.id, revision: recovery.revision })
   s = await h.accessState(); recovery = s.recoveries.find(r => r.id === recovery.id)
+  assert.equal(recovery.status,'ready','Email acceptance cannot stand in for the guest response or follow-up')
+  await h.restart()
+  recovery=(await h.accessState()).recoveries.find(r=>r.id===recovery.id)
+  await h.cmd('recovery.recurrence',{id:recovery.id,revision:recovery.revision,reference:'synthetic-cabin-1',note:'No recurrence',confirm:'yes'},h.owner,409)
+  const confirmedGuest=await h.verifyGuest(oldCode.link)
+  const confirmed=await h.send('/stay/'+oldCode.link,{action:'recovery-confirm',caseId:recovery.id,revision:recovery.revision,response:'confirmed'},confirmedGuest)
+  assert.equal(confirmed.status,303,confirmed.text)
+  recovery=(await h.accessState()).recoveries.find(r=>r.id===recovery.id)
+  await h.cmd('recovery.recurrence',{id:recovery.id,revision:recovery.revision,reference:'synthetic-cabin-2',note:'Guest reports working access and inspector rechecked the finished cleaning',confirm:'yes'})
+  s=await h.accessState();recovery=s.recoveries.find(r=>r.id===recovery.id)
   assert.equal(recovery.status, 'closed')
   assert.equal(s.messages.find(m => m.id === recovery.confirmationMessageId).status, 'sent')
   assert.equal(s.statements.filter(r => r.recoveryId === recovery.id).length, 1)
@@ -144,4 +154,9 @@ test('recovery revises an early arrival and delivers a consented future rate onl
   await h.cmd('recovery.undo',{id:recovery.id,revision:recovery.revision,reason:'Guest and owner agreed to retain the original arrangement'})
   assert.equal((await h.send(recovery.offerUrl)).status,409,'undo revokes the unused future offer')
  } finally {await h.close()}
+})
+
+test('a channel collision is recovered through an exact approved alternative, real preparation, guest acceptance and recurrence without transferring owner funds',async()=>{
+ const {alternativeRecoveryJourney}=await import('./recovery-alternative-support.mjs')
+ await alternativeRecoveryJourney()
 })

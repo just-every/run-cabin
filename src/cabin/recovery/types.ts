@@ -18,11 +18,12 @@ export interface RecoveryExecution {
  grant: RecoveryAuthority; limits: { creditLimitCents: number; cleaningLimitCents: number; cleanerIds: string[] }
  bookingRevision: string; recipient: string | null; propertyRevision: number; settingsRevision: string | null; cleanerId: string; effects: RecoveryEffect[]; capturedAt?: string
 }
-export type Trigger = 'cleaner_cancelled' | 'not_ready' | 'late_checkout' | 'guest_problem'
-export interface Proposal { cleanerId: string; creditCents: number; extraCleaningCents: number; why: string; baseline: string; guestText: string; arrivalTime?: string; futureRate?: { guestId: string; expiresAt: string; baseline: string } }
-export interface Recovery {
+export type Trigger = 'reservation_conflict' | 'cleaner_cancelled' | 'not_ready' | 'late_checkout' | 'guest_problem'
+export interface Proposal { alternative?: import('./alternative').AlternativeProposal; cleanerId: string; creditCents: number; extraCleaningCents: number; why: string; baseline: string; guestText: string; arrivalTime?: string; futureRate?: { guestId: string; expiresAt: string; baseline: string } }
+export interface Recovery { alternativeOrigin?: import('./alternative').AlternativeOrigin;
  issue?: import('../issues/types').ServiceIssue;
  restorePaused?:boolean;
+ collisionRevision?:string; guestConfirmedAt?:string; recurrence?:{at:string;by:string;reference:string;note:string;baseline:string};
  id: string; revision: string; propertyId: string; bookingId: string; turnoverId: string; trigger: Trigger; reason: string
  status: 'open' | 'proposed' | 'active' | 'ready' | 'closed' | 'undone' | 'escalated'; createdAt: string; createdBy: string
  proposal?: Proposal; history: { at: string; by: string; action: string; why: string }[]

@@ -96,7 +96,8 @@
       "commands": [
         "node --test --test-concurrency=1 tests/readiness-browser.test.mjs",
         "node tests/financial-exceptions-browser.mjs",
-        "node tests/qbo-browser.mjs"
+        "node tests/qbo-browser.mjs",
+        "node tests/recovery-browser.mjs"
       ]
     }
   ],

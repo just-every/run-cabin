@@ -1,3 +1,4 @@
+import { seamEdge } from './seam-edge.mjs'
 import { homeDay } from './home-calendar.mjs'
 import { attestArrival } from './readiness-helpers.mjs'
 import { test } from 'node:test'
@@ -9,22 +10,13 @@ import { harness } from './harness.mjs'
 // paid mail transport (tests/mail-edge.mjs) and Seam's lock API, which answers
 // with responses in its documented shape (tests/fixtures/seam).
 const photo = (await readFile('tests/fixtures/checklist.png')).toString('base64')
-const seamFixture = async name => JSON.parse(await readFile(`tests/fixtures/seam/access_codes_${name}.json`, 'utf8'))
 const day = n => homeDay(n, 'America/New_York'), ymd = n => day(n).replace(/-/g, '')
 const ics = events => 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Cabin documented fixture//EN\r\n' + events.map(e => `BEGIN:VEVENT\r\nUID:${e.uid}\r\nDTSTART;VALUE=DATE:${e.start}\r\nDTEND;VALUE=DATE:${e.end}\r\nSUMMARY:${e.summary}\r\nEND:VEVENT\r\n`).join('') + 'END:VCALENDAR\r\n'
 const ADDRESS = '18 Fernwood Lane, Boone, NC 28607'
 
 test('every stay creates its turnover and door codes, the cleaner is emailed and marks it ready with photos', async () => {
-  const lock = []
-  const outbound = async request => {
-    const url = new URL(request.url)
-    if (url.host !== 'connect.getseam.com') return new Response('unexpected', { status: 599 })
-    const body = await request.json(), action = url.pathname.split('/').pop(), reply = await seamFixture(action)
-    lock.push({ action, body, auth: request.headers.get('authorization') })
-    if (action === 'create') Object.assign(reply.access_code, { access_code_id: `ac-${lock.length}`, code: body.code, starts_at: body.starts_at, ends_at: body.ends_at })
-    return Response.json(reply)
-  }
-  const h = await harness({ outbound, auth: { SEAM_API_KEY: 'seam_test_fixture' } })
+  const edge=seamEdge(),lock=edge.calls
+  const h = await harness({outbound:edge.outbound,auth:{SEAM_API_KEY:'synthetic-cabin-1'}})
   try {
     const mail = async to => (await h.db.prepare('SELECT message FROM rer_mail_development_outbox ORDER BY sequence').all()).results.map(r => JSON.parse(r.message)).filter(m => m.to.includes(to))
     const home = await h.cmd('property.save', { name: 'Fernwood Cabin', ownerName: 'Morgan Lee', ownerEmail: 'morgan@stay.example', commissionBps: 2000 })
@@ -55,7 +47,7 @@ test('every stay creates its turnover and door codes, the cleaner is emailed and
     assert.equal(s.notices.find(n => n.recordId === first.id).status, 'sent')
     s = await h.accessState()
     assert.ok(s.codes.every(r => r.lock.state === 'set' && r.lock.providerId))
-    assert.ok(lock.every(call => call.auth === 'Bearer seam_test_fixture'))
+    assert.ok(lock.every(call => call.auth === 'Bearer synthetic-cabin-1'))
     const atHome = iso => new Date(iso).toLocaleString('sv-SE', { timeZone: 'America/New_York' }).slice(0, 16).replace(' ', 'T')
     const pushed = lock.find(call => call.action === 'create' && call.body.code === guestCode(ana).code)
     assert.deepEqual([pushed.body.device_id, atHome(pushed.body.starts_at), atHome(pushed.body.ends_at)], ['device-fixture-1', `${day(3)}T16:00`, `${day(6)}T10:00`])

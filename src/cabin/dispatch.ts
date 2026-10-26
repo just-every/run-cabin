@@ -1,3 +1,4 @@
+import { isArrivalPreparation, synchronizeArrivalPreparations } from './recovery/arrival-preparation'
 import { hasAction,permitsProperty } from './permissions/policy'
 import { occupancy as isStay } from './blocks'
 import { accessBlocked } from './agreements/records'
@@ -17,7 +18,7 @@ import { synchronizeDispatch, reconcileAccepted, offerEligible } from './dispatc
 // window and an email. A moved stay moves its turnover, codes and email; a
 // cancelled one cancels them. Stays that checked out before today start nothing.
 const nights = (b: Booking) => ({ first: b.start.slice(0, 10), checkout: b.end.slice(0, 10) })
-export const liveTurnover = (c: { data: { turnovers: Turnover[] } }, bookingId: string) => c.data.turnovers.find(t => t.bookingId === bookingId && t.status !== 'draft' && t.status !== 'cancelled')
+export const liveTurnover = (c: { data: { turnovers: Turnover[] } }, bookingId: string) => c.data.turnovers.find(t => !isArrivalPreparation(t) && t.bookingId === bookingId && t.status !== 'draft' && t.status !== 'cancelled')
 const activeCleaner = (c: Context, id: string | null, propertyId?:string) => id ? c.data.members.find(m => m.id === id && m.active && m.role === 'cleaner'&&(!m.scope||m.scope.actions.includes('*')||m.scope.actions.includes('operations:read'))&&(!propertyId||!m.scope||m.scope.propertyIds.includes('*')||m.scope.propertyIds.includes(propertyId))) ?? null : null
 
 function windowOf(c: Context, s: HomeSettings, b: Booking) {
@@ -45,6 +46,7 @@ function cleanerCode(c: Context, s: HomeSettings, t: Turnover) {
 }
 
 export function dispatch(c: Context) {
+ synchronizeArrivalPreparations(c)
  const now = Date.parse(c.now)
  const paused = (t: Turnover) => c.data.bookings.some(b=>b.id===t.bookingId&&b.restorePaused)
  for (const b of c.data.bookings) {

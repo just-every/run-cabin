@@ -1,5 +1,5 @@
 import type { Bindings } from '../../auth.server'
-import { type Actor, type GuestMessage, need, text, newId, manager, exact } from '../model'
+import { type Actor, type GuestMessage, need, text, newId, manager, owner, exact } from '../model'
 import { load, mutate } from '../storage'
 import { seal } from '../seal'
 import { managedInstall } from '../channels'
@@ -70,8 +70,21 @@ export async function inboxCommand(env: Bindings, who: Actor, name: string, p: R
    c.data.approvals.push(approval)
    Object.assign(m, { text: text(p.text ?? m.text, 'reply', 4000), status: 'pending', sentBy: who.id, authority:structuredClone(who), approvalId: approval.id, revision: newId() }); markReply(c, tid); return m
   }
+  if (name === 'message.reconcile') {
+   owner(c.actor)
+   const m=c.data.messages.find(r=>r.id===text(p.id,'message ID'));need(m&&m.direction==='out'&&m.status==='failed'&&m.send?.state==='uncertain','Choose an uncertain failed delivery',409);exact(m,p.revision)
+   need(p.confirm==='yes','Confirm you inspected the provider’s attempt history')
+   need(p.outcome==='accepted'||p.outcome==='not_applied','Choose the outcome proved by provider records')
+   const reference=text(p.reference,'provider evidence reference',300),reason=text(p.reason,'what the provider evidence establishes',1000)
+   Object.assign(m.send,{state:p.outcome==='accepted'?'accepted':'rejected',providerId:p.outcome==='accepted'?reference:null,finishedAt:c.now})
+   m.detail=`${p.outcome==='accepted'?'Acceptance':'No delivery'} verified by ${c.actor.email}: ${reference}. ${reason}`;m.revision=newId()
+   const scheduled=m.scheduledId&&c.data.scheduled.find(r=>r.id===m.scheduledId)
+   if(p.outcome==='accepted'){m.status='sent';m.providerId=reference;m.sentAt=c.now;if(scheduled)Object.assign(scheduled,{status:'sent',sentAt:c.now,reason:m.detail,revision:newId()})}
+   c.data.approvals.push({id:newId(),kind:'message-provider-reconciliation',recordId:m.id,revision:m.revision,actorId:c.actor.id,actorName:c.actor.email,at:c.now});c.entityId=m.id;return m
+  }
   if (name === 'message.retry') {
-   const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Message not found', 404); need(m.status === 'failed', 'Only a failed message can be sent again', 409)
+   const m = c.data.messages.find(r => r.id === text(p.id, 'message ID')); need(m && m.direction === 'out', 'Message not found', 404); need(m.status === 'failed', 'Only a failed message can be sent again', 409);exact(m,p.revision)
+   need(m.send?.state!=='uncertain','The owner must reconcile the uncertain provider attempt before any resend',409)
    const scheduled=m.scheduledId&&c.data.scheduled.find(r=>r.id===m.scheduledId)
    if(scheduled){need(p.confirmNoDelivery==='yes','Check the provider history and confirm this attempt was not delivered before sending again',409);const reference=text(p.providerReference,'provider non-delivery evidence reference',300);m.status='discarded';m.detail='Provider non-delivery checked: '+reference;m.revision=newId();Object.assign(scheduled,{status:'scheduled',messageId:null,attemptedAt:undefined,reason:'Human verified no earlier delivery: '+reference,revision:newId()})}
    else Object.assign(m, { status: 'pending', detail: null, revision: newId() })

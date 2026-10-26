@@ -3,7 +3,7 @@ import { homeSettings } from '../homes'
 import { liveTurnover } from '../dispatch'
 import type { Recovery, Trigger } from './types'
 
-export const triggers: Trigger[] = ['cleaner_cancelled', 'not_ready', 'late_checkout', 'guest_problem']
+export const triggers: Trigger[] = ['reservation_conflict', 'cleaner_cancelled', 'not_ready', 'late_checkout', 'guest_problem']
 export function note(c: Context, row: Recovery, action: string, why: string) {
  row.history.push({ at: c.now, by: c.actor.email || c.actor.id, action, why }); row.revision = newId(); c.entityId = row.id
 }
@@ -16,7 +16,7 @@ export function openCase(c: Context, b: Booking, t: Turnover, trigger: Trigger, 
 export function context(c: Context, row: Recovery) {
  const b = c.data.bookings.find(b => b.id === row.bookingId), t = c.data.turnovers.find(t => t.id === row.turnoverId)
  need(b?.status === 'confirmed' && t && t.status !== 'cancelled', 'Stay or turnover changed. Escalate this case and review the stay.', 409)
- return { b, t, settings: homeSettings(c, row.propertyId), policy: c.data.recoveryPolicies.find(p => p.propertyId === row.propertyId) }
+ return { b, t, settings: homeSettings(c, b.propertyId), policy: c.data.recoveryPolicies.find(p => p.propertyId === row.propertyId) }
 }
 /** Approval binds recipients, spend authority, the stay, turnover, home and current code. */
 export function baseline(c: Context, row: Recovery, cleanerId: string) {

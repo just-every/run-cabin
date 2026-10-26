@@ -138,3 +138,8 @@ test('MESSAGE-003: verified readiness releases corrected access, follow-up conse
   assert.equal((await mail(h,'identity@guest.example')).filter(m=>m.subject==='Complete your identity check').length,idMail.filter(m=>m.subject==='Complete your identity check').length)
  }finally{await h.close()}
 })
+
+test('interrupted guest replies retain claims, assign uncertainty and require owner provider evidence before any resend',async()=>{
+ const {interruptedMessageJourney}=await import('./message-interruption-support.mjs')
+ await interruptedMessageJourney()
+})

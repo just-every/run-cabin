@@ -1,3 +1,4 @@
+import { seamEdge } from './seam-edge.mjs'
 import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
@@ -84,13 +85,12 @@ test('AGENT-006: separate native grants fence scopes/windows and exact approvals
 test('AGENT-006: revocation during an uncertain provider write survives later executions and requires evidence before any retry', async () => {
  let interrupt = false, writes = 0, started, release
  const reached = new Promise(resolve => { started = resolve }), response = new Promise(resolve => { release = resolve })
- const h = await harness({ auth: { SEAM_API_KEY: 'synthetic-cabin-1' }, outbound: async request => {
-  const url = new URL(request.url), body = await request.json()
-  assert.equal(url.hostname, 'connect.getseam.com')
-  writes++
-  if (interrupt && url.pathname === '/access_codes/create' && body.name === 'Cabin guest access') { interrupt = false; started(); await response; return new Response('Ambiguous network-edge response', { status: 503 }) }
-  return Response.json(url.pathname === '/access_codes/create' ? { access_code: { access_code_id: `edge-access-${writes}` } } : { ok: true })
- } })
+ const edge=seamEdge({intercept:async ({phase,action,body})=>{
+  if(phase!=='before')return
+  if(['create','update','delete'].includes(action))writes++
+  if(interrupt&&action==='create'&&body.name.startsWith('Cabin guest access ')){interrupt=false;started();await response;return new Response('Ambiguous network-edge response',{status:503})}
+ }})
+ const h=await harness({auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
  let applying
  try {
   const f = await setup(h, { lock: true })
@@ -126,4 +126,40 @@ test('AGENT-006: revocation during an uncertain provider write survives later ex
   assert.equal(r.status, 'active', 'provider acceptance does not declare physical readiness')
   assert.equal((await h.send('/app/recovery', undefined, h.owner)).status, 200)
  } finally { release(); if (applying) await applying.catch(() => {}); await h.close() }
+})
+
+test('ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes',async()=>{
+ let boundary='before'
+ const edge=seamEdge({intercept:({phase,action})=>{
+  if(['create','update','delete'].includes(action)&&phase===boundary)return new Response('Interrupted provider response',{status:503})
+ }})
+ const h=await harness({now:'2026-10-26T14:00:00Z',auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
+ try{
+  const home=await h.cmd('property.save',{name:'Lake House',ownerName:'Morgan Carter',ownerEmail:'morgan@stay.example',commissionBps:2000})
+  await h.cmd('home.settings',{propertyId:home.id,address:'12 Lake Road, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready'],lockDeviceId:'synthetic-cabin-2'})
+  const interrupted=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',start:'2026-11-01',end:'2026-11-03'})
+  let state=await h.accessState(),code=state.codes.find(c=>c.bookingId===interrupted.bookingId&&c.holder==='guest')
+  assert.equal(code.lock.state,'failed');assert.equal(edge.codes.size,0)
+  const before=edge.writes().length
+  await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal(edge.writes().length,before,'An interrupted unacknowledged request is read-only after restart')
+  assert.equal((await h.accessState()).codes.find(c=>c.id===code.id).lock.state,'failed')
+  boundary='after'
+  const accepted=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Ana Diaz',start:'2026-11-05',end:'2026-11-07'})
+  state=await h.accessState();code=state.codes.find(c=>c.bookingId===accepted.bookingId&&c.holder==='guest')
+  assert.equal(code.lock.state,'set');assert.ok(code.lock.providerId)
+  assert.equal([...edge.codes.values()].filter(c=>c.name.endsWith(code.id)).length,1)
+  const ordinary=await h.state();assert.ok(!JSON.stringify(ordinary.codes.find(c=>c.id===code.id).lock).includes('"code":"'+code.code+'"'),'Ordinary state cannot disclose the PIN through persisted provider work')
+  let booking=state.bookings.find(b=>b.id===accepted.bookingId)
+  await h.cmd('reservation.move',{id:booking.id,revision:booking.revision,start:'2026-11-06',end:'2026-11-08'})
+  state=await h.accessState();code=state.codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'set')
+  assert.equal(edge.codes.get(code.lock.providerId).starts_at,'2026-11-06T21:00:00.000Z')
+  booking=state.bookings.find(b=>b.id===booking.id)
+  await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
+  state=await h.accessState();code=state.codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'removed');assert.ok(!edge.codes.has(code.lock.providerId))
+  const writes=edge.writes().filter(c=>c.body.access_code_id===code.lock.providerId||c.body.name?.endsWith(code.id))
+  assert.deepEqual(writes.map(c=>c.action),['create','update','delete'])
+  await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.deepEqual(edge.writes().filter(c=>c.body.access_code_id===code.lock.providerId||c.body.name?.endsWith(code.id)).map(c=>c.action),['create','update','delete'])
+ }finally{await h.close()}
 })

@@ -1,5 +1,5 @@
 import { lifecyclePreference } from '../inbox/lifecycle-ui'
-import { h, heading, form, hidden, empty, propertyName } from './shared'
+import { h, heading, form, hidden, empty, propertyName, select, area } from './shared'
 import { chip, atHome } from './ops'
 import { channelName, span } from '../inventory'
 import { type Thread } from '../inbox/threads'
@@ -29,8 +29,9 @@ function status(s: any, m: any, t: Thread) {
   const sched = m.scheduledId ? s.scheduled.find((r: any) => r.id === m.scheduledId) : null, late = sched ? lateMinutes(sched) : null
   const who = m.control?.automatic ? 'Automatic reply · property authority' : m.source === 'scheduled' ? (sched ? `Scheduled · ${RULE_NAMES[sched.rule as keyof typeof RULE_NAMES]}` : 'Direct booking · sent automatically') : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
   const state = m.status === 'sent' ? `Sent ${when}${sched ? (late !== null && late <= 5 ? ' · on time' : ` · ${late} min late`) : ''}` : m.status === 'suppressed' ? 'Not sent: development mode sends no email' : m.status === 'unavailable' ? `Not sent: ${(m.detail ?? '').split(/(?<=\.) /)[0]}` : m.status === 'failed' ? `Could not send: ${m.detail ?? ''}` : 'Sending…'
-  const retry = m.status === 'failed' ? form('message.retry', page(t), hidden('id', m.id)+(sched?'<label>Provider non-delivery evidence reference<input name="providerReference" maxlength="300" required></label><label class="check"><input type="checkbox" name="confirmNoDelivery" value="yes" required> I verified the provider did not deliver this attempt</label>':''), 'Send again', 'class="quiet inline"') : ''
-  return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(who)}</p><p class="state ${m.status === 'sent' ? 'ok' : m.status === 'failed' || m.status === 'unavailable' ? 'bad' : ''}">${h(state)}</p>${retry}`
+  const retry = m.status === 'failed' && m.send?.state!=='uncertain' ? form('message.retry', page(t), hidden('id', m.id)+hidden('revision',m.revision)+(sched?'<label>Provider non-delivery evidence reference<input name="providerReference" maxlength="300" required></label><label class="check"><input type="checkbox" name="confirmNoDelivery" value="yes" required> I verified the provider did not deliver this attempt</label>':''), 'Send again', 'class="quiet inline"') : ''
+  const reconcile=m.status==='failed'&&m.send?.state==='uncertain'&&s.actor.role==='owner'?form('message.reconcile',page(t),hidden('id',m.id)+hidden('revision',m.revision)+select('outcome','Provider records establish',[['accepted','Accepted by provider'],['not_applied','No effect occurred']])+'<label>Provider evidence reference<input name="reference" maxlength="300" required></label>'+area('reason','What the records establish','','maxlength="1000"')+'<label class="check"><input type="checkbox" name="confirm" value="yes" required> I checked the provider history for this exact attempt</label>','Reconcile provider outcome'):''
+  return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(who)}</p><p class="state ${m.status === 'sent' ? 'ok' : m.status === 'failed' || m.status === 'unavailable' ? 'bad' : ''}">${h(state)}</p>${retry}${reconcile}`
 }
 function browserRead(s:any,m:any){return !!m?.providerId?.startsWith('channel-read:')||!!(m?.replyTo&&s.messages.find((row:any)=>row.id===m.replyTo)?.providerId?.startsWith('channel-read:'))}
 function channelReply(m:any){return `<p class="notice">Open this conversation in ${h(CHANNEL[m.channel])} to reply. Cabin’s browser reader has not sent anything. You can copy the draft below.</p>`}

@@ -79,7 +79,7 @@ export function exportRow(table, row) {
   if (['pending','queued','running','needs_you'].includes(data.status)) { data.status='cancelled'; data.detail=pause }
  }
  if (kind === 'exports') data.token = ''
- if (kind === 'codes') { data.code = ''; data.link = null; data.status = 'revoked'; data.reason = pause; data.lock = {...data.lock,state:'manual',providerId:null,error:null} }
+ if (kind === 'codes') { data.code = ''; data.link = null; data.status = 'revoked'; data.reason = pause; data.lock = {state:'manual',providerId:null,error:null,at:null} }
  if (kind === 'inbox') data.ai = null
  if (kind === 'promotionOffers') { data.restorePaused=true; data.tokenHash=null; delete data.tokenSealed; delete data.checkoutUrl }
  if (kind === 'promotionPolicies') data.enabled=false

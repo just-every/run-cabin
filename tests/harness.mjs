@@ -19,7 +19,7 @@ export async function harness(options = {}) {
   const socket = createServer(); await new Promise(r => socket.listen(0, '127.0.0.1', r)); const port = socket.address().port; await new Promise(r => socket.close(r))
   const dir = options.root ? join(options.root, '.wrangler/state/v3') : await mkdtemp(join(tmpdir(), 'cabin-test-')), origin = `http://${options.hostname??'127.0.0.1'}:${port}`, setup = randomBytes(32).toString('hex')
   const auth = { AUTH_LOCAL: 'true', OWNER_EMAIL: 'owner@stay.example', SESSION_SECRET: randomBytes(32).toString('hex'), SETUP_TOKEN: setup, MAIL_PROVIDER: 'development', MAIL_FROM: 'auth@stay.example', ...options.auth, AUTH_ORIGIN: origin }
-  const config = convertV4MiniflareOptions({ host: options.hostname??'127.0.0.1', port, modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-09-08', compatibilityFlags: ['nodejs_compat'], d1Databases: { DB: 'local-foundation-only' }, bindings: auth, unsafeTriggerHandlers: true, ...(options.outbound ? { outboundService: options.outbound } : {}) })
+  let config = convertV4MiniflareOptions({ host: options.hostname??'127.0.0.1', port, modules: true, script: bundle.outputFiles[0].text, compatibilityDate: '2026-09-08', compatibilityFlags: ['nodejs_compat'], d1Databases: { DB: 'local-foundation-only' }, bindings: auth, unsafeTriggerHandlers: true, ...(options.outbound ? { outboundService: options.outbound } : {}) })
   if(options.assets) config.workers[0].config.assets = {directory: join(process.cwd(), 'public'), hasUserWorker: true}
   let mf = new Miniflare({...config, resourcePersistencePath:dir})
   try {
@@ -69,7 +69,7 @@ export async function harness(options = {}) {
       const verified=await send(path+'/verify',{challengeId:sent.value.challengeId,code},browser);assert.equal(verified.status,303,verified.text)
       return browser+'; '+verified.cookie
     }
-    return { get db(){return db}, get mf(){return mf}, restart:async()=>{await mf.dispose();mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')}, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, verifyGuest, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
+    return { get db(){return db}, get mf(){return mf}, restart:async(overrides={})=>{await mf.dispose();if(overrides.productionMail){const production=await build({banner,entryPoints:['tests/worker.ts'],bundle:true,write:false,format:'esm',platform:'neutral',mainFields:['module','main'],conditions:['workerd','worker','browser'],external:['node:*','cloudflare:*'],target:'es2023'});Object.assign(auth,overrides.auth??{});config=convertV4MiniflareOptions({host:options.hostname??'127.0.0.1',port,modules:true,script:production.outputFiles[0].text,compatibilityDate:'2026-09-08',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'local-foundation-only'},bindings:auth,unsafeTriggerHandlers:true})}mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')}, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, verifyGuest, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
   } catch (error) { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }); throw error }
 }
 

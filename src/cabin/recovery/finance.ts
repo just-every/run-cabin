@@ -5,7 +5,8 @@ export function postRecoveryBalance(c:Context,recovery:{id:string;propertyId:str
  const recoveryId=text(recovery.id,'recovery ID'),prop=property(c,recovery.propertyId),reason=text(why,'recovery balance reason',2000)
  integer(creditCents,'creditCents');integer(extraCleaningCents,'extraCleaningCents')
  need(Number.isSafeInteger(creditCents+extraCleaningCents),'Recovery balance total must be a safe whole number of cents')
- need(c.data.bookings.some(b=>b.id===recovery.bookingId&&b.propertyId===prop.id),'Recovery stay does not belong to this home',409)
+ const linked=c.data.recoveries.find(r=>r.id===recovery.id)?.alternativeOrigin
+ need(c.data.bookings.some(b=>b.id===recovery.bookingId&&(b.propertyId===prop.id||linked?.booking.id===b.id&&linked.propertyId===prop.id&&linked.booking.propertyId===prop.id)),'Recovery stay does not belong to this home',409)
  const postings=c.data.statements.filter(s=>s.source==='recovery'&&s.recoveryId===recoveryId)
  const originals=postings.filter(s=>!s.reversalOf),reversals=postings.filter(s=>s.reversalOf)
  need(originals.length<=1&&reversals.length<=1,'Recovery balance has conflicting postings; review its frozen statements',409)

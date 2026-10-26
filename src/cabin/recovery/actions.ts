@@ -1,3 +1,4 @@
+import { applyAlternative } from './alternative'
 import { requestCleaner, withdrawOffers } from '../dispatch/offers'
 import { type Context, need, newId } from '../model'
 import { issue, revoke } from '../codes'
@@ -11,7 +12,7 @@ import type { Recovery } from './types'
 
 export async function applyRecovery(c: Context, row: Recovery, automatic = false) {
  const p = row.proposal!; need(row.status === 'proposed' && p, 'Review a proposed action first', 409)
- const { b, t, settings, policy } = context(c, row)
+ let { b, t, settings, policy } = context(c, row)
  need(p.baseline === baseline(c, row, p.cleanerId), 'Stay, recipient, cleaner or limits changed. Propose and review again.', 409)
  const within = withinLimits(c, row, p)
  need(!automatic || (policy?.auto && within), 'Owner approval is needed above the saved limits', 403)
@@ -22,7 +23,13 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  if (automatic) requireRecoveryAuthority(c, row)
  const old = c.data.codes.find(r => r.bookingId === b.id && r.holder === 'guest' && r.status === 'issued')
  need(old, 'This stay has no active code to replace. Review access first.', 409)
- row.previous = { turnover: structuredClone(t), code: structuredClone(old), arrivalTime: b.arrivalTime }
+ const previous = { turnover: structuredClone(t), code: structuredClone(old), arrivalTime: b.arrivalTime }
+ if (p.alternative) {
+  need(!automatic,'A manager must explicitly approve an alternative stay',403)
+  const alternative=await applyAlternative(c,row);if(!alternative)return row
+  b=alternative.b;t=alternative.t;settings=alternative.settings
+ }
+ row.previous = previous
  const approval = { id: newId(), kind: automatic ? 'recovery-agent' : 'recovery', recordId: row.id, revision: row.revision, actorId: automatic ? 'cabin:stay-recovery' : c.actor.id, actorName: automatic ? 'Cabin recovery agent within owner grant' : c.actor.email, at: c.now }
  c.data.approvals.push(approval); row.approvalId = approval.id
  await applySettlement(c, row)
@@ -30,7 +37,7 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  else Object.assign(t, { cleanerId: p.cleanerId, status: 'approved', revision: newId() }); delete t.completion
  t.history = [...t.history ?? [], { at: c.now, by: c.actor.id, action: 'recovery reassignment', cleanerId: p.cleanerId }]
  // Issue before revoking: the replacement is guaranteed different from the old code.
- const code = issue(c, settings, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, validFrom: `${b.start.slice(0,10)}T${b.arrivalTime ?? settings.checkInTime}`, validUntil: old.validUntil })
+ const code = issue(c, settings, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, validFrom: `${b.start.slice(0,10)}T${b.arrivalTime ?? settings.checkInTime}`, validUntil: p.alternative ? `${b.end.slice(0,10)}T${b.departureTime ?? settings.checkOutTime}` : old.validUntil })
  // Retain the guest's secret stay URL; its current code changes on the same page.
  code.link = old.link; old.link = null; revoke(old, 'Replaced by approved stay recovery'); row.codeId = code.id
  row.creditMessageId = guestMessage(c, row, 'An update about your stay', p.guestText).id
@@ -44,6 +51,7 @@ export async function applyRecovery(c: Context, row: Recovery, automatic = false
  return row
 }
 export function undoRecovery(c: Context, row: Recovery, why: string) {
+ need(!row.alternativeOrigin,'An approved alternative needs a fresh reservation correction and exact balance review; it cannot silently restore a different home or dates.',409)
  need(row.previous && row.proposal && ['active', 'ready', 'closed', 'escalated'].includes(row.status), 'No applied action to undo', 409)
  const { b, t, settings } = context(c, row)
  need(row.appliedBaseline === JSON.stringify({ booking: b.revision, recipient: b.guestEmail, cleanerId: t.cleanerId }), 'Stay or assignee changed. Review it before compensating this action.', 409)

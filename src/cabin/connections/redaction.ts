@@ -28,7 +28,7 @@ export function ordinaryOutput(value: unknown, secrets: readonly string[] = [],f
  for(const [key,item] of Object.entries(row)) {
   if(PRIVATE_KEYS.has(key))continue
   if(key==='url'&&'intervalMinutes' in row){result[key]=null;continue}
-  if((key==='code'||key==='link')&&'holder' in row){result[key]=null;continue}
+  if((key==='code'||key==='link')&&('holder' in row||'fingerprint' in row&&'operation' in row)){result[key]=null;continue}
   result[key]=ordinaryOutput(item,secrets,key)
  }
  return result

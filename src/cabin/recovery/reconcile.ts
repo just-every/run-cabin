@@ -37,6 +37,7 @@ export async function recoveryEffectCommand(c: Context, name: string, p: Record<
  if (p.outcome === 'accepted') {
   if (effect.kind === 'mail') {
    const message = c.data.messages.find(m => m.id === effect.sourceId)
+   if(message?.send)Object.assign(message.send,{state:'accepted',providerId:reference,finishedAt:c.now})
    if (message) Object.assign(message, { status: 'sent', providerId: reference, sentAt: c.now, revision: newId(), detail: 'Provider acceptance established from reconciled evidence.' })
    const notice = c.data.notices.find(n => n.id === effect.sourceId), delivery = c.data.deliveries.find(d => d.id === effect.sourceId)
    if (notice) Object.assign(notice, { status: 'sent', sentAt: c.now, detail: 'Provider acceptance established from reconciled evidence.' })
@@ -45,7 +46,8 @@ export async function recoveryEffectCommand(c: Context, name: string, p: Record<
    const code = c.data.codes.find(code => code.id === effect.sourceId)
    need(code, 'Access record no longer exists; reconcile it with the provider before continuing', 409)
    need(await sha(JSON.stringify(recoveryEffectSource(c.data, 'lock', code.id)!.payload)) === effect.sourceHash, 'Access changed since submission; reconcile the obsolete provider code separately before authorizing current access', 409)
-   code.lock = { state: code.status === 'revoked' ? 'removed' : 'set', providerId: reference, error: null, at: c.now }
+   code.lock = { ...code.lock, state: 'pending', providerId: reference, error: null, at: c.now }
+   if(code.lock.job){code.lock.job.providerId=reference;code.lock.job.acceptedAt=c.now;code.lock.job.stage='observing';code.lock.job.claim=null}
   }
  } else requeue(c, effect.kind, effect.sourceId)
  note(c, row, 'Provider effect reconciled', `${effect.kind} ${effect.sourceId}: ${effect.state}; ${reference}; ${reason}`)
@@ -54,8 +56,9 @@ export async function recoveryEffectCommand(c: Context, name: string, p: Record<
 function requeue(c: Context, kind: 'mail' | 'lock', id: string) {
  if (kind === 'lock') { const code = c.data.codes.find(code => code.id === id); if (code) code.lock = { ...code.lock, state: 'pending', error: null }; return }
  const message = c.data.messages.find(m => m.id === id)
+ if(message?.send)Object.assign(message.send,{state:'rejected',finishedAt:c.now})
  if (message) Object.assign(message, { status: 'pending', detail: 'Provider proved the earlier request had no effect. A fresh current authority check is required.', revision: newId() })
  const notice = c.data.notices.find(n => n.id === id), delivery = c.data.deliveries.find(d => d.id === id)
- if (notice) notice.status = 'pending'
+ if (notice) {notice.status = 'pending';if(notice.send)notice.send.state='rejected'}
  if (delivery) delivery.status = 'pending'
 }

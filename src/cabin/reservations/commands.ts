@@ -1,3 +1,4 @@
+import { revoke } from '../codes'
 import { type Booking,type Context,need,text,newId,manager,property,exact,sha } from '../model'
 import { channel,held,overlaps,describe } from '../inventory'
 import { day } from '../direct/rules'
@@ -62,7 +63,7 @@ export async function lifecycleCommand(c:Context,name:string,p:Record<string,unk
   const changedHome=target.id!==b.propertyId
   need(!direct||!changedHome,'A paid direct stay retains its original payment and owner scope. Settle it before creating a reservation for another home.',409)
   if(changedHome){
-   for(const code of c.data.codes.filter(code=>code.bookingId===b.id&&code.status==='issued')){code.status='revoked';code.reason='Reservation moved to a different home';code.revision=newId()}
+   for(const code of c.data.codes.filter(code=>code.bookingId===b.id&&code.status==='issued')){revoke(code,'Reservation moved to a different home')}
    for(const job of c.data.turnovers.filter(job=>job.bookingId===b.id&&job.status!=='cancelled')){job.status='cancelled';job.cancelReason='Reservation moved to a different home';job.revision=newId()}
    for(const message of c.data.scheduled.filter(m=>m.bookingId===b.id&&m.status==='scheduled')){message.status='cancelled';message.reason='Reservation moved to a different home';message.revision=newId()}
    next.managementTerms=structuredClone(managementFor(c.data,target.id,next.start))

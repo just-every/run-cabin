@@ -1,3 +1,5 @@
+import { isArrivalPreparation } from './recovery/arrival-preparation'
+import { instant } from './clock'
 import { type Context, type Turnover, need, text, newId, preparer, manager, approve, exact } from './model'
 import { photoList, storePhotos } from './photos'
 import { checklist, homeSettings } from './homes'
@@ -14,6 +16,7 @@ const afterCheckout = (c: Context, row: Turnover) => {
  const b = c.data.bookings.find(b => b.id === row.bookingId)
  need(b?.status === 'confirmed' && b.revision === row.bookingRevision, 'Booking changed. Ask the manager to review this turnover.', 409)
  const s = homeSettings(c, row.propertyId)
+ if(isArrivalPreparation(row)){need(b.propertyId===row.propertyId&&row.nextBookingId===b.id&&row.windowStart&&row.windowEnd&&Date.parse(c.now)>=instant(row.windowStart,s.timeZone)&&Date.parse(c.now)<=instant(row.windowEnd,s.timeZone),'Complete arrival preparation within its approved vacant window before check-in.',409);return}
  need(Date.parse(c.now) >= checkoutInstant(s, b), `Guests have not checked out yet. Record departure and mark ready after ${when(checkoutTime(s, b))} (${s.timeZone}).`, 409)
 }
 export async function turnoverCommand(c:Context,name:string,p:Record<string,unknown>){

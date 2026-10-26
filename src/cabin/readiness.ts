@@ -1,3 +1,4 @@
+import { isArrivalPreparation, validArrivalCompletion } from './recovery/arrival-preparation'
 import { occupancy } from './blocks'
 import { arrivalChecks } from './readiness/records'
 import type { AccessCode, Booking, Data, Property, Task, Turnover } from './model'
@@ -16,11 +17,17 @@ export function homeReadiness(s: Pick<Data, 'properties' | 'bookings' | 'turnove
  const stays = s.bookings.filter(b => b.propertyId === p.id && b.status==='confirmed' && occupancy(b)).sort((a, b) => a.start.localeCompare(b.start))
  const arrival = stays.find(b => stay(b) && b.start.slice(0, 10) >= day) ?? null
  const before = arrival ? stays.filter(b => b.end.slice(0, 10) <= arrival.start.slice(0, 10)).at(-1) : stays.filter(b => b.end.slice(0, 10) <= day).at(-1)
- const turnover = (before && s.turnovers.find(t => t.bookingId === before.id && live(t))) || null
+ const preparation=arrival&&s.turnovers.find(t=>isArrivalPreparation(t)&&t.bookingId===arrival.id&&t.propertyId===p.id&&live(t))
+ const turnover = preparation || (before && s.turnovers.find(t => !isArrivalPreparation(t) && t.bookingId === before.id && live(t))) || null
  const blockers = s.tasks.filter(t => t.propertyId === p.id && t.status === 'open' && t.blocking)
  const reasons: string[] = []
  const cleaner = turnover?.cleanerId ? s.members.find(m => m.id === turnover.cleanerId)?.name ?? 'the cleaner' : null
  if (!turnover) reasons.push(before ? 'No turnover recorded after the last stay' : arrival ? 'No turnover recorded before this arrival' : 'No stays recorded yet')
+ else if (isArrivalPreparation(turnover)) {
+  if(turnover.status==='unassigned')reasons.push('No cleaner assigned')
+  else if(turnover.status==='approved')reasons.push(`Arrival preparation not done yet (${cleaner})`)
+  else if(!arrival||!validArrivalCompletion(turnover,arrival,homeSettings(s,p.id)))reasons.push('Arrival preparation needs fresh checklist and photo evidence')
+ }
  else if (!before || (turnover.status === 'completed' && !validCompletion(turnover, before, homeSettings(s, p.id)))) reasons.push('Cleaning must be done after the preceding stay checks out')
  else if (now < checkoutInstant(homeSettings(s, p.id), before)) reasons.push('The preceding guests have not checked out yet')
  else if (turnover.status === 'unassigned') reasons.push('No cleaner assigned')

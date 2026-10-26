@@ -7,7 +7,7 @@ export async function attestArrival(h, bookingId, cookie = h.owner) {
   const unescape = v => v.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
   // Choose the first unresolved item from rendered per-item sections.
   const sections = [...page.matchAll(/<section class="readiness-item">([\s\S]*?)<\/section>/g)]
-  const pending = sections.find(m=>!m[1].includes('<strong>passed</strong>'))
+  const pending = sections.find(m=>m[1].includes('name="bookingId" value="'+bookingId+'"')&&!m[1].includes('<strong>passed</strong>'))
   if (!pending) return
   const values = Object.fromEntries([...pending[1].matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/g)].map(m=>[m[1],unescape(m[2])]))
   await h.cmd('readiness.attest',{...values,status:'passed',note:'Physically checked for this arrival'},cookie)

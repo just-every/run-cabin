@@ -1,7 +1,7 @@
 import { guestIssueResponse } from './issues/commands'
 import { openGuestIssue } from './issues/records'
 import { guestWorkReport } from './work-orders/guest'
-import { guestSettlement } from './recovery/guest'
+import { guestSettlement, guestRecoveryConfirmation } from './recovery/guest'
 import { settle } from './settle'
 import { event, record } from './audit/write'
 import type { Bindings } from '../auth.server'
@@ -58,11 +58,12 @@ export async function guestStayResponse(request:Request,env:Bindings){
    await mutate(env.DB,actor,value.action==='issue-response'?'issue.guest.response':value.action==='settlement'?'recovery.guest.response':'recovery.guest.report',c=>{
     const booking=authorizeGuestWrite(c,context,sessionHash),code=c.data.codes.find(code=>code.bookingId===booking.id&&code.holder==='guest'&&code.status==='issued')
     if(value.action==='issue-response'){need(code,'Access is not released for this stay',409);guestIssueResponse(c,booking,code,form)}
+    else if(value.action==='recovery-confirm'){need(code,'Access is not released for this stay',409);guestRecoveryConfirmation(c,booking,code,form)}
     else if(value.action==='settlement'){need(code,'Access is not released for this stay',409);guestSettlement(c,booking,code,form,env.OWNER_EMAIL)}
     else{const reason=String(value.reason??'').trim();need(reason&&reason.length<=2000,'Enter a problem of up to 2000 characters');openGuestIssue(c,booking,reason,'portal',env.OWNER_EMAIL,value.category)}
    })
    await settle(env)
-   if(value.action==='issue-response'||value.action==='settlement')return new Response(null,{status:303,headers:{...portalHeaders,location:path}})
+   if(value.action==='issue-response'||value.action==='settlement'||value.action==='recovery-confirm')return new Response(null,{status:303,headers:{...portalHeaders,location:path}})
    p=await findPortal(env,match[1]);reported=true
   }
   const access=portalAccess(p)

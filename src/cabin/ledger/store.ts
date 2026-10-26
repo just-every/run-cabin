@@ -10,9 +10,11 @@ export async function post(c:Context,input:{settlement?:Journal['settlement'];ma
  const rows=await contextJournals(c)
  const existing=rows.find(r=>r.sourceKey===input.sourceKey);if(existing)return existing
  const p=c.data.properties.find(p=>p.id===input.propertyId),setting=c.data.ledgerSettings.find(s=>s.propertyId===input.propertyId)
+ const recoveryStatement=input.sourceType==='recovery'&&c.data.statements.find(s=>s.id===input.sourceId&&s.revision===input.sourceRevision&&s.source==='recovery'&&s.status==='approved'&&s.propertyId===input.propertyId&&s.lines.every(l=>l.bookingId===input.bookingId))
+ const recoveryOrigin=recoveryStatement&&c.data.recoveries.find(r=>r.id===recoveryStatement.recoveryId&&r.statementId===recoveryStatement.id&&r.approvalId&&r.alternativeOrigin?.booking.id===input.bookingId&&r.alternativeOrigin.propertyId===input.propertyId)
  const original=input.reversalOf?rows.find(j=>j.id===input.reversalOf):undefined
  if(original){need(input.propertyId===original.propertyId&&input.bookingId===original.bookingId&&input.ownerKey===original.ownerKey&&input.legalEntity===original.legalEntity&&JSON.stringify(input.lines)===JSON.stringify(original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))),'A reversal must preserve the exact original scope and invert every line',409)}
- else {need(p&&setting,'Set the home’s ledger legal entity before posting',409);need((['maintenance-expense','agreement-expense'].includes(input.sourceType)&&input.bookingId==='')||c.data.bookings.some(b=>b.id===input.bookingId&&b.propertyId===p.id),'Choose a reservation belonging to this home',409)}
+ else {need(p&&setting,'Set the home’s ledger legal entity before posting',409);need((['maintenance-expense','agreement-expense'].includes(input.sourceType)&&input.bookingId==='')||!!recoveryOrigin||c.data.bookings.some(b=>b.id===input.bookingId&&b.propertyId===p.id),'Choose a reservation belonging to this home',409)}
  need(/^\d{4}-\d{2}-\d{2}$/.test(input.effectiveDate)&&Number.isFinite(Date.parse(input.effectiveDate+'T00:00:00Z'))&&new Date(input.effectiveDate+'T00:00:00Z').toISOString().slice(0,10)===input.effectiveDate,'Use a valid effective date')
  need(!await c.db.prepare('SELECT 1 FROM cb_ledger_periods WHERE month=?').bind(input.effectiveDate.slice(0,7)).first(),'This accounting period is closed. Post a linked reversal in an open period.',409)
  const lines=input.lines.filter(l=>l.debitCents||l.creditCents)
