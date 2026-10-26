@@ -29,6 +29,9 @@ export interface SeamCode {
  status?:string
  errors?:unknown[]
  pending_mutations?:unknown[]
+ is_scheduled_on_device?:boolean
+ is_offline_access_code?:boolean
+ is_waiting_for_code_assignment?:boolean
  is_being_deleted?:boolean
 }
 export interface Observation {

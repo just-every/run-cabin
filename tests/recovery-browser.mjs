@@ -12,7 +12,9 @@ try{
   let page,guestPage,origin
   async function ownerPage(h,path='/app/recovery'){
    if(origin!==h.origin){await context.clearCookies();origin=h.origin;const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:origin}]);page=await context.newPage()}
-   await page.goto(origin+path);return page
+   await page.goto(origin+path)
+   if(path==='/app/inbox'&&await page.locator('.thread-row').count())await page.locator('.thread-row.current,.thread-row').first().click()
+   return page
   }
   async function nativeAction(h,name,input){
    await ownerPage(h,name.startsWith('message.')?'/app/inbox':'/app/recovery')

@@ -356,7 +356,7 @@
       "executable": false
     },
     "docs/stay-recovery.md": {
-      "sha256": "2e1daff6b7e897eeff0579ab406a4d81a392fe1ec1aa08956ffdd183f2e2dfaf",
+      "sha256": "b01e57f3a4c0974156fd9f12cbf382de2c7f3f99e931d7025dbc8e7c3e18114b",
       "executable": false
     },
     "docs/taxes.md": {
@@ -2076,7 +2076,7 @@
       "executable": false
     },
     "src/cabin/locks.ts": {
-      "sha256": "ca4c7e659cbd9bd00d28b5bf6df48e144f582b5d548a3c1ca37da2c122d8a9e3",
+      "sha256": "a00bbfa7f4ce24115abef3386eaaa0c58fd5cc5d3f23d6091b365e3b99887987",
       "executable": false
     },
     "src/cabin/locks/jobs.ts": {
@@ -2084,11 +2084,11 @@
       "executable": false
     },
     "src/cabin/locks/provider.ts": {
-      "sha256": "cae4f3a2643ccecfd921ba6275b3ece4868f2b7ed00f2e8845bef9c2e9a14fa3",
+      "sha256": "adf1d9fcc9ee4ca607f0f3d4577304307069740c28c706be5dd642cb76ea1752",
       "executable": false
     },
     "src/cabin/locks/types.ts": {
-      "sha256": "488a213529d5fff3a18bd7e5f4f0c65c26f0720ec3287c9b535a598f2b76329e",
+      "sha256": "b36d4eb4be5298d669b7661361354bf0869949590d0c866e34b382b30fbdcd61",
       "executable": false
     },
     "src/cabin/locks/worker.ts": {
@@ -5212,11 +5212,11 @@
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
-      "sha256": "d7b36f5987824136fb7cdd6d45ab9e67303e4128e8636b5302762e718980da53",
+      "sha256": "ac5f9a4f33a215c5901844c46f34b26b5f073d728817a9b949c9a4624287c76c",
       "executable": false
     },
     "tests/recovery-browser.mjs": {
-      "sha256": "14ec752faf8710f56767fc2b06d091c96b7b90a85ba40693ad05bf284612fd90",
+      "sha256": "93722e4b7acd302d776720218e240aff36d2f33b9a38fc076d6cb0f19b69c785",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {

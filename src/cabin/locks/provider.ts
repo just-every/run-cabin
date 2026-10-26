@@ -49,7 +49,9 @@ export async function observe(env:Bindings,propertyId:string,job:LockJob):Promis
  }
  if(!row)return {...base,state:'failed',error:'No matching code is visible yet. The interrupted attempt will not be repeated; reconcile Seam request history.',complete:false}
  if(actionStatus==='error'||row.errors?.length)return {...base,state:'failed',error:'Seam reports an access-code error. Check its request history before changing access.',complete:false}
- if(exact(row,job)&&row.status==='set'&&!row.is_being_deleted&&!row.pending_mutations?.length&&actionStatus!=='pending')return {...base,state:'set',error:null,complete:true}
+ // Seam can confirm a native future schedule while status remains unset until its start.
+ const programmed=row.status==='set'||row.status==='unset'&&row.is_scheduled_on_device===true
+ if(exact(row,job)&&programmed&&row.is_offline_access_code!==true&&!row.is_waiting_for_code_assignment&&!row.is_being_deleted&&!row.pending_mutations?.length&&actionStatus!=='pending')return {...base,state:'set',error:null,complete:true}
  if(!base.acknowledged)return {...base,state:'failed',error:'The attempted access change is not confirmed by Seam readback. Reconcile request history before repeating it.',complete:false}
  return {...base,state:'pending',error:null,complete:false}
 }

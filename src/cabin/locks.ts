@@ -15,7 +15,7 @@ export const LOCK_LINES = {
  account: 'This home names a lock, but no smart-lock account (Seam) is connected to this install yet, so Cabin cannot push the code. Set it on the keypad by hand.',
  managed: 'Live lock push is not available yet on RER Managed hosting: it cannot reach lock providers until RER adds a provider relay. Set this code on the keypad by hand.',
 }
-export const lockLine = (env: { managed: boolean; lockAccount: boolean }, code: AccessCode) => code.lock.state === 'manual' ? LOCK_LINES.manual : env.managed ? LOCK_LINES.managed : !env.lockAccount ? LOCK_LINES.account : code.lock.state === 'set' ? 'Seam accepted this code for the lock. An accepted code is not a tested door: check it on site.' : code.lock.state === 'removed' ? 'Removed from the lock.' : code.lock.state === 'failed' ? `The lock did not take this code: ${code.lock.error}` : 'Sending to the lock…'
+export const lockLine = (env: { managed: boolean; lockAccount: boolean }, code: AccessCode) => code.lock.state === 'manual' ? LOCK_LINES.manual : env.managed ? LOCK_LINES.managed : !env.lockAccount ? LOCK_LINES.account : code.lock.state === 'set' ? 'Seam confirmed this code and its scheduled window on the lock. It works only during the displayed hours; check entry on site.' : code.lock.state === 'removed' ? 'Removed from the lock.' : code.lock.state === 'failed' ? `The lock did not take this code: ${code.lock.error}` : 'Sending to the lock…'
 
 export async function pushLocks(env: Bindings) {
  if (managedInstall(env)||!await secureAccount(env,'seam')) return []

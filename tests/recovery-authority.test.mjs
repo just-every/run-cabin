@@ -130,7 +130,8 @@ test('AGENT-006: revocation during an uncertain provider write survives later ex
 
 test('ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes',async()=>{
  let boundary='before'
- const edge=seamEdge({intercept:({phase,action})=>{
+ const edge=seamEdge({intercept:({phase,action,codes,result})=>{
+  if(phase==='after'&&action==='create'){const row=codes.get(result.access_code.access_code_id);row.status='unset';row.is_scheduled_on_device=true}
   if(['create','update','delete'].includes(action)&&phase===boundary)return new Response('Interrupted provider response',{status:503})
  }})
  const h=await harness({now:'2026-10-26T14:00:00Z',auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
@@ -148,6 +149,8 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   const accepted=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Ana Diaz',start:'2026-11-05',end:'2026-11-07'})
   state=await h.accessState();code=state.codes.find(c=>c.bookingId===accepted.bookingId&&c.holder==='guest')
   assert.equal(code.lock.state,'set');assert.ok(code.lock.providerId)
+  assert.equal(edge.codes.get(code.lock.providerId).status,'unset');assert.equal(edge.codes.get(code.lock.providerId).is_scheduled_on_device,true)
+  assert.ok(Date.parse(code.validFrom)>Date.parse('2026-10-26T14:00:00Z'),'Confirmed future programming does not move its access start earlier')
   assert.equal([...edge.codes.values()].filter(c=>c.name.endsWith(code.id)).length,1)
   const ordinary=await h.state();assert.ok(!JSON.stringify(ordinary.codes.find(c=>c.id===code.id).lock).includes('"code":"'+code.code+'"'),'Ordinary state cannot disclose the PIN through persisted provider work')
   let booking=state.bookings.find(b=>b.id===accepted.bookingId)
