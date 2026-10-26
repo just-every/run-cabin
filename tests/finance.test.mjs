@@ -229,7 +229,7 @@ test('QuickBooks owner-approved month sync reconciles source journals, survives 
  assert.equal((await h.send('/api/cabin/qbo/callback?state=synthetic-cabin-bad&code=synthetic-cabin-code&realmId=123456789',undefined,h.owner)).status,403)
  assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,303)
  assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,403)
- const c=await h.cmd('qbo.catalog');await qboMapping(h,b.home,c)
+ const c=await h.cmd('qbo.catalog',{});await qboMapping(h,b.home,c)
  const preview=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'});assert.equal(qbo.entries.length,0)
  await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:false},h.owner,400)
  qbo.loseResponse();let sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});assert.ok(sent.entries.some(e=>e.status==='uncertain'))

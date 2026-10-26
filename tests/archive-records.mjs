@@ -1,3 +1,6 @@
+import {qboEdge} from './qbo-edge.mjs'
+import {populateQboArchive,checkQboArchive} from './qbo-archive.mjs'
+const qbo=qboEdge()
 import { populateExceptionArchive,checkExceptionArchive } from './financial-exceptions-archive.mjs'
 import { populateBankArchive,checkBankArchive } from './banking-archive.mjs'
 import { collectionBooking,createCollection } from './collection-support.mjs'
@@ -7,6 +10,7 @@ import { readFile } from 'node:fs/promises'
 const day=n=>homeDay(n, 'America/New_York')
 export async function archiveEdge(request) {
  const u=new URL(request.url)
+ if(u.hostname==='sandbox-quickbooks.api.intuit.com')return qbo.outbound(request)
  if(u.hostname==='calendar.stay.example')return new Response('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n')
  if(u.hostname==='api.stripe.com'&&u.pathname==='/v1/balance')return Response.json({object:'balance',available:[],pending:[],livemode:false})
  if(u.hostname==='api.stripe.com'&&u.pathname==='/v1/checkout/sessions'&&request.method==='POST')return Response.json({id:'cs_archive',url:'https://checkout.stripe.com/c/pay/cs_archive'})
@@ -65,17 +69,19 @@ export async function populateArchive(h,p,cleaner) {
  const pending=await h.send('/stay/'+portal.token+'/send-code',{},guestCookie);assert.equal(pending.status,200)
  const authSecrets=[...(await h.db.prepare('SELECT token_hash FROM cb_guest_sessions').all()).results.map(r=>r.token_hash),...(await h.db.prepare('SELECT code_hash,browser_hash FROM cb_guest_challenges').all()).results.flatMap(r=>[r.code_hash,r.browser_hash])]
  const financialCase=await populateExceptionArchive(h,p)
+ const qbo=await populateQboArchive(h)
  const bank=await populateBankArchive(h)
  const state=await h.accessState(), codes=state.codes.filter(c=>c.link).map(c=>c.link)
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
  const channelAgent=await populateChannelArchive(h,p)
- return {financialCase,bank,collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
+ return {qbo,financialCase,bank,collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
  await checkExceptionArchive(h,owner,proof.financialCase)
  await checkBankArchive(h,owner,proof.bank)
+ await checkQboArchive(h,owner,proof.qbo)
  assert.equal((await h.db.prepare('SELECT COUNT(*) n FROM cb_provider_security').first()).n,0,'provider credentials and grants stay installation-local')
  for(const table of ['cb_guest_challenges','cb_guest_sessions','cb_guest_limits'])assert.equal((await h.db.prepare('SELECT count(*) AS n FROM '+table).first()).n,0,'guest authentication is never restored')
  assert.equal((await h.send('/stay/'+proof.portal.token,undefined,proof.portal.cookie)).status,404)

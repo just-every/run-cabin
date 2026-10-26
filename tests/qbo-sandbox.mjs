@@ -23,7 +23,7 @@ try{
  const vendor=vendors.find(v=>v.DisplayName==='Synthetic Cabin Morgan Carter')??(await api('vendor',{DisplayName:'Synthetic Cabin Morgan Carter'})).Vendor
  const preferences=(await api('preferences')).Preferences
  if(!preferences.AccountingInfoPrefs?.ClassTrackingPerTxnLine)await api('preferences',{...preferences,AccountingInfoPrefs:{...preferences.AccountingInfoPrefs,TrackDepartments:preferences.AccountingInfoPrefs?.TrackDepartments??false,ClassTrackingPerTxnLine:true,ClassTrackingPerTxn:false}})
- const catalog=await h.cmd('qbo.catalog'),b=await qboBooks(h)
+ const catalog=await h.cmd('qbo.catalog',{}),b=await qboBooks(h)
  await h.cmd('qbo.mapping.approve',{propertyId:b.home.id,classId:cls.Id,vendorId:vendor.Id,accounts:accountIds,consent:true})
  const preview=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'}),sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true})
  await assertBatch(h,sent,b.source)

@@ -4820,7 +4820,7 @@
       "executable": false
     },
     "tests/archive-records.mjs": {
-      "sha256": "605d51cec545943b22f0dcd58f360875211e43dedcd60d20abef4a9cec807a6f",
+      "sha256": "3136cccb5d0812bd75b8789b18f6c66a4513c361c873e3aef191bb5ff2bf4498",
       "executable": false
     },
     "tests/archive.test.mjs": {
@@ -4908,7 +4908,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "1aea69a27fcab32c62c597b6b852cb2388891bd3af0f654cc0b5e8fa7becaff9",
+      "sha256": "2bff62154e7ff9e8ba4b2d883edfe6d551ce0103310d52b999c5e514c5246c5a",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {
@@ -5119,6 +5119,10 @@
       "sha256": "d7e2d84709b070a42353696bba857beef8940cd0779d383a34cb548b32ddc2b4",
       "executable": false
     },
+    "tests/qbo-archive.mjs": {
+      "sha256": "c31de843d05f9a222cbbf07258af760164f5dd4480a8fd329ee19a23a4479baa",
+      "executable": false
+    },
     "tests/qbo-browser.mjs": {
       "sha256": "92fc64ba6bb64448c303da2499e00d5bd2436631ac338a5eedc2e97e3ad9de44",
       "executable": false
@@ -5128,7 +5132,7 @@
       "executable": false
     },
     "tests/qbo-sandbox.mjs": {
-      "sha256": "9325c8293da325c94c98e7d55ef62f67c3d95383c458fff96451559d91c3d806",
+      "sha256": "b35ca57be6aed8d9e394ef7f361f358b3b76817c971ba487eee0f07806049463",
       "executable": false
     },
     "tests/qbo-support.mjs": {
