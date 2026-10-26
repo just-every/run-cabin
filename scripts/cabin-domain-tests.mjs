@@ -1,8 +1,8 @@
 import {readFile} from 'node:fs/promises'
 import {spawnSync} from 'node:child_process'
 
-// Keep the public domain command as the complete file registry. The runtime
-// shard takes these restart flows so both jobs fit the existing push timeout.
+// Keep the public domain command as the complete file registry. Give restart
+// flows their own job so browser setup cannot consume their execution budget.
 const restartFiles=new Set(['tests/direct.test.mjs','tests/lifecycle.test.mjs','tests/recovery.test.mjs','tests/recovery-authority.test.mjs'])
 export async function domainArguments(group){
  if(!['core','restart'].includes(group))throw Error('Choose core or restart domain coverage')

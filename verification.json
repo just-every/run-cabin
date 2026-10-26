@@ -54,7 +54,14 @@
       "hosted": true,
       "commands": [
         "pnpm run build",
-        "pnpm run test:runtime",
+        "pnpm run test:runtime"
+      ]
+    },
+    {
+      "name": "restart",
+      "browser": false,
+      "hosted": false,
+      "commands": [
         "node scripts/cabin-domain-tests.mjs restart"
       ]
     },

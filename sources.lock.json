@@ -1016,7 +1016,7 @@
       "executable": false
     },
     "scripts/cabin-domain-tests.mjs": {
-      "sha256": "aa4924f200284174266fad8046227bd811ce16e18eeb4c89947322cf80f29625",
+      "sha256": "4d8faadbe5385684ff42d536e44b8de6df0db703b2c9ccfdce027de767d2ce15",
       "executable": false
     },
     "scripts/channel-agent/executor.mjs": {
@@ -5316,7 +5316,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "0a8a8d17a652e17caa781923ebc975380fafa0549fd17923112b2cf4ba0ecfdd",
+      "sha256": "95ce37a058e496ea0b42d1db661c0e15a2fec34e25e006040b7b547fc884a964",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
