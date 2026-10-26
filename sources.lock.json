@@ -356,7 +356,7 @@
       "executable": false
     },
     "docs/stay-recovery.md": {
-      "sha256": "12c7523c2b207891ed8f9360e750b5204f65d52ec65fd3e8fcd2bb097517c073",
+      "sha256": "3531d3ea708952cd85602027037dafded0ecc35d68367128371eff80fe8f0309",
       "executable": false
     },
     "docs/taxes.md": {
@@ -5220,7 +5220,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "911cd19350e18b077eff2723c30b4d3335a84f2b6234cdaa80d3700f01a8ff6d",
+      "sha256": "2504f1bf6fa04663184a1abc0682ce7c33021bae16dc233bf8f2bd1bd5ad3531",
       "executable": false
     },
     "tests/recovery.test.mjs": {

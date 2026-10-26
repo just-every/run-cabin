@@ -35,6 +35,8 @@ try{
  let row=await h.cmd('recovery.open',{bookingId:stayId,trigger:'cleaner_cancelled',reason:'Sandbox cleaner cancellation followed by failed guest access'})
  row=await h.cmd('recovery.propose',{id:row.id,revision:row.revision,cleanerId:backup.id,creditCents:7500,extraCleaningCents:2500,why:'Exact approved backup, guest credit and replacement access'})
  await h.cmd('recovery.approve',{id:row.id,revision:row.revision})
+ // Request provider readback once; only the subsequent code state can prove removal.
+ await seam('/connected_accounts/sync',{connected_account_id:device.connected_account_id})
  s=await refresh();row=s.recoveries.find(r=>r.id===row.id);newId=row.codeId
  for(let n=0;n<90&&!(s.codes.find(c=>c.id===newId).lock.state==='set'&&s.codes.find(c=>c.id===oldId).lock.state==='removed');n++){await new Promise(r=>setTimeout(r,2000));s=await advance()}
  stage='replacement-code';const replacement=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:replacement.lock.state,detail:replacement.lock.error,oldState:s.codes.find(c=>c.id===oldId).lock.state}));assert.equal(replacement.lock.state,'set');assert.equal(s.codes.find(c=>c.id===oldId).lock.state,'removed');assert.notEqual(replacement.code,old.code)
@@ -51,7 +53,7 @@ try{
  await h.cmd('recovery.close',{id:row.id,revision:row.revision})
  row=(await h.state()).recoveries.find(r=>r.id===row.id)
  const message=(await h.state()).messages.find(m=>m.id===row.confirmationMessageId);assert.equal(message.status,'sent');assert.ok(message.providerId);providerMessageId=message.providerId
- for(let n=0;n<6;n++){
+ for(let n=0;n<24;n++){
   const url=new URL('https://rer-qa-inbox.runeditrun.workers.dev/receipts');url.searchParams.set('subject',marker+' is ready');url.searchParams.set('limit','1')
   const response=await fetch(url,{headers:{authorization:'Bearer '+process.env.QA_INBOX_RECEIPT_TOKEN}});assert.ok(response.ok,'Fleet inbox read HTTP '+response.status)
   const receipt=(await response.json()).receipts?.[0]
@@ -70,8 +72,9 @@ try{
  try{for(const b of (await h.state()).bookings.filter(b=>b.propertyId===home?.id&&b.status==='confirmed'))await h.cmd('reservation.cancel',{id:b.id,revision:b.revision});await refresh()}finally{
   let removed=0
   for(const id of ownedIds){const current=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.find(c=>c.access_code_id===id);if(current){await seam('/access_codes/delete',{access_code_id:id});removed++}}
+  await seam('/connected_accounts/sync',{connected_account_id:device.connected_account_id})
   let left=[]
-  for(let n=0;n<12;n++){left=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.filter(c=>ownedIds.has(c.access_code_id));if(!left.length)break;await new Promise(r=>setTimeout(r,1000))}
+  for(let n=0;n<120;n++){left=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.filter(c=>ownedIds.has(c.access_code_id));if(!left.length)break;await new Promise(r=>setTimeout(r,5000))}
   console.log(JSON.stringify({journey:'recovery-sandbox-cleanup',ownedCodes:ownedIds.size,remaining:left.length,remainingIds:left.map(c=>c.access_code_id)}));await h.close();assert.equal(left.length,0,'Remove every sandbox access code created by this journey')
  }
 }
