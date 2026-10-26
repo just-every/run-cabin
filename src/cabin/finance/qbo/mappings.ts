@@ -26,7 +26,7 @@ export async function approveMapping(env:Bindings,actor:Actor,input:Record<strin
   const id=text(supplied[key],'account for '+accounts[key]),a=remote.accounts.find(a=>a.Id===id&&a.Active!==false)
   need(a&&!['Accounts Receivable','Accounts Payable'].includes(a.AccountType),'Choose an active ordinary account for '+accounts[key]);mapping[key]=id
  }
- const row:Mapping={propertyId,ownerKey,realm:remote.realm,revision:newId(),classId,vendorId,accounts:mapping,approvedBy:actor.id,approvedAt:new Date().toISOString()}
+ const row:Mapping={propertyId,ownerKey,mode:remote.mode,realm:remote.realm,revision:newId(),classId,vendorId,accounts:mapping,approvedBy:actor.id,approvedAt:new Date().toISOString()}
  await requireOwner(env.DB,actor)
  await env.DB.prepare('INSERT INTO cb_qbo_mappings(property_id,owner_key,data) VALUES(?,?,?) ON CONFLICT(property_id,owner_key) DO UPDATE SET data=excluded.data').bind(propertyId,ownerKey,JSON.stringify(row)).run()
  await audit(env.DB,actor,'qbo.mapping.approve',row.revision,propertyId,'approved');return row

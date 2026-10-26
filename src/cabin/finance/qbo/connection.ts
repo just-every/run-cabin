@@ -13,8 +13,9 @@ export async function savedConnection(env:Bindings):Promise<Connection|null> {
  const decrypted=await unseal(env.SESSION_SECRET,purpose(row.realm),row.sealed);need(decrypted,'Reconnect QuickBooks on this installation',409)
  return {realm:row.realm,mode:row.mode,version:row.version,grant:JSON.parse(decrypted)}
 }
-export async function saveGrant(env:Bindings,realm:string,mode:string,grant:Grant,version=newId()) {
+export async function saveGrant(env:Bindings,realm:string,mode:string,grant:Grant,version=newId(),expectedVersion?:string) {
  const sealed=await seal(env.SESSION_SECRET,purpose(realm),JSON.stringify(grant))
+ if(expectedVersion){const changed=await env.DB.prepare('UPDATE cb_qbo_connection SET sealed=?,version=?,lease_until=NULL WHERE id=1 AND version=?').bind(sealed,version,expectedVersion).run();need(changed.meta.changes===1,'QuickBooks connection changed during refresh. Reconnect with fresh authority.',409);return {realm,mode,grant,version} as Connection}
  await env.DB.prepare('INSERT INTO cb_qbo_connection(id,realm,mode,sealed,version) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET realm=excluded.realm,mode=excluded.mode,sealed=excluded.sealed,version=excluded.version,lease_until=NULL').bind(realm,mode,sealed,version).run()
  return {realm,mode,grant,version} as Connection
 }
@@ -28,7 +29,7 @@ export async function connection(env:Bindings,propertyId?:string) {
  try {
   const grant=await tokenRequest(env,{grant_type:'refresh_token',refresh_token:c.grant.refreshToken})
   // Store a rotated refresh grant durably before any company request can fail.
-  c=await saveGrant(env,c.realm,c.mode,grant)
+  c=await saveGrant(env,c.realm,c.mode,grant,newId(),c.version)
  }catch(error){await env.DB.prepare('UPDATE cb_qbo_connection SET lease_until=NULL WHERE id=1 AND version=?').bind(c.version).run();throw error}
  return c
 }
@@ -37,7 +38,7 @@ export async function connectGrant(env:Bindings,actor:Actor,input:Record<string,
  need(input.mode==='sandbox'||input.mode==='production','Choose sandbox or production');const realm=text(input.realmId,'QuickBooks company ID',100);need(/^\d+$/.test(realm),'Invalid QuickBooks company ID')
  const old=await savedConnection(env);need(!old||old.realm===realm&&old.mode===input.mode,'Disconnect the current company before connecting another',409)
  const grant:Grant={accessToken:text(input.accessToken,'OAuth access token',5000),refreshToken:text(input.refreshToken,'OAuth refresh token',5000),expiresAt:new Date(Date.now()+3000000).toISOString()}
- const candidate:Connection={realm,mode:input.mode,grant,version:newId()}
+ const candidate:Connection={provisional:true,realm,mode:input.mode,grant,version:newId()}
  const company=(await api(env,candidate,'companyinfo/'+realm)).CompanyInfo
  need(company?.Country==='US','Connect a US QuickBooks company with USD home currency',409)
  await requireOwner(env.DB,actor);await saveGrant(env,realm,input.mode,grant);await audit(env.DB,actor,'qbo.connect',realm)

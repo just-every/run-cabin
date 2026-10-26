@@ -2,8 +2,8 @@ import { accounts } from '../ledger/types'
 import { h, panel, form, field, select, hidden, badge, money, empty } from './shared'
 const consent=(label:string)=>`<label><input type="checkbox" name="consent" required> ${h(label)}</label>`
 function mapping(s:any,p:any,q:any) {
- const c=q.catalog,existing=q.mappings.find((m:any)=>m.propertyId===p.id&&m.realm===q.connection.realm)
- const names=(rows:any[])=>rows.filter(r=>r.Active!==false).map(r=>[r.Id,r.DisplayName??r.Name] as [string,string])
+ const c=q.catalog,existing=q.mappings.find((m:any)=>m.propertyId===p.id&&m.realm===q.connection.realm&&m.mode===q.connection.mode)
+ const names=(rows:any[])=>rows.filter(r=>r.Active!==false).map(r=>[r.Id,r.DisplayName??(r.AccountType?r.Name+' · '+r.AccountType:r.Name)] as [string,string])
  const fields=Object.entries(accounts).map(([key,label])=>select(key,label,names(c.accounts.filter((a:any)=>!['Accounts Receivable','Accounts Payable'].includes(a.AccountType))))).join('')
  return `<details><summary>${h(p.name)} · accounting mapping</summary>${existing?`<p>Approved ${h(existing.approvedAt)}. Future previews use this mapping; posted entries keep their original mapping.</p>`:''}${form('qbo.mapping.approve','books',hidden('propertyId',p.id)+select('classId','Property class',names(c.classes))+select('vendorId','Property owner vendor',names(c.vendors))+`<details><summary>Ledger account mapping</summary>${fields}</details>`+consent('I reviewed these exact account, class and vendor mappings with the accountant.'),'Approve accounting mapping')}</details>`
 }

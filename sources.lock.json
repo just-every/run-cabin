@@ -572,7 +572,7 @@
       "executable": false
     },
     "migrations/core/0064_quickbooks.sql": {
-      "sha256": "477c8ea1566c90834292cdfebaec966fc55b81e5b3c4fb07cd37918681ac0f45",
+      "sha256": "fe2c75585c77d615c761c798b24ed5ad77cb59d8656f93352cee5783650c0f45",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1804,15 +1804,15 @@
       "executable": false
     },
     "src/cabin/finance/qbo/batches.ts": {
-      "sha256": "3003d45cdbd708c49dd8ed85537984d172a4f9f5b9c8a146cf52caf5ca2e2e2d",
+      "sha256": "cf28d9b79ecec02213fba710e173842afea472173aebea5efc0c3a8043900662",
       "executable": false
     },
     "src/cabin/finance/qbo/client.ts": {
-      "sha256": "d272c97190117ac04f507dd97e9a08f1194b50f1287cb3197008f88cdf43a4c3",
+      "sha256": "18ad18bb934ccc2fb9d8f4760e832647ea9b9752195c31d6cc50753c31dd9c3f",
       "executable": false
     },
     "src/cabin/finance/qbo/connection.ts": {
-      "sha256": "735313cfaf11f003dc756be51f1c79bede0842f4c79ecebca7febf769cf13846",
+      "sha256": "e26ffc9e812a244f9d320ab243511465a9ed452baea479b4aae32df1942c4f48",
       "executable": false
     },
     "src/cabin/finance/qbo/index.ts": {
@@ -1820,7 +1820,7 @@
       "executable": false
     },
     "src/cabin/finance/qbo/mappings.ts": {
-      "sha256": "9f67691ab4b210c3f09be026214d9453209fc63485a7eb3692dad142f97d89a9",
+      "sha256": "2004e80cdd99803feaca297009a1ab28cffb8e4dcc43bce39cf9d6185059e04f",
       "executable": false
     },
     "src/cabin/finance/qbo/payload.ts": {
@@ -1832,7 +1832,7 @@
       "executable": false
     },
     "src/cabin/finance/qbo/types.ts": {
-      "sha256": "48d3c74ae861176dd994d2a949cad6dcff5a035074d113dd41a415cb05aac8d0",
+      "sha256": "1e5974f4884f0a891008b3f089eddc7a8fd6216f5d099d79acebed633c3d1053",
       "executable": false
     },
     "src/cabin/finance/quickbooks.ts": {
@@ -2788,7 +2788,7 @@
       "executable": false
     },
     "src/cabin/ui/qbo.ts": {
-      "sha256": "ac190fcd036966cda181630a5848883fce969f99698c8dd41c4e9183e07a4b64",
+      "sha256": "d987ab1bedbda8fc9817d7b635aedf3e1fd31003015ccb82fab16423a468c7d0",
       "executable": false
     },
     "src/cabin/ui/readiness.ts": {
@@ -5132,7 +5132,7 @@
       "executable": false
     },
     "tests/qbo-sandbox.mjs": {
-      "sha256": "b35ca57be6aed8d9e394ef7f361f358b3b76817c971ba487eee0f07806049463",
+      "sha256": "8b5c501509a6de4af3e218fd2a6fe07b25680d9d3d86ed18f1efc477c53cf69e",
       "executable": false
     },
     "tests/qbo-support.mjs": {

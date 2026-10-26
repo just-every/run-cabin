@@ -21,6 +21,7 @@ export async function tokenRequest(env:Bindings,params:Record<string,string>) {
  return {accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:new Date(Date.now()+data.expires_in*1000).toISOString()}
 }
 export async function api<T=any>(env:Bindings,c:Connection,path:string,body?:unknown,propertyId?:string):Promise<T> {
+ if(!c.provisional){const current=await env.DB.prepare('SELECT version FROM cb_qbo_connection WHERE id=1').first<{version:string}>();need(current?.version===c.version,'QuickBooks connection changed or was disconnected. Review it before continuing.',409)}
  await sharingAllowed(env.DB,'quickbooks',body===undefined?'journal:read':'journal:write',propertyId)
  let r:Response
  try {r=await fetch(apiOrigin(c.mode)+'/v3/company/'+encodeURIComponent(c.realm)+'/'+path,{method:body===undefined?'GET':'POST',redirect:'manual',signal:AbortSignal.timeout(20000),headers:{authorization:'Bearer '+c.grant.accessToken,accept:'application/json',...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})})}catch{throw new QboError(502,'unreachable')}
