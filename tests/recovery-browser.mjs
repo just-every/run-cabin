@@ -36,10 +36,13 @@ try{
   async function screenshot(target,name){
    await target.screenshot({path:`${directory}/${name}-${width}.png`,fullPage:true})
    const fit=await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)
-   if(!fit)console.log(JSON.stringify(await target.locator('main *').evaluateAll(els=>els.filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,15).map(el=>({tag:el.tagName,class:el.className,name:el.getAttribute('name'),width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right}))))
+   if(!fit){
+    const overflowing=await target.locator('main *').evaluateAll(els=>els.filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,15).map(el=>({tag:el.tagName,class:el.className,name:el.getAttribute('name'),width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right})))
+    console.log(JSON.stringify(overflowing))
+   }
    assert.ok(fit,'Screen fits '+width)
    for(const control of await target.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Icon-only controls need a tooltip')
-   const tooltip=target.locator('[data-tooltip]').filter({visible:true}).first()
+   const tooltip=target.locator('[data-tooltip]:visible').first()
    if(await tooltip.count()){
     await tooltip.hover();await target.waitForTimeout(400)
     assert.equal(await tooltip.evaluate(el=>getComputedStyle(el,'::after').visibility),'visible')

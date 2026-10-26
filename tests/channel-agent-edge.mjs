@@ -19,6 +19,15 @@ export async function channelEdge(){
    await route.fulfill({response:undefined,status:200,contentType:'text/html',body:job.kind.startsWith('read-')&&!mode?reads:job.start?(await response.text()).replace(/2026-12-1[012]/g,date=>new Date(Date.parse(job.start+'T00:00:00Z')+(Number(date.slice(-2))-10)*86400000).toISOString().slice(0,10)):await response.text()})
   })
   await context.addInitScript(edits=>localStorage.setItem('sourceEdits',JSON.stringify(edits)),sourceEdits)
+  await context.exposeFunction('cabinEdgeAcceptance',()=>{writes++})
+  await context.addInitScript(()=>{
+   document.addEventListener('click',event=>{
+    const button=event.target instanceof Element?event.target.closest('button'):null
+    if(!button||!/^(Block|Reopen)/.test(button.textContent.trim()))return
+    const snapshot=()=>[...document.querySelectorAll('td')].map(el=>el.textContent).join('|'),before=snapshot()
+    queueMicrotask(()=>{if(snapshot()!==before)window.cabinEdgeAcceptance()})
+   },true)
+  })
   const page=await context.newPage()
   try{
    const listingUrl=job.listingUrl+(mode?'?mode='+mode:'')
@@ -34,7 +43,7 @@ export async function channelEdge(){
     if(nights.every(c=>c.text.includes(' '+want)))return {type:'done',evidence:evidence(want)}
     if(task.kind==='close'&&!driver.baseline){driver.baseline=true;return {type:'baseline',evidence:evidence('open')}}
     const control=observation.controls.find(c=>c.tag==='button'&&c.text.startsWith(task.kind==='close'?'Block':'Reopen'))
-    writes++;return {type:'click',ref:control.ref}
+    return {type:'click',ref:control.ref}
    }
    const result=await (job.kind.startsWith('read-')?executeRead:executeJob)(page,{...job,listingUrl,readUrl:job.readUrl+(mode?'?mode='+mode:'')},driver,{beforeAction:authorize,onBefore:checkpoint,connect:human?async (page,job,guard)=>{
     const viewer=await startSigninViewer(page,job,guard)

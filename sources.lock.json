@@ -4896,7 +4896,7 @@
       "executable": false
     },
     "tests/channel-agent-edge.mjs": {
-      "sha256": "e303412959f85a96d4acde4427eaa96fed8769ce0165dfe52ca0e326f8293cc4",
+      "sha256": "8222ed68d359a08e36ff9deb946db24154af1148396063cd21c0a031f3f3b831",
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
@@ -5216,7 +5216,7 @@
       "executable": false
     },
     "tests/recovery-browser.mjs": {
-      "sha256": "f3b1cd4c63f0d5636de72c0c37323d21074fbf8991882fbbc7a47bf67c679dc9",
+      "sha256": "14ec752faf8710f56767fc2b06d091c96b7b90a85ba40693ad05bf284612fd90",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
