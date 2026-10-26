@@ -51,7 +51,7 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   assert.deepEqual(roomClosures.filter(job=>job.propertyId===home.id).map(job=>job.channel).sort(),['airbnb','booking.com','vrbo'])
   assert.deepEqual(roomClosures.filter(job=>job.propertyId===a.id).map(job=>job.channel).sort(),['booking.com','vrbo'])
   assert.ok(roomClosures.every(job=>job.propertyId!==b.id),'independent room B has no closure')
-  const sharedClosure=roomClosures.find(job=>job.propertyId===home.id)
+  const sharedClosure=roomClosures.find(job=>job.propertyId===home.id&&job.channel==='airbnb')
   const roomB=await h.cmd('reservation.request',{propertyId:b.id,channel:'direct',guestName:'Independent room B',...dates});assert.equal(roomB.status,'accepted')
   for(let n=0;n<11;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
   await sourceRoom(h,a,dates.start,dates.end,true)
@@ -77,7 +77,8 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   await h.cmd('channelAgent.disconnect',{id:roomProfile.id})
   assert.equal((await h.state()).channelAgent.profiles.filter(p=>p.status==='connected').length,8)
   await screens.connect(a,'airbnb',1440)
-  const connecting=(await runner({op:'claim'})).job;assert.equal(connecting.kind,'connect');assert.equal(connecting.profileId,roomProfile.id)
+  const connecting=(await runner({op:'claim'})).job;assert.equal(connecting.kind,'connect');assert.equal(connecting.propertyId,a.id)
+  assert.equal((await h.state()).channelAgent.profiles.find(p=>p.propertyId===a.id&&p.channel==='airbnb').id,roomProfile.id)
   const connected=await edge.run(connecting,{human:true});assert.equal(connected.outcome,'succeeded');await runner({op:'complete',id:connecting.id,lease:connecting.lease,...connected})
   const replacement=(await runner({op:'claim'})).job;assert.equal(replacement.kind,'close');assert.equal(replacement.propertyId,a.id)
   const replaced=await edge.run(replacement);assert.equal(replaced.outcome,'succeeded');await runner({op:'complete',id:replacement.id,lease:replacement.lease,...replaced})

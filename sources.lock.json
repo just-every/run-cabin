@@ -4916,7 +4916,7 @@
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "ef8cb4b6628a43786a34db7fad3d90a48262f336ae832f7d6a2a29ab816eeb83",
+      "sha256": "0e6e1f551e18664950816df10ddb056ba53384c3e10de05a9f09b101d2a67482",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
