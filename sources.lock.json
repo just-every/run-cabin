@@ -5132,7 +5132,7 @@
       "executable": false
     },
     "tests/qbo-sandbox.mjs": {
-      "sha256": "528b99d55786c6c23a2101219cfb8454590412effa1b7386f53e0361656b2172",
+      "sha256": "431b8667cbea587243b718c331c842e855fb581cc34f66147b9cd0eaf8043a62",
       "executable": false
     },
     "tests/qbo-support.mjs": {
