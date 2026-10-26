@@ -8,7 +8,7 @@ import {qboBooks,assertBatch} from './qbo-support.mjs'
 // This journey never exchanges or logs the held refresh token.
 assert.ok(process.env.CABIN_QBO_GRANT_FILE,'Supply a private owner-consented sandbox grant file')
 const grant=JSON.parse(await readFile(process.env.CABIN_QBO_GRANT_FILE,'utf8'))
-const receiptDir=process.env.CABIN_QBO_RECEIPTS??'test-results/qbo-sandbox';await mkdir(receiptDir,{recursive:true})
+const receiptDir=process.env.CABIN_QBO_RECEIPTS??'./test-results/qbo-sandbox';await mkdir(receiptDir,{recursive:true})
 const origin='https://sandbox-quickbooks.api.intuit.com/v3/company/'+grant.realmId
 async function api(path,body){const r=await fetch(origin+'/'+path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+grant.accessToken,accept:'application/json',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}),data=await r.json();assert.ok(r.ok&&!data.Fault,'Sandbox request failed: HTTP '+r.status+' code '+(data.Fault?.Error?.[0]?.code??''));return data}
 async function query(kind){return (await api('query?'+new URLSearchParams({query:'select * from '+kind+' MAXRESULTS 1000'}))).QueryResponse?.[kind]??[]}

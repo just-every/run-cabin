@@ -5124,7 +5124,7 @@
       "executable": false
     },
     "tests/qbo-browser.mjs": {
-      "sha256": "9aff4ca4182973bc0991079ed9033a6ed1ce9cc8a10a73b7bd70ca950330e760",
+      "sha256": "84aece452af96cb09f6ccc6908e5bbf22fba220fd6c0bbd31fe5186b8e4fe070",
       "executable": false
     },
     "tests/qbo-edge.mjs": {
@@ -5132,7 +5132,7 @@
       "executable": false
     },
     "tests/qbo-sandbox.mjs": {
-      "sha256": "709d03dda74369bdbd6afb73092bedc811ad9660a38510df65dfa5aef7b64205",
+      "sha256": "528b99d55786c6c23a2101219cfb8454590412effa1b7386f53e0361656b2172",
       "executable": false
     },
     "tests/qbo-support.mjs": {

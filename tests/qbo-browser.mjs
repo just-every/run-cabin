@@ -4,7 +4,7 @@ import {chromium,expect} from '@playwright/test'
 import {harness} from './harness.mjs'
 import {qboEdge} from './qbo-edge.mjs'
 import {qboBooks,qboAuth,syntheticGrant} from './qbo-support.mjs'
-const dir=process.env.CABIN_QBO_SHOTS??'test-results/qbo-browser';await mkdir(dir,{recursive:true})
+const dir=process.env.CABIN_QBO_SHOTS??'./test-results/qbo-browser';await mkdir(dir,{recursive:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
 try{for(const width of [1440,390]){
  const edge=qboEdge(),h=await harness({assets:true,auth:qboAuth,outbound:edge.outbound,now:'2026-10-26T12:00:00Z'}),context=await browser.newContext({viewport:{width,height:1000}})
