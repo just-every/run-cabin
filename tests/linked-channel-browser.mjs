@@ -31,7 +31,8 @@ export async function channelScreens(h){
   await form.locator('input[name=confirm]').check()
   if(channel==='airbnb')await form.screenshot({path:join(dir,'connect-room-'+width+'.png')})
   await form.getByRole('button',{name:'Connect isolated profile',exact:true}).click()
-  await expect(agent().getByRole('heading',{name:new RegExp(room.name+'$')})).toBeVisible()
+  const label={airbnb:'Airbnb',vrbo:'Vrbo','booking.com':'Booking.com'}[channel]
+  await expect(agent().getByRole('heading',{name:label+' · '+room.name,exact:true})).toBeVisible()
  }
  return {connect,capture,close:()=>browser.close()}
 }
