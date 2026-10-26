@@ -14,7 +14,8 @@ try{
   await page.waitForTimeout(1000)
   const state=(await api('/connect_webviews/get',{connect_webview_id:view.connect_webview_id})).connect_webview
   if(state.connected_account_id){accountId=state.connected_account_id;break}
-  const email=page.locator('input[type="email"]:visible'),password=page.locator('input[type="password"]:visible')
+  const alerts=await page.locator('[role="alert"]:visible').allTextContents();assert.deepEqual(alerts.map(v=>v.trim()).filter(Boolean),[],'The sandbox provider must accept its documented test login')
+  const email=page.locator('input[name="email"]:visible'),password=page.locator('input[type="password"]:visible')
   if(await email.count())await email.fill(process.env.SEAM_SANDBOX_LOGIN)
   if(await password.count())await password.fill(process.env.SEAM_SANDBOX_PASSWORD)
   const controls=await page.locator('button:visible').allTextContents(),fields=await page.locator('input:visible').evaluateAll(rows=>rows.map(el=>({type:el.type,name:el.name,placeholder:el.placeholder})));console.log(JSON.stringify({journey:'sandbox-connect',step,controls:controls.map(v=>v.trim()),fields}))

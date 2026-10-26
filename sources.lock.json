@@ -5220,11 +5220,11 @@
       "executable": false
     },
     "tests/recovery-sandbox-connection.mjs": {
-      "sha256": "06117f37adce0fe7ccadaec2a73c3ea9c7f08da41d76b1cddbb17262f68d5b7c",
+      "sha256": "bb0fe2ce01aee82007dc91ae0c169d80764669d5e74e38068911ab6593201ea5",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "e94628d2042b5b4d076b1b99f499db668fce8521419ea17e9d7d4fd55f1aafa1",
+      "sha256": "397c3080fe959c4863fa8d3a7e1cb9277956593b7436339f6298cf248cc488cd",
       "executable": false
     },
     "tests/recovery.test.mjs": {
