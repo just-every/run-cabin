@@ -5220,7 +5220,7 @@
       "executable": false
     },
     "tests/recovery-sandbox-connection.mjs": {
-      "sha256": "bb0fe2ce01aee82007dc91ae0c169d80764669d5e74e38068911ab6593201ea5",
+      "sha256": "79cd77013eeb41b579d51ed2f0d71ea1569f694d629ab054aa837704540aa8b8",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {

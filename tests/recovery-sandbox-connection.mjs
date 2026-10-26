@@ -7,13 +7,15 @@ assert.equal((await api('/workspaces/get')).workspace.is_sandbox,true)
 const existing=new Set((await api('/connected_accounts/list')).connected_accounts.map(a=>a.connected_account_id))
 const {connect_webview:view}=await api('/connect_webviews/create',{accepted_providers:['kwikset'],automatically_manage_new_devices:true,wait_for_device_creation:true})
 const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-let accountId
+let accountId,authorized=false
 try{
  const context=await browser.newContext(),page=await context.newPage();await page.goto(view.url)
- for(let step=0;step<10;step++){
+ for(let step=0;step<30;step++){
   await page.waitForTimeout(1000)
   const state=(await api('/connect_webviews/get',{connect_webview_id:view.connect_webview_id})).connect_webview
-  if(state.connected_account_id){accountId=state.connected_account_id;break}
+  if(state.connected_account_id)accountId=state.connected_account_id
+  if(state.status==='authorized'&&accountId){authorized=true;break}
+  if(state.login_successful||accountId)continue
   const alerts=await page.locator('[role="alert"]:visible').allTextContents();assert.deepEqual(alerts.map(v=>v.trim()).filter(Boolean),[],'The sandbox provider must accept its documented test login')
   const email=page.locator('input[name="email"]:visible'),password=page.locator('input[type="password"]:visible')
   if(await email.count())await email.fill(process.env.SEAM_SANDBOX_LOGIN)
@@ -23,7 +25,7 @@ try{
   assert.ok(await next.count(),'The documented sandbox connection needs a recognized next action')
   await next.click()
  }
- assert.ok(accountId,'The sandbox test account must authorize its connection')
+ assert.ok(authorized&&accountId,'The sandbox test account must authorize its connection after device creation')
  assert.ok(!existing.has(accountId),'Use a new isolated sandbox account for this proof')
  const devices=(await api('/devices/list',{connected_account_id:accountId})).devices
  const device=devices.find(d=>d.properties?.online&&d.properties?.supported_code_lengths?.includes(4))
