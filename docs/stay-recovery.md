@@ -26,7 +26,7 @@ The owner can enable one-use 10% future-stay rent offers in each home’s recove
 
 Approval changes the stay’s arrival, guest code and preceding cleaner window; the scheduled check-in message follows those facts. It emails the exact revised arrangements. On the private stay page the guest accepts or asks to speak with the host. A help request remains escalated and notifies the host. Acceptance permits closing only after the other readiness checks pass. It does not mark the home ready.
 
-The guest’s accepted page links to the private discounted booking page. Availability, stay rules, contact, consent and terms are checked again at checkout. The 10% applies only to rent before tax; cleaning and extras remain separate. The charged return and owner statement use the reduced rent. Undo revokes an unused offer; an already redeemed offer requires review of the paid return rather than silently changing that booking. General promotions, paid extras, gap-night extensions and the full guest-issue agent remain partial in CONTRACT.md.
+The guest’s accepted page links to the private discounted booking page. Availability, stay rules, contact, consent and terms are checked again at checkout. The 10% applies only to rent before tax; cleaning and extras remain separate. The charged return and owner statement use the reduced rent. Undo revokes an unused offer; an already redeemed offer requires review of the paid return rather than silently changing that booking. General promotions, paid extras and gap-night extensions keep their own acceptance in CONTRACT.md.
 
 ## Conflicts and alternative stays
 

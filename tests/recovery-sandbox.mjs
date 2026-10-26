@@ -12,10 +12,11 @@ const devices=(await seam('/devices/list')).devices,device=devices.find(d=>d.pro
 assert.ok(device,'The sandbox needs an online code-capable device')
 const domains=await fetch('https://api.sendgrid.com/v3/whitelabel/domains',{headers:{authorization:'Bearer '+mailKey}});assert.ok(domains.ok,'Verified sender lookup HTTP '+domains.status)
 assert.ok((await domains.json()).some(d=>d.domain==='mail.runeditrun.com'&&d.valid),'The authorized Run Edit Run sender must be authenticated')
-const anchorDay=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'})
+const proofNow=new Date(),arrivalAt=new Date(proofNow.getTime()+2*3600_000)
+const anchorDay=proofNow.toLocaleDateString('en-CA',{timeZone:'America/New_York'}),arrivalTime=arrivalAt.toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})
 const date=(offset=0)=>new Date(Date.parse(anchorDay+'T00:00:00Z')+offset*86400000).toISOString().slice(0,10)
 const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64'),marker='Cabin recovery '+crypto.randomUUID()
-const h=await harness({auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
+const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
 let home,stayId,oldId,newId,providerMessageId,mailboxId,failure,stage='setup'
 const ownedIds=new Set()
 async function refresh(){const s=await h.accessState();for(const c of s.codes)if(c.lock.providerId)ownedIds.add(c.lock.providerId);return s}
@@ -24,18 +25,18 @@ try{
  home=await h.cmd('property.save',{name:marker,ownerName:'Synthetic Cabin Owner',ownerEmail:process.env.TEST_MAIL_TO,commissionBps:2000})
  await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Synthetic Cabin Trust'})
  const original=await h.person('SyntheticOriginal'),backup=await h.person('SyntheticBackup')
- await h.cmd('home.settings',{propertyId:home.id,address:'12 Synthetic Cabin Lane',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'00:00',cleanerId:original.id,checklist:['Kitchen ready'],photosRequired:1,lockDeviceId:device.device_id})
+ await h.cmd('home.settings',{propertyId:home.id,address:'12 Synthetic Cabin Lane',timeZone:'America/New_York',checkInTime:arrivalTime,checkOutTime:'00:00',cleanerId:original.id,checklist:['Kitchen ready'],photosRequired:1,lockDeviceId:device.device_id})
  await h.cmd('recovery.settings',{propertyId:home.id,cleanerIds:[original.id,backup.id],auto:false,creditLimitCents:10000,cleaningLimitCents:5000})
  await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Synthetic Departing Guest',start:date(-1),end:date()})
  const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Synthetic Recovery Guest',guestEmail:process.env.TEST_MAIL_TO,start:date(),end:date(2)});stayId=request.bookingId
  let s=await refresh(),old=s.codes.find(c=>c.bookingId===stayId&&c.holder==='guest'&&c.status==='issued');oldId=old.id
- for(let n=0;n<30&&old.lock.state!=='set';n++){await new Promise(r=>setTimeout(r,2000));s=await advance();old=s.codes.find(c=>c.id===oldId)}
- stage='initial-code';const remoteInitial=(await seam('/access_codes/get',{access_code_id:old.lock.providerId})).access_code;console.log(JSON.stringify({stage,state:old.lock.state,detail:old.lock.error,remote:{status:remoteInitial.status,codeMatches:remoteInitial.code===old.code,deviceMatches:remoteInitial.device_id===device.device_id,expectedStart:old.lock.job?.starts_at,expectedEnd:old.lock.job?.ends_at,jobStage:old.lock.job?.stage,claimUntil:old.lock.job?.claim?.until,starts:remoteInitial.starts_at,ends:remoteInitial.ends_at,pending:remoteInitial.pending_mutations?.length,errors:remoteInitial.errors?.map(e=>e.type)}}));assert.equal(old.lock.state,'set','Initial guest code needs real provider readback')
+ for(let n=0;n<90&&old.lock.state!=='set';n++){await new Promise(r=>setTimeout(r,2000));s=await advance();old=s.codes.find(c=>c.id===oldId)}
+ stage='initial-code';const remoteInitial=(await seam('/access_codes/get',{access_code_id:old.lock.providerId})).access_code;console.log(JSON.stringify({stage,state:old.lock.state,detail:old.lock.error,remote:{status:remoteInitial.status,scheduled:remoteInitial.is_scheduled_on_device,preferNative:remoteInitial.prefer_native_scheduling,mutations:remoteInitial.pending_mutations?.map(m=>({type:m.mutation_type,scheduledAt:m.scheduled_at})),codeMatches:remoteInitial.code===old.code,deviceMatches:remoteInitial.device_id===device.device_id,expectedStart:old.lock.job?.starts_at,expectedEnd:old.lock.job?.ends_at,jobStage:old.lock.job?.stage,claimUntil:old.lock.job?.claim?.until,starts:remoteInitial.starts_at,ends:remoteInitial.ends_at,pending:remoteInitial.pending_mutations?.length,errors:remoteInitial.errors?.map(e=>e.type)}}));assert.equal(old.lock.state,'set','Initial guest code needs real provider readback')
  let row=await h.cmd('recovery.open',{bookingId:stayId,trigger:'cleaner_cancelled',reason:'Sandbox cleaner cancellation followed by failed guest access'})
  row=await h.cmd('recovery.propose',{id:row.id,revision:row.revision,cleanerId:backup.id,creditCents:7500,extraCleaningCents:2500,why:'Exact approved backup, guest credit and replacement access'})
  await h.cmd('recovery.approve',{id:row.id,revision:row.revision})
  s=await refresh();row=s.recoveries.find(r=>r.id===row.id);newId=row.codeId
- for(let n=0;n<30&&!(s.codes.find(c=>c.id===newId).lock.state==='set'&&s.codes.find(c=>c.id===oldId).lock.state==='removed');n++){await new Promise(r=>setTimeout(r,2000));s=await advance()}
+ for(let n=0;n<90&&!(s.codes.find(c=>c.id===newId).lock.state==='set'&&s.codes.find(c=>c.id===oldId).lock.state==='removed');n++){await new Promise(r=>setTimeout(r,2000));s=await advance()}
  stage='replacement-code';const replacement=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:replacement.lock.state,detail:replacement.lock.error,oldState:s.codes.find(c=>c.id===oldId).lock.state}));assert.equal(replacement.lock.state,'set');assert.equal(s.codes.find(c=>c.id===oldId).lock.state,'removed');assert.notEqual(replacement.code,old.code)
  await h.restart();s=await advance();assert.equal(s.codes.find(c=>c.id===newId).lock.providerId,replacement.lock.providerId)
  row=s.recoveries.find(r=>r.id===row.id);row=await h.cmd('recovery.accept',{id:row.id,revision:row.revision},backup.cookie)

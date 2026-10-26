@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "8aad82f040f84a143c6288bdd5c389742aa96d1189e1552c78ec2bb2967a76fc",
+      "sha256": "79d4c93c9d32702818cfe22ebbd0c822159829570e19c7350d1a4fd85bb3126e",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "25e8c4773c36b849c7d81f45857b674980be583472cc1f587208f26e78f50c5f",
+      "sha256": "483a120a5f989548e45c0562a1d277574afeda81d7af474c08d8248a46922d56",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "615aed07d0852c72f431d7f83160a36d0632a08e1a08b84019c69aea94b01c81",
+      "sha256": "4214fa21e91cb269afafc23bc57b1e384fb2a57051c59ba3b088acba88f80972",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -356,7 +356,7 @@
       "executable": false
     },
     "docs/stay-recovery.md": {
-      "sha256": "b01e57f3a4c0974156fd9f12cbf382de2c7f3f99e931d7025dbc8e7c3e18114b",
+      "sha256": "12c7523c2b207891ed8f9360e750b5204f65d52ec65fd3e8fcd2bb097517c073",
       "executable": false
     },
     "docs/taxes.md": {
@@ -2516,7 +2516,7 @@
       "executable": false
     },
     "src/cabin/recovery/guest.ts": {
-      "sha256": "9639c9ee25eedf809da8acf526b1268f83b51b0c11cbd6c932f2b066b39956f5",
+      "sha256": "e77cd6e6db633f9d74c640855a8ef75501e9623b40fa7c082f263060fc852bcb",
       "executable": false
     },
     "src/cabin/recovery/limits.ts": {
@@ -5208,7 +5208,7 @@
       "executable": false
     },
     "tests/recovery-alternative-support.mjs": {
-      "sha256": "563a5efbbd0ac3b9a4a85faa09392af4a1c61bfde914cc0b974d1d69bd3711ae",
+      "sha256": "d0038630bad75b65c2f1149aa6d6eb8296ad22e453d27589a2b191abe9bd5059",
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
@@ -5216,11 +5216,11 @@
       "executable": false
     },
     "tests/recovery-browser.mjs": {
-      "sha256": "93722e4b7acd302d776720218e240aff36d2f33b9a38fc076d6cb0f19b69c785",
+      "sha256": "09be7a93e9507f75d1a30dde31e9271f76127b25b0d45375a82b1be8a9201b76",
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "d52d12f52fe48aa6ba49b035f6dcc613dde6410b8c73c5592d819c278c380e93",
+      "sha256": "911cd19350e18b077eff2723c30b4d3335a84f2b6234cdaa80d3700f01a8ff6d",
       "executable": false
     },
     "tests/recovery.test.mjs": {

@@ -53,6 +53,7 @@ try{
    }
    const axe=await new AxeBuilder({page:target}).include('main').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()
    assert.deepEqual(axe.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>v.id),[])
+   await target.evaluate(()=>window.scrollTo(0,0))
    await target.screenshot({path:`${directory}/${name}-${width}.png`,fullPage:true})
   }
   try{
@@ -66,7 +67,7 @@ try{
    },screens:async(h,stage,row)=>{
     await ownerPage(h);const card=page.locator('#recovery-'+row.id)
     for(const d of await card.locator('details').all())await d.evaluate(el=>el.open=true)
-    if(stage==='closed')await page.locator('details.panel').evaluateAll(rows=>rows.forEach(el=>el.open=true))
+    if(stage==='closed'){await page.locator('details.panel').evaluateAll(rows=>rows.forEach(el=>el.open=true));if(guestPage){await guestPage.reload();await expect(guestPage.locator('[data-recovery-state="closed"]')).toBeVisible();await screenshot(guestPage,'guest-recovery-closed')}}
     await screenshot(page,'recovery-'+stage)
     if(stage==='active'){await ownerPage(h,'/app/turnovers');await screenshot(page,'arrival-preparation')}
     if(stage==='ready'){await ownerPage(h,'/app/readiness?from=2026-10-26');await screenshot(page,'verified-arrival')}
