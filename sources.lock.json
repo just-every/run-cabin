@@ -4908,7 +4908,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "48976637247b6f0d3ad629a136ddbe3f3b82ffe9f3e1be30d8be3b8f8e253677",
+      "sha256": "97231b464dacb2298546b2b5172a7d19bcfdfcdd56f837198431aab3d996f5b4",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {

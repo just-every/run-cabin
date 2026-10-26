@@ -229,8 +229,11 @@ test('QuickBooks owner-approved month sync reconciles source journals, survives 
  assert.equal((await h.send('/api/cabin/qbo/callback?state=synthetic-cabin-bad&code=synthetic-cabin-code&realmId=123456789',undefined,h.owner)).status,403)
  assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,303)
  assert.equal((await h.send('/api/cabin/qbo/callback?'+new URLSearchParams({state,code:'synthetic-cabin-code',realmId:'123456789'}),undefined,h.owner)).status,403)
- const c=await h.cmd('qbo.catalog',{});await qboMapping(h,b.home,c)
+ const c=await h.cmd('qbo.catalog',{}),mapping=await qboMapping(h,b.home,c)
+ const stale=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'})
+ await h.cmd('qbo.mapping.approve',{propertyId:b.home.id,classId:c.classes[0].Id,vendorId:c.vendors[0].Id,accounts:{...mapping.accounts,cash:'processorFunds'},consent:true})
  const preview=await h.cmd('qbo.preview',{propertyId:b.home.id,month:'2026-10'});assert.equal(qbo.entries.length,0)
+ await h.cmd('qbo.sync',{id:stale.id,revision:stale.revision,consent:true},h.owner,409);assert.equal(qbo.entries.length,0)
  await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:false},h.owner,400)
  qbo.loseResponse();let sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});assert.ok(sent.entries.some(e=>e.status==='uncertain'))
  await h.restart();sent=await h.cmd('qbo.sync',{id:preview.id,revision:preview.revision,consent:true});await assertBatch(h,sent,b.source)
@@ -247,4 +250,5 @@ test('QuickBooks owner-approved month sync reconciles source journals, survives 
  await h.cmd('provider.sharing',{id:'quickbooks',enabled:true,revision:(await h.state()).sharing.find(s=>s.id==='quickbooks').revision,confirm:'yes'})
  // A revoked grant cannot authorize a new journal and cannot duplicate accepted work.
  qbo.revoke();const revoked=await h.cmd('qbo.reconcile',{id:preview.id});assert.ok(revoked.entries.every(e=>e.status==='conflict'));assert.equal(qbo.writes.length,writes)
+ await h.cmd('provider.sharing',{id:'quickbooks',operation:'revoke',securityRevision:''});assert.equal(await h.db.prepare('SELECT 1 FROM cb_qbo_connection').first(),null);await h.cmd('qbo.reconcile',{id:preview.id},h.owner,409)
 },{auth:qboAuth,outbound:request=>qbo.outbound(request),now:'2026-10-26T12:00:00Z'}))
