@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "9268d848ced09634e2ac22c5b2cb7769b9f5425ae946d0795b1577cc4cffb3c4",
+      "sha256": "8194e181437b52bc0ee67a535d7c6631e936346add93f6eea4c42a6a20203287",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "d9afd81cf4751b03a596292c9d060bef0be138944840fd2be75a1b4619331525",
+      "sha256": "faa4ac398b92a47baa04f01a8b4bc6240bd228d0f888627795f7b044c8a40702",
       "executable": false
     },
     "DEMO.md": {
@@ -168,7 +168,7 @@
       "executable": false
     },
     "docs/channel-agent.md": {
-      "sha256": "3e9ca4a7de682fce4c77ac7df0d4cf5e4fd425830f00c4d73abd363eebec6115",
+      "sha256": "1bf21c47404e6ece6420eb9c0a08ab6ec8ef4c90cc5a2cc5d1f925ecbdf6a4f3",
       "executable": false
     },
     "docs/channel-calendars.md": {
@@ -340,7 +340,7 @@
       "executable": false
     },
     "docs/shared-inventory.md": {
-      "sha256": "e2f00b53465b54d5e9daf4cb5707ea2259b87428d69b8ca8ceefb74ae838a164",
+      "sha256": "a2d8f615243258a27c55f9f4e80c7956d695e2f367d2b862885b513a8b36fdc7",
       "executable": false
     },
     "docs/site.json": {
@@ -1432,7 +1432,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/commands.ts": {
-      "sha256": "57b6cf12673f3edee5b8d87871c0e8e33a5de141ef21f73e4655ed3f3a9dde35",
+      "sha256": "0136c5ce8c234651b944083d880df06ba8e49e2a92c5c61d951d93f831167270",
       "executable": false
     },
     "src/cabin/channel-agent/queue.ts": {
@@ -1468,7 +1468,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/ui.ts": {
-      "sha256": "d3315d20561cc315cf518447f88484dabeef322718367243083e7aa137893fd7",
+      "sha256": "042c917a2d6e9abaeec8f025fc7936dba22479f35db3a85def2678a1d43499ac",
       "executable": false
     },
     "src/cabin/channels.ts": {
@@ -4916,7 +4916,7 @@
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "023d2d969b85485f389a3be4259e7a20993aa5838956e1a4bf810784aa87a1be",
+      "sha256": "ef8cb4b6628a43786a34db7fad3d90a48262f336ae832f7d6a2a29ab816eeb83",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
@@ -5133,6 +5133,10 @@
     },
     "tests/lifecycle.test.mjs": {
       "sha256": "fa86c72108dc70743a4c62a2eab5ae4f765e588b28bf39b34d30f7292df8e527",
+      "executable": false
+    },
+    "tests/linked-channel-browser.mjs": {
+      "sha256": "c68801fa0a73ca945eb032894adc7811f6e24471e57774d38f86100708ff3b61",
       "executable": false
     },
     "tests/mail-edge.mjs": {
