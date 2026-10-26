@@ -21,7 +21,7 @@
       "browser": false,
       "hosted": false,
       "commands": [
-        "pnpm run test:cabin"
+        "node scripts/cabin-domain-tests.mjs core"
       ]
     },
     {
@@ -54,7 +54,8 @@
       "hosted": true,
       "commands": [
         "pnpm run build",
-        "pnpm run test:runtime"
+        "pnpm run test:runtime",
+        "node scripts/cabin-domain-tests.mjs restart"
       ]
     },
     {
