@@ -1,4 +1,5 @@
 import { rooms, sourceRoom } from './capacity-support.mjs'
+import { channelScreens } from './linked-channel-browser.mjs'
 import { erase } from './privacy-flow.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
@@ -8,7 +9,7 @@ const dates={start:'2026-12-10',end:'2026-12-13'}
 
 test('channel agent connects isolated profiles, closes other channels from an iCal booking, and safely reopens its own closures',async()=>{
  let feed='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:megan-stay\r\nDTSTART;VALUE=DATE:20261210\r\nDTEND;VALUE=DATE:20261213\r\nSUMMARY:Reserved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'
- const h=await harness({outbound:()=>new Response(feed)}),edge=await channelEdge()
+ const h=await harness({assets:true,outbound:()=>new Response(feed)}),edge=await channelEdge(),screens=await channelScreens(h)
  try{
   const {home,runner}=await provision(h,edge)
   let state=await h.state();assert.equal(state.channelAgent.profiles.filter(p=>p.status==='connected').length,3)
@@ -36,6 +37,15 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   assert.equal((await h.state()).channelAgent.actions.find(a=>a.id===job.id).status,'succeeded')
   const page=await h.send('/app/channels',undefined,h.owner);assert.equal(page.status,200);assert.ok(page.text.includes('side=before'));assert.ok(page.text.includes('side=after'))
   const {a,b}=await rooms(h,home)
+  for(const [room,width] of [[a,1440],[b,390]])for(const channel of ['airbnb','vrbo','booking.com']){
+   await screens.connect(room,channel,width)
+   const {job}=await runner({op:'claim'});assert.equal(job.kind,'connect');assert.equal(job.propertyId,room.id)
+   const result=await edge.run(job,{human:true});assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})
+  }
+  await h.cmd('channelAgent.connect',{propertyId:b.id,channel:'airbnb',confirm:'yes',listingId:'room-a',listingUrl:'https://www.airbnb.com/hosting/calendar/room-b'},h.owner,409)
+  await h.cmd('channelAgent.connect',{propertyId:b.id,channel:'airbnb',confirm:'yes',listingId:'another-room',listingUrl:'https://www.airbnb.com/hosting/calendar/room-a'},h.owner,409)
+  await h.restart();assert.equal((await h.state()).channelAgent.profiles.filter(p=>p.status==='connected').length,9)
+  await screens.capture('linked-profiles')
   await sourceRoom(h,a,dates.start,dates.end)
   const roomClosures=(await h.state()).channelAgent.actions.filter(a=>a.kind==='close'&&a.status==='queued')
   assert.equal(roomClosures.length,3,'room A closes the whole home on every channel, including Airbnb')
@@ -47,7 +57,8 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   await h.cmd('channelAgent.undo',{id:roomClosures[0].id});const reopening=(await runner({op:'claim'})).job;assert.equal(reopening.kind,'open');const reopened=await edge.run(reopening);assert.equal(reopened.outcome,'succeeded');await runner({op:'complete',id:reopening.id,lease:reopening.lease,...reopened})
   // A direct booking enters the identical commit hook and closes all three OTAs.
   const direct=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Megan Ortiz',...dates})
-  assert.equal((await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close').length,3)
+  const wholeClosures=(await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close')
+  for(const listing of [home,a,b])assert.deepEqual(wholeClosures.filter(job=>job.propertyId===listing.id).map(job=>job.channel).sort(),['airbnb','booking.com','vrbo'])
   const original=await h.person('Original'),backup=await h.person('Backup')
   await h.cmd('home.settings',{propertyId:home.id,revision:(await h.state()).homeSettings.find(s=>s.propertyId===home.id).revision,address:'12 Lake Road',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',cleanerId:original.id,checklist:['Ready']})
   await h.cmd('recovery.settings',{propertyId:home.id,cleanerIds:[original.id,backup.id],auto:false,creditLimitCents:0,cleaningLimitCents:0})
@@ -56,8 +67,12 @@ test('channel agent connects isolated profiles, closes other channels from an iC
   await h.cmd('recovery.approve',{id:recovery.id,revision:recovery.revision});recovery=(await h.state()).recoveries.find(r=>r.id===recovery.id)
   const refused=await h.cmd('recovery.close',{id:recovery.id,revision:recovery.revision},h.owner,409)
   assert.match(refused.error,/has not confirmed the current closure/)
+  for(let n=0;n<9;n++){const {job}=await runner({op:'claim'});assert.equal(job.kind,'close');const result=await edge.run(job);assert.equal(result.outcome,'succeeded');await runner({op:'complete',id:job.id,lease:job.lease,...result})}
+  const accepted=(await h.state()).channelAgent.actions.filter(a=>a.bookingId===direct.bookingId&&a.kind==='close')
+  assert.ok(accepted.every(job=>job.status==='succeeded'&&job.result==='closed'&&job.before&&job.after))
+  await screens.capture('whole-home-closures')
 
- }finally{await edge.close();await h.close()}
+ }finally{await screens.close();await edge.close();await h.close()}
 })
 
 test('a two-factor or CAPTCHA channel page stops before any write, retains no security evidence and asks the host',async()=>{
@@ -155,7 +170,7 @@ test('SYNC-011 SYNC-007: changed source identity, future payouts, unavailable pa
  const h=await harness(),edge=await channelEdge()
  try{
   const {home,runner}=await provision(h,edge,['airbnb'])
-  const profileId='channel-profile:airbnb'
+  const profileId=(await h.state()).channelAgent.profiles.find(p=>p.propertyId===home.id&&p.channel==='airbnb').id
   const read=async(kind,want='succeeded')=>{
    await h.cmd('channelAgent.read',{id:profileId,kind:'read-'+kind,readUrl:`https://www.airbnb.com/hosting/lake-loft/${kind}`,confirm:'yes'})
    const {job}=await runner({op:'claim'});assert.equal(job.kind,'read-'+kind)

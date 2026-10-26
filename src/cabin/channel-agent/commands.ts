@@ -25,11 +25,13 @@ export async function channelAgentCommand(env:Bindings,actor:Actor,name:string,p
   if(name==='channelAgent.connect'){
    need(p.confirm==='yes','Review the channel terms risk and explicitly grant the disclosed session and action scope',409)
    const ch=channel(p.channel,false) as Profile['channel'],prop=c.data.properties.find(r=>r.id===p.propertyId);need(prop,'Choose a home')
-   // One isolated profile per install/channel. Listing mapping is explicit; a second home needs a later mapping UI.
-   const id=`channel-profile:${ch}`,old=profiles.find(r=>r.id===id)
+   const old=profiles.find(r=>r.channel===ch&&r.propertyId===prop.id)
+   // Keep existing profile identities so encrypted sessions and source references remain valid.
+   const id=old?.id??`channel-profile:${ch}:${prop.id}`
    need(!actions.some(a=>a.profileId===id&&a.status==='running'),'Finish the current browser action first',409)
    const url=listingUrl(p.listingUrl,ch),listingId=text(p.listingId,'channel listing ID',160)
    need(/^[A-Za-z0-9_-]+$/.test(listingId),'Use the channel’s stable listing ID')
+   need(!profiles.some(r=>r.id!==id&&r.channel===ch&&r.status!=='disconnected'&&(r.listingId===listingId||r.listingUrl===url)),'This channel listing is already mapped to another home; disconnect it before changing the mapping',409)
    need(!old||old.propertyId===prop.id&&old.listingUrl===url&&(!old.listingId||old.listingId===listingId)||old.status==='disconnected','Disconnect the old listing before changing the mapping',409)
    const row:Profile={id,generation:old&&old.status!=='disconnected'?old.generation:newId(),channel:ch,propertyId:prop.id,listingId,listingUrl:url,grantedAt:c.now,grantedBy:actor.id,status:'connecting',updatedAt:c.now,...(old?.stateSealed?{stateSealed:old.stateSealed}:{})};save(c,PROFILE,row)
    for(const a of actions.filter(a=>a.profileId===id&&a.kind==='connect'&&a.status==='queued')){a.status='cancelled';save(c,ACTION,a)}
