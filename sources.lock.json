@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "a1b03039ffda0eba2345eabecd31bec92785da6cc0f73db12aba6b12711838a5",
+      "sha256": "2d10e2ff15b51620daa7a3730010d132ebabe298c4d742d0e2579b8f98cfc1ff",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "2ee60d34815a96f47e06e9209ca3bb8f7db260056d0bfad093e11d964256daeb",
+      "sha256": "6dbd3141e6387184af2f713ecdaf194755f911ea337e99a6944d2c9e26341c67",
       "executable": false
     },
     "DEMO.md": {
@@ -252,7 +252,7 @@
       "executable": false
     },
     "docs/lock-sandbox.md": {
-      "sha256": "a03298d0b5df77ce2adc21dfa2e4292408a07becbdc59abd5e2f3b07d93dadef",
+      "sha256": "b42eb354d31352a2419e71187d9294c17a2e6191f9fce40004fd2e626cde743c",
       "executable": false
     },
     "docs/maintenance.md": {
