@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import {harness} from './harness.mjs'
 import {chromium,expect} from '@playwright/test'
 import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
@@ -25,4 +26,15 @@ export async function directRulesBrowser(h){
    const cfg=(await h.accessState()).direct.homes[0],added=cfg.rates.find(r=>r.start==='2030-03-01');await h.cmd('direct.rate.remove',{propertyId:cfg.propertyId,revision:cfg.revision,rateId:added.id})
   }finally{await context.close()}
  }}finally{await browser.close()}
+}
+
+export async function datedRatesJourney(){
+ const h=await harness({assets:true,now:'2030-01-01T17:00:00Z',outbound:()=>assert.fail('Reviewing a dated quote needs no provider request')})
+ try{
+  const p=await h.cmd('property.save',{name:'Pine Ridge Cabin',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000})
+  let cfg=await h.cmd('direct.configure',{propertyId:p.id,enabled:true,slug:'pine-ridge',description:'A quiet Maine cabin near the lake.',nightlyCents:18000,cleaningCents:7500,extraGuestCents:2000,includedGuests:2,maxGuests:4,minNights:2,maxNights:14,minGapNights:2,depositCents:25000,releaseHours:0,taxLabel:'Maine lodging tax',taxBps:900,countyTaxLabel:'County lodging tax',countyTaxBps:100,agreement:'Quiet hours after 10 pm.',requireIdentity:false,advanceNoticeDays:2,bookingWindowDays:90,preparationNights:2})
+  cfg=await h.cmd('direct.rate.save',{propertyId:p.id,revision:cfg.revision,start:'2030-01-16',end:'2030-01-17',weekday:'all',nightlyCents:25000})
+  await h.cmd('reservation.request',{propertyId:p.id,channel:'airbnb',start:'2030-01-21',end:'2030-01-24',guestName:'Calendar guest'})
+  await directRulesBrowser(h)
+ }finally{await h.close()}
 }

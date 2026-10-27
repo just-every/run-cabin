@@ -1,5 +1,4 @@
 import { rooms,sourceRoom } from './capacity-support.mjs'
-import { directRulesBrowser } from './direct-rules-browser.mjs'
 import { homeDay } from './home-calendar.mjs'
 import { readFile } from 'node:fs/promises'
 import { attestArrival } from './readiness-helpers.mjs'
@@ -177,7 +176,7 @@ test('direct booking enforces dated rates, notice, buffers, saved terms and chec
   allowPayment=true;const accepted=await h.send('/book/pine-ridge/checkout',{...signed,homeRevision:cfg.revision,start:day(40),end:day(43),guests:3});assert.equal(accepted.status,200,accepted.text);assert.equal(charged,74250)
   cfg=await h.cmd('direct.configure',{...settings,propertyId:cfg.propertyId,revision:cfg.revision,advanceNoticeDays:2,bookingWindowDays:90,preparationNights:2,policyName:'New full charge',retainedBps:10000})
   await h.restart();const retained=(await h.accessState()).direct.stays[0];assert.equal(retained.quote.cancellationPolicy.retainedBps,2500);assert.match(retained.signature.text,/Retain one quarter/);assert.equal(retained.quote.totalCents,74250);assert.equal((await h.send('/book/stay/'+accepted.value.token+'/agreement')).status,200)
-  await directRulesBrowser(h)
+  const renewed=await h.send('/book/pine-ridge/quote',good);assert.equal(renewed.status,200,renewed.text);assert.equal(renewed.value.quote.totalCents,81950,'editing booking settings retains saved dated rates')
   const whole=await h.cmd('property.save',{name:'Linked rules home',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000}),linked=await h.cmd('direct.configure',{...settings,propertyId:whole.id,slug:'linked-rules',minGapNights:0,preparationNights:2})
   const {a}=await rooms(h,whole);await sourceRoom(h,a,'2030-02-20','2030-02-23')
   for(const door of ['quote','checkout']){const refusal=await h.send('/book/linked-rules/'+door,{...signed,homeRevision:linked.revision,start:'2030-02-18',end:'2030-02-20',guests:2});assert.equal(refusal.status,409,refusal.text);assert.match(refusal.value.error,/preparation nights/)}

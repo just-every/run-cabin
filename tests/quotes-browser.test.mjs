@@ -1,3 +1,4 @@
+import {datedRatesJourney} from './direct-rules-browser.mjs'
 import { rooms, sourceRoom, unavailable } from './capacity-support.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -52,3 +53,5 @@ test('RES-006: staff issue and revise a quote, then a mobile or desktop guest si
   }finally{await staff.close();await guest.close();await h.close()}
  }}finally{await browser.close()}
 })
+
+test('dated native rates and preparation settings govern the guest breakdown and refusal on desktop and phone',{timeout:120000},datedRatesJourney)
