@@ -15,7 +15,11 @@ async function api(path,body={},method='GET'){
 assert.equal((await api('/workspaces/get')).workspace.is_sandbox,true)
 const device=(await api('/devices/get',{device_id:deviceId})).device
 assert.equal(device.device_id,deviceId);assert.equal(device.properties?.online,true);assert.equal(device.can_program_online_access_codes,true);assert.ok(device.properties.supported_code_lengths.includes(4))
-const proofNow=new Date(),anchor=proofNow.toISOString().slice(0,10),day=n=>new Date(Date.parse(anchor+'T12:00Z')+n*86400000).toISOString().slice(0,10)
+const proofNow=new Date(),zone='America/New_York',anchor=proofNow.toLocaleDateString('en-CA',{timeZone:zone}),day=n=>new Date(Date.parse(anchor+'T12:00Z')+n*86400000).toISOString().slice(0,10)
+const utc=local=>{
+ const offset=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'longOffset'}).formatToParts(new Date(local+'Z')).find(p=>p.type==='timeZoneName').value.replace('GMT','')
+ return Date.parse(local+offset)
+}
 const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:process.env.SEAM_API_KEY},outbound:request=>fetch(request)})
 const owned=new Set();let failure
 const codes=async()=>(await h.accessState()).codes
@@ -32,7 +36,7 @@ async function observe(id,expected){
  console.log(JSON.stringify({journey:'lock-sandbox',sourceSha,stage:expected,localState:code.lock.state,remoteState:remote?.status??'absent',scheduledOnDevice:remote?.is_scheduled_on_device??false,pendingMutations:remote?.pending_mutations?.map(m=>m.mutation_type??m.mutation_code)??[],errors:remote?.errors?.map(e=>e.type??e.error_code)??[],resourceKnown:!!code.lock.providerId}))
  assert.equal(code.lock.state,expected,'Cabin must reconcile the requested state from provider readback')
  if(expected==='removed'){assert.equal(remote,undefined,'Cancellation removes the exact provider code');return code}
- assert.ok(remote,'The exact resource must exist at the provider');assert.equal(remote.device_id,deviceId);assert.equal(remote.code,code.code,'Independent provider PIN readback');assert.equal(Date.parse(remote.starts_at),Date.parse(code.validFrom+'Z'));assert.equal(Date.parse(remote.ends_at),Date.parse(code.validUntil+'Z'))
+ assert.ok(remote,'The exact resource must exist at the provider');assert.equal(remote.device_id,deviceId);assert.equal(remote.code,code.code,'Independent provider PIN readback');assert.equal(Date.parse(remote.starts_at),utc(code.validFrom));assert.equal(Date.parse(remote.ends_at),utc(code.validUntil))
  assert.ok(remote.status==='set'||remote.status==='unset'&&remote.is_scheduled_on_device===true,'Provider confirms programming, including future native schedules')
  assert.equal(remote.errors?.length??0,0);assert.equal(remote.pending_mutations?.length??0,0)
  assert.equal(rows.filter(r=>r.name===code.lock.job.name).length,1,'Exactly one resource for this persisted attempt')
@@ -40,7 +44,7 @@ async function observe(id,expected){
 }
 try{
  const home=await h.cmd('property.save',{name:'Synthetic Cabin sandbox lifecycle',ownerName:'Synthetic Cabin Owner',ownerEmail:'owner@stay.example',commissionBps:2000})
- await h.cmd('home.settings',{propertyId:home.id,address:'12 Synthetic Cabin Lane',timeZone:'UTC',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready'],lockDeviceId:deviceId})
+ await h.cmd('home.settings',{propertyId:home.id,address:'12 Synthetic Cabin Lane',timeZone:zone,checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready'],lockDeviceId:deviceId})
  const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'airbnb',guestName:'Synthetic Cabin Guest',start:day(1),end:day(3)})
  let code=(await codes()).find(c=>c.bookingId===request.bookingId&&c.holder==='guest'&&c.status==='issued');assert.ok(code,'Reservation confirmation automatically issues access')
  code=await observe(code.id,'set');const providerId=code.lock.providerId

@@ -1480,7 +1480,7 @@
       "executable": false
     },
     "src/cabin/codes.ts": {
-      "sha256": "8eb7f85392c2a88c817c28d48bf6c975f4ec277d53cf786425139c51ca782ce6",
+      "sha256": "767338028160c99b1c4d2d59b711a9a6ad16afe429574f053ced39bc927c3b03",
       "executable": false
     },
     "src/cabin/connections/access.ts": {
@@ -2344,7 +2344,7 @@
       "executable": false
     },
     "src/cabin/portal/page.ts": {
-      "sha256": "dc41570a1efe944743c6a2e72ee95fabcd9a061d1280c324f51eb2cd3ce6a022",
+      "sha256": "865462cf824a2c7dbb0568d2bce089eaa624ff3a5fc2d47b513b8a3b18eb7319",
       "executable": false
     },
     "src/cabin/portal/shell.ts": {
@@ -2816,7 +2816,7 @@
       "executable": false
     },
     "src/cabin/ui/ops.ts": {
-      "sha256": "69f517efa78e239b33388dbb57ed6a6fc752df9235e81f01841bdcfa06ce3924",
+      "sha256": "6d97eaf5b07076c02d37e2231b056d33f65922dbe47f817ef779aadc88394320",
       "executable": false
     },
     "src/cabin/ui/owners-operations.ts": {
@@ -5143,6 +5143,10 @@
       "sha256": "c68801fa0a73ca945eb032894adc7811f6e24471e57774d38f86100708ff3b61",
       "executable": false
     },
+    "tests/locks-sandbox.mjs": {
+      "sha256": "9693eaddbf6167d72b4929d8569a1fb5b7351bbe8e97e558c87a246be9bfaed3",
+      "executable": false
+    },
     "tests/mail-edge.mjs": {
       "sha256": "394333109a0f2d54b153559c3d93fe4685ccd7ca75f8b4af04703cd5ce4ba11d",
       "executable": false
@@ -5236,7 +5240,7 @@
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
-      "sha256": "ac5f9a4f33a215c5901844c46f34b26b5f073d728817a9b949c9a4624287c76c",
+      "sha256": "ec5452c8669a9c8685cdde8a73db5ea0727a7e057499f2783a770f8de663e7b6",
       "executable": false
     },
     "tests/recovery-browser.mjs": {

@@ -38,3 +38,11 @@ export function codeState(row: AccessCode, now = Date.now()) {
  if (row.status === 'revoked') return 'revoked'
  return now < instant(row.validFrom, row.timeZone) ? 'scheduled' : now < instant(row.validUntil, row.timeZone) ? 'active' : 'expired'
 }
+/** A clock window alone cannot confirm that a connected lock has accepted access. */
+export function accessState(row: AccessCode, now = Date.now()) {
+ const window = codeState(row, now)
+ if (window === 'revoked' || window === 'expired') return window
+ if (row.lock.state === 'failed' || row.lock.state === 'removed') return 'failed'
+ if (row.lock.state === 'manual') return 'manual'
+ return row.lock.state === 'set' ? window : 'pending'
+}

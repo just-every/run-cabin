@@ -129,9 +129,9 @@ test('AGENT-006: revocation during an uncertain provider write survives later ex
 })
 
 test('ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes',async()=>{
- let boundary='before'
+ let boundary='before',programmed=false
  const edge=seamEdge({intercept:({phase,action,codes,result})=>{
-  if(phase==='after'&&action==='create'){const row=codes.get(result.access_code.access_code_id);row.status='unset';row.is_scheduled_on_device=true}
+  if(phase==='after'&&action==='create'){const row=codes.get(result.access_code.access_code_id);row.status='unset';row.is_scheduled_on_device=programmed}
   if(['create','update','delete'].includes(action)&&phase===boundary)return new Response('Interrupted provider response',{status:503})
  }})
  const h=await harness({now:'2026-10-26T14:00:00Z',auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
@@ -146,9 +146,19 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   assert.equal(edge.writes().length,before,'An interrupted unacknowledged request is read-only after restart')
   assert.equal((await h.accessState()).codes.find(c=>c.id===code.id).lock.state,'failed')
   boundary='after'
-  const accepted=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Ana Diaz',start:'2026-11-05',end:'2026-11-07'})
+  const accepted=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Ana Diaz',guestEmail:'ana@stay.example',start:'2026-11-05',end:'2026-11-07'})
   state=await h.accessState();code=state.codes.find(c=>c.bookingId===accepted.bookingId&&c.holder==='guest')
-  assert.equal(code.lock.state,'set');assert.ok(code.lock.providerId)
+  assert.equal(code.lock.state,'pending');assert.ok(code.lock.providerId)
+  const guestCookie=await h.verifyGuest(code.link)
+  let guestPage=await h.send('/stay/'+code.link,undefined,guestCookie)
+  assert.ok(!guestPage.text.includes('<p class="code">'+code.code+'</p>'),'Acknowledgement alone never releases the guest PIN')
+  const board=await h.send('/app/readiness?from=2026-11-05',undefined,h.owner)
+  assert.ok(board.text.includes('>pending</span>'),'The board reports unconfirmed programming as pending')
+  programmed=true;edge.codes.get(code.lock.providerId).is_scheduled_on_device=true
+  await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  code=(await h.accessState()).codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'set')
+  guestPage=await h.send('/stay/'+code.link,undefined,guestCookie)
+  assert.ok(guestPage.text.includes('<p class="code">'+code.code+'</p>'),'Confirmed programming releases this guest’s PIN')
   assert.equal(edge.codes.get(code.lock.providerId).status,'unset');assert.equal(edge.codes.get(code.lock.providerId).is_scheduled_on_device,true)
   assert.ok(Date.parse(code.validFrom)>Date.parse('2026-10-26T14:00:00Z'),'Confirmed future programming does not move its access start earlier')
   assert.equal([...edge.codes.values()].filter(c=>c.name.endsWith(code.id)).length,1)

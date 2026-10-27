@@ -7,7 +7,7 @@ import { h, money } from '../ui/shared'
 import type { AccessCode, Booking, Data, HomeSettings } from '../model'
 
 /** Door code, arrival instructions and guidebook: shown only while the stay is confirmed, access is released and check-out has not passed. */
-export const accessLive = (code: AccessCode, booking: Booking, blocked: boolean, now = Date.now()) => !blocked && booking.status === 'confirmed' && code.status === 'issued' && now < instant(code.validUntil, code.timeZone)
+export const accessLive = (code: AccessCode, booking: Booking, blocked: boolean, now = Date.now()) => !blocked && booking.status === 'confirmed' && code.status === 'issued' && (code.lock.state === 'manual' || code.lock.state === 'set') && now < instant(code.validUntil, code.timeZone)
 
 const row = (label: string, state: string, detail: string) => `<li><strong>${h(label)}</strong> <span class="chip ${state === 'done' ? 'chip-good' : ''}">${h(state === 'done' ? 'Done' : 'To do')}</span> <span class="muted">${detail}</span></li>`
 

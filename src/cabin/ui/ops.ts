@@ -1,15 +1,15 @@
 import { h, propertyName, memberName, manager } from './shared'
 import { between, wall, when, zoneAbbr, ZONES } from '../clock'
-import { codeState } from '../codes'
+import { accessState } from '../codes'
 import { lockLine } from '../locks'
 import { homeSettings } from '../homes'
 // Pieces the turnover, maintenance and readiness pages share.
 export const chip = (label: string, tone: 'good' | 'bad' | 'wait' | '' = '') => `<span class="chip ${tone ? 'chip-' + tone : ''}"><span class="dot"></span>${h(label)}</span>`
 export const TURNOVER: Record<string, [string, 'good' | 'bad' | 'wait' | '']> = { unassigned: ['No cleaner yet', 'bad'], approved: ['Cleaning scheduled', 'wait'], completed: ['Ready ✓', 'good'], cancelled: ['Cancelled', ''], draft: ['Draft for review', ''] }
 export const turnoverChip = (t: any) => chip(...TURNOVER[t.status] ?? [t.status, ''])
-const CODE: Record<string, [string, 'good' | 'bad' | 'wait' | '']> = { active: ['active', 'good'], scheduled: ['scheduled', 'wait'], expired: ['expired', ''], revoked: ['revoked', 'bad'] }
+const CODE: Record<string, [string, 'good' | 'bad' | 'wait' | '']> = { active: ['active', 'good'], scheduled: ['scheduled', 'wait'], pending: ['pending', 'wait'], failed: ['failed', 'bad'], manual: ['manual keypad', 'wait'], expired: ['expired', ''], revoked: ['revoked', 'bad'] }
 export function codeLine(s: any, code: any, label: string) {
-  const [state, tone] = CODE[codeState(code)]
+  const [state, tone] = CODE[accessState(code)]
   return `<div class="door"><span class="door-label">${h(label)}</span><strong class="door-code">${h(code.code)}</strong>${chip(`${state}`, tone)}<span class="muted">${code.status === 'revoked' ? h(code.reason ?? '') : `Works ${h(between(code.validFrom, code.validUntil))}`}</span></div>`
 }
 /** Lock status for whoever is looking: setup advice is the manager's, a cleaner only learns whether to expect the code at the door. */
