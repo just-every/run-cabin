@@ -55,11 +55,11 @@ function claimDue(env: Bindings, id: string) {
   Object.assign(row, { status: 'sending', messageId: m.id, revision: newId() }); return structuredClone(m)
  }, () => false).catch(() => null)
 }
-const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', c => {
+const claimReply = (env: Bindings, id: string) => mutate(env.DB, INBOX_SYSTEM, 'message.claim', async c => {
  const m = c.data.messages.find(r => r.id === id)
  if (!m || m.status !== 'pending') return null
  if (m.send?.state === 'uncertain') { m.status='failed';m.detail=UNCERTAIN_SEND;m.revision=newId();return null }
- if(messageAccessBlocked(c.data,m))return null
+ if(await messageAccessBlocked(env,c.data,m))return null
  if (m.control?.automatic && !automaticStillAllowed(c.data, env.AUTH_ORIGIN, m)) { m.status = 'draft'; m.control.automatic = false; m.control.needsHost = true; m.detail = 'Automatic authority or sources changed before sending. Review this reply.'; m.revision = newId(); return null }
  startSend(m,c.now,m.createdAt,m.control?.assignedEmail||lifecycleHome(c.data,m.propertyId??'').managerEmail||env.OWNER_EMAIL)
  return structuredClone(m)
@@ -84,7 +84,7 @@ export async function transmit(env: Bindings, data: Data, m: GuestMessage): Prom
    const canonical=await lifecycleContent({db:env.DB,data},b,row.rule,null)
    if (!content.eligible || row.content!==canonical.subject+'\n'+canonical.text) return {status:'unavailable',detail:'Guest facts or release conditions changed after this message was prepared. Review the current stay before sending.',providerId:null}
   }
-  if(messageAccessBlocked(data,m))return {status:'unavailable',detail:'Required agreement and identity tasks must be resolved before guest access instructions can be sent.',providerId:null}
+  if(await messageAccessBlocked(env,data,m))return {status:'unavailable',detail:'Payment, required agreement and identity tasks, and connected-lock programming must be resolved before guest access instructions can be sent.',providerId:null}
   if (m.channel === 'sms') { if (managedInstall(env)||!await secureAccount(env,'twilio') || !m.phone) return { status: 'unavailable', detail: managedInstall(env) ? SMS_MANAGED : SMS_LINE, providerId: null }; if(!await submissionCurrent(env,m))return {status:'failed',detail:UNCERTAIN_SEND,providerId:null,sendState:'uncertain'}; const r = await sendSms(env, m.phone, m.text,m.propertyId); return { status: 'sent', detail: null, providerId: r.providerId } }
   if (m.channel !== 'email') {
    const inbound=m.replyTo?data.messages.find(row=>row.id===m.replyTo):null

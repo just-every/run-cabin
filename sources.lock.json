@@ -1336,7 +1336,7 @@
       "executable": false
     },
     "src/cabin/agreements/access.ts": {
-      "sha256": "5a687f7f0a7bb1d18e03cc2afc573afd3a49512a68a27564b438723942192642",
+      "sha256": "7094277465c30a9cd4b81e75b109401e06fb94da270f2304880712d1c59b89f0",
       "executable": false
     },
     "src/cabin/agreements/commands.ts": {
@@ -1940,7 +1940,7 @@
       "executable": false
     },
     "src/cabin/inbox/deliver.ts": {
-      "sha256": "5cb57cb295e80c0e945b5be7433dbd9a37a64c1e81a31528a905ffd34b3cf0b5",
+      "sha256": "4776502a2b61ccf4897d1ff571ef11927c812fdf5de23363473834d43af79904",
       "executable": false
     },
     "src/cabin/inbox/drafts.ts": {
