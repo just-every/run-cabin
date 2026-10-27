@@ -5224,7 +5224,7 @@
       "executable": false
     },
     "tests/readiness-browser.test.mjs": {
-      "sha256": "66c338678b0598c0e1562201f11c90b717e43d6e24ba0d28d229d1bc944da3c5",
+      "sha256": "6d35855b8c53e3a2cc94d5d8ccc484600e33935ed5d766d3f84be0e1e142007b",
       "executable": false
     },
     "tests/readiness-helpers.mjs": {

@@ -6,6 +6,9 @@ import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { harness } from './harness.mjs'
 import { dayBoardRequests } from './day-board-support.mjs'
+import { lockStatusBrowser } from './lock-status-browser.mjs'
+
+test('connected-lock readback governs board status and guest disclosure on desktop and phone',{timeout:120000},lockStatusBrowser)
 
 test('OPS-008: desktop and phone day board explain declined requests and open their retained sources',{timeout:120000},async()=>{
  const h=await harness({assets:true})
