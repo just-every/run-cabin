@@ -30,6 +30,15 @@ const outbound=async request=>{
 const h=await harness({now:proofNow.toISOString(),outbound,auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
 let home,stayId,oldId,newId,providerMessageId,mailboxId,failure,live,stage='setup'
 const ownedIds=new Set()
+async function providerCodes(){
+ const rows=[],seen=new Set();let cursor
+ do{
+  const page=await seam('/access_codes/list',{device_id:device.device_id,...(cursor?{page_cursor:cursor}:{})})
+  assert.ok(Array.isArray(page.access_codes),'Sandbox access-code list is required');rows.push(...page.access_codes)
+  if(!page.pagination?.has_next_page)return rows
+  cursor=page.pagination.next_page_cursor;assert.ok(cursor&&!seen.has(cursor),'Sandbox pagination must be complete');seen.add(cursor)
+ }while(true)
+}
 async function refresh(){const s=await h.accessState();for(const c of s.codes)if(c.lock.providerId)ownedIds.add(c.lock.providerId);return s}
 async function advance(){await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});return refresh()}
 try{
@@ -74,16 +83,18 @@ try{
  row=(await live.state()).recoveries.find(r=>r.id===row.id)
  await live.cmd('recovery.recurrence',{id:row.id,revision:row.revision,reference:'Seam sandbox readback and fleet QA inbox '+mailboxId,note:'Sandbox code remains confirmed after restart and the verified guest response follows actual readiness mail delivery',confirm:'yes'})
  s=await live.state();row=s.recoveries.find(r=>r.id===row.id);assert.equal(row.status,'closed');assert.equal(s.statements.find(st=>st.id===row.statementId).netCents,-10000)
- const remote=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.filter(c=>c.name?.endsWith(newId));assert.equal(remote.length,1);assert.equal(remote[0].access_code_id,replacement.lock.providerId)
+ const remote=(await providerCodes()).filter(c=>c.name?.endsWith(newId));assert.equal(remote.length,1);assert.equal(remote[0].access_code_id,replacement.lock.providerId)
  console.log(JSON.stringify({journey:'recovery-sandbox',sourceSha:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),sandbox:true,replacementProviderId:replacement.lock.providerId,oldProviderId:old.lock.providerId,oldAccessRemoved:true,replacementConfirmed:true,restartStable:true,duplicates:0,ownerAdjustmentCents:-10000,providerMessageId,mailboxId,guestConfirmed:true,followupConfirmed:true,physicalDoorTest:false}))
 }catch(error){failure=error;console.log(JSON.stringify({journey:'recovery-sandbox-failure',stage,message:String(error.message).split('\n')[0],providerMessageId:providerMessageId??null}))}finally{
  await h.restart({productionMail:true,auth:{AUTH_ORIGIN:h.origin,AUTH_LOCAL:'true',MAIL_PROVIDER:'development',MAIL_API_KEY:''}})
  try{for(const b of (await h.state()).bookings.filter(b=>b.propertyId===home?.id&&b.status==='confirmed'))await h.cmd('reservation.cancel',{id:b.id,revision:b.revision});await refresh()}finally{
-  let removed=0
-  for(const id of ownedIds){const current=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.find(c=>c.access_code_id===id);if(current){await seam('/access_codes/delete',{access_code_id:id});removed++}}
-  let left=[]
-  for(let n=0;n<120;n++){left=(await seam('/access_codes/list',{device_id:device.device_id})).access_codes.filter(c=>ownedIds.has(c.access_code_id));if(!left.length)break;await new Promise(r=>setTimeout(r,5000))}
-  console.log(JSON.stringify({journey:'recovery-sandbox-cleanup',ownedCodes:ownedIds.size,remaining:left.length,remainingIds:left.map(c=>c.access_code_id)}));await h.close();assert.equal(left.length,0,'Remove every sandbox access code created by this journey')
+  try{
+   const names=new Set((await h.accessState()).codes.map(c=>'Cabin '+c.holder+' access '+c.id))
+   for(const current of await providerCodes())if(ownedIds.has(current.access_code_id)||names.has(current.name)){ownedIds.add(current.access_code_id);await seam('/access_codes/delete',{access_code_id:current.access_code_id})}
+   let left=[]
+   for(let n=0;n<120;n++){left=(await providerCodes()).filter(c=>ownedIds.has(c.access_code_id)||names.has(c.name));if(!left.length)break;await new Promise(r=>setTimeout(r,5000))}
+   console.log(JSON.stringify({journey:'recovery-sandbox-cleanup',ownedCodes:ownedIds.size,remaining:left.length,remainingIds:left.map(c=>c.access_code_id)}));assert.equal(left.length,0,'Remove every sandbox access code created by this journey')
+  }finally{await h.close()}
  }
 }
 
