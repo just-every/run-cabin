@@ -18,6 +18,9 @@ export async function lockStatusBrowser(){
   await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Lake Loft Trust'})
   const booking=await h.cmd('reservation.create',{propertyId:home.id,method:'channel',channel:'airbnb',sourceId:'synthetic-cabin-3',guestName:'Ana Diaz',guestEmail:'ana@stay.example',start:'2026-10-31',end:'2026-11-02',rentCents:50000,policyName:'Flexible',retainedBps:0,noShowBps:0}),request={bookingId:booking.id}
   let state=await h.accessState(),code=state.codes.find(c=>c.bookingId===request.bookingId&&c.holder==='guest')
+  const inbox=(await h.send('/app/inbox',undefined,h.owner)).text,thread=inbox.match(/name="thread" value="([^"]+)"/)?.[1]
+  assert.ok(thread,'The built inbox exposes the current guest thread')
+  const message=await h.cmd('message.compose',{thread,text:'Your door code is '+code.code})
   const guestCookie=await h.verifyGuest(code.link),shots=process.env.CABIN_LOCK_SHOTS??'test-results/lock-status';await mkdir(shots,{recursive:true})
   browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
   const contexts=[]
@@ -34,6 +37,8 @@ export async function lockStatusBrowser(){
      state=await h.state();const booking=state.bookings.find(b=>b.id===request.bookingId)
      await h.cmd('reservation.amend',{id:booking.id,revision:booking.revision,guestName:'Ana Diaz',guestEmail:'ana@stay.example',start:'2026-10-31',end:'2026-11-03',reason:'Guest accepted one extra night at the saved price'})
     }
+    const current=(await h.state()).messages.find(m=>m.id===message.id)
+    assert.equal(current.status,['pending','unpaid'].includes(status)?'pending':'sent','Explicitly approved access messages still wait for programming and payment')
     for(const {page,add,width}of contexts){
      await add(h.owner);await page.goto(h.origin+'/app/readiness?from=2026-10-31')
      const card=page.locator('article.home-ready').filter({has:page.getByRole('heading',{name:'Lake Loft',exact:true})})

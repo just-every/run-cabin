@@ -5144,7 +5144,7 @@
       "executable": false
     },
     "tests/lock-status-browser.mjs": {
-      "sha256": "647cfa732da5546f97a6f7a76ac275aec796dbee258cfbecbdd7b8c475e27a2f",
+      "sha256": "1d1be7e4b3103e064be21d431d14bd24fc2e331ec2180825421cb80d8a8e8dc9",
       "executable": false
     },
     "tests/locks-sandbox.mjs": {
