@@ -63,9 +63,10 @@ export async function settle(db:D1Database,id:string,job:LockJob,result:Observat
   code.lock.providerId=result.providerId
   // A stale response may retain the provider reference for revocation, never grant access.
   const unchanged=await fingerprint(c.data,code)===job.fingerprint
-  // Once a created resource is identified it can be revoked even while programming.
-  // Updating a stale window still waits for its outcome before another write.
+  // Cancellation can remove an identified resource while its programming is pending.
+  // An update never creates a different resource; another window edit still waits.
   if(!unchanged&&job.operation==='create'&&result.providerId&&result.acknowledged)current.stage='complete'
+  if(!unchanged&&code.status==='revoked'&&job.operation==='update'&&job.providerId)current.stage='complete'
   code.lock.state=unchanged?result.state:current.stage==='complete'?'pending':'failed'
   code.lock.error=unchanged?result.error:current.stage==='complete'?null:'An earlier lock change is unresolved. Reconcile it before applying the current access window.'
   code.lock.at=c.now;c.entityId=id;return structuredClone(code)

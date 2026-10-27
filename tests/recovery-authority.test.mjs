@@ -129,9 +129,10 @@ test('AGENT-006: revocation during an uncertain provider write survives later ex
 })
 
 test('ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes',async()=>{
- let boundary='before',programmed=false
+ let boundary='before',programmed=false,holdUpdate=false
  const edge=seamEdge({intercept:({phase,action,codes,result})=>{
   if(phase==='after'&&action==='create'){const row=codes.get(result.access_code.access_code_id);row.status='unset';row.is_scheduled_on_device=programmed}
+  if(phase==='after'&&action==='update'&&holdUpdate)codes.get(result.access_code.access_code_id).pending_mutations=[{mutation_code:'updating_time_frame'}]
   if(['create','update','delete'].includes(action)&&phase===boundary)return new Response('Interrupted provider response',{status:503})
  }})
  const h=await harness({now:'2026-10-26T14:00:00Z',auth:{SEAM_API_KEY:'synthetic-cabin-1'},outbound:edge.outbound})
@@ -164,11 +165,13 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   assert.equal([...edge.codes.values()].filter(c=>c.name.endsWith(code.id)).length,1)
   const ordinary=await h.state();assert.ok(!JSON.stringify(ordinary.codes.find(c=>c.id===code.id).lock).includes('"code":"'+code.code+'"'),'Ordinary state cannot disclose the PIN through persisted provider work')
   let booking=state.bookings.find(b=>b.id===accepted.bookingId)
+  holdUpdate=true
   await h.cmd('reservation.move',{id:booking.id,revision:booking.revision,start:'2026-11-06',end:'2026-11-08'})
-  state=await h.accessState();code=state.codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'set')
+  state=await h.accessState();code=state.codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'pending','A requested timeframe is not confirmed while the provider mutation remains pending')
   assert.equal(edge.codes.get(code.lock.providerId).starts_at,'2026-11-06T21:00:00.000Z')
   booking=state.bookings.find(b=>b.id===booking.id)
   await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
+  await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   state=await h.accessState();code=state.codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'removed');assert.ok(!edge.codes.has(code.lock.providerId))
   const writes=edge.writes().filter(c=>c.body.access_code_id===code.lock.providerId||c.body.name?.endsWith(code.id))
   assert.deepEqual(writes.map(c=>c.action),['create','update','delete'])

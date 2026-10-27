@@ -2092,7 +2092,7 @@
       "executable": false
     },
     "src/cabin/locks/jobs.ts": {
-      "sha256": "212a997d70ea86e44fe29dd862a7560aa3ee4a3b8d22c7f432030c71e2c680a1",
+      "sha256": "a0b63c95008f913590fc35f8c27aeefb858917ad8834c9fbd39f14e7f76ad0c1",
       "executable": false
     },
     "src/cabin/locks/provider.ts": {
@@ -5244,7 +5244,7 @@
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
-      "sha256": "ec5452c8669a9c8685cdde8a73db5ea0727a7e057499f2783a770f8de663e7b6",
+      "sha256": "c35759fbfbacd74fcf58d922542d40c09e0557163dbaddf246e2ffdf0f236ede",
       "executable": false
     },
     "tests/recovery-browser.mjs": {
