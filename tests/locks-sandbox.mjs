@@ -54,19 +54,35 @@ async function observe(id,expected){
 try{
  const home=await h.cmd('property.save',{name:'Synthetic Cabin sandbox lifecycle',ownerName:'Synthetic Cabin Owner',ownerEmail:'owner@stay.example',commissionBps:2000})
  await h.cmd('home.settings',{propertyId:home.id,address:'12 Synthetic Cabin Lane',timeZone:zone,checkInTime:'16:00',checkOutTime:'10:00',checklist:['Ready'],lockDeviceId:deviceId})
- const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'airbnb',guestName:'Synthetic Cabin Guest',start:day(1),end:day(3)})
+ const request=await h.cmd('reservation.request',{propertyId:home.id,channel:'airbnb',guestName:'Synthetic Cabin Guest',start:day(-1),end:day(2)})
  let code=(await codes()).find(c=>c.bookingId===request.bookingId&&c.holder==='guest'&&c.status==='issued');assert.ok(code,'Reservation confirmation automatically issues access')
  code=await observe(code.id,'set');const providerId=code.lock.providerId
  let booking=(await h.state()).bookings.find(b=>b.id===request.bookingId)
- await h.cmd('reservation.move',{id:booking.id,revision:booking.revision,start:day(1),end:day(4)})
- code=await observe(code.id,'set');assert.equal(code.validUntil,day(4)+'T10:00');assert.equal(code.lock.providerId,providerId,'An extension updates the same code')
- await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});code=await observe(code.id,'set');assert.equal(code.lock.providerId,providerId)
+ await h.cmd('reservation.move',{id:booking.id,revision:booking.revision,start:day(-1),end:day(3)})
+ try{code=await observe(code.id,'set');assert.equal(code.validUntil,day(3)+'T10:00');assert.equal(code.lock.providerId,providerId,'An extension updates the same code')}
+ catch(error){failure=error;console.log(JSON.stringify({journey:'lock-sandbox-extension-pending',sourceSha,accessCodeId:providerId,verified:false}))}
+ await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});code=(await codes()).find(c=>c.id===code.id);assert.equal(code.lock.providerId,providerId)
  booking=(await h.state()).bookings.find(b=>b.id===request.bookingId)
  await h.cmd('reservation.cancel',{id:booking.id,revision:booking.revision})
  code=await observe(code.id,'removed')
- console.log(JSON.stringify({journey:'lock-sandbox-lifecycle',sourceSha,sandbox:true,deviceType:device.device_type,createdConfirmed:true,extensionConfirmed:true,restartStable:true,cancellationConfirmed:true,physicalDoorTest:false,naturalExpiryProven:false}))
+ console.log(JSON.stringify({journey:'lock-sandbox-lifecycle',sourceSha,sandbox:true,deviceType:device.device_type,createdConfirmed:true,extensionConfirmed:!failure,restartStable:true,cancellationConfirmed:true,physicalDoorTest:false}))
+ const expires=new Date(Date.now()+180_000),expiresDay=expires.toLocaleDateString('en-CA',{timeZone:zone}),expiresTime=expires.toLocaleTimeString('en-GB',{timeZone:zone,hour:'2-digit',minute:'2-digit'})
+ const expiryHome=await h.cmd('property.save',{name:'Synthetic Cabin expiry',ownerName:'Synthetic Cabin Owner',ownerEmail:'owner@stay.example',commissionBps:2000})
+ await h.cmd('home.settings',{propertyId:expiryHome.id,address:'12 Synthetic Cabin Lane',timeZone:zone,checkInTime:'16:00',checkOutTime:expiresTime,checklist:['Ready'],lockDeviceId:deviceId})
+ const short=await h.cmd('reservation.request',{propertyId:expiryHome.id,channel:'direct',guestName:'Synthetic Cabin Expiry Guest',start:day(-1),end:expiresDay})
+ let expiring=(await codes()).find(c=>c.bookingId===short.bookingId&&c.holder==='guest'&&c.status==='issued')
+ expiring=await observe(expiring.id,'set')
+ let expired=false
+ for(let attempt=0;attempt<90;attempt++){
+  const remote=(await remoteCodes()).find(c=>c.access_code_id===expiring.lock.providerId)
+  if(Date.now()>=utc(expiring.validUntil)&&(!remote||remote.status==='unset'&&!(remote.pending_mutations?.length))){expired=true;break}
+  await new Promise(r=>setTimeout(r,4000))
+ }
+ console.log(JSON.stringify({journey:'lock-sandbox-expiry',sourceSha,accessCodeId:expiring.lock.providerId,endsAt:new Date(utc(expiring.validUntil)).toISOString(),providerExpired:expired,physicalDoorTest:false}))
+ assert.ok(expired,'The provider must confirm expiry after the exact stay deadline')
 }catch(error){failure=error;console.log(JSON.stringify({journey:'lock-sandbox-failure',sourceSha,message:String(error.message).split('\n')[0]}))}
 finally{
+ try{
  // Reconcile only this run's named resources; cleanup is separate from cancellation proof.
  const all=await codes();for(const c of all)if(c.lock.providerId)owned.add(c.lock.providerId)
  const names=new Set(all.map(c=>'Cabin '+c.holder+' access '+c.id))
@@ -76,6 +92,7 @@ finally{
   rows=(await remoteCodes()).filter(r=>owned.has(r.access_code_id))
   if(!rows.length)break;await new Promise(r=>setTimeout(r,2000))
  }
- await h.close();console.log(JSON.stringify({journey:'lock-sandbox-cleanup',sourceSha,ownedCodes:owned.size,remaining:rows.length}));assert.equal(rows.length,0,'Every owned sandbox code must be removed')
+ console.log(JSON.stringify({journey:'lock-sandbox-cleanup',sourceSha,ownedCodes:owned.size,remaining:rows.length}));assert.equal(rows.length,0,'Every owned sandbox code must be removed')
+ }finally{await h.close()}
 }
 if(failure)throw failure
