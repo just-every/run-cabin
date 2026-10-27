@@ -19,7 +19,7 @@ const [hour,minute]=proofNow.toLocaleTimeString('en-GB',{timeZone:'America/New_Y
 const date=(offset=0)=>new Date(Date.parse(anchorDay+'T00:00:00Z')+offset*86400000).toISOString().slice(0,10)
 const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64'),marker='Cabin recovery '+crypto.randomUUID()
 const outbound=async request=>{
- const response=await fetch(request)
+ const response=await fetch(request.url,{method:request.method,headers:request.headers,...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()}),signal:AbortSignal.timeout(20_000)})
  if(new URL(request.url).hostname==='connect.getseam.com'&&!response.ok){
   const body=await response.clone().json().catch(()=>({})),safe=value=>typeof value==='string'&&/^[a-z_]{1,80}$/.test(value)?value:null
   console.log(JSON.stringify({stage:'provider-refusal',path:new URL(request.url).pathname,httpStatus:response.status,errorType:safe(body.error?.type),errorCode:safe(body.error?.code)}))

@@ -46,12 +46,12 @@ export async function guestStayResponse(request:Request,env:Bindings){
    await atomic(env.DB,[query('DELETE FROM cb_guest_sessions WHERE token_hash=?',sessionHash),event(actor,'guest.portal.session.end',new Date().toISOString(),{kind:'guestPortalLinks',id:p.link.id,bookingId:p.booking.id,propertyId:p.booking.propertyId,result:'guest_ended',facts:{guestRecipient:recipientHint(savedEmail(p.booking.guestEmail))}})])
    return new Response(null,{status:303,headers:{...portalHeaders,location:path,'set-cookie':cookie(sessionCookie,'',0)}})
   }
-  if(tail.startsWith('files/')){need(request.method==='GET'&&portalAccess(p).live,'Guide file not available',404);return await guestGuideFile(env,p,tail.slice(6))}
+  if(tail.startsWith('files/')){need(request.method==='GET'&&(await portalAccess(env,p)).live,'Guide file not available',404);return await guestGuideFile(env,p,tail.slice(6))}
   const bridge=await portalBridge(request,env,p,sessionHash,tail);if(bridge)return bridge
   need(!tail||tail==='api','Not found',404)
   let reported=false
   if(request.method==='POST'){
-   need(!portalAccess(p).ended,'Contact your host about this completed stay',409)
+   need(!(await portalAccess(env,p)).ended,'Contact your host about this completed stay',409)
    const context=p
    if(request.headers.get('content-type')?.includes('multipart/form-data'))return guestWorkReport(request,env,match[1],p.booking,c=>authorizeGuestWrite(c,context,sessionHash))
    const value=await input(request),form=new URLSearchParams(Object.entries(value).map(([k,v])=>[k,String(v)]))
@@ -66,7 +66,7 @@ export async function guestStayResponse(request:Request,env:Bindings){
    if(value.action==='issue-response'||value.action==='settlement'||value.action==='recovery-confirm')return new Response(null,{status:303,headers:{...portalHeaders,location:path}})
    p=await findPortal(env,match[1]);reported=true
   }
-  const access=portalAccess(p)
+  const access=await portalAccess(env,p)
   if(access.live&&access.code)await record(env.DB,actor,'guest.access.release',{kind:'codes',id:access.code.id,propertyId:p.booking.propertyId,bookingId:p.booking.id,revision:access.code.revision,result:'released'})
   return wantsJson(request)?await stayJson(env,p):await stayPage(request,env,p,reported)
  }catch(error){

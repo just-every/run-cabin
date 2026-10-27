@@ -24,8 +24,8 @@ export function lifecycleOptout(data: Pick<Data, 'inbox' | 'bookings'>, b: Booki
  const decisions=data.inbox.flatMap(i=>i.lifecycle?.optouts??[]).filter(o=>o.bookingId===b.id||data.bookings.some(old=>old.id===o.bookingId&&old.propertyId===b.propertyId&&old.guestEmail&&old.guestEmail===b.guestEmail)).sort((a,b)=>b.at.localeCompare(a.at)); return decisions[0]?.disabled??false
 }
 export function releaseReady(data: Data, b: Booking) {
- const home = data.properties.find(p => p.id === b.propertyId)
- return !accessBlocked(data, b.id) && !!home && homeReadiness(data, home, b.start.slice(0, 10)).state === 'ready'
+ const home = data.properties.find(p => p.id === b.propertyId),code=data.codes.find(c=>c.bookingId===b.id&&c.holder==='guest'&&c.status==='issued')
+ return !accessBlocked(data, b.id) && !!code && (code.lock.state==='manual'||code.lock.state==='set') && !!home && homeReadiness(data, home, b.start.slice(0, 10)).state === 'ready'
 }
 /** All template placeholders use current facts. Access capabilities are absent until every release condition passes. */
 export async function lifecycleContent(c: Pick<Context, 'db' | 'data'>, b: Booking, rule: ScheduleRule, origin: string | null) {

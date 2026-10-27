@@ -1868,7 +1868,7 @@
       "executable": false
     },
     "src/cabin/guest.ts": {
-      "sha256": "ddc408cafd8df25824a52853d678b00102859067e23a4e640e8949ab74070016",
+      "sha256": "9fbf7836bd65b58b8c05138e5ef23480e4ab5d218b83a96227f3243879e58529",
       "executable": false
     },
     "src/cabin/guests/commands.ts": {
@@ -1952,7 +1952,7 @@
       "executable": false
     },
     "src/cabin/inbox/lifecycle-policy.ts": {
-      "sha256": "04fed9095c1ad37d31a677619e0144b6ac02b8acc943b55fa763f3c029de9925",
+      "sha256": "989b3a69bde2db5f3104f04890cdd8c436b309951c175c12002a4e5af18a3aab",
       "executable": false
     },
     "src/cabin/inbox/lifecycle-settings.ts": {
@@ -2352,7 +2352,7 @@
       "executable": false
     },
     "src/cabin/portal/stay.ts": {
-      "sha256": "fa5054d8ecd15af79ac2364ffc8612747a26a27be300e0bc91424b00c747401e",
+      "sha256": "ab12da045a0edb04c556d87b8c12cc688b11be411ebb12d456f1b8f5b236d89e",
       "executable": false
     },
     "src/cabin/portal/types.ts": {
@@ -5092,7 +5092,7 @@
       "executable": false
     },
     "tests/guest-portal.test.mjs": {
-      "sha256": "fb38c752222b5f890d576876a11c57b2edba7588639a0a2db4ca44e253d94602",
+      "sha256": "8b11e1b43f4b4404b71ce9955833de9cdffd7b969e9ebb4c837e933d3fdc17ae",
       "executable": false
     },
     "tests/guests.test.mjs": {
@@ -5143,8 +5143,12 @@
       "sha256": "c68801fa0a73ca945eb032894adc7811f6e24471e57774d38f86100708ff3b61",
       "executable": false
     },
+    "tests/lock-status-browser.mjs": {
+      "sha256": "c4dd746e08610966b63b8132fd82365f1610cdde8da6ae9d7b9c5b2041cdb0a5",
+      "executable": false
+    },
     "tests/locks-sandbox.mjs": {
-      "sha256": "9693eaddbf6167d72b4929d8569a1fb5b7351bbe8e97e558c87a246be9bfaed3",
+      "sha256": "4c3a1b8b7a4273a7a41ce43308535c9713210c531d828528328367e311785cef",
       "executable": false
     },
     "tests/mail-edge.mjs": {
@@ -5260,7 +5264,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "69347335637c88399a31dafd4fbbaf5967481c36650eeee85483c0a5764454b1",
+      "sha256": "989f876977efd4a9a75ff53c3c24f6f1fab3b40123b1f7d6f07c26c89ef4a40a",
       "executable": false
     },
     "tests/recovery.test.mjs": {

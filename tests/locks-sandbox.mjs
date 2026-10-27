@@ -20,7 +20,7 @@ const utc=local=>{
  const offset=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'longOffset'}).formatToParts(new Date(local+'Z')).find(p=>p.type==='timeZoneName').value.replace('GMT','')
  return Date.parse(local+offset)
 }
-const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:process.env.SEAM_API_KEY},outbound:request=>fetch(request)})
+const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:process.env.SEAM_API_KEY}})
 const owned=new Set();let failure
 const codes=async()=>(await h.accessState()).codes
 async function observe(id,expected){
@@ -33,7 +33,7 @@ async function observe(id,expected){
   await new Promise(r=>setTimeout(r,2000));await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
  }
  const rows=(await api('/access_codes/list',{device_id:deviceId})).access_codes,remote=rows.find(r=>r.access_code_id===code.lock.providerId)
- console.log(JSON.stringify({journey:'lock-sandbox',sourceSha,stage:expected,localState:code.lock.state,remoteState:remote?.status??'absent',scheduledOnDevice:remote?.is_scheduled_on_device??false,pendingMutations:remote?.pending_mutations?.map(m=>m.mutation_type??m.mutation_code)??[],errors:remote?.errors?.map(e=>e.type??e.error_code)??[],resourceKnown:!!code.lock.providerId}))
+ console.log(JSON.stringify({journey:'lock-sandbox',sourceSha,stage:expected,localState:code.lock.state,detail:code.lock.error,remoteState:remote?.status??'absent',scheduledOnDevice:remote?.is_scheduled_on_device??false,pendingMutations:remote?.pending_mutations?.map(m=>m.mutation_type??m.mutation_code)??[],errors:remote?.errors?.map(e=>e.type??e.error_code)??[],resourceKnown:!!code.lock.providerId}))
  assert.equal(code.lock.state,expected,'Cabin must reconcile the requested state from provider readback')
  if(expected==='removed'){assert.equal(remote,undefined,'Cancellation removes the exact provider code');return code}
  assert.ok(remote,'The exact resource must exist at the provider');assert.equal(remote.device_id,deviceId);assert.equal(remote.code,code.code,'Independent provider PIN readback');assert.equal(Date.parse(remote.starts_at),utc(code.validFrom));assert.equal(Date.parse(remote.ends_at),utc(code.validUntil))
