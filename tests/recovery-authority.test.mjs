@@ -155,11 +155,17 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   assert.ok(!guestPage.text.includes('<p class="code">'+code.code+'</p>'),'Acknowledgement alone never releases the guest PIN')
   const board=await h.send('/app/readiness?from=2026-11-05',undefined,h.owner)
   assert.ok(board.text.includes('>pending</span>'),'The board reports unconfirmed programming as pending')
+  const inbox=(await h.send('/app/inbox',undefined,h.owner)).text,thread=inbox.match(/name="thread" value="([^"]+)"/)?.[1]
+  assert.ok(thread)
+  const reply=await h.cmd('message.compose',{thread,text:'Your door code is '+code.code})
+  assert.equal(reply.bookingId,accepted.bookingId)
+  assert.equal((await h.state()).messages.find(m=>m.id===reply.id).status,'pending','A human-approved PIN message waits for provider readback')
   programmed=true;edge.codes.get(code.lock.providerId).is_scheduled_on_device=true
   await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   code=(await h.accessState()).codes.find(c=>c.id===code.id);assert.equal(code.lock.state,'set')
   guestPage=await h.send('/stay/'+code.link,undefined,guestCookie)
   assert.ok(guestPage.text.includes('<p class="code">'+code.code+'</p>'),'Confirmed programming releases this guest’s PIN')
+  assert.equal((await h.state()).messages.find(m=>m.id===reply.id).status,'sent','The same approved message sends once programming is confirmed')
   assert.equal(edge.codes.get(code.lock.providerId).status,'unset');assert.equal(edge.codes.get(code.lock.providerId).is_scheduled_on_device,true)
   assert.ok(Date.parse(code.validFrom)>Date.parse('2026-10-26T14:00:00Z'),'Confirmed future programming does not move its access start earlier')
   assert.equal([...edge.codes.values()].filter(c=>c.name.endsWith(code.id)).length,1)
