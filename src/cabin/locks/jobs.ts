@@ -9,6 +9,17 @@ import type { LockJob, Observation } from './types'
 const device=(data:Data,code:AccessCode)=>data.homeSettings.find(s=>s.propertyId===code.propertyId)?.lockDeviceId??null
 export const fingerprint=(data:Data,code:AccessCode)=>sha(JSON.stringify([code.revision,code.status,code.code,code.validFrom,code.validUntil,code.timeZone,device(data,code)]))
 export const due=(code:AccessCode)=>(!code.lock.job?.claim||Date.parse(code.lock.job.claim.until)<=Date.now())&&(code.lock.state==='pending'||code.status==='revoked'&&!!code.lock.providerId&&code.lock.state!=='removed'||!!code.lock.job&&code.lock.job.stage!=='complete')
+/** Expiry is an explicit provider removal, including an unfinished programming attempt. */
+export async function expire(db:D1Database,data:Data){
+ const expired=(d:Data,code:AccessCode,now:number)=>code.status==='issued'&&!!device(d,code)&&!d.bookings.find(b=>b.id===code.bookingId)?.restorePaused&&now>=instant(code.validUntil,code.timeZone)
+ if(!data.codes.some(code=>expired(data,code,Date.now())))return false
+ await mutate(db,SYSTEM,'lock.expire',c=>{
+  const ids=[]
+  for(const code of c.data.codes)if(expired(c.data,code,Date.parse(c.now))){revoke(code,'The assigned access window ended');ids.push(code.id)}
+  return ids
+ })
+ return true
+}
 function provedNotApplied(data:Data,job:LockJob){
  const ticket=job.recovery;if(!ticket)return false
  const attempt=data.recoveries.find(r=>r.id===ticket.caseId)?.execution?.effects.find(e=>e.id===ticket.effectId)?.attempts.find(a=>a.id===ticket.attemptId)

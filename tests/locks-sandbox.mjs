@@ -29,7 +29,7 @@ const utc=local=>{
  const offset=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'longOffset'}).formatToParts(new Date(local+'Z')).find(p=>p.type==='timeZoneName').value.replace('GMT','')
  return Date.parse(local+offset)
 }
-const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:process.env.SEAM_API_KEY}})
+const h=await harness({auth:{SEAM_API_KEY:process.env.SEAM_API_KEY}})
 const owned=new Set();let failure
 const codes=async()=>(await h.accessState()).codes
 async function observe(id,expected){
@@ -74,8 +74,9 @@ try{
  expiring=await observe(expiring.id,'set')
  let expired=false
  for(let attempt=0;attempt<90;attempt++){
+  await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   const remote=(await remoteCodes()).find(c=>c.access_code_id===expiring.lock.providerId)
-  if(Date.now()>=utc(expiring.validUntil)&&(!remote||remote.status==='unset'&&!(remote.pending_mutations?.length))){expired=true;break}
+  if(Date.now()>=utc(expiring.validUntil)&&!remote){const local=(await codes()).find(c=>c.id===expiring.id);assert.equal(local.status,'revoked');assert.equal(local.lock.state,'removed');expired=true;break}
   await new Promise(r=>setTimeout(r,4000))
  }
  console.log(JSON.stringify({journey:'lock-sandbox-expiry',sourceSha,accessCodeId:expiring.lock.providerId,endsAt:new Date(utc(expiring.validUntil)).toISOString(),providerExpired:expired,physicalDoorTest:false}))

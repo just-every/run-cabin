@@ -39,6 +39,7 @@ function cleanerCode(c: Context, s: HomeSettings, t: Turnover) {
  for (const r of current) if (t.status !== 'approved' || r.memberId !== t.cleanerId) revoke(r, t.status === 'completed' ? 'Turnover complete' : 'Reassigned')
  if (t.status !== 'approved' || !t.cleanerId) return null
  const access = cleaningAccess(s, t)
+ if (s.lockDeviceId && Date.parse(c.now) >= instant(access.validUntil, s.timeZone)) { for (const r of current) revoke(r, 'The assigned access window ended'); return null }
  if (instant(access.validUntil, s.timeZone) <= instant(access.validFrom, s.timeZone)) { for (const r of current) revoke(r, 'No cleaning access before the next arrival'); return null }
  const mine = current.find(r => r.memberId === t.cleanerId && r.status === 'issued')
  if (mine) { if (move(c, s, mine, access.validFrom, access.validUntil) && t.notified) t.notified = { ...t.notified, code: '' }; return mine }
@@ -61,7 +62,8 @@ export function dispatch(c: Context) {
   const current = nights(b).checkout >= localDay(now, s.timeZone)
   if (!current && !t) continue
   const stay = { validFrom: `${nights(b).first}T${b.arrivalTime ?? s.checkInTime}`, validUntil: checkoutTime(s, b) }, guest = codes.find(r => r.holder === 'guest')
-  if(b.kind==='block'||accessBlocked(c.data,b.id)){if(guest)revoke(guest,'Current rental agreement must be signed')}
+  if(s.lockDeviceId&&now>=instant(stay.validUntil,s.timeZone)){if(guest)revoke(guest,'The stay access window ended')}
+  else if(b.kind==='block'||accessBlocked(c.data,b.id)){if(guest)revoke(guest,'Current rental agreement must be signed')}
   else if (guest) move(c, s, guest, stay.validFrom, stay.validUntil); else if (current) issue(c, s, { bookingId: b.id, turnoverId: null, holder: 'guest', memberId: null, ...stay })
   const w = windowOf(c, s, b)
   if (!t) {
