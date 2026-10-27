@@ -24,11 +24,18 @@ function savedRules(home: any) {
     line('Guest limit', String(home.maxGuests)),
     line('Stay length', `${home.minNights}–${home.maxNights} nights`),
     line('Minimum gap', `${home.minGapNights} nights`),
+    line('Booking window', `${home.advanceNoticeDays??0} to ${home.bookingWindowDays??730} days ahead`),
+    line('Preparation buffer', `${home.preparationNights??0} nights before and after a stay`),
     line('State tax', `${home.taxLabel || 'No label'} · ${rate(home.taxBps)}`),
     line('County tax', `${home.countyTaxLabel || 'No label'} · ${rate(home.countyTaxBps)}`),
     line('Damage deposit authorization', `${money(home.depositCents)} · release ${home.releaseHours} hours after checkout`),
     line('Identity check', home.requireIdentity ? 'Required' : 'Not required'),
   ].join('')}</ul><p class="muted">New bookings use these saved rules. Existing stays retain their quoted amounts and signed agreement.</p></details>`
+}
+
+function datedRates(home:any){
+ const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],reference=hidden('propertyId',home.propertyId)+hidden('revision',home.revision)
+ return `<details><summary>Seasonal and weekday rates</summary><p>Each rate starts on its first date and ends before its end date. Nights outside these rules use the normal nightly rate. Overlapping rules for the same weekday are refused. Rates affect new quotes; existing stays retain their agreed price.</p>${(home.rates??[]).map((r:any)=>`<article><p>${h(r.start)} to ${h(r.end)} (end excluded) · ${h(r.weekday===null?'Every day':days[r.weekday])} · ${h(money(r.nightlyCents))} per night</p>${form('direct.rate.remove','direct',reference+hidden('rateId',r.id),'Remove dated rate','class="quiet"')}</article>`).join('')}${form('direct.rate.save','direct',reference+`<div class="pair">${field('start','Rate start','date')}${field('end','Rate end (excluded)','date')}</div><label>Rate weekday<select name="weekday" aria-label="Rate weekday"><option value="all">Every day</option>${days.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></label>`+dollars('nightlyCents','Dated nightly rate','',1),'Add dated rate')}<p>OTA rate and restriction publication is not available. These rules govern native quotes and direct checkout.</p></details>`
 }
 
 function homeSettings(state: any, property: any) {
@@ -51,6 +58,8 @@ function homeSettings(state: any, property: any) {
     + integer('maxGuests', 'Maximum guests', home.maxGuests, 1)
     + `<div class="pair">${integer('minNights', 'Minimum nights', home.minNights, 1)}${integer('maxNights', 'Maximum nights', home.maxNights, 1)}</div>`
     + integer('minGapNights', 'Minimum gap between stays (nights)', home.minGapNights)
+    + `<div class="pair">${integer('advanceNoticeDays','Advance notice (days)',home.advanceNoticeDays??0)}${integer('bookingWindowDays','Booking window (days)',home.bookingWindowDays??730,1)}</div>`
+    + integer('preparationNights','Preparation nights before and after a stay',home.preparationNights??0)
     + '<h3>Cancellation policy</h3><p class="muted">Saved with every new quote and signed agreement. Existing stays retain their original terms.</p>'
     + field('policyName','Cancellation policy description','text',home.cancellationPolicy?.name??'No cancellation or no-show charge. Refunds are reviewed by the host.','maxlength="300"')
     + `<div class="pair">${percent('retainedBps','Cancellation charge',home.cancellationPolicy?.retainedBps??0)}${percent('noShowBps','No-show charge',home.cancellationPolicy?.noShowBps??0)}</div>`
@@ -61,13 +70,13 @@ function homeSettings(state: any, property: any) {
     + `<div class="pair">${optional('countyTaxLabel', 'County tax label', home.countyTaxLabel)}${percent('countyTaxBps', 'County tax rate', home.countyTaxBps)}</div>`
     + '<h3>Guest agreement and identity</h3>' + area('agreement', 'Agreement guests must sign', home.agreement, 'maxlength="20000"')
     + verificationPolicyFields(state,home)
-  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
+  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
 }
 
 function quote(stay: any) {
   const q = stay.quote
   return `<details><summary>Quoted total ${h(money(q.totalCents))} · ${h(q.nights)} nights</summary><ul>${[
-    line('Rent', `${q.nights} nights × ${money(q.nightlyCents)} = ${money(q.rentCents)}`),
+    line('Rent', `${q.nights} nights${q.nightlyRates?' at dated rates':' × '+money(q.nightlyCents)} = ${money(q.rentCents)}`),
     line('Cleaning', money(q.cleaningCents)),
     line('Extra guests', money(q.extraGuestCents)),
     ...q.taxes.map((tax: any) => line(`${tax.label} (${rate(tax.bps)})`, money(tax.amountCents))),

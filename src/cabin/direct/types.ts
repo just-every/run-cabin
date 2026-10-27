@@ -1,5 +1,7 @@
 import type { VerificationPolicy } from '../verification/types'
+export interface NightlyRate { id:string; start:string; end:string; weekday:number|null; nightlyCents:number }
 export interface DirectHome {
+ rates?:NightlyRate[]; advanceNoticeDays?:number; bookingWindowDays?:number; preparationNights?:number;
  cancellationPolicy?:import('../reservations/types').CancellationPolicy;
  verificationPolicy?:VerificationPolicy;
  propertyId:string; revision:string; enabled:boolean; slug:string; description:string;
@@ -8,6 +10,7 @@ export interface DirectHome {
  taxLabel:string; taxBps:number; countyTaxLabel:string; countyTaxBps:number; agreement:string; requireIdentity:boolean;
 }
 export interface Quote {
+ nightlyRates?:{date:string;amountCents:number}[];
  inventoryRevision?: string;
  coupon?:{code:string;discountCents:number;policyRevision:string};
  cancellationPolicy?:import('../reservations/types').CancellationPolicy;

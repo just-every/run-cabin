@@ -1,3 +1,5 @@
+import { rooms,sourceRoom } from './capacity-support.mjs'
+import { directRulesBrowser } from './direct-rules-browser.mjs'
 import { homeDay } from './home-calendar.mjs'
 import { readFile } from 'node:fs/promises'
 import { attestArrival } from './readiness-helpers.mjs'
@@ -143,16 +145,43 @@ test('a guest whose checkout Stripe refuses gets guest wording, keeps the hold a
  }finally{await h.close()}
 })
 
-test('direct booking refuses minimum nights, orphan gaps, changed terms and cross-origin checkout with the reason',async()=>{
- const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:()=>assert.fail('An invalid booking must not call Stripe')})
+test('direct booking enforces dated rates, notice, buffers, saved terms and checkout refusals',{timeout:120000},async()=>{
+ const day=n=>homeDay(n,'America/New_York',Date.parse('2030-01-01T17:00:00Z'));let allowPayment=false,charged=0
+ const h=await harness({assets:true,now:'2030-01-01T17:00:00Z',auth:{STRIPE_TEST_SECRET_KEY:['sk','test','syntheticcabin1'].join('_')},outbound:async request=>{assert.ok(allowPayment,'invalid checkout never calls Stripe');const f=new URLSearchParams(await request.text());charged=[...f].filter(([k])=>/line_items\[\d+\]\[price_data\]\[unit_amount\]/.test(k)).reduce((sum,[,v])=>sum+Number(v),0);return Response.json({id:'synthetic-cabin-1',url:'https://checkout.stripe.com/synthetic-cabin-1'})}})
  try{
-  const cfg=await home(h)
+  let cfg=await home(h)
   const short=await h.send('/book/pine-ridge/quote',{start:day(20),end:day(21),guests:2});assert.equal(short.status,400);assert.match(short.value.error,/at least 2 nights/)
   await h.cmd('reservation.request',{propertyId:cfg.propertyId,channel:'airbnb',start:day(20),end:day(23),guestName:'Calendar guest'})
   const gap=await h.send('/book/pine-ridge/quote',{start:day(24),end:day(27),guests:2});assert.equal(gap.status,400);assert.match(gap.value.error,/gap shorter than 2/)
   const stale=await h.send('/book/pine-ridge/checkout',{start:day(30),end:day(33),guests:2,homeRevision:'outdated'});assert.equal(stale.status,409);assert.match(stale.value.error,/terms changed/)
   const csrf=await h.send('/book/pine-ridge/checkout',{},'',{origin:'https://elsewhere.example'});assert.equal(csrf.status,403)
   assert.equal((await h.accessState()).direct.stays.length,0)
+  cfg=await h.cmd('direct.configure',{...settings,propertyId:cfg.propertyId,revision:cfg.revision,advanceNoticeDays:2,bookingWindowDays:90,preparationNights:2,policyName:'Retain one quarter',retainedBps:2500})
+  const rate=async input=>{cfg=await h.cmd('direct.rate.save',{propertyId:cfg.propertyId,revision:cfg.revision,...input})}
+  await rate({start:'2030-01-16',end:'2030-01-17',weekday:'all',nightlyCents:25000})
+  await h.cmd('direct.rate.save',{propertyId:cfg.propertyId,revision:cfg.revision,start:'2030-01-16',end:'2030-01-19',weekday:3,nightlyCents:20000},h.owner,409)
+  const cleaner=await h.person('RateCleaner');await h.cmd('direct.rate.remove',{propertyId:cfg.propertyId,revision:cfg.revision,rateId:cfg.rates[0].id},cleaner.cookie,403)
+  const good={start:'2030-01-15',end:'2030-01-18',guests:3}
+  let q=await h.send('/book/pine-ridge/quote',good);assert.equal(q.status,200,q.text);assert.deepEqual(q.value.quote.nightlyRates,[{date:'2030-01-15',amountCents:18000},{date:'2030-01-16',amountCents:25000},{date:'2030-01-17',amountCents:18000}]);assert.equal(q.value.quote.rentCents,61000);assert.equal(q.value.quote.extraGuestCents,6000);assert.equal(q.value.quote.totalCents,81950)
+  q=await h.send('/book/pine-ridge/quote',{start:'2030-01-17',end:'2030-01-19',guests:2});assert.equal(q.status,200,q.text);assert.equal(q.value.quote.rentCents,36000,'end date is excluded')
+  const signed={homeRevision:cfg.revision,guestName:'Alex Example',email:'alex@stay.example',signature:'Alex Example',consent:'yes',identityConsent:'yes'}
+  for(const [input,status,reason] of [[{start:day(1),end:day(4),guests:2},400,/advance notice/],[{start:day(91),end:day(94),guests:2},400,/within 90 days/],[{start:day(23),end:day(26),guests:2},409,/preparation nights/],[{start:day(16),end:day(20),guests:2},409,/preparation nights/]]){
+   for(const door of ['quote','checkout']){const refused=await h.send('/book/pine-ridge/'+door,{...signed,...input});assert.equal(refused.status,status,refused.text);assert.match(refused.value.error,reason)}
+  }
+  q=await h.send('/book/pine-ridge/quote',{start:day(25),end:day(28),guests:2});assert.equal(q.status,200,q.text)
+  await rate({start:'2030-01-14',end:'2030-01-16',weekday:2,nightlyCents:20000})
+  q=await h.send('/book/pine-ridge/quote',{start:'2030-01-14',end:'2030-01-17',guests:2});assert.equal(q.status,200,q.text);assert.deepEqual(q.value.quote.nightlyRates.map(r=>r.amountCents),[18000,20000,25000],'weekday matching and fallback are per night')
+  const old=await h.send('/book/pine-ridge/checkout',{...signed,...good});assert.equal(old.status,409);assert.match(old.value.error,/terms changed/)
+  await h.cmd('direct.rate.remove',{propertyId:cfg.propertyId,revision:cfg.revision,rateId:cfg.rates.at(-1).id});cfg=(await h.accessState()).direct.homes[0]
+  // Use a different stay so the browser's priced dates remain available.
+  allowPayment=true;const accepted=await h.send('/book/pine-ridge/checkout',{...signed,homeRevision:cfg.revision,start:day(40),end:day(43),guests:3});assert.equal(accepted.status,200,accepted.text);assert.equal(charged,74250)
+  cfg=await h.cmd('direct.configure',{...settings,propertyId:cfg.propertyId,revision:cfg.revision,advanceNoticeDays:2,bookingWindowDays:90,preparationNights:2,policyName:'New full charge',retainedBps:10000})
+  await h.restart();const retained=(await h.accessState()).direct.stays[0];assert.equal(retained.quote.cancellationPolicy.retainedBps,2500);assert.match(retained.signature.text,/Retain one quarter/);assert.equal(retained.quote.totalCents,74250);assert.equal((await h.send('/book/stay/'+accepted.value.token+'/agreement')).status,200)
+  await directRulesBrowser(h)
+  const whole=await h.cmd('property.save',{name:'Linked rules home',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000}),linked=await h.cmd('direct.configure',{...settings,propertyId:whole.id,slug:'linked-rules',minGapNights:0,preparationNights:2})
+  const {a}=await rooms(h,whole);await sourceRoom(h,a,'2030-02-20','2030-02-23')
+  for(const door of ['quote','checkout']){const refusal=await h.send('/book/linked-rules/'+door,{...signed,homeRevision:linked.revision,start:'2030-02-18',end:'2030-02-20',guests:2});assert.equal(refusal.status,409,refusal.text);assert.match(refusal.value.error,/preparation nights/)}
+  const edge=await h.send('/book/linked-rules/quote',{start:'2030-02-16',end:'2030-02-18',guests:2});assert.equal(edge.status,200,edge.text)
   const managed=await harness({auth:{MAIL_PROVIDER:'rer'}})
   try{await home(managed);const no=await managed.send('/book/pine-ridge/checkout',{});assert.equal(no.status,409);assert.match(no.value.error,/not available yet/)}finally{await managed.close()}
  }finally{await h.close()}
@@ -205,7 +234,7 @@ test('WEB-004 risk policy assigns failed checks, offers consented manual review 
  }finally{await h.close()}
 })
 
-test('PAY-003 settles approved claims, rent refunds, saved cancellations and changes once with receipts and balanced tax/owner books',async()=>{
+test('PAY-003 settles approved claims, rent refunds, saved cancellations and changes once with receipts and balanced tax and owner books',async()=>{
  const sessions=new Map(),payments=new Map(),refunds=new Map(),writes={capture:0,release:0,refund:0},captureKeys=[];let lostRefund=false,declineCapture=true
  const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:async request=>{
   const u=new URL(request.url),p=u.pathname,f=new URLSearchParams(request.method==='POST'?await request.text():'')

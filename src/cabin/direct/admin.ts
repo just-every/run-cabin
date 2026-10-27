@@ -7,7 +7,8 @@ import type { Bindings } from '../../auth.server'
 import { manager,need,text,integer, type Actor } from '../model'
 import { assertLive,mutate } from '../storage'
 import { homes,stays,stay,saveHome,saveStay } from './store'
-import { configure } from './rules'
+import { configure,day } from './rules'
+import { overlaps } from '../inventory'
 import { refresh,settleDeposit,reconcileDepositAction } from './payments'
 import { providerState,providerCommand } from './provider'
 import { decimalUnits,arrival,timeLabel } from './presentation'
@@ -29,10 +30,17 @@ export async function directCommand(env:Bindings,actor:Actor,name:string,input:R
  const verification=await verificationCommand(env,actor,name,input);if(verification!==undefined)return verification
  if(name.startsWith('direct.agreement.'))return agreementCommand(env,actor,name,input)
  if(name.startsWith('direct.stripe.'))return providerCommand(env,actor,name,input)
+ if(name==='direct.rate.save'||name==='direct.rate.remove')return mutate(env.DB,actor,name,async c=>{
+  const propertyId=text(input.propertyId,'property ID'),row=(await homes(env.DB)).find(h=>h.propertyId===propertyId);need(row,'Save this home’s booking settings first',404);need(row.revision===input.revision,'This home changed. Reload before saving.',409)
+  const rates=row.rates??=[]
+  if(name==='direct.rate.remove'){const id=text(input.rateId,'rate ID');need(rates.some(r=>r.id===id),'Rate not found',404);row.rates=rates.filter(r=>r.id!==id)}
+  else {const start=day(input.start),end=day(input.end),weekday=input.weekday==='all'?null:integer(Number(input.weekday),'Day of week',0,6),nightlyCents=integer('nightlyDollars' in input?decimalUnits(input.nightlyDollars,'nightly rate'):Number(input.nightlyCents),'Nightly rate',1,100_000_000);need(end>start,'Rate end must follow its start');need(!rates.some(r=>overlaps(r,{start,end})&&(r.weekday===null||weekday===null||r.weekday===weekday)),'These dates already have a rate for that day. Remove the existing rate first.',409);row.rates=[...rates,{id:crypto.randomUUID(),start,end,weekday,nightlyCents}]}
+  row.revision=crypto.randomUUID();saveHome(c,row);return row
+ })
  if(name==='direct.configure')return mutate(env.DB,actor,name,async c=>{
   const propertyId=text(input.propertyId,'property ID');need(c.data.properties.some(p=>p.id===propertyId),'Property not found',404)
   const old=(await homes(env.DB)).find(h=>h.propertyId===propertyId);need(!old||old.revision===input.revision,'This home changed. Reload before saving.',409)
-  const row=configure(input,propertyId),policy=configureVerification(input,env.AUTH_ORIGIN);if(policy){await validateReviewer(c,policy);row.verificationPolicy=policy;row.requireIdentity=policy.mode!=='none'}else if(old?.verificationPolicy)row.verificationPolicy=old.verificationPolicy
+  const row=configure(input,propertyId);row.rates=old?.rates??[];const policy=configureVerification(input,env.AUTH_ORIGIN);if(policy){await validateReviewer(c,policy);row.verificationPolicy=policy;row.requireIdentity=policy.mode!=='none'}else if(old?.verificationPolicy)row.verificationPolicy=old.verificationPolicy
   publishTemplate(c,{...input,propertyId,agreement:row.agreement,agreementRequired:input.agreementRequired??c.data.rentalTemplates.find(t=>t.propertyId===propertyId)?.required??false},env.AUTH_ORIGIN);need(!(await homes(env.DB)).some(h=>h.slug===row.slug&&h.propertyId!==row.propertyId),'Another home uses this booking address',409);saveHome(c,row);await synchronizeVerification(c,row);return row
  })
  const id=text(input.id,'stay ID');await stay(env.DB,id)
