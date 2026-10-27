@@ -13,7 +13,8 @@ export async function harness(options = {}) {
   // The demo entry keeps the app's own mail sender: a demo suppresses mail itself.
   const entry = options.entry ?? 'tests/worker.ts', plugins = options.entry ? [] : [{ name: 'mail-network-edge', setup(builder) { builder.onResolve({filter:/^(?:\.\.?\/)+mail\.server\.mjs$/}, () => ({path: join(process.cwd(),'tests/mail-edge.mjs')})) } }]
   const key = JSON.stringify([entry, options.now ?? null])
-  const banner = options.now ? { js: `const RealDate = globalThis.Date; const pinnedNow = ${Date.parse(options.now)}; globalThis.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [pinnedNow])) } static now() { return pinnedNow } };` } : undefined
+  const clockBanner = now => now ? { js: `const RealDate = globalThis.Date; const pinnedNow = ${Date.parse(now)}; globalThis.Date = class extends RealDate { constructor(...args) { super(...(args.length ? args : [pinnedNow])) } static now() { return pinnedNow } };` } : undefined
+  let banner = clockBanner(options.now)
   if (!bundles.has(key)) bundles.set(key, await build({ banner, entryPoints: [entry], bundle: true, write: false, format: 'esm', platform: 'neutral', mainFields: ['module','main'], conditions: ['workerd', 'worker', 'browser'], external: ['node:*', 'cloudflare:*'], target: 'es2023', plugins }))
   const bundle = bundles.get(key)
   const socket = createServer(); await new Promise(r => socket.listen(0, '127.0.0.1', r)); const port = socket.address().port; await new Promise(r => socket.close(r))
@@ -69,7 +70,18 @@ export async function harness(options = {}) {
       const verified=await send(path+'/verify',{challengeId:sent.value.challengeId,code},browser);assert.equal(verified.status,303,verified.text)
       return browser+'; '+verified.cookie
     }
-    return { get db(){return db}, get mf(){return mf}, restart:async(overrides={})=>{await mf.dispose();if(overrides.productionMail){const production=await build({banner,entryPoints:['tests/worker.ts'],bundle:true,write:false,format:'esm',platform:'neutral',mainFields:['module','main'],conditions:['workerd','worker','browser'],external:['node:*','cloudflare:*'],target:'es2023'});Object.assign(auth,overrides.auth??{});config=convertV4MiniflareOptions({host:options.hostname??'127.0.0.1',port,modules:true,script:production.outputFiles[0].text,compatibilityDate:'2026-09-08',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'local-foundation-only'},bindings:auth,unsafeTriggerHandlers:true})}mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')}, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, verifyGuest, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
+    const restart=async(overrides={})=>{
+      await mf.dispose()
+      if(overrides.now!==undefined)banner=clockBanner(overrides.now)
+      if(overrides.productionMail||overrides.now!==undefined){
+        const rebuilt=await build({banner,entryPoints:[entry],bundle:true,write:false,format:'esm',platform:'neutral',mainFields:['module','main'],conditions:['workerd','worker','browser'],external:['node:*','cloudflare:*'],target:'es2023',plugins:overrides.productionMail?[]:plugins})
+        Object.assign(auth,overrides.auth??{})
+        config=convertV4MiniflareOptions({host:options.hostname??'127.0.0.1',port,modules:true,script:rebuilt.outputFiles[0].text,compatibilityDate:'2026-09-08',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'local-foundation-only'},bindings:auth,unsafeTriggerHandlers:true,...(!overrides.productionMail&&options.outbound?{outboundService:options.outbound}:{})})
+        if(options.assets)config.workers[0].config.assets={directory:join(process.cwd(),'public'),hasUserWorker:true}
+      }
+      mf=new Miniflare({...config,resourcePersistencePath:dir});await mf.ready;db=await mf.getD1Database('DB')
+    }
+    return { get db(){return db}, get mf(){return mf}, restart, origin, owner, auth, send, cmd, state, access, accessState, person, signIn, verifyGuest, close: async () => { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }) } }
   } catch (error) { await mf.dispose(); if (!options.root) await rm(dir, { recursive: true, force: true }); throw error }
 }
 

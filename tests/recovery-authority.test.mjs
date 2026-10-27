@@ -183,5 +183,18 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   assert.deepEqual(writes.map(c=>c.action),['create','update','delete'])
   await h.restart();await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
   assert.deepEqual(edge.writes().filter(c=>c.body.access_code_id===code.lock.providerId||c.body.name?.endsWith(code.id)).map(c=>c.action),['create','update','delete'])
+  boundary='none';holdUpdate=false
+  const ending=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Chris Patel',start:'2026-10-28',end:'2026-10-30'})
+  let expiryCode=(await h.accessState()).codes.find(c=>c.bookingId===ending.bookingId&&c.holder==='guest')
+  assert.equal(expiryCode.lock.state,'set');const expiryId=expiryCode.lock.providerId
+  await h.restart({now:'2026-10-30T13:59:00Z'});await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  expiryCode=(await h.accessState()).codes.find(c=>c.id===expiryCode.id)
+  assert.equal(expiryCode.status,'issued');assert.ok(edge.codes.has(expiryId),'Access is retained before the home-local checkout')
+  await h.restart({now:'2026-10-30T14:00:00Z'});await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  expiryCode=(await h.accessState()).codes.find(c=>c.id===expiryCode.id)
+  assert.equal(expiryCode.status,'revoked');assert.equal(expiryCode.lock.state,'removed');assert.ok(!edge.codes.has(expiryId),'Scheduled checkout removes the provider resource')
+  await(await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+  assert.equal((await h.accessState()).codes.filter(c=>c.bookingId===ending.bookingId&&c.status==='issued').length,0,'Dispatch cannot reissue expired access')
+  assert.deepEqual(edge.writes().filter(c=>c.body.access_code_id===expiryId||c.body.name?.endsWith(expiryCode.id)).map(c=>c.action),['create','delete'])
  }finally{await h.close()}
 })

@@ -5100,7 +5100,7 @@
       "executable": false
     },
     "tests/harness.mjs": {
-      "sha256": "d8c1e98cf3e99024a72cee46ff7fdd1d51bce315f186b9d9e81e522feee640b9",
+      "sha256": "ee43ed6516a3a7be2af731e7915c4515e94fdd444e3761267bdc50b7a86d1c79",
       "executable": false
     },
     "tests/home-calendar.mjs": {
@@ -5244,7 +5244,7 @@
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
-      "sha256": "4b4bae52b892c906847d6ee7684a4cc952607a908e1548471d540e31f3008753",
+      "sha256": "bbb4dbb222d916a9a83ace2f9c08aae415feb5e8921f11413f9ae1c00f930de0",
       "executable": false
     },
     "tests/recovery-browser.mjs": {
