@@ -1,4 +1,4 @@
-import { due, expire } from './locks/jobs'
+import { due } from './locks/jobs'
 import { pushLock } from './locks/worker'
 import { secureAccount } from './connections/credentials'
 import type { Bindings } from '../auth.server'
@@ -19,9 +19,7 @@ export const lockLine = (env: { managed: boolean; lockAccount: boolean }, code: 
 
 export async function pushLocks(env: Bindings) {
  if (managedInstall(env)||!await secureAccount(env,'seam')) return []
- let data=await load(env.DB)
- if(await expire(env.DB,data))data=await load(env.DB)
- const results=[]
+ const data=await load(env.DB),results=[]
  for(const code of data.codes.filter(due).sort((a,b)=>(a.lock.at??'').localeCompare(b.lock.at??'')).slice(0,20)){
   try{results.push(await pushLock(env,code.id))}catch{/* A lost claim or storage interruption leaves its durable attempt for reconciliation. */}
  }
