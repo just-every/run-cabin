@@ -155,7 +155,7 @@ test('ordinary lock jobs reconcile interruptions before and after create, update
   assert.ok(!guestPage.text.includes('<p class="code">'+code.code+'</p>'),'Acknowledgement alone never releases the guest PIN')
   const board=await h.send('/app/readiness?from=2026-11-05',undefined,h.owner)
   assert.ok(board.text.includes('>pending</span>'),'The board reports unconfirmed programming as pending')
-  const inbox=(await h.send('/app/inbox',undefined,h.owner)).text,thread=inbox.match(/name="thread" value="([^"]+)"/)?.[1]
+  const inbox=(await h.send('/app/inbox?q=Ana+Diaz',undefined,h.owner)).text,thread=inbox.match(/name="thread" value="([^"]+)"/)?.[1]
   assert.ok(thread)
   const reply=await h.cmd('message.compose',{thread,text:'Your door code is '+code.code})
   assert.equal(reply.bookingId,accepted.bookingId)

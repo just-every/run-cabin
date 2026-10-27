@@ -5244,7 +5244,7 @@
       "executable": false
     },
     "tests/recovery-authority.test.mjs": {
-      "sha256": "ed4b96c1cef02dcae12e396e161a1c3e787909a27ed449c309bbaaee5ec23425",
+      "sha256": "4b4bae52b892c906847d6ee7684a4cc952607a908e1548471d540e31f3008753",
       "executable": false
     },
     "tests/recovery-browser.mjs": {
@@ -5264,7 +5264,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "989f876977efd4a9a75ff53c3c24f6f1fab3b40123b1f7d6f07c26c89ef4a40a",
+      "sha256": "7c300c4b4fe3c740411c23db96fd855efea7964ec363a1bf274fbe45f5828a1d",
       "executable": false
     },
     "tests/recovery.test.mjs": {

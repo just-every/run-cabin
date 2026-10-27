@@ -4,12 +4,12 @@ import {readFile} from 'node:fs/promises'
 import {harness} from './harness.mjs'
 import {attestArrival} from './readiness-helpers.mjs'
 import {productionMail} from './recovery-production-mail.mjs'
-for(const name of ['SEAM_API_KEY','MAIL_API_KEY','MAIL_FROM','TEST_MAIL_TO','QA_INBOX_RECEIPT_TOKEN'])assert.ok(process.env[name],'Supply the named sandbox and fleet inbox inputs through the approved injector')
+for(const name of ['SEAM_API_KEY','SEAM_SANDBOX_DEVICE_ID','MAIL_API_KEY','MAIL_FROM','TEST_MAIL_TO','QA_INBOX_RECEIPT_TOKEN'])assert.ok(process.env[name],'Supply the named sandbox and fleet inbox inputs through the approved injector')
 assert.ok(process.env.TEST_MAIL_TO.endsWith('@runeditrun.com'),'Live proof requires the approved fleet QA recipient input')
 const from=process.env.MAIL_FROM,key=process.env.SEAM_API_KEY,mailKey=process.env.MAIL_API_KEY
 async function seam(path,body={}){const r=await fetch('https://connect.getseam.com'+path,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});assert.ok(r.ok,'Seam sandbox HTTP '+r.status);const value=await r.json();assert.notEqual(value.ok,false,'Seam sandbox refused the request');return value}
 const workspace=(await seam('/workspaces/get')).workspace;assert.equal(workspace.is_sandbox,true)
-const devices=(await seam('/devices/list')).devices,device=devices.find(d=>(!process.env.SEAM_TEST_DEVICE_ID||d.device_id===process.env.SEAM_TEST_DEVICE_ID)&&d.properties?.online&&d.properties?.supported_code_lengths?.includes(4))
+const devices=(await seam('/devices/list')).devices,device=devices.find(d=>d.device_id===(process.env.SEAM_TEST_DEVICE_ID??process.env.SEAM_SANDBOX_DEVICE_ID)&&d.properties?.online&&d.properties?.supported_code_lengths?.includes(4))
 assert.ok(device,'The sandbox needs an online code-capable device')
 const domains=await fetch('https://api.sendgrid.com/v3/whitelabel/domains',{headers:{authorization:'Bearer '+mailKey}});assert.ok(domains.ok,'Verified sender lookup HTTP '+domains.status)
 assert.ok((await domains.json()).some(d=>d.domain==='mail.runeditrun.com'&&d.valid),'The authorized Run Edit Run sender must be authenticated')
@@ -47,7 +47,7 @@ try{
  await h.cmd('recovery.approve',{id:row.id,revision:row.revision})
  stage='replacement-code';s=await refresh();row=s.recoveries.find(r=>r.id===row.id);newId=row.codeId;const started=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:started.lock.state,detail:started.lock.error,operation:started.lock.job?.operation,jobStage:started.lock.job?.stage,acknowledged:!!started.lock.job?.acceptedAt,providerResourceKnown:!!started.lock.providerId,starts:started.lock.job?.starts_at,ends:started.lock.job?.ends_at}))
  for(let n=0;n<180&&!(s.codes.find(c=>c.id===newId).lock.state==='set'&&s.codes.find(c=>c.id===oldId).lock.state==='removed');n++){await new Promise(r=>setTimeout(r,2000));s=await advance()}
- stage='replacement-code';const replacement=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:replacement.lock.state,detail:replacement.lock.error,oldState:s.codes.find(c=>c.id===oldId).lock.state}));assert.equal(replacement.lock.state,'set');assert.equal(s.codes.find(c=>c.id===oldId).lock.state,'removed');assert.notEqual(replacement.code,old.code)
+ stage='replacement-code';const replacement=s.codes.find(c=>c.id===newId);console.log(JSON.stringify({stage,state:replacement.lock.state,detail:replacement.lock.error,oldState:s.codes.find(c=>c.id===oldId).lock.state}));assert.equal(replacement.lock.state,'set');assert.equal(s.codes.find(c=>c.id===oldId).lock.state,'removed');assert.ok(replacement.code!==old.code,'Replacement access must use distinct digits')
  await h.restart();s=await advance();assert.equal(s.codes.find(c=>c.id===newId).lock.providerId,replacement.lock.providerId)
  row=s.recoveries.find(r=>r.id===row.id);row=await h.cmd('recovery.accept',{id:row.id,revision:row.revision},backup.cookie)
  const turnover=(await h.state()).turnovers.find(t=>t.id===row.turnoverId)
