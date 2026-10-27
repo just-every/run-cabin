@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "33c91d4bceb0748bde86ca77d95739292795689261a02049faed6a5cdf5a89a2",
+      "sha256": "a1b03039ffda0eba2345eabecd31bec92785da6cc0f73db12aba6b12711838a5",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "2988d6773616a5630b3b58743bf684d2de3627ed08a2bf7163dabaaed57d734c",
+      "sha256": "2ee60d34815a96f47e06e9209ca3bb8f7db260056d0bfad093e11d964256daeb",
       "executable": false
     },
     "DEMO.md": {
@@ -252,7 +252,7 @@
       "executable": false
     },
     "docs/lock-sandbox.md": {
-      "sha256": "32f05143d1a8afb919f7dd1e56df222a224f4c5c2e20659a9c4ba7dfdd621500",
+      "sha256": "a03298d0b5df77ce2adc21dfa2e4292408a07becbdc59abd5e2f3b07d93dadef",
       "executable": false
     },
     "docs/maintenance.md": {
@@ -2096,7 +2096,7 @@
       "executable": false
     },
     "src/cabin/locks/provider.ts": {
-      "sha256": "adf1d9fcc9ee4ca607f0f3d4577304307069740c28c706be5dd642cb76ea1752",
+      "sha256": "1344c5abce8eed533e0bd8c63e4b5fa4f65d165c55597d11c71e9ceb826a779a",
       "executable": false
     },
     "src/cabin/locks/types.ts": {
@@ -5264,7 +5264,7 @@
       "executable": false
     },
     "tests/recovery-sandbox.mjs": {
-      "sha256": "76fba6d755d159c20fb55884f416b4ed8ae866e1b605ce71832661ec673f4ac0",
+      "sha256": "ed7e891152a45911e0472a3a85cd33e20d4f78c0f00a1100910c594a89db9f9c",
       "executable": false
     },
     "tests/recovery.test.mjs": {

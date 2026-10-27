@@ -8,7 +8,7 @@ export async function seam(env:Bindings, propertyId:string, path:string, body:Re
  const url=new URL(SEAM+path)
  if(read)for(const [key,value] of Object.entries(body))url.searchParams.set(key,String(value))
  let response:Response
- try {response=await fetch(url,{method:read?'GET':'POST',redirect:'manual',headers:{authorization:`Bearer ${credentials.SEAM_API_KEY}`,'content-type':'application/json',accept:'application/json'},...(read?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(20_000)})}
+ try {response=await fetch(url,{method:read?'GET':path==='/access_codes/delete'?'DELETE':'POST',redirect:'manual',headers:{authorization:`Bearer ${credentials.SEAM_API_KEY}`,'content-type':'application/json',accept:'application/json'},...(read?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(20_000)})}
  catch {throw Error('Seam could not be reached. Reconciliation is pending; no access change will be repeated.')}
  let value:any=null;try{value=await response.json()}catch{/* malformed acknowledgement remains uncertain */}
  if(!response.ok||value?.ok===false)throw Error(`Seam request was not confirmed (HTTP ${response.status}). Check its request history.`)
