@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises'
 import {harness} from './harness.mjs'
 import {attestArrival} from './readiness-helpers.mjs'
 import {productionMail} from './recovery-production-mail.mjs'
-for(const name of ['SEAM_API_KEY','SEAM_SANDBOX_DEVICE_ID','MAIL_API_KEY','MAIL_FROM','TEST_MAIL_TO','QA_INBOX_RECEIPT_TOKEN'])assert.ok(process.env[name],'Supply the named sandbox and fleet inbox inputs through the approved injector')
+for(const name of ['SEAM_API_KEY','MAIL_API_KEY','MAIL_FROM','TEST_MAIL_TO','QA_INBOX_RECEIPT_TOKEN'])assert.ok(process.env[name],'Supply the named sandbox and fleet inbox inputs through the approved injector')
+assert.ok(process.env.SEAM_TEST_DEVICE_ID??process.env.SEAM_SANDBOX_DEVICE_ID,'Supply the exact authorized sandbox device')
 assert.ok(process.env.TEST_MAIL_TO.endsWith('@runeditrun.com'),'Live proof requires the approved fleet QA recipient input')
 const from=process.env.MAIL_FROM,key=process.env.SEAM_API_KEY,mailKey=process.env.MAIL_API_KEY
 async function seam(path,body={}){const r=await fetch('https://connect.getseam.com'+path,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify(body)});assert.ok(r.ok,'Seam sandbox HTTP '+r.status);const value=await r.json();assert.notEqual(value.ok,false,'Seam sandbox refused the request');return value}
