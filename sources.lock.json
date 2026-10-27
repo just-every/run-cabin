@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0c2fa70795d5089b48364b9dd718aa80038562a62d338c48fcaa80d39f765c86",
+      "sha256": "33c91d4bceb0748bde86ca77d95739292795689261a02049faed6a5cdf5a89a2",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c00acce0b8676d3f2dc512cfc1513df611da0170c79227143e1d268a768d2bc4",
+      "sha256": "2988d6773616a5630b3b58743bf684d2de3627ed08a2bf7163dabaaed57d734c",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "30d3a7d5a1a666c56743ea24579277eb56486662626459b69c92e61620acf614",
+      "sha256": "b39dcdb9782497dfcaa12c44fca69368f6c3d67662f403b8ab03d628ef8cb28b",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/day-board.md": {
-      "sha256": "025131255a2225f522e3931c032ebc36e4e69864f456fcc7bb5d0a33675d8522",
+      "sha256": "90c38ddbf3e4b0a39c1610e5eff6790e50e8456239431f442c656c827dae0b26",
       "executable": false
     },
     "docs/direct-bookings.md": {
