@@ -19,15 +19,7 @@ const anchorDay=proofNow.toLocaleDateString('en-CA',{timeZone:'America/New_York'
 const [hour,minute]=proofNow.toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}).split(':').map(Number),departureMinute=Math.max(0,hour*60+minute-60),departureTime=String(Math.floor(departureMinute/60)).padStart(2,'0')+':'+String(departureMinute%60).padStart(2,'0')
 const date=(offset=0)=>new Date(Date.parse(anchorDay+'T00:00:00Z')+offset*86400000).toISOString().slice(0,10)
 const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64'),marker='Cabin recovery '+crypto.randomUUID()
-const outbound=async request=>{
- const response=await fetch(request.url,{method:request.method,headers:request.headers,...(['GET','HEAD'].includes(request.method)?{}:{body:await request.arrayBuffer()}),signal:AbortSignal.timeout(20_000)})
- if(new URL(request.url).hostname==='connect.getseam.com'&&!response.ok){
-  const body=await response.clone().json().catch(()=>({})),safe=value=>typeof value==='string'&&/^[a-z_]{1,80}$/.test(value)?value:null
-  console.log(JSON.stringify({stage:'provider-refusal',path:new URL(request.url).pathname,httpStatus:response.status,errorType:safe(body.error?.type),errorCode:safe(body.error?.code)}))
- }
- return response
-}
-const h=await harness({now:proofNow.toISOString(),outbound,auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
+const h=await harness({now:proofNow.toISOString(),auth:{SEAM_API_KEY:key,OWNER_EMAIL:process.env.TEST_MAIL_TO,MAIL_FROM:from}})
 let home,stayId,oldId,newId,providerMessageId,mailboxId,failure,live,stage='setup'
 const ownedIds=new Set()
 async function providerCodes(){
