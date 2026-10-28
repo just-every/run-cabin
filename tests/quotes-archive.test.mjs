@@ -10,9 +10,9 @@ import {quoteHarness} from './quotes-support.mjs'
 import {harness} from './harness.mjs'
 const exec=promisify(execFile)
 test('RES-006 / DATA-001: public archive restore retains quoted terms without reviving links, inventory holds or email', {timeout:240000},async()=>{
- const temporary=await mkdtemp(join(tmpdir(),'cabin-quotes-archive-')),source=join(temporary,'source'),restored=join(temporary,'restored'),archive=join(temporary,'quotes.rer');let h
+ const temporary=await mkdtemp(join(tmpdir(),'cabin-quotes-archive-')),source=join(temporary,'source'),restored=join(temporary,'restored'),erased=join(temporary,'erased'),archive=join(temporary,'quotes.rer'),journal=join(temporary,'later.rer');let h
  try{
-  for(const root of [source,restored]){
+  for(const root of [source,restored,erased]){
    await mkdir(root)
    for(const name of ['package.json','pnpm-lock.yaml','OPERATIONS.json','RUN-LOCALLY.md','ACCEPTANCE.md','SEED-COMMAND-CONTRACT.md','OPERATIONS.md','.node-version','wrangler.jsonc','deploy.json','rer-setup.json','scripts','src','migrations'])await cp(name,join(root,name),{recursive:true})
    await symlink(resolve('node_modules'),join(root,'node_modules'),'dir')
@@ -39,5 +39,12 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   assert.equal(restoredConversation.length,1);assert.equal(restoredConversation[0].text,sourceInquiry.message);assert.ok(restoredConversation.every(m=>m.status==='discarded'))
   await h.cmd('inquiry.review',{id:restoredInquiry.id,revision:restoredInquiry.revision,sourceThreadId:restoredInquiry.sourceThreadId,confirm:'yes'},cookie,409)
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
+  await h.close();h=await harness({root:source,...identity,outbound:()=>assert.fail('Inquiry erasure cannot cause an external action')})
+  const sourceOwner=await h.signIn(h.auth.OWNER_EMAIL),currentInquiry=(await h.state(sourceOwner)).inquiries.find(q=>q.id===inquiryProof.id)
+  await h.cmd('inquiry.erase',{id:currentInquiry.id,revision:currentInquiry.revision,confirm:'yes'},sourceOwner)
+  assert.equal((await h.state(sourceOwner)).inquiries.find(q=>q.id===inquiryProof.id).status,'erased')
+  await h.close();h=null
+  await exec(process.execPath,[cli,'export','--output',journal],{cwd:source,env,maxBuffer:2e6})
+  await assert.rejects(exec(process.execPath,[cli,'import','--input',archive,'--journal',journal,'--yes'],{cwd:erased,env,maxBuffer:2e6}),error=>error.code===4,'a later inquiry erasure journal refuses an older unredacted archive')
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
 })

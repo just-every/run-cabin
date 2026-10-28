@@ -2376,7 +2376,7 @@
       "executable": false
     },
     "src/cabin/privacy.ts": {
-      "sha256": "2799a425481b98264830f2dba13d11002f7b4c0bc2c4da050ba76689b65a621c",
+      "sha256": "13246eec950b406a7f20b73146ad46946a18296cc779ea92507d4cf2179eaae1",
       "executable": false
     },
     "src/cabin/privacy/attachments.ts": {
@@ -2656,11 +2656,11 @@
       "executable": false
     },
     "src/cabin/reservations/inquiries-ui.ts": {
-      "sha256": "b89bb4399a7a2433d60b13c20f2965ad0bdf8e63805e7e9081a89b7449383102",
+      "sha256": "4edad4d6a20dd4e28d8151f122d9698ca39373ac01633fce46d0ee252e2333d9",
       "executable": false
     },
     "src/cabin/reservations/inquiries.ts": {
-      "sha256": "f5797021fbc82ce8b2e0d15ca1b3001de7cdc0e18e2bbcd39ca1d7acdbbaccd5",
+      "sha256": "214f47ea922a469d59548206b5fd4383bb9154747fdbcf1ecb11252195763bfb",
       "executable": false
     },
     "src/cabin/reservations/quotes-ui.ts": {
@@ -5236,7 +5236,7 @@
       "executable": false
     },
     "tests/quotes-archive.test.mjs": {
-      "sha256": "c7ef184d0fc594c3e9222b73f99d613c8cd99c8cbc15f92588be482468439d07",
+      "sha256": "beceb857cde116ca7203a708f3281ca87381aad52a40c4d7773ccf994f71f2e7",
       "executable": false
     },
     "tests/quotes-browser.test.mjs": {
@@ -5300,7 +5300,7 @@
       "executable": false
     },
     "tests/reservations.test.mjs": {
-      "sha256": "3d37dec1cecf26dc22a1944564fb29b03363ac4cc1be07d1f88ddfb52a624ba8",
+      "sha256": "41846b7d1d7314b8e80a443d12a1527637a9febbc0ca3526008e6d527e6a9fcb",
       "executable": false
     },
     "tests/runtime.mjs": {

@@ -21,7 +21,7 @@ import { eraseSources } from './privacy/sources'
 import { fenceContacts } from './privacy/contacts'
 /** Preserve Base's generated statements as inert SQL for the kit's shared batch.
  * Reads still use the real D1 binding; no independent erasure commits occur. */
-async function checkpoint(db:D1Database):Promise<Query[]>{
+export async function checkpoint(db:D1Database):Promise<Query[]>{
  const prepare=(sql:string,params:any[]=[]):D1PreparedStatement=>{
   const native=params.length?db.prepare(sql).bind(...params):db.prepare(sql)
   return new Proxy(native,{get(target,key){if(key==='cabinQuery')return query(sql,...params);if(key==='bind')return (...args:any[])=>prepare(sql,args);const value=(target as any)[key];return typeof value==='function'?value.bind(target):value}})

@@ -1,4 +1,6 @@
 import { type Context, type GuestMessage, need, newId, owner, sha, text, integer } from '../model'
+import { checkpoint } from '../privacy'
+import { completion } from '../privacy/records'
 import { eraseChannelEvidence } from '../channel-agent/retention'
 import { rows } from '../channel-agent/store'
 import { PROFILE, type Profile } from '../channel-agent/types'
@@ -48,7 +50,7 @@ export async function captureInquiry(c:Context,p:Profile,a:ReadAction,r:Record<s
  c.data.inquiries.push(q);c.entityId=q.id;return q.id
 }
 export function eraseInquiry(c:Context,q:Inquiry){
- q.status='erased';q.guestName='Erased guest';q.sourceText='';q.sourceId='';q.sourceThreadId='';q.sourceUrl='';q.revision=newId()
+ for(const related of c.data.inquiries.filter(row=>row.threadRef===q.threadRef)){related.status='erased';related.guestName='Erased guest';related.sourceText='';related.sourceId='';related.sourceThreadId='';related.sourceUrl='';related.revision=newId()}
  for(const m of c.data.messages.filter(m=>m.id===q.messageId||m.ref===q.threadRef)){m.text='Erased inquiry';m.subject='Erased inquiry';m.status='discarded';m.revision=newId()}
  const row=c.data.threadCases.find(r=>r.id===q.threadId)
  if(row){row.guest='Erased guest';row.status='answered';row.waitingSince=null;row.dueAt=null;row.claim=null;row.notes=[];row.handovers=[];row.revision=newId()}
@@ -59,7 +61,7 @@ export async function inquiryCommand(c:Context,name:string,p:Record<string,unkno
  owner(c.actor);need(!c.actor.isAgent,'A native owner must review source identity',403)
  const q=c.data.inquiries.find(q=>q.id===text(p.id,'inquiry'));need(q,'Inquiry not found',404)
  need(q.revision===p.revision,'Inquiry changed. Review the current source record.',409);c.entityId=q.id
- if(name==='inquiry.erase'){need(p.confirm==='yes','Confirm inquiry erasure');need(!c.data.notices.some(n=>n.recordId===q.threadId&&n.status==='sending'),'Inquiry notice is in flight; reconcile it before erasing',409);await eraseChannelEvidence(c,{entity:'guest',id:q.id,revision:q.revision,bookings:new Set(),properties:new Set([q.propertyId]),values:[q.guestName,q.sourceText]});eraseInquiry(c,q);return q}
+ if(name==='inquiry.erase'){need(p.confirm==='yes','Confirm inquiry erasure');need(!c.data.notices.some(n=>n.recordId===q.threadId&&n.status==='sending'),'Inquiry notice is in flight; reconcile it before erasing',409);await eraseChannelEvidence(c,{entity:'guest',id:q.id,revision:q.revision,bookings:new Set(),properties:new Set([q.propertyId]),values:[q.guestName,q.sourceText]});eraseInquiry(c,q);c.queries.push(...await checkpoint(c.db));const receiptId=await completion(c,'inquiry',q.id,[]);return {...q,receiptId}}
  need(name==='inquiry.review','Unknown inquiry command',404)
  need(q.status==='needs_review'&&!q.restorePaused,'This source inquiry is no longer awaiting review',409)
  need(p.confirm==='yes'&&p.sourceThreadId===q.sourceThreadId,'Confirm the exact source thread identity; name-only matches are refused',409)
