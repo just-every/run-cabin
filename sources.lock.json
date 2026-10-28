@@ -4900,7 +4900,7 @@
       "executable": false
     },
     "tests/cabin.test.mjs": {
-      "sha256": "a7317406be6d8842471b2c492a9ad359ad35769a83d0e22035731f292e3de66d",
+      "sha256": "4d18d66e7a7801da7abb4ed288702f8de69843d6e595e0a89bf881d3aa814240",
       "executable": false
     },
     "tests/calendar.test.mjs": {
@@ -5164,7 +5164,7 @@
       "executable": false
     },
     "tests/movein.test.mjs": {
-      "sha256": "225adafbea0ae1e216a1e846e50027707ebf48de1ae078aa203695aa58eb37be",
+      "sha256": "a456824e33b5345946db81aa5a46202b659c58ed2a9d9aac322920a60d58b33b",
       "executable": false
     },
     "tests/owners.test.mjs": {
