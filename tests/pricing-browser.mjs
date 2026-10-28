@@ -7,7 +7,7 @@ import { pricingHome } from './pricing-support.mjs'
 export async function pricingBrowserJourney(){
  const h=await harness({assets:true,now:'2030-01-01T17:00:00Z',outbound:()=>assert.fail('Pricing review has no provider effect')})
  const browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
- const context=await browser.newContext({viewport:{width:1440,height:1000}}),directory=process.env.CABIN_PRICING_SHOTS??'test-results/pricing'
+ const context=await browser.newContext({viewport:{width:1440,height:1000}}),directory=process.env.CABIN_PRICING_SHOTS??'./test-results/pricing'
  await mkdir(directory,{recursive:true})
  try{
   await pricingHome(h)
@@ -39,6 +39,8 @@ export async function pricingBrowserJourney(){
   await screenshots('booking-preview')
   await adjustment('Vrbo','fixed','markdown','20.00',false,'8.00')
   result=await preview('vrbo');await expect(result).toContainText('Rent $320.02 · cleaning $75.01 · extra guests $40.02.');await expect(result).toContainText('Guest total $435.05');await expect(result).toContainText('expected payout before processor fees $400.25');await screenshots('vrbo-preview')
+  await adjustment('Vrbo','fixed','markdown','200.00',false,'8.00')
+  result=await preview('vrbo');await expect(result.getByRole('status')).toContainText('Floor conflict');await expect(result).toContainText('requested -$19.99, floor enforced');await expect(result).toContainText('Rent $0.00');await screenshots('zero-floor-preview')
   await limits('150.00');await settings();await expect(page.getByLabel('Nightly floor (USD)')).toHaveValue('150.00')
   await expect(page.getByText(/OTA publication and accepted rate readback are unavailable/)).toBeVisible()
   const icons=page.locator('button,a').filter({has:page.locator('svg')});for(const control of await icons.all()){if(!(await control.innerText()).trim()){await control.focus();assert.equal(await control.evaluate(el=>getComputedStyle(el,'::after').opacity),'1')}}
