@@ -234,6 +234,12 @@
       "name": "0063_dependency_keys_sealed.sql",
       "sha256": "9c8fa5f94c48a230f326cd4d666cbc2bd1e7d5a18327b89e65b339ac6a533d9a",
       "sql": "ALTER TABLE rer_dependency_installation ADD COLUMN keys_sealed INTEGER NOT NULL DEFAULT 0 CHECK(keys_sealed IN (0,1));\n-- Nonsecret version history lets restored rows name an unavailable retired key\n-- without confusing ciphertext tampering or a wrong current secret with restore.\nALTER TABLE rer_dependency_installation ADD COLUMN key_ids TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(key_ids) AND json_type(key_ids)='array');\n"
+    },
+    {
+      "binding": "DB",
+      "name": "0064_quickbooks.sql",
+      "sha256": "fe2c75585c77d615c761c798b24ed5ad77cb59d8656f93352cee5783650c0f45",
+      "sql": "CREATE TABLE cb_qbo_connection (id INTEGER PRIMARY KEY CHECK(id=1), realm TEXT NOT NULL, mode TEXT NOT NULL, sealed TEXT NOT NULL, version TEXT NOT NULL, lease_until TEXT);\nCREATE TABLE cb_qbo_oauth (state_hash TEXT PRIMARY KEY, actor_id TEXT NOT NULL, mode TEXT NOT NULL, expires_at TEXT NOT NULL);\nCREATE TABLE cb_qbo_mappings (property_id TEXT NOT NULL, owner_key TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(property_id,owner_key));\nCREATE TABLE cb_qbo_entries (id TEXT PRIMARY KEY, mode TEXT NOT NULL, realm TEXT NOT NULL, source_id TEXT NOT NULL, data TEXT NOT NULL, UNIQUE(mode,realm,source_id));\nCREATE TABLE cb_qbo_batches (id TEXT PRIMARY KEY, property_id TEXT NOT NULL, data TEXT NOT NULL);\nCREATE TABLE cb_qbo_catalog (realm TEXT PRIMARY KEY, data TEXT NOT NULL);\nCREATE TABLE cb_qbo_app (id INTEGER PRIMARY KEY CHECK(id=1), sealed TEXT NOT NULL);\nINSERT INTO cb_provider_sharing(id,enabled,revision,changed_at) VALUES('quickbooks',1,'initial','1970-01-01T00:00:00.000Z');\n"
     }
   ],
   "compatibilityDate": "2026-09-08",
@@ -250,8 +256,7 @@
     "MAIL_PROVIDER": "",
     "MAIL_FROM": "",
     "MAIL_RELAY_URL": "",
-    "MAIL_ACCOUNT_ID": "",
-    "OWNER_EMAIL": ""
+    "MAIL_ACCOUNT_ID": ""
   },
   "secretNames": [
     "SESSION_SECRET",
