@@ -5216,7 +5216,7 @@
       "executable": false
     },
     "tests/quotes-archive.test.mjs": {
-      "sha256": "c9196789584dc3faee89a92751f794d350b3c927be42ec8ba9d39a9a8c7027a2",
+      "sha256": "03c93fef22e3c69cbf2e5bf4dc1a3572159da751b65161a2b0ee5bbd076db25e",
       "executable": false
     },
     "tests/quotes-browser.test.mjs": {
