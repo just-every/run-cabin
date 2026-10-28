@@ -5,7 +5,7 @@ import { scrub, type ErasureScope } from './scope'
 /** Vendor reports and undo snapshots are indivisible source files. Withdraw an
  * affected report rather than leave a second restorable copy of its contacts. */
 export async function eraseSources(c:Context,s:ErasureScope){
- for(const q of c.data.inquiries)if(s.entity==='property'&&s.properties.has(q.propertyId)||s.entity==='guest'&&s.values.some(v=>v.length>=3&&(q.guestName.toLowerCase()===v.toLowerCase()||q.sourceText.toLowerCase().includes(v.toLowerCase()))))eraseInquiry(c,q)
+ for(const q of c.data.inquiries)if(s.entity==='property'&&s.properties.has(q.propertyId))eraseInquiry(c,q)
  await eraseChannelEvidence(c,s)
  for(const row of (await c.db.prepare('SELECT id,plan,inventory,explanations FROM cb_provider_moveins').all<any>()).results){
   const contents=JSON.stringify(row),match=s.values.some(v=>contents.toLowerCase().includes(v.toLowerCase()))

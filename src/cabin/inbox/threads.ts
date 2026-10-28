@@ -32,7 +32,7 @@ export function messageKey(data: Pick<Data, 'bookings'> & Partial<GuestData>, m:
 /** A short stable id for a thread key, safe in a URL. */
 export function threadId(key: string) { let x = 0x811c9dc5; for (let i = 0; i < key.length; i++) { x ^= key.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0 } return 't' + x.toString(36) }
 export interface Thread { id: string; key: string; name: string; email: string | null; phone: string | null; stays: Booking[]; messages: GuestMessage[]; scheduled: Scheduled[]; drafts: number; lastAt: string }
-export function threads(data: Pick<Data, 'bookings' | 'messages' | 'scheduled'> & Partial<GuestData>): Thread[] {
+export function threads(data: Pick<Data, 'bookings' | 'messages' | 'scheduled'> & Partial<GuestData> & Partial<Pick<Data,'inquiries'>>): Thread[] {
  const all = new Map<string, Thread>()
  const thread = (key: string) => { let t = all.get(key); if (!t) { t = { id: threadId(key), key, name: '', email: key.startsWith('e:') ? key.slice(2) : null, phone: key.startsWith('p:') ? key.slice(2) : null, stays: [], messages: [], scheduled: [], drafts: 0, lastAt: '' }; all.set(key, t) } return t }
  const stays = new Map(data.bookings.filter(isStay).map(b => [b.id, b]))
@@ -43,7 +43,7 @@ export function threads(data: Pick<Data, 'bookings' | 'messages' | 'scheduled'> 
   t.stays.sort((a, b) => a.start.localeCompare(b.start)); t.messages.sort((a, b) => (a.sentAt ?? a.createdAt).localeCompare(b.sentAt ?? b.createdAt))
   const named = [...t.stays].reverse().find(b => b.guestName)
   const first = t.stays[0], channel = first ? ({ airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com', direct: 'Direct' } as Record<string, string>)[first.channel] : ''
-  t.name = named?.guestName ?? (t.email ? t.email.split('@')[0] : t.phone ?? (first?.summary && !/^(reserved|not available|blocked)/i.test(first.summary) ? first.summary : `${channel} guest`.trim()))
+  t.name = data.inquiries?.find(q=>q.threadId===t.id&&q.status==='inquiry')?.guestName ?? named?.guestName ?? (t.email ? t.email.split('@')[0] : t.phone ?? (first?.summary && !/^(reserved|not available|blocked)/i.test(first.summary) ? first.summary : `${channel} guest`.trim()))
   t.email ??= t.stays.find(b => b.guestEmail)?.guestEmail ?? null
   t.phone ??= t.stays.find(b => b.guestPhone)?.guestPhone ?? null
   t.lastAt = [...t.messages.map(m => m.sentAt ?? m.createdAt), ...t.scheduled.filter(s => s.sentAt).map(s => s.sentAt!), ...t.stays.map(b => b.approvedAt)].sort().pop() ?? ''

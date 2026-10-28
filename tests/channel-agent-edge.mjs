@@ -27,7 +27,7 @@ export async function channelEdge(){
    const listingUrl=job.listingUrl+(mode?'?mode='+mode:'')
    const driver=async ({phase,job:task,observation})=>{
     if(phase==='read'){
-     const labels={listingId:'Listing ID',direction:'Direction',reservationId:'Reservation ID',guestName:'Guest',start:'Arrival',end:'Departure',status:'Status',guestEmail:'Email',messageId:'Message ID',text:'Message',sentAt:'Sent at',transactionId:'Transaction ID',payoutId:'Payout ID',date:'Settlement date',currency:'Currency',gross:'Gross',fee:'Fee',net:'Net',type:'Type'}
+     const labels={listingId:'Listing ID',threadId:'Thread ID',guests:'Guests',quote:'Quote',deadline:'Deadline',message:'Inquiry message',direction:'Direction',reservationId:'Reservation ID',guestName:'Guest',start:'Arrival',end:'Departure',status:'Status',guestEmail:'Email',messageId:'Message ID',text:'Message',sentAt:'Sent at',transactionId:'Transaction ID',payoutId:'Payout ID',date:'Settlement date',currency:'Currency',gross:'Gross',fee:'Fee',net:'Net',type:'Type'}
      const table=observation.tables[0],columns=Object.fromEntries([...observation.required,...observation.optional].filter(k=>table?.headers.includes(labels[k])).map(k=>[k,table.headers.indexOf(labels[k])]))
      if(JSON.stringify(observation).includes('megan@')||JSON.stringify(observation).includes('1000.00'))throw Error('Source values leaked to model')
      return {type:'extract',table:table?.ref,columns}

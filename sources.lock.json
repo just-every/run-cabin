@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "57c9f1439a003d5871d07ae4f164f56d2d384bd6a920cddbc8ba8abb4dd5d59d",
+      "sha256": "57968e54cde2fa03884cc0dcd721662daa40d155a99a960c527d970c596867db",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "7933f6f0429132e75ecf4882275af3e7b50733637eeb24b0692dff5c3cdd6d5c",
+      "sha256": "0e9935807183a9c0a49940a5ba90db9d1874841140e36af6aa4188ef1ec38c10",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "688b17b3ceeae10f4508f1d0ffa5d10406bbbc4cddabed7341c40ad1f1106b12",
+      "sha256": "fdcf06dc277183a1e8501f62f2c3fe202ce5bd8273f1939a999c7eeb7279e08b",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -1396,7 +1396,7 @@
       "executable": false
     },
     "src/cabin/archive/transform.mjs": {
-      "sha256": "1632de7b7f156cb766ddfe8349b91558053b24b5e2c4d6cbd83dee7ccb82f57c",
+      "sha256": "2d70d96967d2cf3e144bf526cfba661377798cd51cc39ef97388ba936922b2e7",
       "executable": false
     },
     "src/cabin/archive/ui.ts": {
@@ -1460,7 +1460,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/read-import.ts": {
-      "sha256": "4adc8ea6e9d64f9e15709804f406845fb2bb4b7af568edcd19c632b07514b053",
+      "sha256": "114c8a50834180b2abada801d364e2b5fe962a6f262bfe194522c7fbdd3aaf5c",
       "executable": false
     },
     "src/cabin/channel-agent/read-types.ts": {
@@ -1472,7 +1472,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/runner.ts": {
-      "sha256": "07f2d5a8acf2caa3764dde8eb9ebe0c66125dd39323c76faf0d3f29819cb91be",
+      "sha256": "8b642fc7e563c63f7d45213f2a4e920f3f93008dcf2405beedbe0aca5a35c67f",
       "executable": false
     },
     "src/cabin/channel-agent/store.ts": {
@@ -2036,7 +2036,7 @@
       "executable": false
     },
     "src/cabin/inbox/team/cases.ts": {
-      "sha256": "7436bb8f9cb8114253021c1998acdbe26a4959f5941423ba0b54bf45d2152d5b",
+      "sha256": "e01e9bdd5a60f1498de2d18cca0a12f6378a490b2220b7a6d9517f295017c1cd",
       "executable": false
     },
     "src/cabin/inbox/team/commands.ts": {
@@ -2044,7 +2044,7 @@
       "executable": false
     },
     "src/cabin/inbox/team/inquiries.ts": {
-      "sha256": "9ab0a5145014796a918c25cda9e6d60a94abbdf758b04b7ffb118790a3fc4125",
+      "sha256": "6de39c142e063f01a9ddc7abf39d707ca033c2c43af19ffa0c84f544bc88323d",
       "executable": false
     },
     "src/cabin/inbox/team/routing.ts": {
@@ -2068,7 +2068,7 @@
       "executable": false
     },
     "src/cabin/inbox/threads.ts": {
-      "sha256": "d3af57f995a5a2873245aaf287ddf998fe7e559ef0acb71e7d334c8625889505",
+      "sha256": "4841681d323790c289798ee6e28f171c19023de73ce7c543abc447076df95668",
       "executable": false
     },
     "src/cabin/inventory.ts": {
@@ -2276,7 +2276,7 @@
       "executable": false
     },
     "src/cabin/pages/inbox.ts": {
-      "sha256": "226d2c6ecb4100881921ba5e3888f5ef6610d2268eee46b2fd553aefd3589ba7",
+      "sha256": "dcffa45622a88341c1cd43cf5304debcb710116927766ee6fcf8f8f36f452a7f",
       "executable": false
     },
     "src/cabin/pages/index.ts": {
@@ -2316,7 +2316,7 @@
       "executable": false
     },
     "src/cabin/permissions/projection.ts": {
-      "sha256": "a4a67d32ab32ef8655f52e1d5bbba13020336cf0e13f4c9e51efd488debc8366",
+      "sha256": "903b3c02ce1708509c7f5970ffb504103e9659699a44790d9736faace7d266e3",
       "executable": false
     },
     "src/cabin/permissions/reads.ts": {
@@ -2440,7 +2440,7 @@
       "executable": false
     },
     "src/cabin/privacy/sources.ts": {
-      "sha256": "ecd513463af6781d36034254cb7d4db069923504e60c36dafcb31dd071dc9bc7",
+      "sha256": "b3b308708d7096c8a094f31468dd3e181cd07b431cf351a128f5888477e843e1",
       "executable": false
     },
     "src/cabin/promotions/booking-coupons.ts": {
@@ -2688,7 +2688,7 @@
       "executable": false
     },
     "src/cabin/reservations/inquiries.ts": {
-      "sha256": "6e5189392ba1d1e2a8a7516a899cbe6bb27cc8fcea08694c5bc2b29bf4ff8ea5",
+      "sha256": "f5797021fbc82ce8b2e0d15ca1b3001de7cdc0e18e2bbcd39ca1d7acdbbaccd5",
       "executable": false
     },
     "src/cabin/reservations/quotes-ui.ts": {
@@ -4920,11 +4920,11 @@
       "executable": false
     },
     "tests/archive-records.mjs": {
-      "sha256": "c4d0d920a8a32aa0f87b1193e71b6bce2f6f6a7c569389416f4052617e7010e4",
+      "sha256": "7f1e223585d7437f7036c1b1b528f2efc74e48342b008addbad1b96f0dcd1802",
       "executable": false
     },
     "tests/archive.test.mjs": {
-      "sha256": "7f4520a56cf2827faec2863c48ced34aaf6db25f2a6437e59fd8beac2f5e387b",
+      "sha256": "ffd52bab85facc20d30cf61a00f81af379c6288787c59091aedc05ea164b0991",
       "executable": false
     },
     "tests/audit.test.mjs": {
@@ -4960,11 +4960,11 @@
       "executable": false
     },
     "tests/channel-agent-edge.mjs": {
-      "sha256": "227ff15575ac367ebb4ebb9e450f72a85fc656bd561115510814e091a270a0a2",
+      "sha256": "efa8693d83b5514442ac500bc527ff657d8dcadc662886ca3e941900ffe2e62a",
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "05c8045ff0987a396accc697720c011b798eb4af166f2e33cbe9268974d2b313",
+      "sha256": "07d1ebcf5b0dbbac8e468148547bf537640fccd78562da2f10244bd081991c65",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
@@ -5060,7 +5060,7 @@
       "executable": false
     },
     "tests/fixtures/channel-pages/reads.html": {
-      "sha256": "b0600db8fe1b51b953aff8bf7a4860f3d00c934ab0dbcf0afbd922771757546a",
+      "sha256": "e675393b0898d0f5c8f933649640f84e15ff96ab011aa1f6a4b9825824563623",
       "executable": false
     },
     "tests/fixtures/checklist.png": {
@@ -5163,8 +5163,12 @@
       "sha256": "a89f3f8c4bfb18bf695c8294f79823886f946b3497c5fac505b95d32dcfc4b9f",
       "executable": false
     },
+    "tests/inquiries-browser.mjs": {
+      "sha256": "1f547b6d3e070f195a2d15ae5524c9b7089cc126f8b79983f11aa10ce5f86b9f",
+      "executable": false
+    },
     "tests/inquiries-support.mjs": {
-      "sha256": "ad3808ea81e280a589dec529d32d53cece79a0c5629c79f8745d41cea854dce3",
+      "sha256": "bc84f1e3bbc52e96b1b1b3c63302386af8bc91b3e8fe68636d87e075588f7ced",
       "executable": false
     },
     "tests/interface-accessibility.mjs": {
@@ -5332,7 +5336,7 @@
       "executable": false
     },
     "tests/reservations.test.mjs": {
-      "sha256": "fbcf041d74fa57aea537acb7ba92e6207c72bbfa78c2af949c51688c6e796417",
+      "sha256": "3d37dec1cecf26dc22a1944564fb29b03363ac4cc1be07d1f88ddfb52a624ba8",
       "executable": false
     },
     "tests/runtime.mjs": {

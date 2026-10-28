@@ -65,6 +65,8 @@ export function exportRow(table, row) {
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
  if(kind==='inquiries')data.restorePaused=true
+ if(kind==='messages'&&data.providerId?.startsWith('channel-read:inquiry:')){data.status='discarded';data.detail=pause}
+ if(kind==='threadCases'&&data.key?.startsWith('r:inquiry-thread:')){data.status='answered';data.waitingSince=null;data.dueAt=null;data.claim=null}
  if(kind==='financialCases')data.restorePaused=true
  if(kind==='distributionPlans')data.restorePaused=true
  if(kind==='guestPortalLinks'){data.token=null;data.status='revoked';data.sessionEpoch='restored'}

@@ -88,7 +88,7 @@ export function projectState<T>(state: T, actor: Actor): T {
       if (!access && ['code', 'link', 'guide', 'guestText', 'content'].includes(key)) continue
       if ((!guest || service) && pii.has(key)) continue
       if (!identity && ['identity', 'verifications', 'documents', 'decision', 'provider', 'verificationPolicy'].includes(key)) continue
-      if (!finance && (money.has(key) || /(?:Cents|Bps)$/.test(key))) continue
+      if (!finance && (money.has(key) || /(?:Cents|Bps)$/.test(key)) && !(key==='quoteCents'&&typeof value.threadRef==='string'&&typeof value.deadline==='string')) continue
       if (!finance && !owner && /^(?:ownerName|ownerEmail|owners|commissionBps)$/.test(key)) continue
       if (!guest && key === 'summary') { out[key] = 'Reserved'; continue }
       const itemClean = clean(item, ids)
