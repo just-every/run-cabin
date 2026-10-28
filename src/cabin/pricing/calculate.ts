@@ -27,9 +27,9 @@ export function calculatePricing(home:DirectHome,rates:{date:string;amountCents:
  const p=home.pricing!,a=p.channels[channel]??unchangedAdjustment(),count=rates.length
  const discountKind=count>=28?'monthly':count>=7?'weekly':null,discountBps=discountKind==='monthly'?p.monthlyBps:discountKind==='weekly'?p.weeklyBps:0
  const nights=rates.map(r=>{
-  const adjusted=Math.max(0,a.kind==='percent'?rounded(r.amountCents,10000+a.value):r.amountCents+a.value)
-  const afterLength=adjusted-rounded(adjusted,discountBps),beforeReturning=Math.max(p.floorCents,afterLength)
-  const requestedCents=afterLength-rounded(beforeReturning,returningBps),amountCents=Math.max(p.floorCents,requestedCents)
+  const adjusted=a.kind==='percent'?rounded(r.amountCents,10000+a.value):r.amountCents+a.value
+  const afterLength=adjusted-rounded(Math.max(0,adjusted),discountBps),beforeReturning=Math.max(p.floorCents,afterLength)
+  const requestedCents=afterLength-rounded(Math.max(0,afterLength),returningBps),amountCents=Math.max(p.floorCents,requestedCents)
   const weekday=new Date(r.date+'T00:00:00Z').getUTCDay(),rule=home.rates?.find(v=>v.start<=r.date&&r.date<v.end&&(v.weekday===null||v.weekday===weekday))
   return {date:r.date,rateId:rule?.id??null,baseCents:r.amountCents,adjustmentCents:adjusted-r.amountCents,lengthDiscountCents:Math.max(0,adjusted-beforeReturning),returningDiscountCents:beforeReturning-amountCents,requestedCents,amountCents,floorCents:p.floorCents,floorApplied:requestedCents<p.floorCents}
  })

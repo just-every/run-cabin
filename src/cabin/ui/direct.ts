@@ -77,7 +77,7 @@ function homeSettings(state: any, property: any) {
 function quote(stay: any) {
   const q = stay.quote
   return `<details><summary>Quoted total ${h(money(q.totalCents))} · ${h(q.nights)} nights</summary><ul>${[
-    line('Rent', `${q.nights} nights${q.nightlyRates?' at dated rates':' × '+money(q.nightlyCents)} = ${money(q.rentCents)}`),
+    line('Rent', `${q.nights} nights${q.pricing?' at saved rates':q.nightlyRates?' at dated rates':' × '+money(q.nightlyCents)} = ${money(q.rentCents)}`),
     line('Cleaning', money(q.cleaningCents)),
     line('Extra guests', money(q.extraGuestCents)),
     ...q.taxes.map((tax: any) => line(`${tax.label} (${rate(tax.bps)})`, money(tax.amountCents))),
