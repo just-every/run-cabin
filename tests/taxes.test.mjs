@@ -144,4 +144,18 @@ test('quarterly jurisdiction reviews conserve monthly levies across boundaries, 
  await f.approve(nextYear,h.owner,409)
  assert.equal(JSON.stringify((await h.state()).ledger.journals),ledgerBeforeRefusal)
  assert.equal((await f.exported(nextYear)).status,'draft')
+ // Replayed source capture cannot create another levy or another ledger posting.
+ const source=f.february.source,input={bookingId:source.bookingId,baseCents:source.baseCents,exemptCents:0}
+ const preview=await h.cmd('tax.source.preview',input),beforeReplay=await h.state()
+ await h.cmd('tax.source.record',{...input,previewDigest:preview.previewDigest,reference:source.reference,document:source.document,collections:preview.assessed.map(r=>({ruleId:r.rule.id,month:r.month,channelCents:0})),confirm:'yes'},h.owner,409)
+ assert.deepEqual((await h.state()).taxes,beforeReplay.taxes)
+ assert.deepEqual((await h.state()).ledger.journals,beforeReplay.ledger.journals)
+ const manager=await h.person('SyntheticTaxManager','manager')
+ assert.equal((await h.send(`/api/cabin/taxes/${q1.id}.json`,undefined,manager.cookie)).status,200)
+ await h.cmd('member.save',{...manager,active:false})
+ const beforeRevoked=(await h.state()).taxes
+ await h.cmd('tax.report.prepare',{propertyId:f.home.id,month:'2027-01',periodKind:'quarter'},manager.cookie,403)
+ await f.approve(nextYear,manager.cookie,403)
+ assert.equal((await h.send(`/api/cabin/taxes/${q1.id}.json`,undefined,manager.cookie)).status,403)
+ assert.deepEqual((await h.state()).taxes,beforeRevoked)
 },{now:'2026-10-28T12:00:00Z'}))

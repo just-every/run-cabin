@@ -146,7 +146,8 @@ acceptance/payment documents remain external acceptance work.
 `tests/taxes.test.mjs` also exercises quarter and year boundaries, separate
 levy totals, monthly and quarterly overlap refusal in both directions, late
 refund supplements, refused unsafe approvals, frozen monthly exports, restart
-and exact source-line ledger reconciliation. `tests/tax-periods-browser.mjs`
+and exact source-line ledger reconciliation, replayed-source refusal and
+revoked-manager refusal without changing tax records. `tests/tax-periods-browser.mjs`
 runs in push Verify through native review forms and downloaded JSON, with
 desktop assertions and phone review use. Neither journey files a return or
 remits funds; the statutory partner and real OTA acceptance remain unproved.

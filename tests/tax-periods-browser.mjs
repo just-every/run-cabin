@@ -38,6 +38,8 @@ try{
   await card.getByText(/source lines and ledger links/).click()
   await expect(card.getByRole('cell',{name:'9%',exact:true})).toHaveCount(3)
   await expect(card.getByRole('cell',{name:'1%',exact:true})).toHaveCount(3)
+  await expect(card.locator('tbody tr').filter({hasText:'2026-03 · sales'})).toContainText('$1.00')
+  await expect(card.locator('tbody tr').filter({hasText:'2026-03 · lodging'})).toContainText('$9.00')
   await proof('quarter-sources')
   await card.getByRole('checkbox').check();await card.getByRole('button',{name:'Approve and freeze review'}).click()
   card=page.locator('details.tax-review').filter({has:page.locator(`input[name="id"][value="${report.id}"]`)})

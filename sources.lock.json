@@ -364,7 +364,7 @@
       "executable": false
     },
     "docs/taxes.md": {
-      "sha256": "841efd77516646c1391933fac29d26792a4be62e014d17832aaae3e32c5acdfd",
+      "sha256": "8ed3262bc66296d2dff0877454c463f8495e8c0e88879c86744a41debbb1b84d",
       "executable": false
     },
     "docs/team-access.md": {
@@ -1020,7 +1020,7 @@
       "executable": false
     },
     "scripts/cabin-domain-tests.mjs": {
-      "sha256": "4d8faadbe5385684ff42d536e44b8de6df0db703b2c9ccfdce027de767d2ce15",
+      "sha256": "b68bd3c1bfd9bf3cbcb166616210e32f75d882c8a37017161a5710b0e161051c",
       "executable": false
     },
     "scripts/channel-agent/executor.mjs": {
@@ -2728,7 +2728,7 @@
       "executable": false
     },
     "src/cabin/taxes/ui.ts": {
-      "sha256": "b97815dcced6722cba7bc16ea0cc2e474c51e027b2e185d3b5d90dca78ded5fd",
+      "sha256": "600cea48b13a8e9eb51757d59077d7363beab54ed0050e2a84d0df0b03811190",
       "executable": false
     },
     "src/cabin/turnover-window.ts": {
@@ -5300,7 +5300,7 @@
       "executable": false
     },
     "tests/tax-periods-browser.mjs": {
-      "sha256": "456e89451d774bc8d91d44e63ad07778584714ef959e59039b2f058b0c189fc4",
+      "sha256": "2efde434aaf878c6cba8313f9c75c236720b032320e263ad9ddf4e99e5dfb2a0",
       "executable": false
     },
     "tests/tax-periods-support.mjs": {
@@ -5308,7 +5308,7 @@
       "executable": false
     },
     "tests/taxes.test.mjs": {
-      "sha256": "acb615f179cddfa4b500e1a6916631e5765e7038c715f504a4855cb5ca7b8f92",
+      "sha256": "cca0256ae16b97004731c5bfb8035bae5472a941dc7c0ac511f926cbf63a634b",
       "executable": false
     },
     "tests/turnovers.test.mjs": {
@@ -5336,7 +5336,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "317e2502b56ae4c0ec333d4e6c8e68e00e639375243b30f1043bd7e00a88a969",
+      "sha256": "7c6de74d34c67ef22b2fe7f4f60b5c3873f7936f58b60f1e92ee090a11ea246f",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
