@@ -4896,7 +4896,7 @@
       "executable": false
     },
     "tests/cabin.test.mjs": {
-      "sha256": "a7317406be6d8842471b2c492a9ad359ad35769a83d0e22035731f292e3de66d",
+      "sha256": "bc3b019c40c21d6bc20014d3ee58e59d6f9d74b8bb3654ef011cba4b7495b7ae",
       "executable": false
     },
     "tests/calendar.test.mjs": {
