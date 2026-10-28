@@ -12,13 +12,21 @@ async function home(h){const p=await h.cmd('property.save',{name:'Pine Ridge Cab
 
 test('only the installation owner can configure Stripe, including against a legacy wildcard grant',async()=>{
  const provider=async h=>(await h.db.prepare('SELECT data FROM cb_direct_provider WHERE id=1').first())?.data??null
- let providerCalls=0
+ let providerCalls=0,checkouts=0
  const h=await harness({outbound:async request=>{
   providerCalls++
   const path=new URL(request.url).pathname
   assert.equal(new URL(request.url).hostname,'api.stripe.com')
   if(path==='/v1/balance')return Response.json({object:'balance',livemode:request.headers.get('authorization')?.includes('sk_live_')})
-  if(path==='/v1/checkout/sessions')return Response.json({id:'cs_owner_check',url:'https://checkout.stripe.com/c/pay/cs_owner_check'})
+  if(path==='/v1/checkout/sessions'){
+   assert.equal(request.method,'POST')
+   const id='cs_owner_check_'+(++checkouts)
+   return Response.json({id,url:'https://checkout.stripe.com/c/pay/'+id})
+  }
+  if(path.startsWith('/v1/checkout/sessions/cs_owner_check_')){
+   assert.equal(request.method,'GET')
+   return Response.json({id:path.split('/').pop(),status:'complete',payment_status:'paid',metadata:{purpose:'cabin_connection_check'},payment_intent:{status:'succeeded',amount_received:100,currency:'usd'}})
+  }
   assert.fail('Unexpected provider call '+path)
  }})
  try{
@@ -44,6 +52,33 @@ test('only the installation owner can configure Stripe, including against a lega
   assert.equal(managerPage.status,200,managerPage.text);assert.doesNotMatch(managerPage.text,/Connect Stripe|direct\.stripe\.save/)
   assert.equal(ownerPage.status,200,ownerPage.text);assert.match(ownerPage.text,/Connect Stripe/)
   assert.equal((await command(h.owner,'direct.stripe.test',{})).status,200)
+
+  const pending=await provider(h),callsBeforeCheck=providerCalls
+  assert.equal(JSON.parse(pending).check.status,'pending')
+  const managerCheck=await command(manager.cookie,'direct.stripe.check',{})
+  assert.equal(managerCheck.status,403,managerCheck.text);assert.equal(await provider(h),pending)
+  const htmlCheck=cookie=>h.mf.dispatchFetch(h.origin+'/app/action?name=direct.stripe.check&returnTo=%2Fapp%2Fdirect',{method:'POST',headers:{origin:h.origin,cookie,'content-type':'application/x-www-form-urlencoded'},body:'',redirect:'manual'})
+  const managerHtml=await htmlCheck(manager.cookie),managerError=await managerHtml.text()
+  assert.equal(managerHtml.status,200,managerError);assert.match(managerError,/Owner access required/)
+  assert.doesNotMatch(managerError,/Connect Stripe|direct\.stripe\.save/)
+  assert.equal(providerCalls,callsBeforeCheck,'refused HTML setup and error rendering do not reach Stripe')
+  assert.equal(await provider(h),pending,'refused HTML setup leaves the provider row byte-for-byte unchanged')
+
+  const ownerHtml=await htmlCheck(h.owner),ownerResult=await ownerHtml.text()
+  assert.equal(ownerHtml.status,200,ownerResult);assert.match(ownerResult,/Stripe test charge succeeded/)
+  assert.equal(providerCalls,callsBeforeCheck+2,'the owner check reads the balance and checkout')
+  assert.equal(JSON.parse(await provider(h)).check.status,'paid')
+
+  assert.equal((await command(h.owner,'direct.stripe.test',{})).status,200)
+  const nextPending=await provider(h),callsBeforeReturn=providerCalls
+  assert.equal(JSON.parse(nextPending).check.status,'pending')
+  const managerReturn=await h.send('/app/direct',undefined,manager.cookie)
+  assert.equal(managerReturn.status,200,managerReturn.text)
+  assert.equal(providerCalls,callsBeforeReturn);assert.equal(await provider(h),nextPending)
+  const ownerReturn=await h.send('/app/direct',undefined,h.owner)
+  assert.equal(ownerReturn.status,200,ownerReturn.text);assert.match(ownerReturn.text,/Passed — Stripe confirmed a \$1\.00 test payment/)
+  assert.equal(providerCalls,callsBeforeReturn+1,'the owner page still reconciles a pending checkout')
+  assert.equal(JSON.parse(await provider(h)).check.status,'paid')
 
   const p=await h.cmd('property.save',{name:'Manager Booking Home',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000})
   assert.equal((await command(manager.cookie,'direct.configure',{...settings,slug:'manager-booking-home',propertyId:p.id})).status,200)
