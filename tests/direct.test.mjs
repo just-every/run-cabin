@@ -160,6 +160,18 @@ test('direct booking enforces dated rates, notice, buffers, saved terms and chec
   await rate({start:'2030-01-16',end:'2030-01-17',weekday:'all',nightlyCents:25000})
   await h.cmd('direct.rate.save',{propertyId:cfg.propertyId,revision:cfg.revision,start:'2030-01-16',end:'2030-01-19',weekday:3,nightlyCents:20000},h.owner,409)
   const cleaner=await h.person('RateCleaner');await h.cmd('direct.rate.remove',{propertyId:cfg.propertyId,revision:cfg.revision,rateId:cfg.rates[0].id},cleaner.cookie,403)
+  const savePolicy=async input=>{cfg=await h.cmd('direct.cancellation.save',{propertyId:cfg.propertyId,revision:cfg.revision,dateBasis:'arrival',...input})}
+  await savePolicy({start:'2030-01-08',end:'2030-01-10',policyName:'Winter half retained',retainedBps:5000,noShowBps:10000})
+  await savePolicy({start:'2030-01-10',end:'2030-01-12',policyName:'Winter three quarters retained',retainedBps:7500,noShowBps:10000})
+  const beforePolicy=structuredClone(cfg),badPolicy={propertyId:cfg.propertyId,revision:cfg.revision,dateBasis:'arrival',start:'2030-01-09',end:'2030-01-11',policyName:'Overlapping policy',retainedBps:10000}
+  await h.cmd('direct.cancellation.save',badPolicy,h.owner,409)
+  await h.cmd('direct.cancellation.save',{...badPolicy,start:'2030-02-30',end:'2030-03-03'},h.owner,400)
+  await h.cmd('direct.cancellation.save',{...badPolicy,start:'2030-02-01',end:'2030-02-03',dateBasis:'booking'},h.owner,400)
+  await h.cmd('direct.cancellation.remove',{propertyId:cfg.propertyId,revision:cfg.revision,policyId:cfg.cancellationRevisions[0].id},cleaner.cookie,403)
+  assert.deepEqual((await h.accessState()).direct.homes[0],beforePolicy,'refused policy writes change nothing')
+  for(const [start,end,bps] of [['2030-01-07','2030-01-09',2500],['2030-01-08','2030-01-10',5000],['2030-01-09','2030-01-11',5000],['2030-01-10','2030-01-12',7500],['2030-01-11','2030-01-13',7500],['2030-01-12','2030-01-14',2500]]){
+   const result=await h.send('/book/pine-ridge/quote',{start,end,guests:2});assert.equal(result.status,200,result.text);assert.equal(result.value.quote.cancellationPolicy.retainedBps,bps);assert.equal(result.value.quote.cancellationPolicy.selection.basis,'arrival');assert.equal(result.value.quote.cancellationPolicy.selection.date,start)
+  }
   const good={start:'2030-01-15',end:'2030-01-18',guests:3}
   let q=await h.send('/book/pine-ridge/quote',good);assert.equal(q.status,200,q.text);assert.deepEqual(q.value.quote.nightlyRates,[{date:'2030-01-15',amountCents:18000},{date:'2030-01-16',amountCents:25000},{date:'2030-01-17',amountCents:18000}]);assert.equal(q.value.quote.rentCents,61000);assert.equal(q.value.quote.extraGuestCents,6000);assert.equal(q.value.quote.totalCents,81950)
   q=await h.send('/book/pine-ridge/quote',{start:'2030-01-17',end:'2030-01-19',guests:2});assert.equal(q.status,200,q.text);assert.equal(q.value.quote.rentCents,36000,'end date is excluded')
@@ -173,9 +185,23 @@ test('direct booking enforces dated rates, notice, buffers, saved terms and chec
   const old=await h.send('/book/pine-ridge/checkout',{...signed,...good});assert.equal(old.status,409);assert.match(old.value.error,/terms changed/)
   await h.cmd('direct.rate.remove',{propertyId:cfg.propertyId,revision:cfg.revision,rateId:cfg.rates.at(-1).id});cfg=(await h.accessState()).direct.homes[0]
   // Use a different stay so the browser's priced dates remain available.
+  await savePolicy({start:day(40),end:day(45),policyName:'Retain one quarter',retainedBps:2500,noShowBps:10000})
+  const unsignedRevision=cfg.revision,staffInput={propertyId:cfg.propertyId,start:day(60),end:day(63),guests:2,guestName:'Policy Guest',email:['synthetic-cabin-2','stay.example'].join('@'),expiresAt:'2030-01-03T17:00:00Z',hold:false}
+  const unsigned=await h.cmd('quote.issue',staffInput),privateLink=await h.send('/api/cabin/quotes/'+unsigned.id+'/link',undefined,h.owner),staffPath=privateLink.headers.get('location')
+  await savePolicy({policyId:cfg.cancellationRevisions[0].id,start:'2030-01-08',end:'2030-01-10',policyName:'Updated winter policy',retainedBps:6000,noShowBps:10000})
+  const beforeCheckout=await h.accessState()
+  const stalePolicy=await h.send('/book/pine-ridge/checkout',{...signed,homeRevision:unsignedRevision,...good});assert.equal(stalePolicy.status,409);assert.match(stalePolicy.value.error,/terms changed/)
+  const staleStaff=await h.send(staffPath+'/checkout',{...staffInput,signature:staffInput.guestName,consent:'yes',homeRevision:cfg.revision,staffQuoteRevision:unsigned.revision});assert.equal(staleStaff.status,409);assert.match(staleStaff.value.error,/terms changed/)
+  const afterCheckout=await h.accessState();assert.deepEqual(afterCheckout.bookings,beforeCheckout.bookings);assert.deepEqual(afterCheckout.direct.stays,beforeCheckout.direct.stays)
   allowPayment=true;const accepted=await h.send('/book/pine-ridge/checkout',{...signed,homeRevision:cfg.revision,start:day(40),end:day(43),guests:3});assert.equal(accepted.status,200,accepted.text);assert.equal(charged,74250)
+  const signedStay=(await h.accessState()).direct.stays[0],signedPolicy=structuredClone(signedStay.quote.cancellationPolicy),signedDocument=(await h.send('/book/stay/'+accepted.value.token+'/agreement')).text
+  const selected=cfg.cancellationRevisions.find(r=>r.id===signedPolicy.selection.revision);assert.ok(selected);assert.equal(signedPolicy.noShowBps,10000)
+  await savePolicy({policyId:selected.id,start:selected.start,end:selected.end,policyName:'Replacement full charge',retainedBps:10000,noShowBps:10000})
+  const currentPolicyId=cfg.cancellationRevisions.find(r=>r.start===selected.start).id
+  cfg=await h.cmd('direct.cancellation.remove',{propertyId:cfg.propertyId,revision:cfg.revision,policyId:currentPolicyId})
   cfg=await h.cmd('direct.configure',{...settings,propertyId:cfg.propertyId,revision:cfg.revision,advanceNoticeDays:2,bookingWindowDays:90,preparationNights:2,policyName:'New full charge',retainedBps:10000})
   await h.restart();const retained=(await h.accessState()).direct.stays[0];assert.equal(retained.quote.cancellationPolicy.retainedBps,2500);assert.match(retained.signature.text,/Retain one quarter/);assert.equal(retained.quote.totalCents,74250);assert.equal((await h.send('/book/stay/'+accepted.value.token+'/agreement')).status,200)
+  assert.deepEqual(retained.quote.cancellationPolicy,signedPolicy);assert.equal((await h.send('/book/stay/'+accepted.value.token+'/agreement')).text,signedDocument)
   const renewed=await h.send('/book/pine-ridge/quote',good);assert.equal(renewed.status,200,renewed.text);assert.equal(renewed.value.quote.totalCents,81950,'editing booking settings retains saved dated rates')
   const whole=await h.cmd('property.save',{name:'Linked rules home',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000}),linked=await h.cmd('direct.configure',{...settings,propertyId:whole.id,slug:'linked-rules',minGapNights:0,preparationNights:2})
   const {a}=await rooms(h,whole);await sourceRoom(h,a,'2030-02-20','2030-02-23')
@@ -320,10 +346,16 @@ test('PAY-003 settles approved claims, rent refunds, saved cancellations and cha
   assert.deepEqual(await totals(first.id),{owner:5000,tax:0,hold:0})
   const damageRefund=await prepare(first.id,'deposit',5000);await approve(first.id,damageRefund)
   assert.deepEqual(await totals(first.id),{owner:0,tax:0,hold:0})
+  cfg=await h.cmd('direct.cancellation.save',{propertyId:cfg.propertyId,revision:cfg.revision,dateBasis:'arrival',start:day(10),end:day(13),policyName:'Dated quarter retained',retainedBps:2500,noShowBps:10000})
   const cancelled=await book(10),cancelledStay=await get(cancelled.id)
+  const savedCancellation=structuredClone(cancelledStay.quote.cancellationPolicy),dated=cfg.cancellationRevisions[0]
+  cfg=await h.cmd('direct.cancellation.save',{propertyId:cfg.propertyId,revision:cfg.revision,dateBasis:'arrival',policyId:dated.id,start:dated.start,end:dated.end,policyName:'Replacement full charge',retainedBps:10000,noShowBps:10000})
+  await h.restart();assert.deepEqual((await get(cancelled.id)).quote.cancellationPolicy,savedCancellation)
+
   await h.db.prepare("UPDATE cb_direct_stays SET data=json_set(data,'$.depositDueAt',?) WHERE id=?").bind(new Date(Date.now()-3600000).toISOString(),cancelled.id).run()
   await h.cmd('direct.refresh',{id:cancelled.id});booking=(await h.state()).bookings.find(b=>b.id===cancelledStay.bookingId)
   await h.cmd('reservation.end',{id:booking.id,revision:booking.revision,outcome:'cancelled',reason:'Guest cancellation request'})
+  assert.deepEqual((await h.state()).bookings.find(b=>b.id===booking.id).lifecycle.policy,savedCancellation)
   const cancelPlan=await prepare(cancelled.id,'settlement');assert.equal(cancelPlan.amounts.totalCents,50737)
   await approve(cancelled.id,cancelPlan);await approve(cancelled.id,cancelPlan)
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal((await get(cancelled.id)).deposit.status,'canceled')

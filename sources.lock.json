@@ -1544,11 +1544,11 @@
       "executable": false
     },
     "src/cabin/direct/admin.ts": {
-      "sha256": "418cb80adf9c6048f12c326dc29036f18c363020dd694202523dc5196fab21f3",
+      "sha256": "74894b20a33bba3867b5fa88073a50fdba2956710f01639a054117f62429aab5",
       "executable": false
     },
     "src/cabin/direct/agreement-text.ts": {
-      "sha256": "c14cf45366fa33a055f6a34d5018589683658bf01d3fdaffca8508c2d72d190b",
+      "sha256": "0b9c203b3cd700f4a0105c9b4e7c642e4fdcfc7895b2460910f97b98449d3bb7",
       "executable": false
     },
     "src/cabin/direct/checkout.ts": {
@@ -1636,7 +1636,7 @@
       "executable": false
     },
     "src/cabin/direct/rules.ts": {
-      "sha256": "75812d5c307c7021bb05b4891260913a41ab69488aafeb3611e5ed05da74f032",
+      "sha256": "d3a02e5706c1ac986686e7635f24d43d1c3a24a3c240f731008d23d3fa0cc6dc",
       "executable": false
     },
     "src/cabin/direct/settlement-ledger.ts": {
@@ -1660,7 +1660,7 @@
       "executable": false
     },
     "src/cabin/direct/types.ts": {
-      "sha256": "c0516e107711787d33ff199cb379a1e55aa26306585baed9e03f57b6ddb7a4ec",
+      "sha256": "88a972becb3f7d2da67e888e694fe6954cd64e239fa89a5116268062fce08a50",
       "executable": false
     },
     "src/cabin/dispatch.ts": {
@@ -2656,7 +2656,7 @@
       "executable": false
     },
     "src/cabin/reservations/types.ts": {
-      "sha256": "5aebca4451751e0c227f83722a3152841e27c97307fdf29a7e21b815483be72c",
+      "sha256": "b740746e2c6d288580f9b126d4ca9df96804c515b66231769a75fce4db39f4c0",
       "executable": false
     },
     "src/cabin/reservations/ui.ts": {
@@ -2784,7 +2784,7 @@
       "executable": false
     },
     "src/cabin/ui/direct.ts": {
-      "sha256": "1fa324a1c475fe7608813152a8cbd4fa752428b67760c4f68c7d2470fc8dcf02",
+      "sha256": "7e253b6811e64d99b56380109a5ce008924212c684e822df65aca3df8ee4d3ac",
       "executable": false
     },
     "src/cabin/ui/fit.ts": {
@@ -4960,11 +4960,11 @@
       "executable": false
     },
     "tests/direct-rules-browser.mjs": {
-      "sha256": "8314e5ab1882773e7a071c8fc922f2350a8b7732aa1cf17c73a174fbbf68a003",
+      "sha256": "0311f760d5d7c331dbb197bee07f07a40ac7fb273cd8b34bdc7896ccdf470f07",
       "executable": false
     },
     "tests/direct.test.mjs": {
-      "sha256": "e5b0583e25048b2ef6f17fc41e85943ede6328cdecaf66d64e71088dd488922c",
+      "sha256": "b8785ba3add3609ebdd3059677b2e6cde63b116040ae8e2a03a84767777f2082",
       "executable": false
     },
     "tests/dispatch.test.mjs": {
@@ -5212,7 +5212,7 @@
       "executable": false
     },
     "tests/quotes-archive.test.mjs": {
-      "sha256": "f54ee2e6d14ba6dfa80139f63af1ac1166ec3a6d39a0cb01588b6272649e4034",
+      "sha256": "c9196789584dc3faee89a92751f794d350b3c927be42ec8ba9d39a9a8c7027a2",
       "executable": false
     },
     "tests/quotes-browser.test.mjs": {

@@ -19,15 +19,27 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   }
   const env={...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'};delete env.RER_LOCAL_OPERATION;delete env.RER_LOCAL_STATE_PATH
   await exec(process.execPath,[resolve('node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','foundation','--local'],{cwd:source,env,maxBuffer:2e6})
-  h=await quoteHarness({root:source});const {a,b}=await rooms(h,h.p);const quote=await h.cmd('quote.issue',h.input),path=await h.link(quote),identity={auth:h.auth,owner:h.owner};await h.close();h=null
+  h=await quoteHarness({root:source});const {a,b}=await rooms(h,h.p)
+  let cfg=await h.cmd('direct.cancellation.save',{propertyId:h.p.id,revision:h.home.revision,dateBasis:'arrival',start:h.input.start,end:h.input.end,policyName:'Saved dated half charge',retainedBps:5000,noShowBps:10000})
+  const quote=await h.cmd('quote.issue',h.input),path=await h.link(quote)
+  const signed=await h.accept(quote,path,{homeRevision:cfg.revision,inventoryRevision:quote.versions[0].price.inventoryRevision});assert.equal(signed.status,200,signed.text)
+  const originalStay=(await h.state()).direct.stays[0],signedPolicy=structuredClone(originalStay.quote.cancellationPolicy),signedText=originalStay.signature.text
+  const dated=cfg.cancellationRevisions[0]
+  cfg=await h.cmd('direct.cancellation.save',{propertyId:h.p.id,revision:cfg.revision,dateBasis:'arrival',policyId:dated.id,start:dated.start,end:dated.end,policyName:'New full charge',retainedBps:10000,noShowBps:10000})
+  const pending=await h.cmd('quote.issue',{...h.input,start:quote.versions[0].price.end,end:new Date(Date.parse(quote.versions[0].price.end)+3*86400000).toISOString().slice(0,10),hold:true})
+  const pendingPath=await h.link(pending),identity={auth:h.auth,owner:h.owner};await h.close();h=null
   const cli=resolve('node_modules/@runeditrun/rer/global/rer.mjs')
   await exec(process.execPath,[cli,'export','--output',archive],{cwd:source,env,maxBuffer:2e6})
   const bytes=await readFile(archive,'utf8');assert.ok(!bytes.includes(path.split('/').at(-1)),'archive omits the private quote capability');assert.match(bytes,/Alex Rivera/,'business terms remain portable')
   await exec(process.execPath,[cli,'import','--input',archive,'--yes'],{cwd:restored,env,maxBuffer:2e6})
   let outbound=0;h=await harness({root:restored,...identity,outbound:()=>{outbound++;assert.fail('Restored quotes must cause no external action')}})
   const cookie=await h.signIn(h.auth.OWNER_EMAIL),saved=await h.state(cookie)
-  assert.deepEqual(saved.propertyProfiles.find(p=>p.propertyId===saved.staffQuotes[0].propertyId).inventoryUnits,[a.id,b.id].sort());assert.equal(saved.staffQuotes.length,1);assert.equal(saved.staffQuotes[0].versions[0].price.totalCents,58300);assert.equal(saved.staffQuotes[0].versions[0].price.cancellationPolicy.retainedBps,5000)
-  assert.equal((await h.send(path)).status,404,'old quote link cannot be accepted after restore');assert.equal(saved.bookings.filter(b=>b.status==='confirmed').length,0,'restored quote holds cannot block new inventory')
+  assert.deepEqual(saved.propertyProfiles.find(p=>p.propertyId===saved.staffQuotes[0].propertyId).inventoryUnits,[a.id,b.id].sort());assert.equal(saved.staffQuotes.length,2);assert.equal(saved.staffQuotes[0].versions[0].price.totalCents,58300);assert.equal(saved.staffQuotes[0].versions[0].price.cancellationPolicy.retainedBps,5000)
+  assert.equal((await h.send(path)).status,404,'old quote link cannot be accepted after restore');assert.equal((await h.send(pendingPath)).status,404);assert.equal(saved.bookings.filter(b=>b.quoteId&&b.status==='confirmed').length,0,'restored quote holds cannot block new inventory')
+  const restoredStay=saved.direct.stays.find(s=>s.id===originalStay.id);assert.deepEqual(restoredStay.quote.cancellationPolicy,signedPolicy);assert.equal(restoredStay.signature.text,signedText);assert.equal(restoredStay.restored,true)
+  assert.equal(saved.direct.homes[0].cancellationRevisions[0].policy.retainedBps,10000)
+  assert.equal((await h.send('/book/stay/'+signed.value.token)).status,404,'restored signed capability stays inactive')
+  await h.restart();const restarted=await h.state(cookie);assert.deepEqual(restarted.direct.stays.find(s=>s.id===originalStay.id).quote.cancellationPolicy,signedPolicy);assert.equal(restarted.direct.stays.find(s=>s.id===originalStay.id).signature.text,signedText)
   await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'});assert.equal(outbound,0)
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
 })

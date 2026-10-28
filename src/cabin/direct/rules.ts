@@ -26,5 +26,12 @@ export function quote(home:DirectHome,bookings:Booking[],input:Record<string,unk
  const taxes:Quote['taxes']=[];for(const [label,bps,jurisdiction]of [[home.taxLabel,home.taxBps,'state'],[home.countyTaxLabel,home.countyTaxBps,'county']] as const)if(bps)taxes.push({label,bps,jurisdiction,amountCents:Math.floor((base*bps+5000)/10000)})
  const totalCents=base+taxes.reduce((s,t)=>s+t.amountCents,0);need(Number.isSafeInteger(totalCents)&&totalCents<=99_999_999,'This quote exceeds the payment limit')
  const inventoryRevision=capacity.propertyProfiles?.find(p=>p.propertyId===home.propertyId)?.revision
- return {...(home.rates?.length?{nightlyRates}:{}),...(inventoryRevision?{inventoryRevision}:{}),cancellationPolicy:structuredClone(home.cancellationPolicy),start,end,guests,nights,nightlyCents:home.nightlyCents,rentCents,...(offer?{baseRentCents,discountCents,returningGuest:{offerId:offer.id,guestId:offer.guestId,name:offer.guestName,discountBps:1000}}:{}),cleaningCents:home.cleaningCents,extraGuestCents,taxes,totalCents,depositCents:home.depositCents}
+ return {...(home.rates?.length?{nightlyRates}:{}),...(inventoryRevision?{inventoryRevision}:{}),cancellationPolicy:selectedCancellation(home,start),start,end,guests,nights,nightlyCents:home.nightlyCents,rentCents,...(offer?{baseRentCents,discountCents,returningGuest:{offerId:offer.id,guestId:offer.guestId,name:offer.guestName,discountBps:1000}}:{}),cleaningCents:home.cleaningCents,extraGuestCents,taxes,totalCents,depositCents:home.depositCents}
+}
+
+/** Arrival is the property's calendar date, independent of booking time and checkout. */
+export function selectedCancellation(home:DirectHome,arrival:string){
+ const selected=home.cancellationRevisions?.find(r=>r.start<=arrival&&arrival<r.end)
+ need(home.cancellationPolicy,'The host must review and save the cancellation policy before accepting new reservations.',409)
+ return {...structuredClone(selected?.policy??home.cancellationPolicy),selection:{basis:'arrival' as const,date:arrival,revision:selected?.id??home.revision,start:selected?.start??null,end:selected?.end??null}}
 }

@@ -38,6 +38,15 @@ function datedRates(home:any){
  return `<details><summary>Seasonal and weekday rates</summary><p>Each rate starts on its first date and ends before its end date. Nights outside these rules use the normal nightly rate. Overlapping rules for the same weekday are refused. Rates affect new quotes; existing stays retain their agreed price.</p>${(home.rates??[]).map((r:any)=>`<article><p>${h(r.start)} to ${h(r.end)} (end excluded) · ${h(r.weekday===null?'Every day':days[r.weekday])} · ${h(money(r.nightlyCents))} per night</p>${form('direct.rate.remove','direct',reference+hidden('rateId',r.id),'Remove dated rate','class="quiet"')}</article>`).join('')}${form('direct.rate.save','direct',reference+`<div class="pair">${field('start','Rate start','date')}${field('end','Rate end (excluded)','date')}</div><label>Rate weekday<select name="weekday" aria-label="Rate weekday"><option value="all">Every day</option>${days.map((d,i)=>`<option value="${i}">${d}</option>`).join('')}</select></label>`+dollars('nightlyCents','Dated nightly rate','',1),'Add dated rate')}<p>OTA rate and restriction publication is not available. These rules govern native quotes and direct checkout.</p></details>`
 }
 
+function datedCancellation(home:any){
+ const reference=hidden('propertyId',home.propertyId)+hidden('revision',home.revision)
+ const fields=(r?:any)=>hidden('dateBasis','arrival')+(r?hidden('policyId',r.id):'')
+  +`<div class="pair">${field('start','Policy arrival start','date',r?.start??'')}${field('end','Policy arrival end (excluded)','date',r?.end??'')}</div>`
+  +field('policyName','Dated cancellation description','text',r?.policy.name??'','maxlength="300"')
+  +`<div class="pair">${percent('retainedBps','Dated cancellation charge',r?.policy.retainedBps??0)}${percent('noShowBps','Dated no-show charge',r?.policy.noShowBps??0)}</div>`
+ return `<details><summary>Dated cancellation policies</summary><p>Selected by the property-local arrival date, not the booking date or checkout date. The start is included; the end is excluded. Arrival dates without a revision use the default cancellation policy in booking settings. Revisions cannot overlap. Changes affect unsigned quotes; signed stays retain their exact policy.</p>${(home.cancellationRevisions??[]).map((r:any)=>`<article><p>${h(r.start)} to ${h(r.end)} (end excluded) · ${h(r.policy.name)} · ${h(rate(r.policy.retainedBps))} cancellation; ${h(rate(r.policy.noShowBps))} no-show</p><details><summary>Edit dated policy</summary>${form('direct.cancellation.save','direct',reference+fields(r),'Save policy revision')}</details>${form('direct.cancellation.remove','direct',reference+hidden('policyId',r.id),'Remove dated policy','class="quiet"')}</article>`).join('')}${form('direct.cancellation.save','direct',reference+fields(),'Add dated policy')}</details>`
+}
+
 function homeSettings(state: any, property: any) {
   const saved = state.direct.homes.find((home: any) => home.propertyId === property.id)
   const home = saved ?? {
@@ -60,7 +69,7 @@ function homeSettings(state: any, property: any) {
     + integer('minGapNights', 'Minimum gap between stays (nights)', home.minGapNights)
     + `<div class="pair">${integer('advanceNoticeDays','Advance notice (days)',home.advanceNoticeDays??0)}${integer('bookingWindowDays','Booking window (days)',home.bookingWindowDays??730,1)}</div>`
     + integer('preparationNights','Preparation nights before and after a stay',home.preparationNights??0)
-    + '<h3>Cancellation policy</h3><p class="muted">Saved with every new quote and signed agreement. Existing stays retain their original terms.</p>'
+    + '<h3>Default cancellation policy</h3><p class="muted">Used when no dated policy matches the property-local arrival date. Saved with every new quote and signed agreement. Existing stays retain their original terms.</p>'
     + field('policyName','Cancellation policy description','text',home.cancellationPolicy?.name??'No cancellation or no-show charge. Refunds are reviewed by the host.','maxlength="300"')
     + `<div class="pair">${percent('retainedBps','Cancellation charge',home.cancellationPolicy?.retainedBps??0)}${percent('noShowBps','No-show charge',home.cancellationPolicy?.noShowBps??0)}</div>`
     + '<h3>Damage deposit</h3>'
@@ -70,7 +79,7 @@ function homeSettings(state: any, property: any) {
     + `<div class="pair">${optional('countyTaxLabel', 'County tax label', home.countyTaxLabel)}${percent('countyTaxBps', 'County tax rate', home.countyTaxBps)}</div>`
     + '<h3>Guest agreement and identity</h3>' + area('agreement', 'Agreement guests must sign', home.agreement, 'maxlength="20000"')
     + verificationPolicyFields(state,home)
-  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
+  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}${datedCancellation(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
 }
 
 function quote(stay: any) {

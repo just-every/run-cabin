@@ -1,6 +1,8 @@
 import type { VerificationPolicy } from '../verification/types'
 export interface NightlyRate { id:string; start:string; end:string; weekday:number|null; nightlyCents:number }
+export interface CancellationRevision { id:string; start:string; end:string; policy:import('../reservations/types').CancellationPolicy }
 export interface DirectHome {
+ cancellationRevisions?:CancellationRevision[];
  rates?:NightlyRate[]; advanceNoticeDays?:number; bookingWindowDays?:number; preparationNights?:number;
  cancellationPolicy?:import('../reservations/types').CancellationPolicy;
  verificationPolicy?:VerificationPolicy;

@@ -1,6 +1,6 @@
 import type { ManagementTerms } from '../properties/terms'
 export interface ReservationPrice { rentCents:number; feesCents:number; taxCents:number; totalCents:number }
-export interface CancellationPolicy { known?:boolean; name:string; freeUntil:string|null; retainedBps:number; noShowBps:number }
+export interface CancellationPolicy { selection?:{basis:'arrival';date:string;revision:string;start:string|null;end:string|null}; known?:boolean; name:string; freeUntil:string|null; retainedBps:number; noShowBps:number }
 export interface ReservationVersion {
  revision:string; at:string; by:string; reason:string; propertyId:string; start:string; end:string;
  guestName:string; guestEmail?:string; guestPhone?:string; arrivalTime?:string; departureTime?:string; status:string;
