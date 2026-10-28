@@ -12,6 +12,9 @@ export async function validateStaged({ db, tables }) {
  for (const name of ['cb_qbo_mappings','cb_qbo_entries','cb_qbo_batches','cb_records','cb_direct_stays','cb_verifications','cb_provider_sharing','cb_direct_homes','cb_tax_deliveries','cb_provider_moveins']) {
   for await (const row of rows(name)) if (JSON.stringify(exportRow(name,row)) !== JSON.stringify(row)) throw Error('Archive contains active provider work or private capabilities: '+name)
  }
+ for(const name of ['agent_door_approvals','agent_door_reviews'])if(tables[name]){
+  for await(const row of rows(name))if(JSON.stringify(exportRow(name,row))!==JSON.stringify(row))throw Error('Archive contains active agent authority: '+name)
+ }
  for await (const row of rows('cb_ledger_journals')) {
   const journal=JSON.parse(row.data)
   if (journal.lines.reduce((n,l)=>n+l.debitCents-l.creditCents,0)!==0) throw Error('Archive ledger is not balanced.')

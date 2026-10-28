@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "56c69d32e9e956b941e7e14247dd1e91417cf0b4f44f51808485990f0b129305",
+      "sha256": "bf3a3d5519c7d1f1fd5cbce2ddbd48a2b456675f901e482d7a8cd8cb6a13dcb8",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -432,7 +432,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "83dec0039cbf68b49b345d531cbeeffba0ca623bcd50af04f1d7f37ad403ac13",
+      "sha256": "5482d7c737fcd844c4d2055c31c09af51b03c3155751249eb846ddd63188b948",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -601,6 +601,10 @@
     },
     "migrations/core/0067_business_people.sql": {
       "sha256": "51aa39622d866b987d71b6e37c9a8300e7f24c54a55611edaab669ed051b01cd",
+      "executable": false
+    },
+    "migrations/core/0068_agent_people.sql": {
+      "sha256": "caf98890bc655719a1a543e3fd984c90b1c3449b8c79914bd8a031074537bed0",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1364,7 +1368,7 @@
       "executable": false
     },
     "src/cabin/agent-door/people.ts": {
-      "sha256": "4f452e6925759ddaef55e71e5552d4af973f3b1b9529a65d097dc68240cc30bf",
+      "sha256": "c8ca12c83806a66659f21e2412439e94120f3224ed0cfe408ca47d8b2c04c968",
       "executable": false
     },
     "src/cabin/agent-door/records.ts": {
@@ -1400,7 +1404,7 @@
       "executable": false
     },
     "src/cabin/archive-policy.mjs": {
-      "sha256": "9e5615af4cc894a99184bd36bf4c65768ca6adb9e275636a3db6a46e3e3d274c",
+      "sha256": "235aebf1aecf37c134fb5bb0eeb167cf2658ed3b3a211eecf37fb07c23f7f801",
       "executable": false
     },
     "src/cabin/archive/inter-font.json": {
@@ -1420,7 +1424,7 @@
       "executable": false
     },
     "src/cabin/archive/transform.mjs": {
-      "sha256": "c5421c4cc30cfa575703535010026afa39ea3b21dbe70932945e37d478ab9fb3",
+      "sha256": "b88aa8b5e11376106a80f8652a26cee2ad0144dbcf9a8560b626e177bf9b7d6e",
       "executable": false
     },
     "src/cabin/archive/ui.ts": {
@@ -1428,7 +1432,7 @@
       "executable": false
     },
     "src/cabin/archive/validate.mjs": {
-      "sha256": "7dd739afee9fee8bb1c9b5d1ed4f35ffffee5eec1ff77bf47cc384dc4990abb2",
+      "sha256": "ff536ecf8d8d59004ea5383da51eeef2350007b4d8a0077870bcad6335a9fc1a",
       "executable": false
     },
     "src/cabin/audit/imports.ts": {

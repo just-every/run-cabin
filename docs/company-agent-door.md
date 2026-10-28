@@ -22,7 +22,9 @@ team operator ID. Business never creates a substitute Cabin grant. A native
 owner first grants the person's role and properties through Properties & people;
 the signed roster then binds that admitted identity. Unknown, inactive,
 allow-list-excluded and unadmitted people cannot sponsor an agent. Changing
-either email cannot move an established binding. Business owner maps to owner,
+either email cannot move an established binding. A signed team binding also
+retains the native member-grant ID; a changed address cannot select another
+person's grant. Business owner maps to owner,
 Business team admin to policy editor, and member to no policy role; a local
 promotion does not create a Business role.
 
@@ -44,3 +46,8 @@ manifest's real setup-token POST, then uses native commands for rental fixtures.
 The declared tools make no provider requests, so no test network edge is declared.
 There is no provider cost registration or enforced spend reservation. The
 journey declares `spend: {none: true}`.
+
+Backups retain door audit, events and historical decisions. They omit signed
+Business bindings, policy, agent admission and replay state; pending approvals
+expire and saved Undo payloads are removed. Restoring an archive requires fresh
+Business pairing and policy before any new agent action.
