@@ -136,7 +136,7 @@
       "text": "**CABIN-04 \u2014 Turnovers, door codes and cleaner notices.** Every confirmed stay from any channel creates one turnover between its check-out and the next check-in, a guest door code for the stay and, once assigned, the cleaner's own code for the window; the cleaner is emailed the window, address and code, and a moved or canceled stay re-emails or cancels it.",
       "to": "clause",
       "ids": [
-        "OPS-001"
+        "OPS-005"
       ]
     },
     {
@@ -554,7 +554,25 @@
     {
       "file": "CONTRACT.md",
       "line": 148,
-      "text": "For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Every action is logged with who acted, what they did, when and a screenshot, with secrets protected under SECURITY-001. At any CAPTCHA, 2FA challenge or terms prompt, the agent stops and hands control back to the host; it never solves or bypasses them or accepts terms for the host. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the channel-specific terms risks below, the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (owner decision, 19 Oct 2026); the broader channel-management requirements remain in SYNC-002\u2013010.",
+      "text": "For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Every action is logged with who acted, what they did, when and a screenshot, with secrets protected under SECURITY-001. ",
+      "to": "clause",
+      "ids": [
+        "SYNC-011"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 148,
+      "text": "At any CAPTCHA, 2FA challenge or terms prompt, the agent stops and hands control back to the host; it never solves or bypasses them or accepts terms for the host.",
+      "to": "base",
+      "ids": [
+        "BASE-AGENT-008"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 148,
+      "text": " Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the channel-specific terms risks below, the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (owner decision, 19 Oct 2026); the broader channel-management requirements remain in SYNC-002\u2013010.",
       "to": "clause",
       "ids": [
         "SYNC-011"
@@ -927,7 +945,8 @@
       "text": "When a Booking.com reservation uses property collect (Booking.com\u2019s hotel-collect model, where the property rather than Booking.com charges the guest), the guest\u2019s card arrives through the channel connection and is tokenized straight into Stripe\u2019s vault; Cabin never stores, logs or shows the full card number or security code, and keeps only the token reference, brand, last four digits and expiry. That token becomes the reservation\u2019s payment mandate, and PAY-002 charges it on the reservation\u2019s saved deposit and balance schedule with the same idempotency and replay protection as every other collection job. A permitted role can report a declined or invalid card to Booking.com from the reservation\u2019s Payments section, once per card: Cabin records the report as made only when Booking.com acknowledges it, and a repeated click or replayed job sends nothing further. After acknowledgment the reservation shows the guest\u2019s deadline to supply new card details as Booking.com states it (normally 24 hours), and an assigned exception escalates before and at that deadline. An updated card from Booking.com is tokenized the same way, replaces the mandate, retries the failed charge and resumes the schedule. If no valid card arrives by the deadline, Cabin offers the penalty-free cancellation Booking.com\u2019s invalid-card process allows; a human confirms it, and Cabin records the cancellation, reopens inventory through SYNC-006 and suppresses future collection only after Booking.com acknowledges it. Collected amounts post to the reservation\u2019s trust subledger (FIN-001) and reconcile in FIN-002, where Booking.com\u2019s commission on a property-collect stay is a payable on Booking.com\u2019s commission invoice to the property, never netted from a payout. A property-collect Booking.com guest card received under PAY-006 is the reservation\u2019s authorized mandate for its saved deposit and balance schedule.",
       "to": "clause",
       "ids": [
-        "PAY-006"
+        "PAY-006",
+        "PAY-007"
       ]
     },
     {
@@ -936,7 +955,8 @@
       "text": "**Acceptance evidence:** Receive three property-collect Booking.com test reservations through the connection and confirm no full card number or security code appears in any read, export, log or archive. On the first, verify the deposit and balance each charge on schedule exactly once, including after a replayed callback and a rerun job. On the second, decline the card, report it invalid from the reservation and repeat the report; verify a single report, Booking.com\u2019s acknowledgment, and the guest deadline with an assigned exception. Deliver an updated card from Booking.com and verify the failed charge retries once and the schedule resumes. Leave the third reservation\u2019s declined card un-updated past its deadline; verify the penalty-free cancellation is offered, confirmed by a human and acknowledged by Booking.com, that inventory reopens and that no further charge is attempted. Reconcile the collected amounts and the Booking.com commission invoice to each reservation and its owner statement line. The collection job runs through PAY-002's schedule, authority, receipt and reconciliation.",
       "to": "clause",
       "ids": [
-        "PAY-006"
+        "PAY-006",
+        "PAY-007"
       ]
     },
     {
@@ -3341,7 +3361,7 @@
       "text": "**CABIN-04 \u2014 Turnovers, door codes and cleaner notices \u00b7 done.** Confirm, move and cancel channel and direct stays; verify one turnover per stay, time-scoped guest/cleaner codes and the corresponding cleaner emails.",
       "to": "clause",
       "ids": [
-        "OPS-001"
+        "OPS-005"
       ]
     },
     {
@@ -4151,7 +4171,8 @@
       "text": "**PAY-006 \u2014 Booking.com property-collect guest cards \u00b7 missing.** Receive three property-collect Booking.com test reservations through the connection and confirm no full card number or security code appears in any read, export, log or archive. On the first, verify the deposit and balance each charge on schedule exactly once, including after a replayed callback and a rerun job. On the second, decline the card, report it invalid from the reservation and repeat the report; verify a single report, Booking.com\u2019s acknowledgment, and the guest deadline with an assigned exception. Deliver an updated card from Booking.com and verify the failed charge retries once and the schedule resumes. Leave the third reservation\u2019s declined card un-updated past its deadline; verify the penalty-free cancellation is offered, confirmed by a human and acknowledged by Booking.com, that inventory reopens and that no further charge is attempted. Reconcile the collected amounts and the Booking.com commission invoice to each reservation and its owner statement line. The collection job runs through PAY-002's schedule, authority, receipt and reconciliation.",
       "to": "clause",
       "ids": [
-        "PAY-006"
+        "PAY-006",
+        "PAY-007"
       ]
     },
     {
@@ -5268,301 +5289,951 @@
     {
       "file": "docs/CLAIMS.md",
       "line": 11,
-      "text": "| 1 | Hero | \"syncs Airbnb, Vrbo and Booking.com\" | code | Live iCal both ways for all three: each home polls its Airbnb, Vrbo and Booking.com calendar links on a 15\u201360 minute Cron and shows last-synced time and errors (`src/cabin/channels.ts`, `src/cabin/ui/channels.ts`, `src/server.ts` `scheduled`); each home publishes its own Cabin export link per channel (`src/cabin/ical-export.ts`). Independently named external iCal feeds import inventory blocks without guest messages or charges; failed feeds retain blocks and show an assigned exception until recovery (`tests/calendars-sync.test.mjs`, SYNC-009 done). Channel partner APIs (SYNC-002\u2013004) are later, and Cabin's Channels page says so. On RER Managed, links show \"not available yet\" until its provider relay. `tests/cabin.test.mjs` (line 143). |",
+      "text": "| 1 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 11,
+      "text": " \"syncs Airbnb, Vrbo and Booking.com\" ",
+      "to": "copy",
+      "of": 654
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 11,
+      "text": "| code | Live iCal both ways for all three: each home polls its Airbnb, Vrbo and Booking.com calendar links on a 15\u201360 minute Cron and shows last-synced time and errors (`src/cabin/channels.ts`, `src/cabin/ui/channels.ts`, `src/server.ts` `scheduled`); each home publishes its own Cabin export link per channel (`src/cabin/ical-export.ts`). Independently named external iCal feeds import inventory blocks without guest messages or charges; failed feeds retain blocks and show an assigned exception until recovery (`tests/calendars-sync.test.mjs`, SYNC-009 done). Channel partner APIs (SYNC-002\u2013004) are later, and Cabin's Channels page says so. On RER Managed, links show \"not available yet\" until its provider relay. `tests/cabin.test.mjs` (line 143). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 12,
-      "text": "| 2 | Hero | \"answers your guests\" | code | Every guest message gets a drafted reply from the install's own AI key or a template, and the host sends it by email from the guest's thread: `src/cabin/inbox/drafts.ts`, `src/cabin/inbox/commands.ts`, `src/cabin/ui/inbox.ts`, `tests/inbox.test.mjs`. MESSAGE-001, MESSAGE-004. |",
+      "text": "| 2 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 12,
+      "text": " \"answers your guests\" ",
+      "to": "copy",
+      "of": 655
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 12,
+      "text": "| code | Every guest message gets a drafted reply from the install's own AI key or a template, and the host sends it by email from the guest's thread: `src/cabin/inbox/drafts.ts`, `src/cabin/inbox/commands.ts`, `src/cabin/ui/inbox.ts`, `tests/inbox.test.mjs`. MESSAGE-001, MESSAGE-004. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 13,
-      "text": "| 3 | Hero | \"sends the cleaner\" | code | Every reservation, from any channel or direct, is dispatched to the home's default cleaner, who is emailed the turnover window, address and door code; reassigning re-notifies both cleaners, and a moved or cancelled stay re-emails or cancels (`src/cabin/dispatch.ts`, `src/cabin/notices.ts`, `src/cabin/notify.ts`, `src/cabin/turnovers.ts` `turnover.assign`). Without a mail provider (and always in development) the job says the email was not sent. Configured homes use cleaner acceptance, daily job/work/drive capacity and manager-entered travel routes, with eligible backup offers after decline or cancellation (`src/cabin/dispatch/`, `tests/dispatch.test.mjs`; OPS-001). `tests/turnovers.test.mjs` (line 15). |",
+      "text": "| 3 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 13,
+      "text": " \"sends the cleaner\" ",
+      "to": "copy",
+      "of": 656
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 13,
+      "text": "| code | Every reservation, from any channel or direct, is dispatched to the home's default cleaner, who is emailed the turnover window, address and door code; reassigning re-notifies both cleaners, and a moved or cancelled stay re-emails or cancels (`src/cabin/dispatch.ts`, `src/cabin/notices.ts`, `src/cabin/notify.ts`, `src/cabin/turnovers.ts` `turnover.assign`). Without a mail provider (and always in development) the job says the email was not sent. Configured homes use cleaner acceptance, daily job/work/drive capacity and manager-entered travel routes, with eligible backup offers after decline or cancellation (`src/cabin/dispatch/`, `tests/dispatch.test.mjs`; OPS-001). `tests/turnovers.test.mjs` (line 15). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 14,
-      "text": "| 4 | Hero | \"and the door code\" | code | Cabin issues each stay a guest code (check-in to check-out) and each assigned turnover a cleaner code (its window), emails the cleaner theirs and shows the guest theirs on a secret stay page (`src/cabin/codes.ts`, `src/cabin/guest.ts`). Pushing codes to a smart lock goes through a Seam adapter (`src/cabin/locks.ts`) tested against Seam-shaped fixtures; the owner's Seam account is a later step, so codes are set on the keypad by hand and Cabin's Turnovers page says so (on RER Managed, \"not available yet\" until its provider relay). OPS-005. `tests/turnovers.test.mjs` (line 15). |",
+      "text": "| 4 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 14,
+      "text": " \"and the door code\" ",
+      "to": "copy",
+      "of": 657
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 14,
+      "text": "| code | Cabin issues each stay a guest code (check-in to check-out) and each assigned turnover a cleaner code (its window), emails the cleaner theirs and shows the guest theirs on a secret stay page (`src/cabin/codes.ts`, `src/cabin/guest.ts`). Pushing codes to a smart lock goes through a Seam adapter (`src/cabin/locks.ts`) tested against Seam-shaped fixtures; the owner's Seam account is a later step, so codes are set on the keypad by hand and Cabin's Turnovers page says so (on RER Managed, \"not available yet\" until its provider relay). OPS-005. `tests/turnovers.test.mjs` (line 15). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 15,
-      "text": "| 5 | Hero | \"turns every payout into an owner statement\" | partial | Imported Airbnb and Vrbo USD payouts match stays and become frozen monthly statements, with paid owner expenses, review and owner delivery. Stripe USD settlement reader is tested at the network edge; live Stripe matching still needs an eligible automatic USD payout (fleet test account settles AUD). `src/cabin/finance/`, `statements.ts`, `tests/finance.test.mjs`; FIN-002, FIN-004. Financial exception cases retain imported frozen statements as source evidence and link later-period corrections without rewriting released documents; bank records must match this reservation before resolving a bank request (`tests/ledger.test.mjs`). AGENT-002 remains partial for actual distribution and remaining provider and accounting workflows. |",
+      "text": "| 5 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 15,
+      "text": " \"turns every payout into an owner statement\" ",
+      "to": "copy",
+      "of": 658
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 15,
+      "text": "| partial | Imported Airbnb and Vrbo USD payouts match stays and become frozen monthly statements, with paid owner expenses, review and owner delivery. Stripe USD settlement reader is tested at the network edge; live Stripe matching still needs an eligible automatic USD payout (fleet test account settles AUD). `src/cabin/finance/`, `statements.ts`, `tests/finance.test.mjs`; FIN-002, FIN-004. Financial exception cases retain imported frozen statements as source evidence and link later-period corrections without rewriting released documents; bank records must match this reservation before resolving a bank request (`tests/ledger.test.mjs`). AGENT-002 remains partial for actual distribution and remaining provider and accounting workflows. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 16,
-      "text": "| 6 | Hero | \"100% free, open source alternative to Guesty, Hostaway and OwnerRez\" | code (free, open source) | `LICENSE` (MIT); no author licence, property/staff allowance or paid feature tier. OPEN-001 is done: a public clone used 40 homes, 25 invited staff and every linked product area, with provider costs and their source shown before owner authorization (`docs/free-source.md`, `src/cabin/connections/`). \"Alternative to\" rests on the target contract as a whole (BOUNDARY-001). |",
+      "text": "| 6 | Hero |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 16,
+      "text": " \"100% free, open source alternative to Guesty, Hostaway and OwnerRez\" ",
+      "to": "copy",
+      "of": 659
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 16,
+      "text": "| code (free, open source) | `LICENSE` (MIT); no author licence, property/staff allowance or paid feature tier. OPEN-001 is done: a public clone used 40 homes, 25 invited staff and every linked product area, with provider costs and their source shown before owner authorization (`docs/free-source.md`, `src/cabin/connections/`). \"Alternative to\" rests on the target contract as a whole (BOUNDARY-001). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 17,
-      "text": "| 7 | Hero tags | Ready \u2713 \u00b7 Pine Ridge Cabin; Checked out 10:00 am \u00b7 Sandy Shores | code | \"Ready \u2713\": Readiness marks a home ready when the turnover before its next arrival is done with its photos and nothing blocks it (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). \"Checked out\": the cleaner's \"Guests have left\" (or a manager's entry) records the actual check-out time on the turnover, shown on Turnovers and Readiness (`src/cabin/turnovers.ts` `turnover.checkout`). Check-out from lock events or a guest portal remains contract (OPS-008). `tests/turnovers.test.mjs` (line 15). |",
+      "text": "| 7 | Hero tags |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 17,
+      "text": " Ready \u2713 \u00b7 Pine Ridge Cabin; Checked out 10:00 am \u00b7 Sandy Shores ",
+      "to": "copy",
+      "of": 660
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 17,
+      "text": "| code | \"Ready \u2713\": Readiness marks a home ready when the turnover before its next arrival is done with its photos and nothing blocks it (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). \"Checked out\": the cleaner's \"Guests have left\" (or a manager's entry) records the actual check-out time on the turnover, shown on Turnovers and Readiness (`src/cabin/turnovers.ts` `turnover.checkout`). Check-out from lock events or a guest portal remains contract (OPS-008). `tests/turnovers.test.mjs` (line 15). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 18,
-      "text": "| 8 | Hero tags | Guest arriving 4 pm \u00b7 Airbnb \u00b7 Lake Loft | code | Each stay carries a guest name and arrival time from the feed (\"Reserved - Name\") or entered by a manager (`booking.details`, `src/cabin/inventory.ts`); the calendar grid bar and \"Arrivals in the next two weeks\" show guest, time, channel and home (`src/cabin/ui/calendar-grid.ts`, `src/cabin/ui/requests.ts`). OPS-008 day board remains contract. |",
+      "text": "| 8 | Hero tags |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 18,
+      "text": " Guest arriving 4 pm \u00b7 Airbnb \u00b7 Lake Loft ",
+      "to": "copy",
+      "of": 661
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 18,
+      "text": "| code | Each stay carries a guest name and arrival time from the feed (\"Reserved - Name\") or entered by a manager (`booking.details`, `src/cabin/inventory.ts`); the calendar grid bar and \"Arrivals in the next two weeks\" show guest, time, channel and home (`src/cabin/ui/calendar-grid.ts`, `src/cabin/ui/requests.ts`). OPS-008 day board remains contract. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 19,
-      "text": "| 9 | Hero tags | Door code 4417 active | code | Each door code shows its four digits and whether it is scheduled, active, expired or revoked at the home's local time, on Readiness and Turnovers (`src/cabin/codes.ts` `codeState`, `src/cabin/ui/ops.ts`). \"Active\" means within its window; confirming it on a lock needs the owner's smart-lock account (OPS-005). `tests/turnovers.test.mjs` (line 15). |",
+      "text": "| 9 | Hero tags |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 19,
+      "text": " Door code 4417 active ",
+      "to": "copy",
+      "of": 662
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 19,
+      "text": "| code | Each door code shows its four digits and whether it is scheduled, active, expired or revoked at the home's local time, on Readiness and Turnovers (`src/cabin/codes.ts` `codeState`, `src/cabin/ui/ops.ts`). \"Active\" means within its window; confirming it on a lock needs the owner's smart-lock account (OPS-005). `tests/turnovers.test.mjs` (line 15). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 20,
-      "text": "| 10 | Hero tags | Cleaning \u00b7 Luis \u00b7 Desert Casita | code | Each assigned turnover shows its cleaner, home and window (check-out to the next check-in) to managers and to that cleaner: `src/cabin/dispatch.ts`, `src/cabin/ui/turnovers.ts`, `src/cabin/domain.ts`. `tests/turnovers.test.mjs` (line 15). |",
+      "text": "| 10 | Hero tags |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 20,
+      "text": " Cleaning \u00b7 Luis \u00b7 Desert Casita ",
+      "to": "copy",
+      "of": 663
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 20,
+      "text": "| code | Each assigned turnover shows its cleaner, home and window (check-out to the next check-in) to managers and to that cleaner: `src/cabin/dispatch.ts`, `src/cabin/ui/turnovers.ts`, `src/cabin/domain.ts`. `tests/turnovers.test.mjs` (line 15). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 21,
-      "text": "| 11 | Hero tags | Vrbo request declined \u00b7 overlaps Airbnb | code | A request for held nights is declined with the overlapping stay named, e.g. \"Overlaps Airbnb stay Oct 17 \u2192 Oct 20\", recorded and shown under Recent requests (`src/cabin/inventory.ts` `reservation.request`, `src/cabin/ui/requests.ts`). Requests are taken in Cabin; answering them inside Vrbo needs its partner API (SYNC-008, later). `tests/cabin.test.mjs` (line 178). |",
+      "text": "| 11 | Hero tags |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 21,
+      "text": " Vrbo request declined \u00b7 overlaps Airbnb ",
+      "to": "copy",
+      "of": 664
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 21,
+      "text": "| code | A request for held nights is declined with the overlapping stay named, e.g. \"Overlaps Airbnb stay Oct 17 \u2192 Oct 20\", recorded and shown under Recent requests (`src/cabin/inventory.ts` `reservation.request`, `src/cabin/ui/requests.ts`). Requests are taken in Cabin; answering them inside Vrbo needs its partner API (SYNC-008, later). `tests/cabin.test.mjs` (line 178). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 22,
-      "text": "| 12 | Booked | \"Booked once. Closed everywhere.\" / \"Seconds later those nights close on Vrbo, Booking.com and your own site\" | partial | The moment a stay is held, the direct booking site stops offering its nights and every channel's Cabin export link lists them (`src/cabin/inventory.ts`, `src/cabin/ical-export.ts`, `src/cabin/direct/`). Channels read those links on their own schedule, so closing within seconds needs the partner APIs (SYNC-002\u2013004) and measured closure latency (SYNC-006). A collision that arrives first is kept and shown as a double booking (`src/cabin/ui/calendar.ts`). `tests/cabin.test.mjs`. |",
+      "text": "| 12 | Booked |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 22,
+      "text": " \"Booked once. Closed everywhere.\" / \"Seconds later those nights close on Vrbo, Booking.com and your own site\" ",
+      "to": "copy",
+      "of": 665
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 22,
+      "text": "| partial | The moment a stay is held, the direct booking site stops offering its nights and every channel's Cabin export link lists them (`src/cabin/inventory.ts`, `src/cabin/ical-export.ts`, `src/cabin/direct/`). Channels read those links on their own schedule, so closing within seconds needs the partner APIs (SYNC-002\u2013004) and measured closure latency (SYNC-006). A collision that arrives first is kept and shown as a double booking (`src/cabin/ui/calendar.ts`). `tests/cabin.test.mjs`. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 23,
-      "text": "| 13 | Booked | Lake Loft calendar: one row per channel (Airbnb, Vrbo, Booking.com, Direct), the stay bar and Closed bars from check-in afternoon to checkout morning | code | Day/week/full-month homes-by-days grid with channel-coloured stay and block bars, property/channel filters and end-exclusive checkout. Each bar opens its payment/readiness state and an authoritative reservation record with local times, turnover, issues and source freshness; unavailable reads show stale/unknown and suppress open-night offers (`src/cabin/ui/calendar.ts`, `calendar-grid.ts`, `calendar-detail.ts`, `tests/calendar.test.mjs`, `docs/portfolio-calendar.md`); RES-001 done, SYNC-001. |",
+      "text": "| 13 | Booked |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 23,
+      "text": " Lake Loft calendar: one row per channel (Airbnb, Vrbo, Booking.com, Direct), the stay bar and Closed bars from check-in afternoon to checkout morning ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 23,
+      "text": "| code | Day/week/full-month homes-by-days grid with channel-coloured stay and block bars, property/channel filters and end-exclusive checkout. Each bar opens its payment/readiness state and an authoritative reservation record with local times, turnover, issues and source freshness; unavailable reads show stale/unknown and suppress open-night offers (`src/cabin/ui/calendar.ts`, `calendar-grid.ts`, `calendar-detail.ts`, `tests/calendar.test.mjs`, `docs/portfolio-calendar.md`); RES-001 done, SYNC-001. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 24,
-      "text": "| 14 | Booked | \"Rates from PriceLabs\" with each night's rate | contract | PRICE-001. Cabin prices direct bookings from each home's own nightly rate (`src/cabin/direct/rules.ts`); no pricing-tool connection yet. |",
+      "text": "| 14 | Booked |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 24,
+      "text": " \"Rates from PriceLabs\" with each night's rate ",
+      "to": "copy",
+      "of": 667
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 24,
+      "text": "| contract | PRICE-001. Cabin prices direct bookings from each home's own nightly rate (`src/cabin/direct/rules.ts`); no pricing-tool connection yet. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 25,
-      "text": "| 15 | Booked | Sync log: each channel's result, Booking.com's \"push failed \u00b7 429 rate limited\" and its retry, \"All channels in sync \u00b7 34 s\" | partial | Each calendar link's last sync, status, error and change count are recorded and shown, and a failed read is retried on the next Cron run (`src/cabin/channels.ts`, `src/cabin/ui/channels.ts`, `src/server.ts` `scheduled`). Pushing to channels, rate-limit handling and a per-push log need the partner APIs: SYNC-007, SYNC-002\u2013004. |",
+      "text": "| 15 | Booked |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 25,
+      "text": " Sync log: each channel's result, Booking.com's \"push failed \u00b7 429 rate limited\" and its retry, \"All channels in sync \u00b7 34 s\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 25,
+      "text": "| partial | Each calendar link's last sync, status, error and change count are recorded and shown, and a failed read is retried on the next Cron run (`src/cabin/channels.ts`, `src/cabin/ui/channels.ts`, `src/server.ts` `scheduled`). Pushing to channels, rate-limit handling and a per-push log need the partner APIs: SYNC-007, SYNC-002\u2013004. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 26,
-      "text": "| 16 | Booked | \"Airbnb \u00b7 reservation HMQ4K2Z9 received\" | partial | Stays arrive from each channel's calendar link with their dates, and a manager adds the guest and arrival time (`booking.details`, `src/cabin/inventory.ts`). Reservation codes and guest details from Airbnb itself need its API: SYNC-002. |",
+      "text": "| 16 | Booked |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 26,
+      "text": " \"Airbnb \u00b7 reservation HMQ4K2Z9 received\" ",
+      "to": "copy",
+      "of": 669
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 26,
+      "text": "| partial | Stays arrive from each channel's calendar link with their dates, and a manager adds the guest and arrival time (`booking.details`, `src/cabin/inventory.ts`). Reservation codes and guest details from Airbnb itself need its API: SYNC-002. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 27,
-      "text": "| 17 | Before arrival | \"Airbnb, Vrbo, Booking.com, text and email arrive in one thread per guest\" | partial | One thread per guest joins their stays from every channel and direct, the scheduled messages and guest email routed to the install's own address (`src/cabin/inbox/threads.ts`, `src/cabin/inbox/inbound.ts`). Texts (Twilio) and channel messages run through adapters tested against documented-shape fixtures and connect later (`src/cabin/inbox/adapters/`, `src/cabin/inbox/setup-help.ts`). MESSAGE-001. |",
+      "text": "| 17 | Before arrival |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 27,
+      "text": " \"Airbnb, Vrbo, Booking.com, text and email arrive in one thread per guest\" ",
+      "to": "copy",
+      "of": 670
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 27,
+      "text": "| partial | One thread per guest joins their stays from every channel and direct, the scheduled messages and guest email routed to the install's own address (`src/cabin/inbox/threads.ts`, `src/cabin/inbox/inbound.ts`). Texts (Twilio) and channel messages run through adapters tested against documented-shape fixtures and connect later (`src/cabin/inbox/adapters/`, `src/cabin/inbox/setup-help.ts`). MESSAGE-001. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 28,
-      "text": "| 18 | Before arrival | \"Scheduled messages go out on time\"; \"Wed 10:00 am \u00b7 Directions and Wi-Fi \u00b7 sent automatically\"; \"Sat 12:00 pm \u00b7 check-in steps \u00b7 scheduled\" | code | Per-home local-time/event templates now cover confirmation, payment/signature/ID reminders, pre-arrival, arrival, checkout, reviews and consented repeat stays. Quiet hours, guest opt-out and current release conditions fence queued sends; access waits for payment, verification and physical readiness. Durable claims show late or uncertain submissions and assigned failures. `src/cabin/inbox/`, `tests/lifecycle.test.mjs`, `docs/lifecycle-messages.md`; MESSAGE-003 done. Hosted authenticated mail and desktop/phone configuration, thread and received-email preference journeys exercised. |",
+      "text": "| 18 | Before arrival |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 28,
+      "text": " \"Scheduled messages go out on time\"; \"Wed 10:00 am \u00b7 Directions and Wi-Fi \u00b7 sent automatically\"; \"Sat 12:00 pm \u00b7 check-in steps \u00b7 scheduled\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 28,
+      "text": "| code | Per-home local-time/event templates now cover confirmation, payment/signature/ID reminders, pre-arrival, arrival, checkout, reviews and consented repeat stays. Quiet hours, guest opt-out and current release conditions fence queued sends; access waits for payment, verification and physical readiness. Durable claims show late or uncertain submissions and assigned failures. `src/cabin/inbox/`, `tests/lifecycle.test.mjs`, `docs/lifecycle-messages.md`; MESSAGE-003 done. Hosted authenticated mail and desktop/phone configuration, thread and received-email preference journeys exercised. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 29,
-      "text": "| 19 | Before arrival | \"and Cabin drafts the rest\" / a reply labelled Draft with Send and Edit | code | Every guest message gets a drafted reply from the install's own AI key or a template; it waits in the thread and only `message.send` sends it (`src/cabin/inbox/drafts.ts`, `src/cabin/inbox/commands.ts`, `tests/inbox.test.mjs`). MESSAGE-004. |",
+      "text": "| 19 | Before arrival |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 29,
+      "text": " \"and Cabin drafts the rest\" / a reply labelled Draft with Send and Edit ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 29,
+      "text": "| code | Every guest message gets a drafted reply from the install's own AI key or a template; it waits in the thread and only `message.send` sends it (`src/cabin/inbox/drafts.ts`, `src/cabin/inbox/commands.ts`, `tests/inbox.test.mjs`). MESSAGE-004. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 30,
-      "text": "| 20 | Before arrival | \"Door code start moved to 2:00 pm\" | code | From the guest thread a human approves an exact reservation revision after verified cleaning/photos and no blocking work. Guest access starts at the approved time; the preceding cleaner window and scheduled facts follow, with one guest confirmation. Manual keypad confirmation is explicit; live lock acceptance still needs a lock account. `src/cabin/inbox/arrival.ts`, `src/cabin/inbox/render.ts`, `tests/replies.test.mjs`; MESSAGE-004, OPS-005. Hosted 2 pm approval and received guest mail exercised at 1440 and 390. |",
+      "text": "| 20 | Before arrival |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 30,
+      "text": " \"Door code start moved to 2:00 pm\" ",
+      "to": "copy",
+      "of": 673
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 30,
+      "text": "| code | From the guest thread a human approves an exact reservation revision after verified cleaning/photos and no blocking work. Guest access starts at the approved time; the preceding cleaner window and scheduled facts follow, with one guest confirmation. Manual keypad confirmation is explicit; live lock acceptance still needs a lock account. `src/cabin/inbox/arrival.ts`, `src/cabin/inbox/render.ts`, `tests/replies.test.mjs`; MESSAGE-004, OPS-005. Hosted 2 pm approval and received guest mail exercised at 1440 and 390. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 31,
-      "text": "| 21 | Turnover day | \"Every checkout opens a turnover: the cleaner, the checklist, the photos and a fresh door code for the next guest\" | code | Every stay creates, moves or cancels its turnover between checkout and the next check-in, dispatched to the home's cleaner with their own code; each stay gets its guest code (`src/cabin/dispatch.ts`, `src/cabin/codes.ts`, `src/cabin/turnovers.ts`). OPS-001, OPS-005. `tests/turnovers.test.mjs`. |",
+      "text": "| 21 | Turnover day |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 31,
+      "text": " \"Every checkout opens a turnover: the cleaner, the checklist, the photos and a fresh door code for the next guest\" ",
+      "to": "copy",
+      "of": 674
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 31,
+      "text": "| code | Every stay creates, moves or cancels its turnover between checkout and the next check-in, dispatched to the home's cleaner with their own code; each stay gets its guest code (`src/cabin/dispatch.ts`, `src/cabin/codes.ts`, `src/cabin/turnovers.ts`). OPS-001, OPS-005. `tests/turnovers.test.mjs`. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 32,
-      "text": "| 22 | Turnover day | Luis's phone: today's job with its window, \"Ready 2:41 pm\", the ticked checklist, \"Photos 12 / 12\" and his next job | code | The cleaner's own responsive job list; every checklist item must be ticked and the home's required photos (up to 12) uploaded to mark it ready (`src/cabin/ui/turnovers.ts`, `src/cabin/turnovers.ts`, `src/cabin/photos.ts`). OPS-002 done: private device drafts retain checklist notes and photos offline, and reconnect requires current job/revision review before uploading (`public/cleaner-drafts.js`, `tests/cleaner-mobile.test.mjs`). EVIDENCE-001. |",
+      "text": "| 22 | Turnover day |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 32,
+      "text": " Luis's phone: today's job with its window, \"Ready 2:41 pm\", the ticked checklist, \"Photos 12 / 12\" and his next job ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 32,
+      "text": "| code | The cleaner's own responsive job list; every checklist item must be ticked and the home's required photos (up to 12) uploaded to mark it ready (`src/cabin/ui/turnovers.ts`, `src/cabin/turnovers.ts`, `src/cabin/photos.ts`). OPS-002 done: private device drafts retain checklist notes and photos offline, and reconnect requires current job/revision review before uploading (`public/cleaner-drafts.js`, `tests/cleaner-mobile.test.mjs`). EVIDENCE-001. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 33,
-      "text": "| 23 | Turnover day | \"Desert Casita \u00b7 front door\": Luis's code for his window, the next guest's code for theirs | code | A cleaner code for each assigned turnover's window and a guest code per stay, with no two overlapping codes sharing digits (`src/cabin/codes.ts`). Pushing codes to a lock goes through the Seam adapter once the owner connects an account (`src/cabin/locks.ts`); until then they are set on the keypad by hand. OPS-005. |",
+      "text": "| 23 | Turnover day |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 33,
+      "text": " \"Desert Casita \u00b7 front door\": Luis's code for his window, the next guest's code for theirs ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 33,
+      "text": "| code | A cleaner code for each assigned turnover's window and a guest code per stay, with no two overlapping codes sharing digits (`src/cabin/codes.ts`). Pushing codes to a lock goes through the Seam adapter once the owner connects an account (`src/cabin/locks.ts`); until then they are set on the keypad by hand. OPS-005. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 34,
-      "text": "| 24 | Turnover day | \"Patio light out \u00b7 task added for Dale\" | code | A cleaner reports a broken thing with photos; it becomes a maintenance task for the home's maintenance person, emailed to them (`src/cabin/maintenance.ts`, `src/cabin/ui/maintenance.ts`). OPS-004 is done: vendor acceptance, exact quote/invoice approval, spend limits, inventory closure, evidenced completion, named inspection, owner-linked costs and recurring visits (`src/cabin/work-orders/`, `tests/work-orders.test.mjs`, `docs/maintenance.md`). Hosted workflow and authenticated maintenance mail exercised at 1440 and 390. |",
+      "text": "| 24 | Turnover day |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 34,
+      "text": " \"Patio light out \u00b7 task added for Dale\" ",
+      "to": "copy",
+      "of": 677
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 34,
+      "text": "| code | A cleaner reports a broken thing with photos; it becomes a maintenance task for the home's maintenance person, emailed to them (`src/cabin/maintenance.ts`, `src/cabin/ui/maintenance.ts`). OPS-004 is done: vendor acceptance, exact quote/invoice approval, spend limits, inventory closure, evidenced completion, named inspection, owner-linked costs and recurring visits (`src/cabin/work-orders/`, `tests/work-orders.test.mjs`, `docs/maintenance.md`). Hosted workflow and authenticated maintenance mail exercised at 1440 and 390. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 35,
-      "text": "| 25 | Stay recovery | \"Cabin finds a new cleaner\"; \"Asked 3 nearby cleaners \u00b7 Ana Diaz accepted, arrives 1:30 pm\" | code | A cancelling accepted cleaner triggers offers to up to three eligible approved backups, ranked by manager-entered home-base drive minutes. First eligible acceptance wins after rechecking daily jobs/hours, travel and work windows; the planned arrival is shown. Old access is revoked and assignment/withdrawal mail follows the result (`src/cabin/dispatch/`, `src/cabin/dispatch.ts`, `tests/dispatch.test.mjs`, `docs/turnover-dispatch.md`). Hosted Luis cancellation \u2192 three offers \u2192 Ana acceptance and 1:30 pm arrival proven at 1440 and 390 with received cleaner mail. OPS-001. AGENT-001 also covers exact alternative stays, date rescheduling, inspected field work, verified guest confirmation and original-owner adjustment; its remaining native sandbox point is named in the contract. |",
+      "text": "| 25 | Stay recovery |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 35,
+      "text": " \"Cabin finds a new cleaner\"; \"Asked 3 nearby cleaners \u00b7 Ana Diaz accepted, arrives 1:30 pm\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 35,
+      "text": "| code | A cancelling accepted cleaner triggers offers to up to three eligible approved backups, ranked by manager-entered home-base drive minutes. First eligible acceptance wins after rechecking daily jobs/hours, travel and work windows; the planned arrival is shown. Old access is revoked and assignment/withdrawal mail follows the result (`src/cabin/dispatch/`, `src/cabin/dispatch.ts`, `tests/dispatch.test.mjs`, `docs/turnover-dispatch.md`). Hosted Luis cancellation \u2192 three offers \u2192 Ana acceptance and 1:30 pm arrival proven at 1440 and 390 with received cleaner mail. OPS-001. AGENT-001 also covers exact alternative stays, date rescheduling, inspected field work, verified guest confirmation and original-owner adjustment; its remaining native sandbox point is named in the contract. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 36,
-      "text": "| 26 | Stay recovery | \"resets the door codes\"; \"Code 7102 for Ana \u00b7 1:30 \u2013 4:00 pm\"; \"code 4417 live at 4:00 pm\" | partial | Recovery issues the new cleaner's code for the window and rotates or moves the guest code (`src/cabin/recovery/actions.ts`, `src/cabin/codes.ts`). Manual keypad confirmation remains explicit. Native Seam work now retains per-code claims and reconciles interrupted creation, amendment and removal against the provider (`src/cabin/locks/`, `tests/recovery-authority.test.mjs`); future scheduled codes remain inactive until their window. Verified native recovery remains AGENT-001's sandbox point; complete family coverage remains OPS-005. |",
+      "text": "| 26 | Stay recovery |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 36,
+      "text": " \"resets the door codes\"; \"Code 7102 for Ana \u00b7 1:30 \u2013 4:00 pm\"; \"code 4417 live at 4:00 pm\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 36,
+      "text": "| partial | Recovery issues the new cleaner's code for the window and rotates or moves the guest code (`src/cabin/recovery/actions.ts`, `src/cabin/codes.ts`). Manual keypad confirmation remains explicit. Native Seam work now retains per-code claims and reconciles interrupted creation, amendment and removal against the provider (`src/cabin/locks/`, `tests/recovery-authority.test.mjs`); future scheduled codes remain inactive until their window. Verified native recovery remains AGENT-001's sandbox point; complete family coverage remains OPS-005. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 37,
-      "text": "| 27 | Stay recovery | \"settles it with the guest before she arrives\": \"Megan's 2 pm early check-in no longer fits\", \"Offered 10% off her next stay\", her reply | code | An exactly approved recovery can withdraw an early-arrival promise to the normal check-in and issue a private one-use 10% rent offer for a future stay, within the owner\u2019s saved policy and the guest\u2019s verified contact and consent. Access, cleaner window and scheduled facts follow the revised time; the guest accepts or asks a person for help on the stay page. Closure waits for acceptance plus cleaning/photos/access, and undo revokes an unused offer. Hosted exact approval, changed access, authentic guest mail, guest acceptance and private returning-rate page exercised at 1440 and 390. `src/cabin/recovery/settlement.ts`, `guest.ts`, `src/cabin/guests/offers.ts`, `tests/recovery.test.mjs`; AGENT-003 is done: source-linked guest issues use approved safe instructions, bounded accepted field work, named inspection, guest confirmation and delayed recurrence checks; emergencies immediately reach the named host (`src/cabin/issues/`, `tests/issues.test.mjs`, `docs/guest-issues.md`). Hosted desktop/phone issue and emergency journeys and real guest/field mail were exercised. WEB-005 remains partial for broader promotions.  AGENT-006 is done: separate native recovery action/provider grants, windows and per-stay ceilings; exact revision fencing; pause/revoke and durable evidence-led provider reconciliation (`src/cabin/recovery/`, `tests/recovery-authority.test.mjs`, `docs/recovery-authority.md`). Automatic $75/$100 credit and actual guest email plus desktop/phone authority controls exercised. |",
+      "text": "| 27 | Stay recovery |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 37,
+      "text": " \"settles it with the guest before she arrives\": \"Megan's 2 pm early check-in no longer fits\", \"Offered 10% off her next stay\", her reply ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 37,
+      "text": "| code | An exactly approved recovery can withdraw an early-arrival promise to the normal check-in and issue a private one-use 10% rent offer for a future stay, within the owner\u2019s saved policy and the guest\u2019s verified contact and consent. Access, cleaner window and scheduled facts follow the revised time; the guest accepts or asks a person for help on the stay page. Closure waits for acceptance plus cleaning/photos/access, and undo revokes an unused offer. Hosted exact approval, changed access, authentic guest mail, guest acceptance and private returning-rate page exercised at 1440 and 390. `src/cabin/recovery/settlement.ts`, `guest.ts`, `src/cabin/guests/offers.ts`, `tests/recovery.test.mjs`; AGENT-003 is done: source-linked guest issues use approved safe instructions, bounded accepted field work, named inspection, guest confirmation and delayed recurrence checks; emergencies immediately reach the named host (`src/cabin/issues/`, `tests/issues.test.mjs`, `docs/guest-issues.md`). Hosted desktop/phone issue and emergency journeys and real guest/field mail were exercised. WEB-005 remains partial for broader promotions.  AGENT-006 is done: separate native recovery action/provider grants, windows and per-stay ceilings; exact revision fencing; pause/revoke and durable evidence-led provider reconciliation (`src/cabin/recovery/`, `tests/recovery-authority.test.mjs`, `docs/recovery-authority.md`). Automatic $75/$100 credit and actual guest email plus desktop/phone authority controls exercised. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 38,
-      "text": "| 28 | Stay recovery | \"Checklist 18 / 18 \u00b7 photos 14 / 14\"; \"Lake Loft ready\"; \"Resolved 3:32 pm\" | code | The case closes only after the replacement cleaner's completed checklist, required photos, confirmed access and accepted guest email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). Closure also waits for verified guest confirmation and a person\u2019s separate follow-up; unresolved channel, access or balance outcomes keep it open. Production SendGrid readiness mail has an authenticated QA receipt through `tests/recovery-mail-sandbox.mjs`. The native sandbox point remains AGENT-001; broader evidence provenance remains EVIDENCE-001. OPS-003 is done: recovery closure also requires attested supplies/access and named inspector acceptance (`src/cabin/readiness/`, `tests/readiness.test.mjs`, `tests/recovery.test.mjs`). |",
+      "text": "| 28 | Stay recovery |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 38,
+      "text": " \"Checklist 18 / 18 \u00b7 photos 14 / 14\"; \"Lake Loft ready\"; \"Resolved 3:32 pm\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 38,
+      "text": "| code | The case closes only after the replacement cleaner's completed checklist, required photos, confirmed access and accepted guest email (`src/cabin/recovery/commands.ts`; `tests/recovery.test.mjs`). Closure also waits for verified guest confirmation and a person\u2019s separate follow-up; unresolved channel, access or balance outcomes keep it open. Production SendGrid readiness mail has an authenticated QA receipt through `tests/recovery-mail-sandbox.mjs`. The native sandbox point remains AGENT-001; broader evidence provenance remains EVIDENCE-001. OPS-003 is done: recovery closure also requires attested supplies/access and named inspector acceptance (`src/cabin/readiness/`, `tests/readiness.test.mjs`, `tests/recovery.test.mjs`). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 39,
-      "text": "| 29 | Stay recovery | \"Cost to owner $0.00\" | code | Each recovery case posts its approved credits and extra cleaning to a frozen owner adjustment and to the reservation trust ledger of a configured home (owner funds against guest credits payable or vendor payable), and nothing when there are none; undo posts the exact reversal (`src/cabin/recovery/finance.ts`, `src/cabin/ledger/automatic.ts`; `tests/recovery.test.mjs`; FIN-001). |",
+      "text": "| 29 | Stay recovery |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 39,
+      "text": " \"Cost to owner $0.00\" ",
+      "to": "copy",
+      "of": 682
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 39,
+      "text": "| code | Each recovery case posts its approved credits and extra cleaning to a frozen owner adjustment and to the reservation trust ledger of a configured home (owner funds against guest credits payable or vendor payable), and nothing when there are none; undo posts the exact reversal (`src/cabin/recovery/finance.ts`, `src/cabin/ledger/automatic.ts`; `tests/recovery.test.mjs`; FIN-001). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 40,
-      "text": "| 30 | Interlude | \"All five homes ready for Saturday\" | code | Readiness for any day: \"All 5 homes ready for Saturday\" or the homes still open (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). OPS-003 is done: the board also requires supplies/restock, physical access and named inspection, showing guest-impact exceptions and pending follow-up (`src/cabin/readiness/`, `tests/readiness.test.mjs`, `docs/readiness.md`); OPS-008 remains partial. |",
+      "text": "| 30 | Interlude |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 40,
+      "text": " \"All five homes ready for Saturday\" ",
+      "to": "copy",
+      "of": 683
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 40,
+      "text": "| code | Readiness for any day: \"All 5 homes ready for Saturday\" or the homes still open (`src/cabin/readiness.ts`, `src/cabin/ui/readiness.ts`). OPS-003 is done: the board also requires supplies/restock, physical access and named inspection, showing guest-impact exceptions and pending follow-up (`src/cabin/readiness/`, `tests/readiness.test.mjs`, `docs/readiness.md`); OPS-008 remains partial. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 41,
-      "text": "| 31 | Payout | \"Airbnb's payout matches Megan's stay to the cent\": \"Airbnb payout \u00b7 Oct 25 \u00b7 $929.26 \u2026 Matched\" | partial | Imported Airbnb and Vrbo USD payout CSVs match each line to its stay with the actual fees, leaving unmatched lines for review (`src/cabin/finance/`, `tests/finance.test.mjs`). Payouts straight from the channels need their partner APIs: FIN-002. |",
+      "text": "| 31 | Payout |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 41,
+      "text": " \"Airbnb's payout matches Megan's stay to the cent\": \"Airbnb payout \u00b7 Oct 25 \u00b7 $929.26 \u2026 Matched\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 41,
+      "text": "| partial | Imported Airbnb and Vrbo USD payout CSVs match each line to its stay with the actual fees, leaving unmatched lines for review (`src/cabin/finance/`, `tests/finance.test.mjs`). Payouts straight from the channels need their partner APIs: FIN-002. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 42,
-      "text": "| 32 | Payout | \"and lands on the owner's October statement\": the statement with each stay, gross rent, channel and card fees, cleaning, management 20%, the hot tub filter and the owner payout | code | Approval freezes each home's monthly matched payouts, actual channel and card fees, paid expenses and the management commission into the owner payable (`src/cabin/statements.ts`, `tests/finance.test.mjs`). PROPERTY-001 now preserves each reservation\u2019s effective owner/commission agreement in the statement allocation (`src/cabin/properties/`, `tests/property-register.test.mjs`). FIN-003 is done: frozen agreement models, fixed and percentage fees, owner interests, reserves and evidence-linked shared costs feed the allocation ledger and structured statements (`src/cabin/finance/allocation-commands.ts`, `tests/allocations.test.mjs`, `docs/management-allocations.md`). FIN-004 is done: effective-date ledger closes freeze opening and closing payable, complete received-settlement coverage, tax/reserve/refund/distribution detail and exact source revisions; scheduled review or release, scoped owner CSV/PDF downloads and traceable corrections preserve sent originals (`src/cabin/finance/month-close.ts`, `close-schedule.ts`, `tests/month-close.test.mjs`, `docs/monthly-close.md`). Hosted owner mail, downloads and schedules exercised at 1440 and 390. Live payout retrieval remains FIN-002. |",
+      "text": "| 32 | Payout |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 42,
+      "text": " \"and lands on the owner's October statement\": the statement with each stay, gross rent, channel and card fees, cleaning, management 20%, the hot tub filter and the owner payout ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 42,
+      "text": "| code | Approval freezes each home's monthly matched payouts, actual channel and card fees, paid expenses and the management commission into the owner payable (`src/cabin/statements.ts`, `tests/finance.test.mjs`). PROPERTY-001 now preserves each reservation\u2019s effective owner/commission agreement in the statement allocation (`src/cabin/properties/`, `tests/property-register.test.mjs`). FIN-003 is done: frozen agreement models, fixed and percentage fees, owner interests, reserves and evidence-linked shared costs feed the allocation ledger and structured statements (`src/cabin/finance/allocation-commands.ts`, `tests/allocations.test.mjs`, `docs/management-allocations.md`). FIN-004 is done: effective-date ledger closes freeze opening and closing payable, complete received-settlement coverage, tax/reserve/refund/distribution detail and exact source revisions; scheduled review or release, scoped owner CSV/PDF downloads and traceable corrections preserve sent originals (`src/cabin/finance/month-close.ts`, `close-schedule.ts`, `tests/month-close.test.mjs`, `docs/monthly-close.md`). Hosted owner mail, downloads and schedules exercised at 1440 and 390. Live payout retrieval remains FIN-002. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 43,
-      "text": "| 33 | Payout | \"QuickBooks \u00b7 synced Oct 31\" | code | FIN-007 done: native owner-authorized QBO, reviewed account and class mappings, month including refund and expense, reconciled totals, duplicate-free repeat and external-edit conflict. `tests/qbo-sandbox.mjs`, `evidence/fin-007-qbo-sandbox-2026-10-26.json`, `tests/finance.test.mjs` and native 1440 and 390 forms in `tests/qbo-browser.mjs`. |",
+      "text": "| 33 | Payout |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 43,
+      "text": " \"QuickBooks \u00b7 synced Oct 31\" ",
+      "to": "copy",
+      "of": 686
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 43,
+      "text": "| code | FIN-007 done: native owner-authorized QBO, reviewed account and class mappings, month including refund and expense, reconciled totals, duplicate-free repeat and external-edit conflict. `tests/qbo-sandbox.mjs`, `evidence/fin-007-qbo-sandbox-2026-10-26.json`, `tests/finance.test.mjs` and native 1440 and 390 forms in `tests/qbo-browser.mjs`. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 44,
-      "text": "| 34 | Payout | \"Owner portal \u00b7 Karen viewed Nov 1\" | code | Separate owner sign-in scopes homes, calendar visibility, performance, frozen statements, invoice/record downloads, reported reserves, recorded distributions, issues, expense decisions and inventory-checked personal stays. Actual owner HTML views and CSV downloads append attributable events; the operator statement card shows who viewed and when. API reads and previews never count as views. RES-003 now connects permitted owner/maintenance blocks to inventory, channel calendar exports, cleaner tasks and frozen completion-based owner-use costs (`src/cabin/blocks.ts`, `tests/owners.test.mjs`, `docs/owner-blocks.md`). Exact historical statement grants survive ownership transfer without exposing the new owner\u2019s records. `src/cabin/owners/`, `src/cabin/ui/owners-operations.ts`, `tests/owners.test.mjs`; FIN-005, AUDIT-001. Hosted two-owner mail sign-in, view label, expense/stay approvals, transfer and revocation exercised at 1440 and 390. |",
+      "text": "| 34 | Payout |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 44,
+      "text": " \"Owner portal \u00b7 Karen viewed Nov 1\" ",
+      "to": "copy",
+      "of": 687
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 44,
+      "text": "| code | Separate owner sign-in scopes homes, calendar visibility, performance, frozen statements, invoice/record downloads, reported reserves, recorded distributions, issues, expense decisions and inventory-checked personal stays. Actual owner HTML views and CSV downloads append attributable events; the operator statement card shows who viewed and when. API reads and previews never count as views. RES-003 now connects permitted owner/maintenance blocks to inventory, channel calendar exports, cleaner tasks and frozen completion-based owner-use costs (`src/cabin/blocks.ts`, `tests/owners.test.mjs`, `docs/owner-blocks.md`). Exact historical statement grants survive ownership transfer without exposing the new owner\u2019s records. `src/cabin/owners/`, `src/cabin/ui/owners-operations.ts`, `tests/owners.test.mjs`; FIN-005, AUDIT-001. Hosted two-owner mail sign-in, view label, expense/stay approvals, transfer and revocation exercised at 1440 and 390. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 45,
-      "text": "| 35 | Payout | \"Lodging tax 9% \u00b7 $172.44 \u00b7 filed Nov 1\" (the host's share, with Airbnb and Vrbo remitting their own) | partial | Direct checkout still collects its configured state/county levies. Monthly reviews now separate documented channel remittances from host liability for configured state/county/city obligations, with exemptions/refunds, exact approval, separate accountant packets and human-recorded filing/payment evidence linked to the ledger (`src/cabin/taxes/`, `tests/taxes.test.mjs`, `docs/taxes.md`). Hosted review/freeze and authentic packet mail exercised at 1440 and 390. A delivered packet is not a filed return: live authorized partner filing/remittance remains unproven, so FIN-008 and this claim remain partial. |",
+      "text": "| 35 | Payout |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 45,
+      "text": " \"Lodging tax 9% \u00b7 $172.44 \u00b7 filed Nov 1\" (the host's share, with Airbnb and Vrbo remitting their own) ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 45,
+      "text": "| partial | Direct checkout still collects its configured state/county levies. Monthly reviews now separate documented channel remittances from host liability for configured state/county/city obligations, with exemptions/refunds, exact approval, separate accountant packets and human-recorded filing/payment evidence linked to the ledger (`src/cabin/taxes/`, `tests/taxes.test.mjs`, `docs/taxes.md`). Hosted review/freeze and authentic packet mail exercised at 1440 and 390. A delivered packet is not a filed return: live authorized partner filing/remittance remains unproven, so FIN-008 and this claim remain partial. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 46,
-      "text": "| 36 | Next stay | \"Your own booking site takes the payment\" / \"Pay $1,454.50 \u00b7 Powered by Stripe\" | code | Public per-home booking pages with Stripe-hosted checkout, confirmed only after the server verifies payment (`src/cabin/direct/http.ts`, `public-ui.ts`, `stripe.ts`, `payments.ts`; `tests/direct.test.mjs`). WEB-001 is done: host branding/pages/SEO, chosen public galleries and guide/policies, inventory-backed date/guest/amenity search, consented analytics and owner-verified portable HTTPS domains (`src/cabin/website/`, `tests/website.test.mjs`, `docs/booking-website.md`). Hosted desktop/phone custom-domain booking retained payment, signed agreement, identity decision and actual damage authorization on one reservation, with authenticated guest mail. Native source-backed cash and cleared-check receipts now retain immutable evidence and update only their reservation balance (`tests/direct.test.mjs`, `docs/scheduled-collection.md`). PAY-001 remains partial for ACH. |",
+      "text": "| 36 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 46,
+      "text": " \"Your own booking site takes the payment\" / \"Pay $1,454.50 \u00b7 Powered by Stripe\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 46,
+      "text": "| code | Public per-home booking pages with Stripe-hosted checkout, confirmed only after the server verifies payment (`src/cabin/direct/http.ts`, `public-ui.ts`, `stripe.ts`, `payments.ts`; `tests/direct.test.mjs`). WEB-001 is done: host branding/pages/SEO, chosen public galleries and guide/policies, inventory-backed date/guest/amenity search, consented analytics and owner-verified portable HTTPS domains (`src/cabin/website/`, `tests/website.test.mjs`, `docs/booking-website.md`). Hosted desktop/phone custom-domain booking retained payment, signed agreement, identity decision and actual damage authorization on one reservation, with authenticated guest mail. Native source-backed cash and cleared-check receipts now retain immutable evidence and update only their reservation balance (`tests/direct.test.mjs`, `docs/scheduled-collection.md`). PAY-001 remains partial for ACH. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 47,
-      "text": "| 37 | Next stay | \"the rental agreement\" / \"Rental agreement signed\" | code | The guest signs the home's versioned agreement; the signed text and its hash are kept with the stay (`src/cabin/direct/checkout.ts`). WEB-003 done: versioned property templates, immutable signed downloads and date/term amendments with renewed consent before configured access. Hosted initial and renewal guest mail received and signing exercised at 1440 and 390 (`src/cabin/agreements/`, `tests/direct.test.mjs`). |",
+      "text": "| 37 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 47,
+      "text": " \"the rental agreement\" / \"Rental agreement signed\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 47,
+      "text": "| code | The guest signs the home's versioned agreement; the signed text and its hash are kept with the stay (`src/cabin/direct/checkout.ts`). WEB-003 done: versioned property templates, immutable signed downloads and date/term amendments with renewed consent before configured access. Hosted initial and renewal guest mail received and signing exercised at 1440 and 390 (`src/cabin/agreements/`, `tests/direct.test.mjs`). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 48,
-      "text": "| 38 | Next stay | \"the ID check\" / \"ID verified\" | code | Risk-based property policies cover direct and channel stays with guest consent, Stripe Identity or assigned manual review, and saved confirmation/access gates. Restricted decisions retain minimal state/references; erasure revokes links and tracks asynchronous provider redaction. Hosted Stripe test success/failure, manual approval and access release/withholding exercised at 1440 and 390 with received guest/reviewer mail. `src/cabin/verification/`, `src/cabin/direct/`, `tests/direct.test.mjs`, `docs/identity-verification.md`; WEB-004 done. |",
+      "text": "| 38 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 48,
+      "text": " \"the ID check\" / \"ID verified\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 48,
+      "text": "| code | Risk-based property policies cover direct and channel stays with guest consent, Stripe Identity or assigned manual review, and saved confirmation/access gates. Restricted decisions retain minimal state/references; erasure revokes links and tracks asynchronous provider redaction. Hosted Stripe test success/failure, manual approval and access release/withholding exercised at 1440 and 390 with received guest/reviewer mail. `src/cabin/verification/`, `src/cabin/direct/`, `tests/direct.test.mjs`, `docs/identity-verification.md`; WEB-004 done. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 49,
-      "text": "| 39 | Next stay | \"the damage deposit\" / \"Damage deposit $500 \u00b7 held, not charged\" | code | PAY-003 is done for self-hosted direct bookings: a separate manual-capture authorization tracks actual expiry, warns before a long stay outlasts it, and releases unclaimed or canceled holds automatically. Evidenced human partial capture releases the remainder. Exact approved partial/full rent and captured-damage refunds use saved cancellation/change terms, original tax amounts and owner/entity journals, with itemized guest receipts and durable provider reconciliation (`src/cabin/direct/`, `tests/direct.test.mjs`, `docs/direct-bookings.md`). Hosted Stripe test-card capture/refunds, automatic release, real authenticated mail and operator/guest screens at 1440 and 390 were exercised. |",
+      "text": "| 39 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 49,
+      "text": " \"the damage deposit\" / \"Damage deposit $500 \u00b7 held, not charged\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 49,
+      "text": "| code | PAY-003 is done for self-hosted direct bookings: a separate manual-capture authorization tracks actual expiry, warns before a long stay outlasts it, and releases unclaimed or canceled holds automatically. Evidenced human partial capture releases the remainder. Exact approved partial/full rent and captured-damage refunds use saved cancellation/change terms, original tax amounts and owner/entity journals, with itemized guest receipts and durable provider reconciliation (`src/cabin/direct/`, `tests/direct.test.mjs`, `docs/direct-bookings.md`). Hosted Stripe test-card capture/refunds, automatic release, real authenticated mail and operator/guest screens at 1440 and 390 were exercised. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 50,
-      "text": "| 40 | Next stay | Checkout lines: nights, cleaning fee, \"Lodging tax 9%\", total | code | Nightly rate, cleaning fee and each configured lodging tax itemized and collected (`src/cabin/direct/rules.ts`, `public-ui.ts`). RES-004, FIN-008. |",
+      "text": "| 40 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 50,
+      "text": " Checkout lines: nights, cleaning fee, \"Lodging tax 9%\", total ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 50,
+      "text": "| code | Nightly rate, cleaning fee and each configured lodging tax itemized and collected (`src/cabin/direct/rules.ts`, `public-ui.ts`). RES-004, FIN-008. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 51,
-      "text": "| 41 | Next stay | \"Returning guest 10%\" / \"Welcome back, Megan\" | code | Reviewed guest identities, source history, consent and home permission support private expiring one-use returning offers (`src/cabin/guests/`, `src/cabin/direct/`, `tests/guests.test.mjs`, `docs/guests.md`). A completed stay and verified contact qualify; the server applies 10% to rent before tax and rechecks eligibility at checkout. Hosted welcome/quote, USD Stripe test payment, signed agreement, receipt and linked return history proven at 1440 and 390. GUEST-001 is done. WEB-005 now also implements scoped coupons and paid gap/early/late/extra supplements with original-stay updates and refunds (`src/cabin/promotions/`, `tests/promotions.test.mjs`, `docs/promotions.md`). Hosted gap/early payments and refunds were exercised; complete USD settlement/owner-statement acceptance remains partial. |",
+      "text": "| 41 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 51,
+      "text": " \"Returning guest 10%\" / \"Welcome back, Megan\" ",
+      "to": "copy",
+      "of": 694
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 51,
+      "text": "| code | Reviewed guest identities, source history, consent and home permission support private expiring one-use returning offers (`src/cabin/guests/`, `src/cabin/direct/`, `tests/guests.test.mjs`, `docs/guests.md`). A completed stay and verified contact qualify; the server applies 10% to rent before tax and rechecks eligibility at checkout. Hosted welcome/quote, USD Stripe test payment, signed agreement, receipt and linked return history proven at 1440 and 390. GUEST-001 is done. WEB-005 now also implements scoped coupons and paid gap/early/late/extra supplements with original-stay updates and refunds (`src/cabin/promotions/`, `tests/promotions.test.mjs`, `docs/promotions.md`). Hosted gap/early payments and refunds were exercised; complete USD settlement/owner-statement acceptance remains partial. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 52,
-      "text": "| 42 | Next stay | \"Jul 10\u201314 \u00b7 closed on Airbnb, Vrbo, Booking.com\" | partial | A direct stay holds its nights and every channel's export link lists them on its next read (`src/cabin/ical-export.ts`); closing at once needs the partner APIs (SYNC-002\u2013004, SYNC-006). |",
+      "text": "| 42 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 52,
+      "text": " \"Jul 10\u201314 \u00b7 closed on Airbnb, Vrbo, Booking.com\" ",
+      "to": "copy",
+      "of": 695
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 52,
+      "text": "| partial | A direct stay holds its nights and every channel's export link lists them on its next read (`src/cabin/ical-export.ts`); closing at once needs the partner APIs (SYNC-002\u2013004, SYNC-006). |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 53,
-      "text": "| 43 | Next stay | \"No channel fee\" | code | Direct bookings are paid into the host's own Stripe account (`src/cabin/direct/stripe.ts`); no channel commission applies. |",
+      "text": "| 43 | Next stay |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 53,
+      "text": " \"No channel fee\" ",
+      "to": "copy",
+      "of": 696
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 53,
+      "text": "| code | Direct bookings are paid into the host's own Stripe account (`src/cabin/direct/stripe.ts`); no channel commission applies. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 54,
-      "text": "| 44 | Moving in | \"Move from Guesty, Hostaway or OwnerRez\"; \"Importing from Hostaway \u2026 100%\" | code | Native CSV reports for all three with preview, per-row refusals, reconciliation, sign-off and guarded undo (`src/cabin/movein/providers/`, `provider-import.ts`; `tests/movein.test.mjs`). MIGRATE-002\u2013004. Live API accounts remain open. |",
+      "text": "| 44 | Moving in |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 54,
+      "text": " \"Move from Guesty, Hostaway or OwnerRez\"; \"Importing from Hostaway \u2026 100%\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 54,
+      "text": "| code | Native CSV reports for all three with preview, per-row refusals, reconciliation, sign-off and guarded undo (`src/cabin/movein/providers/`, `provider-import.ts`; `tests/movein.test.mjs`). MIGRATE-002\u2013004. Live API accounts remain open. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 55,
-      "text": "| 45 | Moving in | \"with listings, reservations, guests and owner balances\": 5 listings, 61 upcoming reservations, 1,284 guests, \"$18,406.22 \u00b7 matched\" | code | Listings map to stable homes; reservations, guest contacts and USD opening balances import and reconcile against source totals before sign-off (`src/cabin/movein/`). MIGRATE-001 is done for the property register: exact source custody, normalized accepted rows and refused rows, resumable approval, guarded undo and durable dispositions (`tests/movein-register.test.mjs`, `docs/move-in.md`), exercised at 1440 and 390. Provider migration targets MIGRATE-002\u2013004 and MIGRATE-007 remain partial. |",
+      "text": "| 45 | Moving in |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 55,
+      "text": " \"with listings, reservations, guests and owner balances\": 5 listings, 61 upcoming reservations, 1,284 guests, \"$18,406.22 \u00b7 matched\" ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 55,
+      "text": "| code | Listings map to stable homes; reservations, guest contacts and USD opening balances import and reconcile against source totals before sign-off (`src/cabin/movein/`). MIGRATE-001 is done for the property register: exact source custody, normalized accepted rows and refused rows, resumable approval, guarded undo and durable dispositions (`tests/movein-register.test.mjs`, `docs/move-in.md`), exercised at 1440 and 390. Provider migration targets MIGRATE-002\u2013004 and MIGRATE-007 remain partial. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 56,
-      "text": "| 46 | Moving in | \"Your channel listings and reviews stay where they are\": Airbnb 5 and Vrbo 4 listings reconnected, one Booking.com listing awaiting approval | partial | Imported calendar links become scheduled connections on the same listings, and Cabin publishes its export links; nothing on the channels is moved (`src/cabin/movein/provider-records.ts`, `src/cabin/calendars.ts`). Channel API accounts and their approval states are contract: SYNC-002\u2013004. |",
+      "text": "| 46 | Moving in |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 56,
+      "text": " \"Your channel listings and reviews stay where they are\": Airbnb 5 and Vrbo 4 listings reconnected, one Booking.com listing awaiting approval ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 56,
+      "text": "| partial | Imported calendar links become scheduled connections on the same listings, and Cabin publishes its export links; nothing on the channels is moved (`src/cabin/movein/provider-records.ts`, `src/cabin/calendars.ts`). Channel API accounts and their approval states are contract: SYNC-002\u2013004. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 57,
-      "text": "| 47 | Moving in | Terminal chip: `curl -fsSL https://runeditrun.com/install.sh \\| sh -s -- dev just-every/run-cabin`, then the comment `# Already have Node 22 or later? npx -y @runeditrun/rer dev just-every/run-cabin` | partial | The pinned verbs and strengthened source journey (`tests/launch.test.mjs`) pass Linux installation, setup and development, native owner sign-in and saved-product restart with normal child reaping and sufficient temporary disk. Clean macOS and owner-cloud receipts move to missing RUNTIME-002. RUNTIME-001 is done for current payment, channel, message, lock and report jobs: provider readback or assigned uncertain outcomes survive interruption without repeated effects. `tests/collection-support.mjs`, `tests/channel-agent.test.mjs`, `tests/lifecycle.test.mjs`, `tests/recovery-authority.test.mjs`, `tests/finance.test.mjs` and `tests/archive.test.mjs`; future provider jobs retain the inherited obligation in their own clauses. |",
+      "text": "| 47 | Moving in |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 57,
+      "text": " Terminal chip: `curl -fsSL https://runeditrun.com/install.sh \\| sh -s -- dev just-every/run-cabin`, then the comment `# Already have Node 22 or later? npx -y @runeditrun/rer dev just-every/run-cabin` ",
+      "to": "section",
+      "section": "Homepage claims"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 57,
+      "text": "| partial | The pinned verbs and strengthened source journey (`tests/launch.test.mjs`) pass Linux installation, setup and development, native owner sign-in and saved-product restart with normal child reaping and sufficient temporary disk. Clean macOS and owner-cloud receipts move to missing RUNTIME-002. RUNTIME-001 is done for current payment, channel, message, lock and report jobs: provider readback or assigned uncertain outcomes survive interruption without repeated effects. `tests/collection-support.mjs`, `tests/channel-agent.test.mjs`, `tests/lifecycle.test.mjs`, `tests/recovery-authority.test.mjs`, `tests/finance.test.mjs` and `tests/archive.test.mjs`; future provider jobs retain the inherited obligation in their own clauses. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 58,
-      "text": "| 48 | Moving in | \"Not yet: Expedia, hotel room types and built-in dynamic pricing.\" | \u2014 | Not a capability claim: names what Cabin does not do. |",
+      "text": "| 48 | Moving in |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 58,
+      "text": " \"Not yet: Expedia, hotel room types and built-in dynamic pricing.\" ",
+      "to": "copy",
+      "of": 701
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 58,
+      "text": "| \u2014 | Not a capability claim: names what Cabin does not do. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 59,
-      "text": "| 49 | Closing | \"Open source vacation rental software for hosts and managers\" / \"Free and open source, MIT licensed\" | code | `LICENSE`, `src/cabin/`; public-source access at 40 homes and 25 staff and provider-owned fee disclosure (`docs/free-source.md`). OPEN-001 done. |",
+      "text": "| 49 | Closing |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 59,
+      "text": " \"Open source vacation rental software for hosts and managers\" / \"Free and open source, MIT licensed\" ",
+      "to": "copy",
+      "of": 702
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 59,
+      "text": "| code | `LICENSE`, `src/cabin/`; public-source access at 40 homes and 25 staff and provider-owned fee disclosure (`docs/free-source.md`). OPEN-001 done. |",
       "to": "changelog"
     },
     {
       "file": "docs/CLAIMS.md",
       "line": 60,
-      "text": "| 50 | Hero, actions | \"Try the demo\" | \u2014 | No hosted demo exists yet, so the link opens `/run` (SITE-002). |",
+      "text": "| 50 | Hero, actions |",
+      "to": "changelog"
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 60,
+      "text": " \"Try the demo\" ",
+      "to": "copy",
+      "of": 703
+    },
+    {
+      "file": "docs/CLAIMS.md",
+      "line": 60,
+      "text": "| \u2014 | No hosted demo exists yet, so the link opens `/run` (SITE-002). |",
       "to": "changelog"
     },
     {

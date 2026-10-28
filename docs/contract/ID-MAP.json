@@ -23,7 +23,7 @@
     "CABIN-04": {
       "how": "merged",
       "to": [
-        "OPS-001"
+        "OPS-005"
       ]
     },
     "CABIN-05": {
@@ -291,9 +291,10 @@
       ]
     },
     "PAY-006": {
-      "how": "kept",
+      "how": "split",
       "to": [
-        "PAY-006"
+        "PAY-006",
+        "PAY-007"
       ]
     },
     "GUEST-001": {

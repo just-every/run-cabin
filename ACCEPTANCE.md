@@ -8,10 +8,10 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 | Tier | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Core | 15 | 57 | 19 | 91 |
+| Core | 13 | 59 | 20 | 92 |
 | Agent surface | 0 | 0 | 8 | 8 |
 | Later | 0 | 0 | 0 | 0 |
-| Full target | 15 | 57 | 27 | 99 |
+| Full target | 13 | 59 | 28 | 100 |
 
 Judged from the code and tests at commit `a124cd29ea9575bf4b077e4aef05088f7c2ef04a` (21 October 2026). Field proof register: 10 rows; 0 passed, 0 failed, 10 not run.
 
@@ -114,7 +114,7 @@ Core · target · **partial** · Register R-5
 
 Core · target · **partial** · Register R-5
 
-**Requirement.** An approved Booking.com connectivity connection receives bookings, guest/date changes and cancellations, and publishes room/rate-plan availability, prices and restrictions. It tracks channel-versus-property collection and actionable channel rejections. Payments by Booking.com virtual credit cards are charged and reconciled under PAY-005, property-collect guest cards are charged, reported invalid and followed up under PAY-006, and several Booking.com property accounts connect side by side under SYNC-010.
+**Requirement.** An approved Booking.com connectivity connection receives bookings, guest/date changes and cancellations, and publishes room/rate-plan availability, prices and restrictions. It tracks channel-versus-property collection and actionable channel rejections. Payments by Booking.com virtual credit cards are charged and reconciled under PAY-005, property-collect guest cards are charged under PAY-006 and reported invalid and followed up under PAY-007, and several Booking.com property accounts connect side by side under SYNC-010.
 
 **Acceptance.**
 1. Map a Booking.com room/rate plan; reserve, amend and cancel externally, update Cabin availability/rate restrictions, and compare reservation identity, collection method and accepted channel state.
@@ -211,9 +211,9 @@ Core · target · **missing** · Register R-5
 
 #### SYNC-011 — Channel agents in the host's own accounts
 
-Core · target · **partial** · Register R-5
+Core · target · **partial** · Cites BASE-ROLE-001, BASE-AGENT-005, BASE-AGENT-008 · Register R-5
 
-**Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Each channel action keeps its exact source revision and protected before/after screenshot under AUDIT-001 and SECURITY-001. At any CAPTCHA, 2FA challenge or terms prompt, the agent stops and hands control back to the host; it never solves or bypasses them or accepts terms for the host. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the [channel-specific terms risks](/docs/channel-terms), the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (RL-1); the broader channel-management requirements remain in SYNC-002–010.
+**Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Each channel action keeps its exact source revision and protected before/after screenshot under AUDIT-001 and SECURITY-001. The person-only provider handoff is exercised separately on Airbnb, Booking.com and Vrbo through the exact host-account session. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the [channel-specific terms risks](/docs/channel-terms), the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (RL-1); the broader channel-management requirements remain in SYNC-002–010.
 
 **Acceptance.**
 1. Separately on Airbnb, Booking.com and Vrbo, inspect the risk notice, connect the host's own account, close a night, read and answer a guest message, and read a reservation in the extranet.
@@ -239,7 +239,7 @@ Core · target · **partial**
 
 #### RES-002 — Complete reservation lifecycle
 
-Core · target · **done** · Rules D-1
+Core · target · **partial** · Rules D-1
 
 **Requirement.** Staff create direct, phone and manual reservations, record channel bookings, modify guest/date/unit/price details, handle no-shows and cancellations, and retain policy, source IDs and full revision history. A change recomputes inventory, payment balance, messages, tasks, access and owner allocations; conflicting edits require reconciliation rather than silently replacing another revision.
 
@@ -247,7 +247,7 @@ Core · target · **done** · Rules D-1
 1. Create a phone reservation, extend it, move units, cancel under its saved policy and inspect downstream calendar, balance, queued messages, cleaning and lock changes; repeat with a channel amendment and duplicate event.
 
 **Evidence.** `src/cabin/reservations/`; `src/cabin/calendars.ts`; `src/cabin/agreements/records.ts`; `tests/reservations.test.mjs`; `tests/direct.test.mjs`; `tests/turnovers.test.mjs`; `docs/reservation-lifecycle.md`
-**Gap.** None.
+**Gap.** The cited reservation tests assert revision history, changed balances, work and access. Suppression of a demonstrably populated scheduled-message set after cancellation is unasserted; the cited every-check alone can pass over an empty set.
 
 #### RES-003 — Owner stays and maintenance blocks
 
@@ -379,7 +379,7 @@ Core · target · **done**
 
 #### WEB-004 — Guest identity verification
 
-Core · target · **done**
+Core · target · **partial**
 
 **Requirement.** Managers configure risk-based identity verification through Stripe Identity or an approved verification partner, with explicit guest consent, restricted access and a manual review alternative. Cabin retains necessary verification state and provider references while minimizing identity-document copies. Failed or incomplete checks enter an assigned review queue and obey saved access-release policy.
 
@@ -387,7 +387,7 @@ Core · target · **done**
 1. Complete and fail partner verification from the guest check-in link, route one case for human review, confirm staff access limits and retention/erasure behavior, and prove door codes do not release while a required verification remains unresolved.
 
 **Evidence.** `src/cabin/verification/`; `src/cabin/direct/`; `src/cabin/codes.ts`; `src/cabin/agreements/records.ts`; `src/cabin/guest.ts`; `src/cabin/audit/privacy.ts`; `migrations/core/0031_verification.sql`; `tests/direct.test.mjs`; `docs/identity-verification.md`
-**Gap.** None.
+**Gap.** Cited tests assert provider/manual outcomes, scoped identity reads, access withholding and explicit erasure/redaction. The configured identity-retention period is not independently asserted.
 
 #### WEB-005 — Promotions, upsells and gap-night offers
 
@@ -472,19 +472,30 @@ Core · target · **missing**
 
 Core · target · **missing**
 
-**Requirement.** When a Booking.com reservation uses property collect (Booking.com’s hotel-collect model, where the property rather than Booking.com charges the guest), the guest’s card arrives through the channel connection and is tokenized straight into Stripe’s vault; Cabin never stores, logs or shows the full card number or security code, and keeps only the token reference, brand, last four digits and expiry. That token becomes the reservation’s payment mandate, and PAY-002 charges it on the reservation’s saved deposit and balance schedule with the same idempotency and replay protection as every other collection job. A permitted role can report a declined or invalid card to Booking.com from the reservation’s Payments section, once per card: Cabin records the report as made only when Booking.com acknowledges it, and a repeated click or replayed job sends nothing further. After acknowledgment the reservation shows the guest’s deadline to supply new card details as Booking.com states it (normally 24 hours), and an assigned exception escalates before and at that deadline. An updated card from Booking.com is tokenized the same way, replaces the mandate, retries the failed charge and resumes the schedule. If no valid card arrives by the deadline, Cabin offers the penalty-free cancellation Booking.com’s invalid-card process allows; a human confirms it, and Cabin records the cancellation, reopens inventory through SYNC-006 and suppresses future collection only after Booking.com acknowledges it. Collected amounts post to the reservation’s trust subledger (FIN-001) and reconcile in FIN-002, where Booking.com’s commission on a property-collect stay is a payable on Booking.com’s commission invoice to the property, never netted from a payout. A property-collect Booking.com guest card received under PAY-006 is the reservation’s authorized mandate for its saved deposit and balance schedule.
+**Requirement.** When a Booking.com reservation uses property collect (Booking.com’s hotel-collect model, where the property rather than Booking.com charges the guest), the guest’s card arrives through the channel connection and is tokenized straight into Stripe’s vault; Cabin never stores, logs or shows the full card number or security code, and keeps only the token reference, brand, last four digits and expiry. That token becomes the reservation’s payment mandate, and PAY-002 charges it on the reservation’s saved deposit and balance schedule with the same idempotency and replay protection as every other collection job. Collected amounts post to the reservation’s trust subledger (FIN-001) and reconcile in FIN-002, where Booking.com’s commission on a property-collect stay is a payable on Booking.com’s commission invoice to the property, never netted from a payout. A property-collect Booking.com guest card received under PAY-006 is the reservation’s authorized mandate for its saved deposit and balance schedule.
 
 **Acceptance.**
 1. Receive three property-collect Booking.com test reservations through the connection and confirm no full card number or security code appears in any read, export, log or archive.
 2. On the first, verify the deposit and balance each charge on schedule exactly once, including after a replayed callback and a rerun job.
-3. On the second, decline the card, report it invalid from the reservation and repeat the report; verify a single report, Booking.com’s acknowledgment, and the guest deadline with an assigned exception.
-4. Deliver an updated card from Booking.com and verify the failed charge retries once and the schedule resumes.
-5. Leave the third reservation’s declined card un-updated past its deadline; verify the penalty-free cancellation is offered, confirmed by a human and acknowledged by Booking.com, that inventory reopens and that no further charge is attempted.
-6. Reconcile the collected amounts and the Booking.com commission invoice to each reservation and its owner statement line.
-7. The collection job runs through PAY-002's schedule, authority, receipt and reconciliation.
+3. Reconcile the collected amounts and the Booking.com commission invoice to each reservation and its owner statement line.
+4. The collection job runs through PAY-002's schedule, authority, receipt and reconciliation.
 
 **Evidence.** None.
 **Gap.** No implementing flow in the audited tree. Inherits PAY-002's schedule, current authority, receipt and reconciliation; its channel card intake and provider acceptance remain account-blocked.
+
+#### PAY-007 — Booking.com invalid-card recovery
+
+Core · target · **missing** · From PAY-006 · Cites BASE-MAIL-001, BASE-AGENT-007
+
+**Requirement.** A permitted role can report a declined or invalid card to Booking.com from the reservation’s Payments section, once per card: Cabin records the report as made only when Booking.com acknowledges it, and a repeated click or replayed job sends nothing further. After acknowledgment the reservation shows the guest’s deadline to supply new card details as Booking.com states it (normally 24 hours), and an assigned exception escalates before and at that deadline. An updated card from Booking.com is tokenized the same way, replaces the mandate, retries the failed charge and resumes the schedule. If no valid card arrives by the deadline, Cabin offers the penalty-free cancellation Booking.com’s invalid-card process allows; a human confirms it, and Cabin records the cancellation, reopens inventory through SYNC-006 and suppresses future collection only after Booking.com acknowledges it. An agent’s equivalent cancellation carries commitment, money and external as applicable; the company’s policy decides it.
+
+**Acceptance.**
+1. On the second, decline the card, report it invalid from the reservation and repeat the report; verify a single report, Booking.com’s acknowledgment, and the guest deadline with an assigned exception.
+2. Deliver an updated card from Booking.com and verify the failed charge retries once and the schedule resumes.
+3. Leave the third reservation’s declined card un-updated past its deadline; verify the penalty-free cancellation is offered, confirmed by a human and acknowledged by Booking.com, that inventory reopens and that no further charge is attempted.
+
+**Evidence.** None.
+**Gap.** No implementing channel-card intake, invalid-card reporting, acknowledged replacement or penalty-free recovery workflow is asserted.
 
 #### GUEST-001 — Guest profiles and repeat-stay context
 
@@ -594,7 +605,7 @@ Core · target · **missing**
 
 #### OPS-001 — Reservation-triggered turnover dispatch
 
-Core · target · **partial** · From OPS-001, CABIN-04 · Rules D-1
+Core · target · **partial** · From OPS-001 · Rules D-1
 
 **Requirement.** Confirmed reservations, checkout, amendments and cancellations create or revise the appropriate cleaning/inspection tasks exactly once. Managers configure per-property templates, timing, rates and approved teams; cleaners accept or decline, receive reminders, and can be replaced without losing history. Overdue or declined jobs escalate before arrival. Each cleaner or team has a saved daily capacity (jobs and hours) and home base; travel time between consecutive jobs comes from property addresses through a routing provider such as the Google Maps Distance Matrix API, or from manager-entered drive times. An assignment that would exceed capacity or cannot reach the next job within its window is never made silently: it routes to the next eligible backup or is flagged to a manager with the reason. Cleaner notices carry the work window, address and authorized entry details and are updated or canceled with the stay; guest and cleaner codes remain OPS-005.
 
@@ -657,9 +668,9 @@ Core · target · **partial**
 
 #### OPS-005 — Stay-bound smart-lock automation
 
-Core · target · **partial** · Rules D-1 · Register R-6
+Core · target · **partial** · From OPS-005, CABIN-04 · Rules D-1 · Register R-6
 
-**Requirement.** Schlage, Yale, August, Kwikset, RemoteLock, Igloohome, Nuki and Salto locks connect directly or through an approved bridge such as Seam; Connections shows which path each lock uses. Cabin provisions a unique stay-bound code for every confirmed reservation at a lock-equipped property without staff action, verifies provider/device state, sends them only when release rules pass, updates windows for changed stays and revokes them on cancellation/checkout. Battery/offline alerts trigger assigned action and a manager-approved backup entry plan; an API acknowledgment alone is not a tested door. Hub-dependent and offline-PIN locks follow OPS-007.
+**Requirement.** Schlage, Yale, August, Kwikset, RemoteLock, Igloohome, Nuki and Salto locks connect directly or through an approved bridge such as Seam; Connections shows which path each lock uses. Cabin provisions a unique stay-bound code for every confirmed reservation at a lock-equipped property without staff action, verifies provider/device state, sends them only when release rules pass, updates windows for changed stays and revokes them on cancellation/checkout. Battery/offline alerts trigger assigned action and a manager-approved backup entry plan; an API acknowledgment alone is not a tested door. Cleaners have their own turnover-window codes, distinct from guest stay codes. Their notices carry the work window, address and authorized code and are updated or canceled with the stay. Hub-dependent and offline-PIN locks follow OPS-007.
 
 **Acceptance.**
 1. Connect each named lock family, directly or through the bridge; for each, provision and verify a stay code, extend then cancel the booking and observe expiry/revocation at the device or provider test harness.
@@ -667,8 +678,10 @@ Core · target · **partial** · Rules D-1 · Register R-6
 3. Confirm a reservation through a channel and verify its code is provisioned with no staff action, shown as active only once the provider or device confirms it, and sent to the guest only after release rules pass; a stay with an unresolved payment or ID check keeps its code unsent.
 4. As this clause’s provider jobs are built, interrupt each lock job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
-**Evidence.** `src/cabin/codes.ts`; `src/cabin/dispatch.ts`; `src/cabin/locks.ts`; `src/cabin/guest.ts`; `tests/turnovers.test.mjs`
-**Gap.** Every confirmed stay gets a guest code valid check-in to check-out and each assigned turnover a cleaner code for its window, without staff action; windows move with the stay and codes are revoked on cancellation or reassignment; the guest sees theirs on a secret stay page. Codes are pushed through a Seam adapter tested only against Seam-shaped fixtures: the owner's lock account is not connected, so codes are set by hand and the page says so (unavailable on RER Managed until its provider relay). A human may approve early arrival from the inbox only after verified readiness, moving the guest and preceding cleaner windows with one confirmation (src/cabin/inbox/arrival.ts, tests/replies.test.mjs). No device state checks, battery/offline alerts or backup entry plans. Held-key read-only discovery on 23 October confirms one sandbox Schlage Encode; the provider list has no RemoteLock entry, so the required eight-family journey needs an authorized RemoteLock-capable connection outside this held route. Metadata is not provisioning proof; docs/lock-sandbox.md.
+5. Compare the guest stay and cleaner turnover code windows; move and cancel the stay and verify the assigned cleaner’s window, address and code notice follows exactly once.
+
+**Evidence.** `src/cabin/codes.ts`; `src/cabin/dispatch.ts`; `src/cabin/locks.ts`; `src/cabin/guest.ts`; `tests/turnovers.test.mjs`; `tests/turnovers.test.mjs`
+**Gap.** Every confirmed stay gets a guest code valid check-in to check-out and each assigned turnover a cleaner code for its window, without staff action; windows move with the stay and codes are revoked on cancellation or reassignment; the guest sees theirs on a secret stay page. Codes are pushed through a Seam adapter tested only against Seam-shaped fixtures: the owner's lock account is not connected, so codes are set by hand and the page says so (unavailable on RER Managed until its provider relay). A human may approve early arrival from the inbox only after verified readiness, moving the guest and preceding cleaner windows with one confirmation (src/cabin/inbox/arrival.ts, tests/replies.test.mjs). No device state checks, battery/offline alerts or backup entry plans. Held-key read-only discovery on 23 October confirms one sandbox Schlage Encode; the provider list has no RemoteLock entry, so the required eight-family journey needs an authorized RemoteLock-capable connection outside this held route. Metadata is not provisioning proof; docs/lock-sandbox.md. Unasserted: every named lock family and before/after provider boundary, low-battery/offline pre-arrival assignment, code release under unresolved payment/identity, and exactly-once changed cleaner notice. Native guest/cleaner windows and a canceled notice are asserted by the inherited turnover tests.
 
 #### OPS-006 — Breezeway specialist operations handoff
 
@@ -984,8 +997,10 @@ Core · target · **partial** · From DATA-001, CABIN-13 · Cites BASE-DATA-001,
 **Acceptance.**
 1. Use the public rer export/import commands to round-trip a populated installation, compare all record families/media and totals, reject damaged or populated restores and verify restored jobs/connections remain inactive until the new owner reauthorizes them.
 
+2. Back up a hosted Cabin into an owner-only file without exposing a download link, restore into a fresh hosted environment and inspect the retained rental records.
+
 **Evidence.** `src/cabin/archive/`; `src/cabin/archive-policy.mjs`; `scripts/backup/`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs`; `tests/hosted-backup.test.mjs`; `docs/portable-records.md`
-**Gap.** Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Damaged and populated destinations are refused without partial data; Restored jobs and connections remain inactive until exact reauthorization.
+**Gap.** Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Damaged and populated destinations are refused without partial data; Restored jobs and connections remain inactive until exact reauthorization. Hosted owner-only output without link exposure and a fresh actual hosted restore are unasserted; local archive equivalence and restoration of selected records are asserted.
 
 #### DATA-002 — Erasure, retention and later-journal fencing
 

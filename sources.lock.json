@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "7abfdf7788d5333fb0c707717ac4142c8e007a8fd2635b39e3962ee666140924",
+      "sha256": "d64bb6608ff1b9881cbb203d9b78de6832c4cbd650ccb7482659378e1822614b",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "776aacfc0f199f588f5d95a938c27ea58c23e924307e1c18712d69087eca7346",
+      "sha256": "e06d43421d5b4bc214b9cb53413fdcd8c54555f4019bc07242bc43d0f080eebf",
       "executable": false
     },
     "DEMO.md": {
@@ -175,8 +175,12 @@
       "sha256": "6900144fef79e10a0fe8de1601e118d148cb18a5b91622166cb61f40072d2162",
       "executable": false
     },
+    "docs/channel-terms.md": {
+      "sha256": "e9252d2c0cbb2115af196385d55e61cdf76007cc36821a9d9c678aee84db81d1",
+      "executable": false
+    },
     "docs/CLAIMS.md": {
-      "sha256": "2f1f7fb0cef32d4c785282eabdc660b6b26cc0946bdc6b5a9bd15cba57eb477c",
+      "sha256": "70f8f6ed3c31b84200bdb752cb534e7e1a1d83d1d9ccabc1c00f1d20cd1a4f79",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -188,11 +192,15 @@
       "executable": false
     },
     "docs/contract/COVERAGE.json": {
-      "sha256": "7c28e85c9b9b59577d6ed763c16f3532917ee6b11759fe8194f5b9711a8050c1",
+      "sha256": "137509f1ab6d6617a5caa93acf763cf5307176b011e2ba65cbde11e6682ad385",
+      "executable": false
+    },
+    "docs/contract/DONE-AUDIT.md": {
+      "sha256": "f097ca8dfaba6d1840058657f59a2bd2c7f271e54cc4feb52a9dc7ea7e2a53b4",
       "executable": false
     },
     "docs/contract/ID-MAP.json": {
-      "sha256": "67fc385fbac54b38917c8e9f4d6b88cd76d665703a54c6c7ca47561ca43a7277",
+      "sha256": "66d2cd866b39044970e31dc6cb63f76b40db2132f1362b8370dc8e15ab19ef0a",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -397,6 +405,10 @@
     },
     "docs/verify.md": {
       "sha256": "8ab0a7c3438f1cac49ab5db9aebd70777053e00d5a30443c41e707a162af6ee8",
+      "executable": false
+    },
+    "docs/workflow-semantics.md": {
+      "sha256": "7d330491792faefb3ce7005e2ef151b9a4d62acca951b750f1b3ff62a709962c",
       "executable": false
     },
     "edition.json": {
@@ -999,6 +1011,10 @@
       "sha256": "afe42986588ab0132fb63c1f2947b77da91a9fad6d8aec841f868ad8e61ec642",
       "executable": false
     },
+    "RULINGS.md": {
+      "sha256": "1268df85369c310fbbb7b7f9f8d5f61b8ac4256957d9c7c9f1ec5ec8e67bcda9",
+      "executable": false
+    },
     "RUN-LOCALLY.md": {
       "sha256": "97848ac04347c38a24f23782055f396fbf6ae54ee67e20143b50fd88a9e8dea9",
       "executable": false
@@ -1240,7 +1256,7 @@
       "executable": false
     },
     "seed.json": {
-      "sha256": "5d4555af8e5e9db07586ac321390b70be87ab0e8258f396563c4d770c64f29c4",
+      "sha256": "8b6c762ec0d3d6e43ebd391bc9ddb720f64a868109594ca967c44e9ca625d7ee",
       "executable": false
     },
     "src/auth.server.ts": {
