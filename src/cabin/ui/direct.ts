@@ -6,7 +6,7 @@ import { agreementPanel } from '../agreements/ui'
 import { settlementPanel } from '../direct/settlement-ui'
 import { dateLabel,timeLabel,identityLabel,depositLabel,activeDeposit,arrival } from '../direct/presentation'
 import { homeSettings as homeSettingsOf } from '../homes'
-import { h, heading, panel, form, field, area, hidden, empty, badge, manager, money, propertyName } from './shared'
+import { h, heading, panel, form, field, area, hidden, empty, badge, manager, owner, money, propertyName } from './shared'
 
 const dollars = (name: string, label: string, value: unknown, min = 0, attrs = '') => field(name.replace('Cents','Dollars'), `${label} (USD)`, 'number', value===''?'':(Number(value??0)/100).toFixed(2), `min="${min/100}" step="0.01" ${attrs}`)
 const percent = (name:string,label:string,value:number)=>field(name.replace('Bps','Percent'),label+' (%)','number',(value/100).toFixed(2),'min="0" max="100" step="0.01"')
@@ -123,7 +123,7 @@ export function direct(state: any) {
   return heading('Direct bookings', 'Your homes, booked directly', 'Publish booking rules, review guest agreements and payment status, and manage damage deposits and tax filing evidence.')
     + websiteEditor(state.direct.site??null,state)
     + promotionPanel(state)
-    + stripeSetup(state)
+    + (owner(state) ? stripeSetup(state) : '')
     + collectionPanel(state)
     + manualReceiptPanel(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
