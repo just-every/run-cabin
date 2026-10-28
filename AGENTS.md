@@ -134,3 +134,23 @@ their maintenance.
 
 Pinned reference: https://github.com/runeditrun/base/blob/ada9f574d8a7247edc3a1180b593ad182b1fbb37/TANSTACK-START-MIGRATION.md
 Native-session/runtime evidence: https://github.com/runeditrun/base/tree/ada9f574d8a7247edc3a1180b593ad182b1fbb37/default-seed
+
+## Lander-Regenerate
+
+CONTRACT.md is authoritative. For touched Status rows, preserve all other legacy
+prose and regenerate the selected acceptance entries, contract progress notes
+and summary counts with:
+
+```sh
+node src/base/contract-docs.mjs write --clauses FIN-008
+node src/base/contract-docs.mjs check --clauses FIN-008
+```
+
+Pass the touched clause IDs as a comma-separated list. This command does not
+change acceptance requirements or homepage claims. After the final source,
+test or documentation edit, stage new files and regenerate the source lock last:
+
+```sh
+node scripts/edition-authoring/cli.mjs lock
+node scripts/edition-authoring/cli.mjs check
+```

@@ -104,11 +104,11 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0c2fa70795d5089b48364b9dd718aa80038562a62d338c48fcaa80d39f765c86",
+      "sha256": "7f384b1dd8b62703f0f26f165471aba6995b42a07d63c650a56dbec9a45461ca",
       "executable": false
     },
     "AGENTS.md": {
-      "sha256": "6318ea6b55750b5ac64ebf7cf8f62cb10d97defb59e2f2e12bf8762b9b96c0c8",
+      "sha256": "8a5cfa4403e08326426f1f4e8798fddb3a74ea566686cae006067a88d1e8e3a1",
       "executable": false
     },
     "base-copies.json": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c00acce0b8676d3f2dc512cfc1513df611da0170c79227143e1d268a768d2bc4",
+      "sha256": "a7f1c0c4238cff7102866bb8461badebbf4fd1d713929069ceea4cebac7f04cd",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "30d3a7d5a1a666c56743ea24579277eb56486662626459b69c92e61620acf614",
+      "sha256": "d45100f2c02b226f535e0e18f9bfbc4bc928e63cbd4900a343b0ffd4835eb4b3",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -364,7 +364,7 @@
       "executable": false
     },
     "docs/taxes.md": {
-      "sha256": "5ad4b1a1b5a2a8b81fee22d773c28e529f648b4243ec1d6f933d6c8ec0ba4e08",
+      "sha256": "841efd77516646c1391933fac29d26792a4be62e014d17832aaae3e32c5acdfd",
       "executable": false
     },
     "docs/team-access.md": {
@@ -1237,6 +1237,10 @@
     },
     "src/auth.server.ts": {
       "sha256": "f7f778444b4b1ea4dd3efff44943b259b69bbf686b2b6547df18e68dc9c3b662",
+      "executable": false
+    },
+    "src/base/contract-docs.mjs": {
+      "sha256": "50779f8e4131a334bf84cc8070ae91056b544ab1bf6661b32ce08f0ad3e9eb13",
       "executable": false
     },
     "src/base/contract-filter.ts": {
@@ -2680,7 +2684,7 @@
       "executable": false
     },
     "src/cabin/taxes/calculate.ts": {
-      "sha256": "c21d3965eccc5cff37772bd78723bf4a346e2657f12382ab57d17111fccc5f39",
+      "sha256": "3abb11058e570dc4a5f46bf07fa893abeaf1ba0fae45490876a829eb8018662a",
       "executable": false
     },
     "src/cabin/taxes/commands.ts": {
@@ -2688,7 +2692,7 @@
       "executable": false
     },
     "src/cabin/taxes/delivery.ts": {
-      "sha256": "19994d05d0a54912cf6fd92a53a2a89cc1ee8fdc2f81f0c6bc816d2c9ace0811",
+      "sha256": "15f2036be02d240a9fd9489c2bc331a36a95f6c18ba344f1f9ff8c72b4a9da9c",
       "executable": false
     },
     "src/cabin/taxes/direct.ts": {
@@ -2700,7 +2704,7 @@
       "executable": false
     },
     "src/cabin/taxes/reports.ts": {
-      "sha256": "42f8a76345312441a07eb9c7d36c268f3d3ff2b9819d89c6f053393eb0ec6109",
+      "sha256": "b26f919efdaaf7f4edd35f7c47f18ae342691f81401dfc22028bd72957eb8775",
       "executable": false
     },
     "src/cabin/taxes/sources.ts": {
@@ -2712,7 +2716,7 @@
       "executable": false
     },
     "src/cabin/taxes/types.ts": {
-      "sha256": "8809423b5f7fda5071e032cf14a8e01fb48e3242aea2c199e694339c94b1c681",
+      "sha256": "a3071a2fc643fc4354e3833ceebc3e6ebae41caebfefb8163866c73ed3282515",
       "executable": false
     },
     "src/cabin/taxes/ui-setup.ts": {
@@ -2724,7 +2728,7 @@
       "executable": false
     },
     "src/cabin/taxes/ui.ts": {
-      "sha256": "5867fc28e659d60dda17a971a4a4b58adfff3a5b87aa915e4411e10ffbcc519d",
+      "sha256": "b97815dcced6722cba7bc16ea0cc2e474c51e027b2e185d3b5d90dca78ded5fd",
       "executable": false
     },
     "src/cabin/turnover-window.ts": {
@@ -5295,8 +5299,16 @@
       "sha256": "4439a98f536236e07d3a35f4fc67e4998660445f851e11229f5b2f41958baceb",
       "executable": false
     },
+    "tests/tax-periods-browser.mjs": {
+      "sha256": "456e89451d774bc8d91d44e63ad07778584714ef959e59039b2f058b0c189fc4",
+      "executable": false
+    },
+    "tests/tax-periods-support.mjs": {
+      "sha256": "2b912a284dc3dee73e10ac3e772df724bc1c4cdc8fdd6505c982419ed65702bd",
+      "executable": false
+    },
     "tests/taxes.test.mjs": {
-      "sha256": "678012f6ee684c0e60088c701dcee482c68207c2e7f7bba66afa549705bdb7e8",
+      "sha256": "acb615f179cddfa4b500e1a6916631e5765e7038c715f504a4855cb5ca7b8f92",
       "executable": false
     },
     "tests/turnovers.test.mjs": {
@@ -5324,7 +5336,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "95ce37a058e496ea0b42d1db661c0e15a2fec34e25e006040b7b547fc884a964",
+      "sha256": "317e2502b56ae4c0ec333d4e6c8e68e00e639375243b30f1043bd7e00a88a969",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {

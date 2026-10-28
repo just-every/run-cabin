@@ -1,7 +1,7 @@
-# Monthly US lodging taxes
+# US lodging-tax reviews
 
-Open **Lodging taxes** in the manager workspace. This is a source-led monthly
-review, accountant/partner packet and external-evidence workflow. Sending an
+Open **Lodging taxes** in the manager workspace. This is a source-led monthly or calendar-quarter
+review, accountant or partner packet and external-evidence workflow. Sending an
 email does not file a government return or remit funds. No Avalara or other
 statutory filing API is connected by this feature.
 
@@ -28,7 +28,7 @@ effective rule/month is calculated and rounded separately. This supports
 stays crossing months and rates changing during a stay. The final night of a
 rule's effective range is inclusive; checkout is exclusive. All levies
 currently share the entered taxable base and exemption amount. Jurisdictions
-requiring different fee bases, compounding, non-monthly filing periods or
+requiring different fee bases, compounding, other filing periods or
 unconfigured tax treatments require accountant resolution and must remain
 unsupported work items. Cabin supplies no automatic statutory rate lookup.
 
@@ -60,13 +60,27 @@ does not invent a cash or tax-payable entry.
 
 ## Review, delivery and external evidence
 
-Prepare one property's stay month. State, county and city obligations retain
+Choose a property, monthly or quarterly period and a month within that period.
+A quarter is January through March, April through June, July through September
+or October through December; its end date is exclusive. Select all configured
+jurisdictions or one jurisdiction belonging to that property. The review sums
+existing monthly source lines without recalculating or rounding taxes again.
+It uses stay months for assessments and the entered accounting date for refunds.
+Registration must remain valid through the final day of the selected period.
+
+Prepare one property's period. State, county and city obligations retain
 their own lines, exemptions, collection splits and ledger links. Approval
 binds the exact revision and refuses changed configuration, sources,
 reservations, unresolved work items or reversed/mismatched ledger evidence.
 The approved snapshot, original source evidence, rates, recipients and
 registration evidence are frozen. Later records form a supplemental review
-containing only lines not included in prior approved reviews.
+containing only lines not included in any approved review, including overlapping
+monthly and quarterly reviews. Approval of an overlapping review invalidates
+previously prepared drafts. Original approved monthly snapshots and ledger
+postings remain unchanged; even a negative supplement needs exact review.
+A refund entered late with an accounting date inside a reviewed quarter becomes
+a linked supplement to that quarter. A refund dated in the next quarter belongs
+to that next quarter and keeps its original levy link.
 
 Explicit delivery sends a separate frozen packet per jurisdiction through
 Cabin's existing mail provider. Provider acceptance, suppression, missing
@@ -107,7 +121,7 @@ Each command accepts `{name, input}`. Forms use the same commands.
 | `tax.source.record` | Preview inputs plus `previewDigest, reference, document, collections:[{ruleId,month,channelCents}], confirm:"yes"`; `supersedesSourceId` only for a fully reversed replacement |
 | `tax.source.direct` | `stayId, confirm:"yes"` |
 | `tax.adjust` | `lineId, effectiveDate, baseCents, exemptCents, taxCents, channelCents, reference, reason, confirm:"yes"` |
-| `tax.report.prepare` | `propertyId, month` |
+| `tax.report.prepare` | `propertyId, month, periodKind?:"month"|"quarter", jurisdictionId?` |
 | `tax.report.approve` | `id, revision, confirm:"yes"` |
 | `tax.report.deliver` | `id, revision, confirm:"yes"`, optional `jurisdictionId`; retry adds `checkedProvider:"yes"` |
 | `tax.evidence.record` | `id, revision, jurisdictionId, kind:"acknowledgement"|"rejection"|"payment", reference, date, document, amountCents, confirm:"yes"` |
@@ -128,3 +142,11 @@ Hosted October review and separate accountant packet delivery were exercised at 
 The test does not prove any real statutory filing, partner acknowledgement
 or movement of money. A live authorized filing partner and jurisdiction
 acceptance/payment documents remain external acceptance work.
+
+`tests/taxes.test.mjs` also exercises quarter and year boundaries, separate
+levy totals, monthly and quarterly overlap refusal in both directions, late
+refund supplements, refused unsafe approvals, frozen monthly exports, restart
+and exact source-line ledger reconciliation. `tests/tax-periods-browser.mjs`
+runs in push Verify through native review forms and downloaded JSON, with
+desktop assertions and phone review use. Neither journey files a return or
+remits funds; the statutory partner and real OTA acceptance remain unproved.
