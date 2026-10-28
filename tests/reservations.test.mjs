@@ -144,9 +144,11 @@ test('source inquiries require exact reviewed identity, deduplicate replay and l
   const latestScope=(await h.state()).members.find(m=>m.id===scoped.id)
   await h.cmd('member.save',{id:latestScope.id,revision:latestScope.revision,name:latestScope.name,email:latestScope.email,pmsRole:'guest_service',propertyIds:[outsiderHome.id],actions:['inbox:read','reservations:read'],active:true})
   assert.equal((await h.state(await h.signIn(latestScope.email))).inquiries.length,0,'another home cannot read inquiry identity or price')
+  await source.read([{...sourceInquiry,reservationId:'synthetic-cabin-related-inquiry'}])
+  assert.equal((await h.state()).inquiries.length,2)
   await h.cmd('channelAgent.disconnect',{id:source.profile.id});await h.cmd('inquiry.erase',{id:q.id,revision:q.revision,confirm:'yes'})
   await source.connect();await source.read(undefined,'needs_you');await source.read([{...sourceInquiry,status:'confirmed'}],'needs_you');await source.read([{...sourceInquiry,reservationId:'synthetic-cabin-new-inquiry'}],'needs_you')
-  s=await h.state();assert.equal(s.inquiries[0].status,'erased');assert.ok(s.messages.every(m=>m.status==='discarded'));assert.equal((await h.db.prepare("SELECT COUNT(*) n FROM cb_records WHERE kind='channelAgentEvidence'").first()).n,0,'erasure withdraws source screenshots');assert.doesNotMatch(JSON.stringify(s.inquiries),/Synthetic guest|May we stay/)
+  s=await h.state();assert.ok(s.inquiries.every(q=>q.status==='erased'),'erasure covers the entire reviewed source conversation');assert.ok(s.privacy.receipts.some(r=>r.entity==='inquiry'));assert.ok(s.messages.every(m=>m.status==='discarded'));assert.equal((await h.db.prepare("SELECT COUNT(*) n FROM cb_records WHERE kind='channelAgentEvidence'").first()).n,0,'erasure withdraws source screenshots');assert.doesNotMatch(JSON.stringify(s.inquiries),/Synthetic guest|May we stay/)
   assert.equal((await h.send('/app/reservations',undefined,source.cleaner.cookie)).status,403)
  }finally{await h.close()}
 })
