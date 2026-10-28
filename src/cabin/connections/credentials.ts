@@ -59,7 +59,7 @@ export async function securitySummary(env: Bindings, id: string) {
 export async function securityCommand(env: Bindings, actor: Actor, input: Record<string, unknown>) {
  owner(actor)
  const id = String(input.id), operation = String(input.operation)
- need(ACTIONS[id], 'Unknown provider')
+ need(Object.hasOwn(ACTIONS, id), 'Unknown provider')
  need(['grant', 'credential', 'revoke'].includes(operation), 'Choose a connection operation')
  return mutate(env.DB, actor, `provider.${operation}`, async c => {
   const before = await providerPolicy(env.DB, id)

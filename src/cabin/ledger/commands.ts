@@ -33,7 +33,7 @@ export async function ledgerCommand(c:Context,name:string,p:Record<string,unknow
   const row=await post(c,{...original,sourceKey:'reversal:'+original.id,sourceType:'correction',sourceId:original.id,sourceRevision:original.id,effectiveDate:text(p.effectiveDate,'correction date',10),reversalOf:original.id,lines:original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))});c.entityId=row.id;return row
  }
  need(name==='ledger.post','Unknown ledger command',404)
- const operation=text(p.operation,'transaction type'),build=operations[operation];need(build,'Choose a supported ledger transaction')
+ const operation=text(p.operation,'transaction type'),build=Object.hasOwn(operations,operation)?operations[operation]:undefined;need(build,'Choose a supported ledger transaction')
  const home=property(c,p.propertyId),bookingId=text(p.bookingId,'reservation'),amount=integer(Number(p.amountCents),'amount cents',1,100_000_000),sourceId=text(p.sourceId,'source document reference',200)
  const sourceRevision=text(p.sourceRevision,'source revision',200)
  const all=await journals(c.db),previous=all.filter(j=>j.propertyId===home.id&&j.sourceType===operation&&j.sourceId===sourceId)

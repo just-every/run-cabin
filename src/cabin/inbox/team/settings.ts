@@ -15,7 +15,7 @@ export function teamSettingsCommand(c: Context, name: string, p: Record<string, 
  team.since ||= c.now
  const section = String(p.section ?? ''), remove = p.remove === true || p.remove === 'on' || p.remove === 'yes', id = String(p.id ?? '')
  const list = { template: 'templates', route: 'routes', shift: 'shifts' } as const
- if (section in list) {
+ if (Object.hasOwn(list, section)) {
   const key = list[section as keyof typeof list], items = team[key] as { id: string }[]
   if (remove) { need(items.some(i => i.id === id), 'Not found', 404); (team[key] as unknown[]) = items.filter(i => i.id !== id) }
   else if (section === 'template') team.templates = [...team.templates, { id: newId(), title: text(p.title, 'template title', 80), text: text(p.text, 'template text', 2000) }]

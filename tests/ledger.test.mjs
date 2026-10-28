@@ -55,3 +55,24 @@ test('trust accounts reconcile bank, ledger and owner controls and reserve only 
 test('financial exception cases pursue split-payment fee and refund sources, reject and exactly approve a linked frozen-statement correction without inventing a distribution',{timeout:120000},async()=>{
  const {exceptionJourney}=await import('./financial-exceptions-support.mjs');for(const legacy of [false,true])await exceptionJourney({legacy})
 })
+
+test('ledger transaction names reject inherited properties through the signed-in command door',()=>run(async h=>{
+ const home=await h.cmd('property.save',{name:'Prototype Ridge',ownerName:'Morgan',ownerEmail:'morgan@stay.example',commissionBps:2000})
+ await h.cmd('ledger.configure',{propertyId:home.id,legalEntity:'Prototype Ridge Rentals LLC'})
+ const reservation=await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',start:'2026-11-01',end:'2026-11-05',guestName:'Alex',kind:'stay'})
+ const manager=await h.person('LedgerManager','manager')
+ const input={propertyId:home.id,bookingId:reservation.bookingId,effectiveDate:'2026-11-05',amountCents:10000,sourceId:'prototype-door',sourceRevision:'document-1'}
+ const send=operation=>h.send('/api/cabin/command',{name:'ledger.post',input:{...input,operation}},manager.cookie)
+ const unknown=await send('unsupported-transaction')
+ assert.equal(unknown.status,400,'unknown transaction is rejected')
+ assert.ok(unknown.value.error==='Choose a supported ledger transaction','unknown transaction uses the existing safe error')
+ for(const operation of ['constructor','__proto__','hasOwnProperty']){
+  const response=await send(operation)
+  assert.equal(response.status,unknown.status,operation+' is treated as an unknown transaction')
+  assert.ok(response.text===unknown.text,operation+' returns only the unknown-transaction error')
+  assert.ok(Object.entries(h.auth).every(([key,value])=>!response.text.includes(key)&&!response.text.includes(String(value))),operation+' response contains no binding name or value')
+ }
+ const registered=await send('deposit')
+ assert.equal(registered.status,200,'a registered transaction still works for a signed-in manager')
+ assert.ok(registered.value.result?.sourceType==='deposit'&&registered.value.result.lines?.length===2,'the registered handler posts its balanced ledger lines')
+}))
