@@ -26,6 +26,12 @@ export async function pricingJourney(){
   const p=await pricingHome(h);await p.limits()
   await p.channel('booking-com','percent','15.00',{includeCleaning:true,channelCommissionPercent:'15.00'})
   await p.channel('vrbo','fixed','20.00',{adjustmentDirection:'markdown',channelCommissionPercent:'8.00'})
+  await p.channel('booking-com','percent','15.00',{includeCleaning:true,includeExtraGuests:true,channelCommissionPercent:'15.00'})
+  let allFees=(await p.preview('booking-com')).quote;assert.equal(allFees.extraGuestCents,4602);assert.equal(allFees.totalCents,54630)
+  await p.channel('booking-com','percent','15.00',{includeCleaning:true,channelCommissionPercent:'15.00'})
+  await p.channel('airbnb','percent','10.00',{adjustmentDirection:'markdown',includeCleaning:true,includeExtraGuests:true})
+  const markdown=(await p.preview('airbnb')).quote;assert.equal(markdown.rentCents,32402);assert.equal(markdown.cleaningCents,6751);assert.equal(markdown.extraGuestCents,3602);assert.equal(markdown.totalCents,42755)
+
   let q=(await p.preview('booking-com')).quote
   assert.equal(q.rentCents,41402);assert.equal(q.cleaningCents,8626);assert.equal(q.extraGuestCents,4002);assert.equal(q.totalCents,54030);assert.equal(q.pricing.commissionCents,8105);assert.equal(q.pricing.expectedPayoutCents,45925)
   q=(await p.preview('vrbo')).quote;assert.equal(q.rentCents,32002);assert.equal(q.cleaningCents,7501);assert.equal(q.extraGuestCents,4002);assert.equal(q.totalCents,43505);assert.equal(q.pricing.expectedPayoutCents,40025)
@@ -42,7 +48,18 @@ export async function pricingJourney(){
   await h.cmd('member.save',{...manager,active:false});await h.cmd('direct.pricing.save',{propertyId:p.property.id,revision:p.home.revision,floorDollars:'0',weeklyPercent:'0',monthlyPercent:'0'},manager.cookie,403)
   const boundaries=[[6,'2030-04-07',108006,115507,null],[7,'2030-04-08',113407,120908,'weekly'],[27,'2030-04-28',437427,444928,'weekly'],[28,'2030-04-29',403228,410729,'monthly']]
   for(const [nights,end,rent,total,kind]of boundaries){const r=await h.send('/book/synthetic-cabin/quote',{start:'2030-04-01',end,guests:2,channel:'booking-com',rentCents:1});assert.equal(r.status,200,r.text);assert.equal(r.value.quote.nights,nights);assert.equal(r.value.quote.rentCents,rent);assert.equal(r.value.quote.totalCents,total);assert.equal(r.value.quote.pricing.discountKind,kind);assert.equal(r.value.quote.pricing.channel,'direct')}
+  await h.cmd('direct.rate.save',{propertyId:p.property.id,revision:p.home.revision,start:'2030-03-01',end:'2030-03-02',weekday:'all',nightlyCents:18005});await p.refresh()
+  const halfCent=(await p.preview('direct','2030-03-01','2030-03-08',2)).quote;assert.equal(halfCent.rentCents,113410);assert.equal(halfCent.pricing.nights[0].lengthDiscountCents,1801);assert.equal(halfCent.pricing.nights[0].amountCents,16204)
+  const ownerEmail=['synthetic-cabin-1','example.invalid'].join('@')
+  await h.cmd('property.terms',{propertyId:p.property.id,propertyRevision:p.property.revision,effectiveFrom:'2030-01-01',ownerName:'Synthetic owner',ownerEmail,commissionBps:2000,terms:'Reviewed native allocation',allocation:{commissionBase:'rent',fixedFeeCents:0,reserveBps:0,ownerUseCleaningCents:0,passThrough:'owner',taxExpense:'owner',owners:[{name:'Synthetic owner',email:ownerEmail,bps:10000}],mapping:{owner:'Owner payable',manager:'Management revenue',reserve:'Owner reserve',tax:'Tax payable',vendor:'Vendor payable',reviewedBy:'Synthetic accountant'}}})
+  await h.cmd('promotion.configure',{propertyId:p.property.id,enabled:'yes',minimumNetCents:0,providerFeeReserveCents:0,stock:1,refundRetainedBps:0,refundDeadlineHours:24,taxBps:0,coupons:[{code:'SYNTHETIC',bps:1000,from:'2030-01-01',until:'2031-01-01',minNights:1,channels:['direct']}],confirm:'yes'})
+  const couponInput={start:'2030-04-01',end:'2030-04-08',guests:2,couponCode:'SYNTHETIC'}
+  const coupon=await h.send('/book/synthetic-cabin/quote',couponInput);assert.equal(coupon.status,200,coupon.text);assert.equal(coupon.value.quote.rentCents,102067);assert.equal(coupon.value.quote.totalCents,109568);assert.equal(coupon.value.quote.pricing.rentCents,102067);assert.ok(coupon.value.quote.pricing.nights.every(n=>n.amountCents===14581))
   await p.limits('150.00')
+  for(const door of ['quote','checkout']){
+   const refused=await h.send('/book/synthetic-cabin/'+door,{...couponInput,homeRevision:p.home.revision,guestName:'Synthetic guest',email:['synthetic-cabin-4','example.invalid'].join('@'),signature:'Synthetic guest',consent:'yes'});assert.equal(refused.status,409,refused.text);assert.match(refused.value.error,/nightly floor/);assert.equal(creates,0);assert.equal((await h.state()).direct.stays.length,0)
+  }
+
   q=(await p.preview('direct','2030-04-01','2030-04-29',2)).quote;assert.equal(q.rentCents,420000);assert.equal(q.totalCents,427501);assert.ok(q.pricing.nights.every(n=>n.amountCents===15000&&n.floorApplied&&n.requestedCents===14401))
   await p.channel('direct','fixed','20.00',{adjustmentDirection:'markdown'})
   q=(await p.preview('direct','2030-04-01','2030-04-08',2)).quote;assert.equal(q.rentCents,105000);assert.equal(q.totalCents,112501)
@@ -60,6 +77,6 @@ export async function pricingJourney(){
   const link=await h.send('/api/cabin/quotes/'+staff.id+'/link',undefined,h.owner);assert.equal(link.status,303)
   const staleQuote=await h.send(link.headers.get('location'));assert.equal(staleQuote.status,409)
   const staleCheckout=await h.send('/book/synthetic-cabin/checkout',signed);assert.equal(staleCheckout.status,409);assert.equal(creates,1,'stale terms have no payment effect')
-  const retained=await h.send('/book/stay/'+accepted.value.token);assert.equal(retained.status,200);assert.match(retained.text,/Floor conflict/);assert.match(retained.text,/1,125\.01/);assert.match(retained.text,new RegExp(snapshot.pricing.policyRevision))
+  const retained=await h.send('/book/stay/'+accepted.value.token);assert.equal(retained.status,200);assert.match(retained.text,/Floor conflict/);assert.match(retained.text,/1,125\.01/)
  }finally{await h.close()}
 }

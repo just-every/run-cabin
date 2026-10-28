@@ -6,6 +6,7 @@
       "hosted": false,
       "commands": [
         "node src/base/contract-docs.mjs check --clauses FIN-008",
+        "node src/base/contract-docs.mjs check --clauses PRICE-002",
         "node scripts/cabin-domain-tests.mjs operations",
         "pnpm run check --profile first-party",
         "pnpm run test:site"
