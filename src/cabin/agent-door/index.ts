@@ -41,6 +41,14 @@ export function cabinAgentDoor(original: Bindings) {
   })
 }
 
+/** Unconfigured installations still serve their native health and installation pages. */
+export async function cabinAgentResponse(request: Request, env: Bindings): Promise<Response | null> {
+  const path = new URL(request.url).pathname
+  if (!['/mcp', '/agents', '/api/rer/agent-policy', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(path)
+    && !path.startsWith('/agents/api/') && !/^\/agents\/approvals\/[^/]+$/.test(path)) return null
+  return cabinAgentDoor(env).handle(request)
+}
+
 export function cabinBusinessSettings(original: Bindings) {
   const env = runtimeBindings(original)
   const binding = trust(env)

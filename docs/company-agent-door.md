@@ -1,4 +1,4 @@
-# Company agent access
+## Company agent access
 
 Cabin serves the shared Base agent door at `/mcp`, the standard discovery and
 metadata paths, `/api/rer/agent-policy` and `/agents`. It uses the installation's
