@@ -1,6 +1,6 @@
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
-import { need,text,newId,type Actor } from '../model'
+import { need,owner,text,newId,type Actor } from '../model'
 import { managedInstall } from '../channels'
 import { stripe,stripeCredentials,MANAGED_STRIPE_LINE,CARD_ONLY } from './stripe'
 import { providerSettings,saveProvider,sealKey,type StripeMode } from './provider-store'
@@ -22,6 +22,7 @@ export async function checkTest(env:Bindings){
  return {message:status==='paid'?'Stripe test charge succeeded: $1.00 in test money. Your connection can create and read a paid checkout.':status==='expired'?'The test checkout expired. Start another test checkout.':'The test checkout is awaiting payment. Open it below, then check again.'}
 }
 export async function providerCommand(env:Bindings,actor:Actor,name:string,p:Record<string,unknown>){
+ owner(actor)
  need(!managedInstall(env),MANAGED_STRIPE_LINE,409)
  if(name==='direct.stripe.save'){
   const mode=text(p.mode,'payment mode');need(mode==='test'||mode==='live','Choose test or live mode')

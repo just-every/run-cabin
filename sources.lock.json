@@ -1616,7 +1616,7 @@
       "executable": false
     },
     "src/cabin/direct/provider.ts": {
-      "sha256": "06612682e5948a560b2cfb1b35a28d2268a35ea9987ff92b8e6fe6af12159a8c",
+      "sha256": "1013d051420494922d08a04525359f1636fa12db9c483478fac3a2927cc9febc",
       "executable": false
     },
     "src/cabin/direct/public-ui.ts": {
@@ -2784,7 +2784,7 @@
       "executable": false
     },
     "src/cabin/ui/direct.ts": {
-      "sha256": "1fa324a1c475fe7608813152a8cbd4fa752428b67760c4f68c7d2470fc8dcf02",
+      "sha256": "29716b97b4e185ee5e4a78693cf254094c0d82da32fe8de6fee2bda4f68274bb",
       "executable": false
     },
     "src/cabin/ui/fit.ts": {
@@ -4964,7 +4964,7 @@
       "executable": false
     },
     "tests/direct.test.mjs": {
-      "sha256": "e5b0583e25048b2ef6f17fc41e85943ede6328cdecaf66d64e71088dd488922c",
+      "sha256": "7fe516eefa877002aefea02b9271ea34ed4c7d23e9cd127e18eb3166982a4d24",
       "executable": false
     },
     "tests/dispatch.test.mjs": {

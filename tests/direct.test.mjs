@@ -10,6 +10,46 @@ const day=n=>homeDay(n, 'America/New_York')
 const settings={enabled:true,slug:'pine-ridge',description:'A quiet Maine cabin near the lake.',nightlyCents:18000,cleaningCents:7500,extraGuestCents:2000,includedGuests:2,maxGuests:4,minNights:2,maxNights:14,minGapNights:2,depositCents:25000,releaseHours:0,taxLabel:'Maine lodging tax',taxBps:900,countyTaxLabel:'County lodging tax',countyTaxBps:100,agreement:'No smoking. Quiet hours after 10 pm. Damage claims require evidence.',requireIdentity:true}
 async function home(h){const p=await h.cmd('property.save',{name:'Pine Ridge Cabin',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000});return h.cmd('direct.configure',{...settings,propertyId:p.id})}
 
+test('only the installation owner can configure Stripe, including against a legacy wildcard grant',async()=>{
+ const provider=async h=>(await h.db.prepare('SELECT data FROM cb_direct_provider WHERE id=1').first())?.data??null
+ let providerCalls=0
+ const h=await harness({outbound:async request=>{
+  providerCalls++
+  const path=new URL(request.url).pathname
+  assert.equal(new URL(request.url).hostname,'api.stripe.com')
+  if(path==='/v1/balance')return Response.json({object:'balance',livemode:request.headers.get('authorization')?.includes('sk_live_')})
+  if(path==='/v1/checkout/sessions')return Response.json({id:'cs_owner_check',url:'https://checkout.stripe.com/c/pay/cs_owner_check'})
+  assert.fail('Unexpected provider call '+path)
+ }})
+ try{
+  const manager=await h.person('LegacyStripeManager','manager')
+  assert.deepEqual(manager.scope.propertyIds,['*']);assert.deepEqual(manager.scope.actions,['*'])
+  const command=(cookie,name,input)=>h.send('/api/cabin/command',{name,input},cookie)
+
+  assert.equal((await command(h.owner,'direct.stripe.save',{mode:'test',key:'sk_test_owner1'})).status,200)
+  assert.equal((await command(h.owner,'direct.stripe.save',{mode:'live',key:'sk_live_owner1',liveConsent:'yes'})).status,200)
+  assert.equal((await command(h.owner,'direct.stripe.mode',{mode:'test'})).status,200)
+  assert.equal((await command(h.owner,'direct.stripe.mode',{mode:'live',liveConsent:'yes'})).status,200)
+  const before=await provider(h),callsBeforeManager=providerCalls
+
+  const managerSave=await command(manager.cookie,'direct.stripe.save',{mode:'test',key:'sk_test_manager1'}),afterSave=await provider(h)
+  const managerMode=await command(manager.cookie,'direct.stripe.mode',{mode:'test'}),afterMode=await provider(h)
+  const managerTest=await command(manager.cookie,'direct.stripe.test',{}),afterTest=await provider(h)
+  const managerPage=await h.send('/app/direct',undefined,manager.cookie),ownerPage=await h.send('/app/direct',undefined,h.owner)
+
+  assert.equal(managerSave.status,403,managerSave.text);assert.equal(afterSave,before)
+  assert.equal(managerMode.status,403,managerMode.text);assert.equal(afterMode,before)
+  assert.equal(managerTest.status,403,managerTest.text);assert.equal(afterTest,before)
+  assert.equal(providerCalls,callsBeforeManager,'refused setup commands do not reach Stripe')
+  assert.equal(managerPage.status,200,managerPage.text);assert.doesNotMatch(managerPage.text,/Connect Stripe|direct\.stripe\.save/)
+  assert.equal(ownerPage.status,200,ownerPage.text);assert.match(ownerPage.text,/Connect Stripe/)
+  assert.equal((await command(h.owner,'direct.stripe.test',{})).status,200)
+
+  const p=await h.cmd('property.save',{name:'Manager Booking Home',ownerName:'Morgan Example',ownerEmail:'morgan@stay.example',commissionBps:2000})
+  assert.equal((await command(manager.cookie,'direct.configure',{...settings,slug:'manager-booking-home',propertyId:p.id})).status,200)
+ }finally{await h.close()}
+})
+
 test('a signed direct checkout receives Stripe test payment, verifies identity, holds a deposit and closes every channel export',async()=>{
  let payment=false,session,verification=false,holdRequests=0,releaseRequests=0,depositStatus='requires_capture'
  const h=await harness({auth:{STRIPE_TEST_SECRET_KEY:'sk_test_fake'},outbound:async request=>{
