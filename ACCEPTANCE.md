@@ -38,7 +38,7 @@ Core · published · **partial** · From CABIN-01, PROPERTY-001 · Cites BASE-SI
 
 Core · target · **partial** · From AUTH-002, AUTH-001 · Cites BASE-ACCESS-002, BASE-ACCESS-004, BASE-ROLE-001, BASE-SIGNIN-001
 
-**Requirement.** Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners have the intersection of explicitly selected properties and actions. Installation administration is distinct from rental ownership. The installation owner grants manager and cleaner membership; native rental submissions are bound to the installation’s own origin. Cleaners see assigned published jobs and redacted associated stay and home details; service staff receive necessary entry instructions without guest identity documents or owner banking details. Offboarding also withdraws connected device codes. API-001 and MOBILE-001 use these same rental roles and scopes.
+**Requirement.** Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners have the intersection of explicitly selected properties and actions. Installation administration is distinct from rental ownership. The installation owner grants manager and cleaner membership; native rental submissions are bound to the installation’s own origin. Queued mutations recheck their property/action authority at commit. A cleaner’s maintenance view stays within their granted homes. Cleaners see assigned published jobs and redacted associated stay and home details; service staff receive necessary entry instructions without guest identity documents or owner banking details. Offboarding also withdraws connected device codes. API-001 and MOBILE-001 use these same rental roles and scopes.
 
 **Acceptance.**
 1. Invite each role from team settings; use its session to perform an allowed action and attempt the same action on another property, statement, identity document and credential; revoke a role during a queued job and verify execution is refused.
@@ -211,7 +211,7 @@ Core · target · **missing** · Register R-5
 
 #### SYNC-011 — Channel agents in the host's own accounts
 
-Core · target · **partial** · Cites BASE-ROLE-001, BASE-AGENT-005, BASE-AGENT-008 · Register R-5
+Core · target · **partial** · Cites BASE-ROLE-001, BASE-AUDIT-001, BASE-AGENT-005, BASE-AGENT-008, BASE-AGENT-009 · Register R-5
 
 **Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Each channel action keeps its exact source revision and protected before/after screenshot under AUDIT-001 and SECURITY-001. The person-only provider handoff is exercised separately on Airbnb, Booking.com and Vrbo through the exact host-account session. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the [channel-specific terms risks](/docs/channel-terms), the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (RL-1); the broader channel-management requirements remain in SYNC-002–010.
 
@@ -618,7 +618,7 @@ Core · target · **partial** · From OPS-001 · Rules D-1
 
 #### EVIDENCE-001 — Private immutable cleaner completion evidence
 
-Core · target · **partial** · From EVIDENCE-001, CABIN-05 · Cites BASE-INPUT-003, BASE-ROLE-001
+Core · target · **partial** · From EVIDENCE-001, CABIN-05 · Cites BASE-INPUT-001, BASE-INPUT-003, BASE-ROLE-001
 
 **Requirement.** Only the assigned currently authorized cleaner completes an approved turnover, once, using every approved checklist item and a valid PNG/JPEG with caption. Completion retains original photos, their digest and caption, the completing cleaner and time. A changed booking invalidates stale completion authority; authorized photo retrieval rechecks current permissions. Work finished after the next check-in remains done and is labeled late. A reopened job names the stay or checkout change and can be completed again while reusing its original photos.
 
@@ -797,6 +797,33 @@ Core · target · **partial**
 
 **Evidence.** `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md`
 **Gap.** Source-backed bank imports and frozen bank/ledger/owner controls are implemented. Live bank-feed and complete two-account reconciliation proof remain open; separately reserved plans and actual ACH execution are FIN-010 and FIN-011.
+
+#### FIN-010 — Exact internally reserved distribution plans
+
+Core · target · **partial** · From FIN-006
+
+**Requirement.** Under RL-101 the native installation owner alone approves an exact, unexecuted plan binding payee, amount, bank account and legal entity. Available funds exclude reserves, taxes, advances, other payables and other owners’ money. Approval reserves internally and creates neither a bank payout nor a ledger distribution. Restored plans are inactive. This is a conservative preparation boundary; an agent’s preparation carries standard and an execution call carries money and commitment, decided by the company’s policy subject to FIN-011’s verified external authority.
+
+**Acceptance.**
+1. Prepare an owner or vendor plan from reconciled balances and approve its exact payee, amount, account and entity as native owner; refuse any use of reserved funds or another owner’s money.
+2. Read the internal reservation and verify that no bank request or ledger payout was made; restore it and verify inactive history.
+
+**Evidence.** `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md`
+**Gap.** Bank reconciliation and internally reserved native-owner plans are implemented. Full exact payee/account/entity and net-liability proof must be judged; no actual execution is claimed.
+
+#### FIN-011 — Verified ACH execution and returned distributions
+
+Core · target · **missing** · From FIN-006 · Register R-7
+
+**Requirement.** Actual distribution uses a separately verified licensed ACH/payout partner, funded trust arrangement, verified owner or vendor payee and bank execution authority. Fresh exact execution approval under RL-101 binds the chosen payee, amount, account and entity; an agent’s equivalent call carries money and commitment and the company’s policy decides it, without manufacturing a person’s approval. Only provider pending, settled, failed and returned evidence drives the money outcome. A return restores liability and corrects the owner statement through FIN-001’s immutable custody and closed-period rules; Cabin itself never custodies funds.
+
+**Acceptance.**
+1. Execute an exactly authorized owner or vendor distribution using the verified partner and payee, with available funds net of all reserves and liabilities.
+2. Follow pending, settled, failed and returned transfers from provider evidence; read bank evidence of a return, restored owner liability and the corrected owner statement.
+3. Refuse execution lacking fresh exact authority, including any attempt to use another owner’s funds.
+
+**Evidence.** `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md`
+**Gap.** Licensed-partner approval, funded trust arrangement, verified payees, execution authority and actual pending/settled/failed/returned transfers, bank return evidence, restored liability and corrected owner statement are absent. Stripe checkout and Plaid read credentials convey no payout authority.
 
 #### FIN-007 — QuickBooks Online accounting synchronization
 
@@ -1031,7 +1058,7 @@ Core · target · **done** · Cites BASE-DATA-004, BASE-DATA-005, BASE-INSTALL-0
 
 Core · target · **partial** · Cites BASE-OPS-005, BASE-AUDIT-001, BASE-DATA-003, BASE-AGENT-009
 
-**Requirement.** The Cabin trail links rental-role changes, exact approvals, reservation revisions, released guest access, channel and lock actions, trust postings, move-in journals and recovery decisions to their stay, property, source revision and result. It excludes personal message bodies and active entry capabilities while preserving the accounting attribution needed after guest erasure.
+**Requirement.** The Cabin trail links rental-role changes, exact approvals, reservation revisions, released guest access, channel and lock actions, trust postings, move-in journals and recovery decisions to their stay, property, source revision and result. Original rental business events are append-only; corrections retain the earlier event rather than overwriting it. The trail excludes personal message bodies and active entry capabilities while preserving the accounting attribution needed after guest erasure.
 
 **Acceptance.**
 1. Follow a stay from booking through task, message, lock, refund and owner statement; export its human/agent/provider history, erase the guest and verify useful anonymized attribution remains without secrets or personal message bodies.
@@ -1043,7 +1070,7 @@ Core · target · **partial** · Cites BASE-OPS-005, BASE-AUDIT-001, BASE-DATA-0
 
 Core · target · **partial** · Cites BASE-SECRET-001, BASE-DATA-004, BASE-AGENT-003, BASE-AGENT-005
 
-**Requirement.** Before a provider connection is enabled, Connections discloses its destination, rental-data families, purpose, action/home authority and provider cost. Credential rotation fences old inbound events and queued effects. Ordinary staff and agent views omit guest identity copies, tax and bank details and active door capabilities unless their job-specific scope permits them. Reply assistance uses only the current matched stay and property instructions; guest-authored text cannot confer authority.
+**Requirement.** Before a provider connection is enabled, Connections discloses its destination, rental-data families, purpose, action/home authority and provider cost. Provider credentials remain encrypted at rest. Current action/home grants bound each connection, and inbound provider events are authenticated against current provider signatures. Credential rotation fences old inbound events and queued effects. Ordinary staff and agent views omit guest identity copies, tax and bank details and active door capabilities unless their job-specific scope permits them. Operational logs, ordinary exports and unscoped agent prompts exclude ID images, tax IDs, bank details and active door codes; separately authorized jobs retain only the evidence they need. Reply assistance uses only the current matched stay and property instructions.
 
 **Acceptance.**
 1. Enable, rotate and revoke a provider connection, submit forged events and adversarial guest text, inspect role-limited API/export/log/agent outputs and prove revoked queued actions stop while historical evidence remains readable.
@@ -1122,35 +1149,6 @@ Core · target · **partial**
 
 **Evidence.** `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs`
 **Gap.** Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests.
-
-### US money, owner accounting and reporting
-
-#### FIN-010 — Exact internally reserved distribution plans
-
-Core · target · **partial** · From FIN-006
-
-**Requirement.** Under RL-101 the native installation owner alone approves an exact, unexecuted plan binding payee, amount, bank account and legal entity. Available funds exclude reserves, taxes, advances, other payables and other owners’ money. Approval reserves internally and creates neither a bank payout nor a ledger distribution. Restored plans are inactive. This is a conservative preparation boundary; an agent’s preparation carries standard and an execution call carries money and commitment, decided by the company’s policy subject to FIN-011’s verified external authority.
-
-**Acceptance.**
-1. Prepare an owner or vendor plan from reconciled balances and approve its exact payee, amount, account and entity as native owner; refuse any use of reserved funds or another owner’s money.
-2. Read the internal reservation and verify that no bank request or ledger payout was made; restore it and verify inactive history.
-
-**Evidence.** `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md`
-**Gap.** Bank reconciliation and internally reserved native-owner plans are implemented. Full exact payee/account/entity and net-liability proof must be judged; no actual execution is claimed.
-
-#### FIN-011 — Verified ACH execution and returned distributions
-
-Core · target · **missing** · From FIN-006 · Register R-7
-
-**Requirement.** Actual distribution uses a separately verified licensed ACH/payout partner, funded trust arrangement, verified owner or vendor payee and bank execution authority. Fresh exact execution approval under RL-101 binds the chosen payee, amount, account and entity; an agent’s equivalent call carries money and commitment and the company’s policy decides it, without manufacturing a person’s approval. Only provider pending, settled, failed and returned evidence drives the money outcome. A return restores liability and corrects the owner statement through FIN-001’s immutable custody and closed-period rules; Cabin itself never custodies funds.
-
-**Acceptance.**
-1. Execute an exactly authorized owner or vendor distribution using the verified partner and payee, with available funds net of all reserves and liabilities.
-2. Follow pending, settled, failed and returned transfers from provider evidence; read bank evidence of a return, restored owner liability and the corrected owner statement.
-3. Refuse execution lacking fresh exact authority, including any attempt to use another owner’s funds.
-
-**Evidence.** `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md`
-**Gap.** Licensed-partner approval, funded trust arrangement, verified payees, execution authority and actual pending/settled/failed/returned transfers, bank return evidence, restored liability and corrected owner statement are absent. Stripe checkout and Plaid read credentials convey no payout authority.
 
 ### Push further: agents complete the stay’s job
 

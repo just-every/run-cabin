@@ -265,10 +265,19 @@
     {
       "file": "CONTRACT.md",
       "line": 58,
-      "text": "Revocation applies on the next request and mutation authority is fenced at commit;",
+      "text": "Revocation applies on the next request",
       "to": "base",
       "ids": [
         "BASE-ROLE-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 58,
+      "text": " and mutation authority is fenced at commit;",
+      "to": "clause",
+      "ids": [
+        "AUTH-002"
       ]
     },
     {
@@ -1153,10 +1162,28 @@
     {
       "file": "CONTRACT.md",
       "line": 340,
-      "text": "Cabin checks image structure and keeps persisted private bytes, digest, actor and completion time.",
+      "text": "Cabin checks image structure",
+      "to": "base",
+      "ids": [
+        "BASE-INPUT-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 340,
+      "text": " and keeps persisted private bytes",
       "to": "base",
       "ids": [
         "BASE-INPUT-003"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 340,
+      "text": ", digest, actor and completion time.",
+      "to": "clause",
+      "ids": [
+        "EVIDENCE-001"
       ]
     },
     {
@@ -1854,10 +1881,19 @@
     {
       "file": "CONTRACT.md",
       "line": 544,
-      "text": "Erasure anonymizes identity references while preserving necessary accounting/action history;",
+      "text": "Erasure anonymizes identity references",
       "to": "base",
       "ids": [
         "BASE-DATA-003"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 544,
+      "text": " while preserving necessary accounting/action history;",
+      "to": "clause",
+      "ids": [
+        "AUDIT-001"
       ]
     },
     {

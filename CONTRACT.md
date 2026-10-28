@@ -33,7 +33,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 | BASE-ACCESS-002 | Sessions | AUTH-002, GUEST-002, MOBILE-001, HTTP-001 | not run |
 | BASE-ACCESS-003 | Public endpoints | none | not run |
 | BASE-ACCESS-004 | Server-side authorisation | AUTH-002 | not run |
-| BASE-INPUT-001 | Validation | INTERFACE-001 | not run |
+| BASE-INPUT-001 | Validation | EVIDENCE-001, INTERFACE-001 | not run |
 | BASE-INPUT-002 | HTML | none | not run |
 | BASE-INPUT-003 | Uploads | EVIDENCE-001 | not run |
 | BASE-SECRET-001 | No leakage | WEB-002, GUEST-002, DATA-001, SECURITY-001 | not run |
@@ -51,28 +51,28 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 | BASE-OPS-003 | Idempotency | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, FIN-007, RUNTIME-001 | not run |
 | BASE-OPS-004 | Failure is visible | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, RUNTIME-001 | not run |
 | BASE-OPS-005 | Audit | AUDIT-001 | not run |
-| BASE-ROLE-001 | Roles through every door | CABIN-01, AUTH-002, EVIDENCE-001, FIN-007, MOBILE-001 | not run |
-| BASE-AUDIT-001 | Searchable, durable audit | DATA-002, AUDIT-001 | not run |
+| BASE-ROLE-001 | Roles through every door | CABIN-01, AUTH-002, SYNC-011, EVIDENCE-001, FIN-007, MOBILE-001 | not run |
+| BASE-AUDIT-001 | Searchable, durable audit | SYNC-011, DATA-002, AUDIT-001 | not run |
 | BASE-BACKUP-001 | Independent backup, restore and rollback | DATA-001 | not run |
 | BASE-DATA-006 | Erasure respects retention and legal hold | DATA-002 | not run |
 | BASE-SIGNIN-001 | Standards-based SSO and lifecycle | CABIN-01, AUTH-002 | not run |
 | BASE-SIGNIN-002 | Native multi-factor authentication | none | not run |
 | BASE-INSTALL-001 | Free self-host and removal | DATA-003, RUNTIME-001, OPEN-001 | not run |
-| BASE-MAIL-001 | Truthful mail outcomes | MESSAGE-001, MESSAGE-002, MESSAGE-003, GUEST-002, FIN-007 | not run |
+| BASE-MAIL-001 | Truthful mail outcomes | PAY-007, MESSAGE-001, MESSAGE-002, MESSAGE-003, GUEST-002, FIN-007 | not run |
 | BASE-ACCESSIBILITY-001 | One accessibility bar | WEB-001, WEB-002, INTERFACE-001 | not run |
 | BASE-DOCS-001 | On-site docs from one contract | none | not run |
 | BASE-AGENT-001 | One MCP door per seed | none | not run |
-| BASE-AGENT-002 | The seed's jobs are tools, through the UI's own actions | AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-001 | not run |
+| BASE-AGENT-002 | The seed's jobs are tools, through the UI's own actions | SURFACE-001, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
 | BASE-AGENT-003 | Records are resources | SECURITY-001, SURFACE-004 | not run |
 | BASE-AGENT-004 | Business identity and short-lived, audience-bound tokens | CONTROL-002, SURFACE-008 | not run |
-| BASE-AGENT-005 | An agent acts as a person in a role, never more | CONTROL-002, MESSAGE-004, SECURITY-001, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-003, SURFACE-008 | not run |
-| BASE-AGENT-006 | Every action declares its risk class | CONTROL-002, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-001, SURFACE-002, SURFACE-003 | not run |
-| BASE-AGENT-007 | The company's policy decides, at one chokepoint | CONTROL-001, CONTROL-002, MESSAGE-002, MESSAGE-003, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-005, SURFACE-006 | not run |
-| BASE-AGENT-008 | Truthful attribution | CONTROL-001, CONTROL-002, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-003, SURFACE-006 | not run |
-| BASE-AGENT-009 | Every agent action is audited with its class and decision | AUDIT-001, SURFACE-007 | not run |
+| BASE-AGENT-005 | An agent acts as a person in a role, never more | CONTROL-002, SYNC-011, MESSAGE-004, SECURITY-001, SURFACE-003, SURFACE-008, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
+| BASE-AGENT-006 | Every action declares its risk class | CONTROL-002, MESSAGE-004, SURFACE-001, SURFACE-002, SURFACE-003, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
+| BASE-AGENT-007 | The company's policy decides, at one chokepoint | CONTROL-001, CONTROL-002, PAY-007, MESSAGE-002, MESSAGE-003, MESSAGE-004, SURFACE-005, SURFACE-006, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
+| BASE-AGENT-008 | Truthful attribution | CONTROL-001, CONTROL-002, SYNC-011, MESSAGE-004, SURFACE-003, SURFACE-006, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
+| BASE-AGENT-009 | Every agent action is audited with its class and decision | SYNC-011, AUDIT-001, SURFACE-007 | not run |
 | BASE-AGENT-010 | Agents can follow changes | SURFACE-004 | not run |
 | BASE-AGENT-011 | Limits are policy, and Pause stops everything | SURFACE-007 | not run |
-| BASE-AGENT-012 | Writes are idempotent and conflict-safe | RUNTIME-001, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-006, SURFACE-008 | not run |
+| BASE-AGENT-012 | Writes are idempotent and conflict-safe | RUNTIME-001, SURFACE-006, SURFACE-008, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006 | not run |
 | BASE-AGENT-013 | Manifest, docs and the conformance journey | SURFACE-001, SURFACE-005 | not run |
 
 ## Published clauses
@@ -97,7 +97,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 *Tier:* Core · *From:* AUTH-002, AUTH-001 · *Cites:* BASE-ACCESS-002, BASE-ACCESS-004, BASE-ROLE-001, BASE-SIGNIN-001
 
-**Requirement.** Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners have the intersection of explicitly selected properties and actions. Installation administration is distinct from rental ownership. The installation owner grants manager and cleaner membership; native rental submissions are bound to the installation’s own origin. Cleaners see assigned published jobs and redacted associated stay and home details; service staff receive necessary entry instructions without guest identity documents or owner banking details. Offboarding also withdraws connected device codes. API-001 and MOBILE-001 use these same rental roles and scopes.
+**Requirement.** Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners have the intersection of explicitly selected properties and actions. Installation administration is distinct from rental ownership. The installation owner grants manager and cleaner membership; native rental submissions are bound to the installation’s own origin. Queued mutations recheck their property/action authority at commit. A cleaner’s maintenance view stays within their granted homes. Cleaners see assigned published jobs and redacted associated stay and home details; service staff receive necessary entry instructions without guest identity documents or owner banking details. Offboarding also withdraws connected device codes. API-001 and MOBILE-001 use these same rental roles and scopes.
 
 **Acceptance.**
 1. Invite each role from team settings; use its session to perform an allowed action and attempt the same action on another property, statement, identity document and credential; revoke a role during a queued job and verify execution is refused.
@@ -231,7 +231,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### SYNC-011 — Channel agents in the host's own accounts
 
-*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-AGENT-005, BASE-AGENT-008 · *Register:* R-5
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-AUDIT-001, BASE-AGENT-005, BASE-AGENT-008, BASE-AGENT-009 · *Register:* R-5
 
 **Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Each channel action keeps its exact source revision and protected before/after screenshot under AUDIT-001 and SECURITY-001. The person-only provider handoff is exercised separately on Airbnb, Booking.com and Vrbo through the exact host-account session. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the [channel-specific terms risks](/docs/channel-terms), the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (RL-1); the broader channel-management requirements remain in SYNC-002–010.
 
@@ -545,7 +545,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### EVIDENCE-001 — Private immutable cleaner completion evidence
 
-*Tier:* Core · *From:* EVIDENCE-001, CABIN-05 · *Cites:* BASE-INPUT-003, BASE-ROLE-001
+*Tier:* Core · *From:* EVIDENCE-001, CABIN-05 · *Cites:* BASE-INPUT-001, BASE-INPUT-003, BASE-ROLE-001
 
 **Requirement.** Only the assigned currently authorized cleaner completes an approved turnover, once, using every approved checklist item and a valid PNG/JPEG with caption. Completion retains original photos, their digest and caption, the completing cleaner and time. A changed booking invalidates stale completion authority; authorized photo retrieval rechecks current permissions. Work finished after the next check-in remains done and is labeled late. A reopened job names the stay or checkout change and can be completed again while reusing its original photos.
 
@@ -682,6 +682,27 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 **Acceptance.**
 1. Reconcile two trust accounts and their separate owner liabilities to bank and ledger sources; refuse unmatched or unassigned sources and any use of another owner’s funds.
+
+#### FIN-010 — Exact internally reserved distribution plans
+
+*Tier:* Core · *From:* FIN-006
+
+**Requirement.** Under RL-101 the native installation owner alone approves an exact, unexecuted plan binding payee, amount, bank account and legal entity. Available funds exclude reserves, taxes, advances, other payables and other owners’ money. Approval reserves internally and creates neither a bank payout nor a ledger distribution. Restored plans are inactive. This is a conservative preparation boundary; an agent’s preparation carries standard and an execution call carries money and commitment, decided by the company’s policy subject to FIN-011’s verified external authority.
+
+**Acceptance.**
+1. Prepare an owner or vendor plan from reconciled balances and approve its exact payee, amount, account and entity as native owner; refuse any use of reserved funds or another owner’s money.
+2. Read the internal reservation and verify that no bank request or ledger payout was made; restore it and verify inactive history.
+
+#### FIN-011 — Verified ACH execution and returned distributions
+
+*Tier:* Core · *From:* FIN-006 · *Register:* R-7
+
+**Requirement.** Actual distribution uses a separately verified licensed ACH/payout partner, funded trust arrangement, verified owner or vendor payee and bank execution authority. Fresh exact execution approval under RL-101 binds the chosen payee, amount, account and entity; an agent’s equivalent call carries money and commitment and the company’s policy decides it, without manufacturing a person’s approval. Only provider pending, settled, failed and returned evidence drives the money outcome. A return restores liability and corrects the owner statement through FIN-001’s immutable custody and closed-period rules; Cabin itself never custodies funds.
+
+**Acceptance.**
+1. Execute an exactly authorized owner or vendor distribution using the verified partner and payee, with available funds net of all reserves and liabilities.
+2. Follow pending, settled, failed and returned transfers from provider evidence; read bank evidence of a return, restored owner liability and the corrected owner statement.
+3. Refuse execution lacking fresh exact authority, including any attempt to use another owner’s funds.
 
 #### FIN-007 — QuickBooks Online accounting synchronization
 
@@ -862,7 +883,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 *Tier:* Core · *Cites:* BASE-OPS-005, BASE-AUDIT-001, BASE-DATA-003, BASE-AGENT-009
 
-**Requirement.** The Cabin trail links rental-role changes, exact approvals, reservation revisions, released guest access, channel and lock actions, trust postings, move-in journals and recovery decisions to their stay, property, source revision and result. It excludes personal message bodies and active entry capabilities while preserving the accounting attribution needed after guest erasure.
+**Requirement.** The Cabin trail links rental-role changes, exact approvals, reservation revisions, released guest access, channel and lock actions, trust postings, move-in journals and recovery decisions to their stay, property, source revision and result. Original rental business events are append-only; corrections retain the earlier event rather than overwriting it. The trail excludes personal message bodies and active entry capabilities while preserving the accounting attribution needed after guest erasure.
 
 **Acceptance.**
 1. Follow a stay from booking through task, message, lock, refund and owner statement; export its human/agent/provider history, erase the guest and verify useful anonymized attribution remains without secrets or personal message bodies.
@@ -871,7 +892,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 *Tier:* Core · *Cites:* BASE-SECRET-001, BASE-DATA-004, BASE-AGENT-003, BASE-AGENT-005
 
-**Requirement.** Before a provider connection is enabled, Connections discloses its destination, rental-data families, purpose, action/home authority and provider cost. Credential rotation fences old inbound events and queued effects. Ordinary staff and agent views omit guest identity copies, tax and bank details and active door capabilities unless their job-specific scope permits them. Reply assistance uses only the current matched stay and property instructions; guest-authored text cannot confer authority.
+**Requirement.** Before a provider connection is enabled, Connections discloses its destination, rental-data families, purpose, action/home authority and provider cost. Provider credentials remain encrypted at rest. Current action/home grants bound each connection, and inbound provider events are authenticated against current provider signatures. Credential rotation fences old inbound events and queued effects. Ordinary staff and agent views omit guest identity copies, tax and bank details and active door capabilities unless their job-specific scope permits them. Operational logs, ordinary exports and unscoped agent prompts exclude ID images, tax IDs, bank details and active door codes; separately authorized jobs retain only the evidence they need. Reply assistance uses only the current matched stay and property instructions.
 
 **Acceptance.**
 1. Enable, rotate and revoke a provider connection, submit forged events and adversarial guest text, inspect role-limited API/export/log/agent outputs and prove revoked queued actions stop while historical evidence remains readable.
@@ -932,29 +953,6 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 4. Advance the host’s scheduled expiry in its test boundary, verify the old session can no longer read its data, and start again to find fresh sample data with the changes and typed contact details gone from storage, logs and backups.
 5. Record outbound effects during the journey and prove no real message, charge, payout or lock/provider action occurred; launch a fresh owner installation and find no sample records.
 6. Separately verify the public demo hostname and homepage link open the working hosted demo.
-
-### US money, owner accounting and reporting
-
-#### FIN-010 — Exact internally reserved distribution plans
-
-*Tier:* Core · *From:* FIN-006
-
-**Requirement.** Under RL-101 the native installation owner alone approves an exact, unexecuted plan binding payee, amount, bank account and legal entity. Available funds exclude reserves, taxes, advances, other payables and other owners’ money. Approval reserves internally and creates neither a bank payout nor a ledger distribution. Restored plans are inactive. This is a conservative preparation boundary; an agent’s preparation carries standard and an execution call carries money and commitment, decided by the company’s policy subject to FIN-011’s verified external authority.
-
-**Acceptance.**
-1. Prepare an owner or vendor plan from reconciled balances and approve its exact payee, amount, account and entity as native owner; refuse any use of reserved funds or another owner’s money.
-2. Read the internal reservation and verify that no bank request or ledger payout was made; restore it and verify inactive history.
-
-#### FIN-011 — Verified ACH execution and returned distributions
-
-*Tier:* Core · *From:* FIN-006 · *Register:* R-7
-
-**Requirement.** Actual distribution uses a separately verified licensed ACH/payout partner, funded trust arrangement, verified owner or vendor payee and bank execution authority. Fresh exact execution approval under RL-101 binds the chosen payee, amount, account and entity; an agent’s equivalent call carries money and commitment and the company’s policy decides it, without manufacturing a person’s approval. Only provider pending, settled, failed and returned evidence drives the money outcome. A return restores liability and corrects the owner statement through FIN-001’s immutable custody and closed-period rules; Cabin itself never custodies funds.
-
-**Acceptance.**
-1. Execute an exactly authorized owner or vendor distribution using the verified partner and payee, with available funds net of all reserves and liabilities.
-2. Follow pending, settled, failed and returned transfers from provider evidence; read bank evidence of a return, restored owner liability and the corrected owner statement.
-3. Refuse execution lacking fresh exact authority, including any attempt to use another owner’s funds.
 
 ### Agent surface
 
