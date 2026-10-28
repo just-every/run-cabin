@@ -104,11 +104,11 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "0c2fa70795d5089b48364b9dd718aa80038562a62d338c48fcaa80d39f765c86",
+      "sha256": "c9ec0e3aec0a44793d840535e98a9aa62d2eb752f3990ce573f5cdfe62721bc7",
       "executable": false
     },
     "AGENTS.md": {
-      "sha256": "6318ea6b55750b5ac64ebf7cf8f62cb10d97defb59e2f2e12bf8762b9b96c0c8",
+      "sha256": "709d74dcab708bacdc6e57f3013b52ed79011fc5363f3c785a87cf5165095a49",
       "executable": false
     },
     "base-copies.json": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c00acce0b8676d3f2dc512cfc1513df611da0170c79227143e1d268a768d2bc4",
+      "sha256": "4f1a70615ecadb64d97c88d041d025c125af3b011e98755689412267eacaa4cc",
       "executable": false
     },
     "DEMO.md": {
@@ -176,7 +176,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "30d3a7d5a1a666c56743ea24579277eb56486662626459b69c92e61620acf614",
+      "sha256": "13ab7a6c5a0a3a728fe00f6e4c51665fe4da7de1904468c503f9f174b61c224a",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -196,7 +196,7 @@
       "executable": false
     },
     "docs/direct-bookings.md": {
-      "sha256": "a2d45903b801763004c9f2e98bc1f66cf79ce973fc7bc7c75f2155462b33b150",
+      "sha256": "b1e7edc829b428241e8d52a5afc0099776163f57fa850f9f384513e5ce7f0e4c",
       "executable": false
     },
     "docs/erasure.md": {
@@ -1020,7 +1020,7 @@
       "executable": false
     },
     "scripts/cabin-domain-tests.mjs": {
-      "sha256": "4d8faadbe5385684ff42d536e44b8de6df0db703b2c9ccfdce027de767d2ce15",
+      "sha256": "b68bd3c1bfd9bf3cbcb166616210e32f75d882c8a37017161a5710b0e161051c",
       "executable": false
     },
     "scripts/channel-agent/executor.mjs": {
@@ -1057,6 +1057,10 @@
     },
     "scripts/channel-agent/viewer.mjs": {
       "sha256": "aee3cf486579e00cb4485110ceb83d044662057b0b08d302f07689e72ef0a3b8",
+      "executable": false
+    },
+    "scripts/contract-docs.mjs": {
+      "sha256": "c2b8aeb7c57e0270a115d3fe8b840e0ecd8b47afe4290c19735adfa3bdfd2df7",
       "executable": false
     },
     "scripts/delivery/base/artifact.mjs": {
@@ -2640,7 +2644,7 @@
       "executable": false
     },
     "src/cabin/reservations/finance.ts": {
-      "sha256": "7e63214cf2f7c4462071aca7b4bfe4abd36384f57bbe531652642ff182c23810",
+      "sha256": "2939015456e8705de242ff6be453d3ee9cc60c12e6ecf9057fd7e9cc3214fa9c",
       "executable": false
     },
     "src/cabin/reservations/history.ts": {
@@ -4960,11 +4964,11 @@
       "executable": false
     },
     "tests/direct-rules-browser.mjs": {
-      "sha256": "0311f760d5d7c331dbb197bee07f07a40ac7fb273cd8b34bdc7896ccdf470f07",
+      "sha256": "c979a6150dfb821abaa43fd02679e4f8529f2e81a901fe8ad26f6b814e021e91",
       "executable": false
     },
     "tests/direct.test.mjs": {
-      "sha256": "b8785ba3add3609ebdd3059677b2e6cde63b116040ae8e2a03a84767777f2082",
+      "sha256": "e396208792de110268995f9b41c34efc3ae355e9360e33ae7d5ceea268cb7bf0",
       "executable": false
     },
     "tests/dispatch.test.mjs": {
@@ -5324,7 +5328,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "95ce37a058e496ea0b42d1db661c0e15a2fec34e25e006040b7b547fc884a964",
+      "sha256": "c03e987ca5d5bc33e076659f98550e23105cd76c18c1cd60b921431e7dd8c409",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {

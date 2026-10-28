@@ -1,5 +1,21 @@
 # Agent instructions
 
+## Contract assessments and source lock
+
+CONTRACT.md owns acceptance text and Status assessments. Lander-Regenerate:
+`node scripts/contract-docs.mjs write --clauses RES-004` followed by
+`node scripts/contract-docs.mjs check --clauses RES-004`. Substitute the touched
+clause IDs, separated by commas. The command updates the touched generated
+assessments in ACCEPTANCE.md and docs/CLAIMS.md and recomputes summary counts,
+preserving unrelated legacy prose. Without clause arguments, it checks or
+regenerates the assessments already managed by this command.
+
+Resolve CONTRACT.md first after a merge, retaining main's newer judgments;
+regenerate the assessments rather than resolving their generated blocks by hand.
+Stage every new source before locking. Regenerate the source lock last with
+`node scripts/edition-authoring/cli.mjs lock`, then run
+`node scripts/edition-authoring/cli.mjs check`. Keep the current Base pin.
+
 ## Launch for review
 
 When asked to launch, run or review this app, run this from the checkout root

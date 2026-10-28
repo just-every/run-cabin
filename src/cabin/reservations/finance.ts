@@ -13,7 +13,10 @@ export function price(input:Record<string,unknown>):ReservationPrice {
 export function policy(input:Record<string,unknown>):CancellationPolicy {
  const name=String(input.policyName??'').trim();need(name&&name.length<=300,'Describe the saved cancellation policy')
  const freeUntil=input.freeUntil?String(input.freeUntil):null
- need(!freeUntil||/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{3})?)?Z$/.test(freeUntil)&&Number.isFinite(Date.parse(freeUntil)),'Use an exact UTC cancellation deadline')
+ if(freeUntil){
+  const parts=/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(?::(\d{2})(\.\d{3})?)?Z$/.exec(freeUntil),instant=Date.parse(freeUntil)
+  need(parts&&Number.isFinite(instant)&&new Date(instant).toISOString()===parts[1]+':'+(parts[2]??'00')+(parts[3]??'.000')+'Z','Use an exact UTC cancellation deadline')
+ }
  const percent=(key:string)=>{const value=input[key.replace('Bps','Percent')];if(value===undefined)return Number(input[key]??0);need(/^\d+(?:\.\d{1,2})?$/.test(String(value)),'Enter a percentage with at most two decimal places');return Math.round(Number(value)*100)}
  return {known:true,name,freeUntil,retainedBps:integer(percent('retainedBps'),'cancellation basis points',0,10000),noShowBps:integer(percent('noShowBps'),'no-show basis points',0,10000)}
 }
