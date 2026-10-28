@@ -134,3 +134,16 @@ their maintenance.
 
 Pinned reference: https://github.com/runeditrun/base/blob/ada9f574d8a7247edc3a1180b593ad182b1fbb37/TANSTACK-START-MIGRATION.md
 Native-session/runtime evidence: https://github.com/runeditrun/base/tree/ada9f574d8a7247edc3a1180b593ad182b1fbb37/default-seed
+
+## Lander-Regenerate
+
+Keep CONTRACT.md as the acceptance and Status source. For a touched clause run
+`node scripts/contract-docs.mjs write --clauses PRICE-002`, then
+`node scripts/contract-docs.mjs check`. Pass multiple touched IDs as a comma-separated
+value. This seed preserves its legacy acceptance journeys and homepage claim prose;
+the generator updates the touched status and evidence entries, the generated claim
+status block and the source summary counts. It never changes acceptance text.
+
+Stage new files before regenerating the edition source lock:
+`node scripts/edition-authoring/cli.mjs lock`, then
+`node scripts/edition-authoring/cli.mjs check`.

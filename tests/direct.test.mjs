@@ -407,3 +407,7 @@ test('source-backed cash and cleared-check receipts post once, retain evidence a
 test('scoped financial roles can use their own payment doors and cannot read or mutate another property schedule or manual receipt',async()=>{
  const {collectionScopedJourney}=await import('./collection-support.mjs');await collectionScopedJourney()
 })
+
+test('native saved channel pricing, direct length discounts and nightly floors preserve exact signed calculations',{timeout:120000},async()=>{
+ const {pricingJourney}=await import('./pricing-support.mjs');await pricingJourney()
+})
