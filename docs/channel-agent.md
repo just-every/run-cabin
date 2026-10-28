@@ -49,3 +49,28 @@ Payouts reuse the existing transaction CSV importer, matching the source reserva
 Guest erasure withdraws the whole affected home’s source screenshots and read-page links because one table can contain several guests. Source anchors prevent restoration of erased contacts. Portable archives exclude browser sessions, runner secrets, evidence ciphertext and execution leases; restored profiles are disconnected and unfinished jobs are canceled. A restored archive cannot replay a channel action.
 
 The five channel public-door tests use real Playwright against saved **synthetic** channel-edge pages, including all three reservation/message/payout reads, duplicate/restart handling, reviewed guest-thread joins, source amendments/cancellation, future payout refusal, unavailable pages, terms handoff, custody and erasure. They establish no live OTA DOM, guest receipt or bank acceptance. Channels, its connection/read forms and success/refusal log were used at 1440 and 390. SYNC-011, SYNC-002–004/006/007, MESSAGE-001 and FIN-002 retain their existing partial statuses; the next local slice is exact-approved browser replies, followed by owner-provided live-account acceptance.
+
+
+## Account identities
+
+In Channels, open Account settings to name a channel account. Select that
+owning account when connecting each listing. Each listing still signs in with
+its own isolated encrypted profile; choosing an account identity grants no
+additional browser actions or co-host permissions.
+
+Existing profiles receive stable separate account identities without changing
+their profile IDs, sessions or source history. Account ownership appears on
+native reservation records, guest conversations and imported settlement rows.
+Equal source reservation, message and transaction IDs in different accounts
+remain distinct. A listing already owned by another account is refused;
+reviewed remapping is not available yet.
+
+Revoke account forgets every associated session and fences pending reads,
+including stale runner completions. It retains business history and leaves
+other accounts usable. An already submitted channel change still needs source
+reconciliation. Restored accounts and profiles remain inactive.
+
+These are native identity controls. Actual provider authorization, co-host
+permission readback, account monitoring, review attribution, provider-confirmed
+stop-sell and live reauthorization still need the host-account journeys in
+SYNC-010.

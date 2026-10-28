@@ -177,12 +177,24 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   await h.restart();assert.equal((await h.state()).payouts.length,3)
   const observations=(await h.db.prepare("SELECT data FROM cb_records WHERE kind='channelAgentReadObservations'").all()).results
   assert.equal(observations.length,18);assert.ok(!JSON.stringify(observations).includes('kitchen available'));assert.ok(!JSON.stringify(observations).includes('megan@'))
+  // Emulate the previous edition's profile metadata; sessions and imported
+  // business history already exist and must keep their original identities.
+  const legacy=(await h.state()).channelAgent.profiles.find(p=>p.channel==='airbnb')
+  const sourceIds=(await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id)
+  await h.db.batch([
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentProfiles' AND id=?").bind(legacy.id),
+   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId)
+  ])
   const initial=(await h.state()).channelAgent,profileA=initial.profiles.find(p=>p.channel==='airbnb'),accountA=profileA.accountId
   const oldProfileId=profileA.id,oldGeneration=profileA.generation
   const manager=await h.person('AccountManager','manager')
   await h.cmd('channelAgent.account.create',{channel:'airbnb',nickname:'Denied'},manager.cookie,403)
   await h.cmd('channelAgent.account.revoke',{id:accountA,confirm:'yes'},manager.cookie,403)
   await screens.accountSettings('rename',{id:accountA,nickname:'Mountain hosts'})
+  assert.equal((await h.state()).channelAgent.profiles.find(p=>p.id===legacy.id).generation,legacy.generation)
+  await read('airbnb','reservations')
+  assert.equal((await h.state()).bookings.length,3,'migration and replay retain the three original stays')
+  assert.deepEqual((await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id),sourceIds)
   await screens.accountSettings('create',{channel:'airbnb',nickname:'Coastal hosts'})
   let accounts=(await h.state()).channelAgent.accounts
   const accountB=accounts.find(a=>a.nickname==='Coastal hosts').id
@@ -225,10 +237,12 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   const payoutPage=await h.send('/app/statements',undefined,h.owner);assert.ok(payoutPage.text.includes('Coastal hosts'))
   const inboxPage=await h.send('/app/inbox',undefined,h.owner);assert.ok(inboxPage.text.includes('Coastal hosts'))
   await screens.capture('account-identities')
+  await screens.businessRecords(airbnb.find(b=>b.channelAccountId===accountB),'Coastal hosts')
   await queueRead(profileA,'reservations')
   const pending=(await runner({op:'claim'})).job;assert.equal(pending.kind,'read-reservations')
   const stale=await edge.run(pending);assert.equal(stale.outcome,'succeeded')
   await queueRead(profileSibling,'messages')
+  await queueRead(profileA,'payouts')
   const beforeRevoke=await h.state(),bProfile=beforeRevoke.channelAgent.profiles.find(p=>p.id===profileB.id)
   await screens.accountSettings('revoke',{id:accountA})
   await runner({op:'authorize',id:pending.id,lease:pending.lease},409)
