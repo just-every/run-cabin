@@ -100,6 +100,14 @@ WEB-005 adds scoped coupons and paid gap-night, early/late and extra offers beyo
 
 FIN-007 is done (26 October): owner-consented Accounting OAuth and reviewed property class, owner vendor and account mappings synchronized nine native October journals to Sandbox Company US 86ae. The refund and expense reconcile within 371500 debit and credit cents; repeat retains each external identity once, and an external edit is flagged without overwrite or replacement. The redacted sandbox result is `evidence/fin-007-qbo-sandbox-2026-10-26.json`; native forms were used at 1440 and 390. Homepage copy is unchanged.
 
+<!-- contract-status:FIN-008:start -->
+FIN-008 · US occupancy, lodging and sales-tax obligations · partial.
+
+Evidence: `src/cabin/taxes/`; `migrations/core/0029_taxes.sql`; `tests/taxes.test.mjs` — monthly lodging tax and quarterly jurisdiction reviews conserve monthly levies across boundaries, overlap, late refunds and restart; `tests/tax-periods-browser.mjs` — native quarterly preparation, approval and exact export with phone review use; `docs/taxes.md`; `src/cabin/direct/`; `tests/direct.test.mjs`.
+
+Remaining: Source-backed monthly and calendar-quarter reviews preserve separate state, county and city levies, documented channel collection, host liability and original ledger postings. Jurisdiction selection, stale and overlapping approval refusal, linked late-refund supplements, immutable monthly reviews and exact exports are implemented. Quarterly approval is an accountant review, never statutory filing or remittance. Remaining: selected authorized statutory partner filing and remittance plus actual direct and OTA stays in two jurisdictions with mixed collection, exemption and refund, separate accepted levies, statutory acknowledgments, payment and remaining-liability reconciliation; required partner and OTA accounts are not held. Other nonmonthly periods, differing taxable bases and automatic jurisdiction and rate lookup remain open. Existing direct checkout and source-backed monthly accountant-packet evidence remain; no real statutory receipt is claimed.
+<!-- contract-status:FIN-008:end -->
+
 <!-- cabin-contract-docs: SYNC-010 -->
 ### SYNC-010 · Multiple connected accounts per channel and Airbnb co-hosting
 

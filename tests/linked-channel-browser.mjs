@@ -56,9 +56,9 @@ export async function channelScreens(h){
   }
   await page.waitForLoadState()
  }
- async function businessRecords(booking,accountName){
+ async function businessRecords(booking,accountName,homeName='Second Loft',stage=''){
   await page.setViewportSize({width:1440,height:1000});await page.goto(h.origin+'/app/inbox')
-  const href=await page.locator('a.thread-row').filter({hasText:'Second Loft'}).getAttribute('href')
+  const href=await page.locator('a.thread-row').filter({hasText:homeName}).getAttribute('href')
   assert.ok(href,'the imported account has a native guest thread')
   const views=[
    ['reservation-account','/app/calendar?reservation='+booking.id,'[aria-label="Reservation record"]'],
@@ -69,7 +69,7 @@ export async function channelScreens(h){
    await page.setViewportSize({width,height:1000});await page.goto(h.origin+path)
    const region=name==='payout-account'?page.locator(selector).filter({has:page.getByRole('heading',{name:'2. Matched stays and exceptions',exact:true})}):page.locator(selector)
    if(width===1440)assert.ok((await region.innerText()).includes(accountName),'the native source record names its owning account')
-   await region.screenshot({path:join(dir,name+'-'+width+'.png')})
+   await region.screenshot({path:join(dir,stage+name+'-'+width+'.png')})
   }
  }
  return {connect,capture,accountSettings,businessRecords,close:()=>browser.close()}

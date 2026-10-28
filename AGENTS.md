@@ -137,21 +137,29 @@ Native-session/runtime evidence: https://github.com/runeditrun/base/tree/ada9f57
 
 ## Lander-Regenerate
 
-CONTRACT.md owns clause status, Evidence and Gap. Keep existing acceptance
-journey prose and older homepage assessments intact. For touched clause rows:
+CONTRACT.md is authoritative. For touched Status rows, preserve all other legacy
+prose and regenerate the selected acceptance entries, contract progress notes
+and summary counts with:
+
+```sh
+node src/base/contract-docs.mjs write --clauses FIN-008
+node src/base/contract-docs.mjs check --clauses FIN-008
+```
+
+Pass the touched clause IDs as a comma-separated list. This command does not
+change acceptance requirements or homepage claims. After the final source,
+test or documentation edit, stage new files and regenerate the source lock last:
+
+```sh
+node scripts/edition-authoring/cli.mjs lock
+node scripts/edition-authoring/cli.mjs check
+```
+
+The existing SYNC-010 projection retains its bounded legacy generator:
 
 ```sh
 node scripts/cabin-contract-docs.mjs write --clauses SYNC-010
 node scripts/cabin-contract-docs.mjs check --clauses SYNC-010
 ```
 
-The generator updates the selected acceptance evidence, its bounded claims
-projection and all Status summary counts. Pass additional touched clause IDs
-after `--clauses`. Check without arguments validates all managed projections.
-After the last source, test or documentation edit, regenerate and check the
-edition source lock:
-
-```sh
-node scripts/edition-authoring/cli.mjs lock
-node scripts/edition-authoring/cli.mjs check
-```
+Run both selected generators when merging FIN-008 and SYNC-010 changes.

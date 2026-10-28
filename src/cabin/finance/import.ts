@@ -67,7 +67,16 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
   for(const sourceLine of lines){
    const line={...sourceLine,...(accountId?{channelAccountId:accountId,channelAccountName:accountName}:{})}
    const old=c.data.payouts.find(r=>r.source===line.source&&r.externalId===line.externalId&&(r.channelAccountId===accountId||!r.channelAccountId&&r.propertyId===propertyId))
-   if(old){need(unchanged(old,line),'A provider line changed after import; reconcile the source report before posting',409);need(!propertyId||old.propertyId===propertyId,'This provider line is already imported for another home',409);duplicates.push(old.id);continue}
+   if(old){
+    need(unchanged(old,line),'A provider line changed after import; reconcile the source report before posting',409)
+    need(!propertyId||old.propertyId===propertyId,'This provider line is already imported for another home',409)
+    if(accountId&&!old.channelAccountId){
+     const booking=c.data.bookings.find(b=>b.id===old.bookingId)
+     need(!booking?.channelAccountId||booking.channelAccountId===accountId,'This provider line belongs to another channel account; owner review required',409)
+     old.channelAccountId=accountId;old.channelAccountName=accountName
+    }
+    duplicates.push(old.id);continue
+   }
    const eligible=matches(line,c.data.bookings,direct,propertyId)
    const b=eligible.length===1?eligible[0]:null
    const row:Payout={...line,id:newId(),revision:newId(),propertyId:b?.propertyId??propertyId,bookingId:b?.id??null,match:b?'matched':'unmatched',importedAt:c.now,importedBy:actor.id}

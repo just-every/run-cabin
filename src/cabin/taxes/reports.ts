@@ -1,22 +1,24 @@
 import { need, text, integer, newId, query, sha, property, exact, type Context } from '../model'
 import { post, contextJournals } from '../ledger/store'
 import { debit, credit } from '../ledger/types'
-import { month, date, workItems, obligations, baseline } from './calculate'
+import { reviewPeriod, reportPeriod, priorReports, jurisdictions, date, workItems, obligations, baseline } from './calculate'
 import { saveReport, saveDelivery, scope } from './store'
 import type { TaxData, TaxReport, TaxEvidence, TaxDelivery, Rule } from './types'
 export const paid=(data:TaxData,reportId:string,jurisdictionId:string)=>data.evidence.filter(e=>e.reportId===reportId&&e.jurisdictionId===jurisdictionId&&e.kind==='payment').reduce((n,e)=>n+e.amountCents,0)
 export async function reportCommand(c:Context,data:TaxData,name:string,p:Record<string,unknown>){
  if(name==='tax.report.prepare'){
-  const home=property(c,p.propertyId),period=month(p.month),rows=obligations(data,home.id,period),sourceIds=new Set(rows.flatMap(o=>o.lines.map(l=>l.sourceId))),ruleIds=new Set(rows.flatMap(o=>o.lines.map(l=>l.ruleId)))
+  const home=property(c,p.propertyId),period=reviewPeriod(p.month,p.periodKind??'month'),jurisdictionId=p.jurisdictionId&&p.jurisdictionId!=='all'?text(p.jurisdictionId,'jurisdiction'):undefined
+  need(!jurisdictionId||jurisdictions(data.config,home.id).some(j=>j.id===jurisdictionId),'Choose a jurisdiction belonging to this property',404)
+  const rows=obligations(data,home.id,period,jurisdictionId),sourceIds=new Set(rows.flatMap(o=>o.lines.map(l=>l.sourceId))),ruleIds=new Set(rows.flatMap(o=>o.lines.map(l=>l.ruleId)))
   const sourceRows=data.sources.filter(s=>sourceIds.has(s.id)),rules=[...new Map(sourceRows.flatMap(s=>s.rules).filter(r=>ruleIds.has(r.id)).map(r=>[r.id+':'+r.revision,r])).values()]
-  const report:TaxReport={id:newId(),revision:newId(),propertyId:home.id,month:period,status:'draft',baseline:await baseline(data,c.data,home.id,period),obligations:rows,sources:sourceRows,rules,preparedAt:c.now,preparedBy:c.actor.id,priorReportIds:data.reports.filter(r=>r.propertyId===home.id&&r.month===period&&r.status==='approved').map(r=>r.id),workItems:workItems(data,c.data,home.id,period)}
+  const report:TaxReport={id:newId(),revision:newId(),propertyId:home.id,month:period.start.slice(0,7),period,...(jurisdictionId?{jurisdictionId}:{}),status:'draft',baseline:await baseline(data,c.data,home.id,period,jurisdictionId),obligations:rows,sources:sourceRows,rules,preparedAt:c.now,preparedBy:c.actor.id,priorReportIds:priorReports(data,home.id,period,jurisdictionId).map(r=>r.id),workItems:workItems(data,c.data,home.id,period)}
   saveReport(c,report);return report
  }
  if(!['tax.report.approve','tax.report.deliver','tax.evidence.record'].includes(name))return undefined
  const report=data.reports.find(r=>r.id===text(p.id,'tax review'));need(report,'Tax review not found',404);exact(report,p.revision)
  if(name==='tax.report.approve'){
   need(report.status==='draft','This review is already approved',409)
-  need(await baseline(data,c.data,report.propertyId,report.month)===report.baseline,'Tax sources, configuration or reservations changed. Prepare a new review.',409)
+  need(await baseline(data,c.data,report.propertyId,reportPeriod(report),report.jurisdictionId)===report.baseline,'Tax sources, configuration or reservations changed. Prepare a new review.',409)
   need(!report.workItems.length,'Resolve the work items before approving this review: '+report.workItems.join(' '),409)
   need(report.obligations.length,'There are no unreviewed tax lines in this period',409)
   need(p.confirm==='yes','Confirm the exact source records, separate levies, registrations and filing recipients')
@@ -28,7 +30,7 @@ export async function reportCommand(c:Context,data:TaxData,name:string,p:Record<
   report.status='approved';report.approvedAt=c.now;report.approvedBy=c.actor.id
   c.data.approvals.push({id:newId(),kind:'tax-review',recordId:report.id,revision:report.revision,actorId:c.actor.id,at:c.now});saveReport(c,report,true);return report
  }
- need(report.status==='approved','Approve this exact monthly review first',409)
+ need(report.status==='approved','Approve this exact tax review first',409)
  if(name==='tax.report.deliver'){
   need(p.confirm==='yes','Confirm delivery of this reviewed tax packet to the named accountant/filing recipients')
   const out:TaxDelivery[]=[]

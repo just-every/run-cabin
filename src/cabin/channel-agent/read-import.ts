@@ -120,8 +120,9 @@ async function messages(c:Context,env:Bindings,p:Profile,a:ReadAction,payload:Re
   const reservationId='channel-read-source:'+await sourceKey(p,'reservation',r.reservationId)
   const reservation=saved.find(s=>s.id===reservationId),b=sourceBooking(c,p,reservation)
   need(b,'Import this message’s source reservation first',409)
-  if(old){need(c.data.messages.some(m=>m.id===old.messageId&&m.bookingId===b.id),'Imported message is missing or moved; owner review required',409);save(c,READ_SOURCE,{...old,observedAt:payload.observedAt});ids.push(old.messageId!);continue}
-  const m=await receiveGuestInContext(c,env,{channel:p.channel,bookingId:b.id,propertyId:p.propertyId,ref:b.channelRef,subject:`${p.channel} message`,text:r.text,providerId:'channel-read:'+key,sentAt:r.sentAt},{ai:false,scoped:true})
+  const m=old?c.data.messages.find(m=>m.id===old.messageId&&m.bookingId===b.id):await receiveGuestInContext(c,env,{channel:p.channel,bookingId:b.id,propertyId:p.propertyId,ref:b.channelRef,subject:`${p.channel} message`,text:r.text,providerId:'channel-read:'+key,sentAt:r.sentAt},{ai:false,scoped:true})
+  need(m,'Imported message is missing or moved; owner review required',409)
+  need(!m.channelAccountId||m.channelAccountId===accountIdFor(p),'Imported message belongs to another channel account; owner review required',409)
   m.channelAccountId=accountIdFor(p);m.channelAccountName=p.accountNickname
   // Drafts from a read always remain host decisions, including later scheduler passes.
   for(const draft of c.data.messages.filter(d=>d.replyTo===m.id&&d.direction==='out'))if(draft.control){draft.channelAccountId=accountIdFor(p);draft.channelAccountName=p.accountNickname;draft.control.automatic=false;draft.control.needsHost=true}

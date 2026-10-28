@@ -183,7 +183,9 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   const sourceIds=(await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id)
   await h.db.batch([
    h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentProfiles' AND id=?").bind(legacy.id),
-   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId)
+   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId),
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.channelAccountId','$.channelAccountName') WHERE (kind IN ('bookings','messages') AND json_extract(data,'$.channel')='airbnb') OR (kind='payouts' AND json_extract(data,'$.source')='airbnb')"),
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentReadSources' AND json_extract(data,'$.profileId')=?").bind(legacy.id)
   ])
   const initial=(await h.state()).channelAgent,profileA=initial.profiles.find(p=>p.channel==='airbnb'),accountA=profileA.accountId
   const oldProfileId=profileA.id,oldGeneration=profileA.generation
@@ -192,7 +194,21 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   await h.cmd('channelAgent.account.revoke',{id:accountA,confirm:'yes'},manager.cookie,403)
   await screens.accountSettings('rename',{id:accountA,nickname:'Mountain hosts'})
   assert.equal((await h.state()).channelAgent.profiles.find(p=>p.id===legacy.id).generation,legacy.generation)
-  await read('airbnb','reservations')
+  const beforeUpgrade=await h.accessState()
+  for(const kind of ['reservations','messages','payouts'])await read('airbnb',kind)
+  await h.restart()
+  const upgraded=await h.accessState()
+  for(const kind of ['bookings','messages','payouts']){
+   assert.deepEqual(upgraded[kind].map(r=>r.id),beforeUpgrade[kind].map(r=>r.id),'upgrade replay retains existing '+kind+' identities')
+   const owned=upgraded[kind].filter(r=>(r.channel??r.source)==='airbnb')
+   assert.ok(owned.length,'legacy '+kind+' are present')
+   assert.ok(owned.every(r=>r.channelAccountId===accountA&&r.channelAccountName==='Mountain hosts'),'legacy '+kind+' retain owning account after replay and restart')
+  }
+  const legacyPayout=upgraded.payouts.find(p=>p.source==='airbnb')
+  assert.equal(legacyPayout.bookingId,beforeUpgrade.payouts.find(p=>p.id===legacyPayout.id).bookingId)
+  assert.equal(legacyPayout.netCents,97000)
+  assert.equal(legacyPayout.match,'matched')
+  await screens.businessRecords(upgraded.bookings.find(b=>b.channel==='airbnb'),'Mountain hosts','Lake Loft','legacy-')
   assert.equal((await h.state()).bookings.length,3,'migration and replay retain the three original stays')
   assert.deepEqual((await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id),sourceIds)
   await screens.accountSettings('create',{channel:'airbnb',nickname:'Coastal hosts'})
