@@ -72,7 +72,11 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
     need(!propertyId||old.propertyId===propertyId,'This provider line is already imported for another home',409)
     // Upgrade attribution only after the existing financial record is verified.
     // Its identity, match, frozen-statement link and money remain unchanged.
-    if(accountId){old.channelAccountId=accountId;old.channelAccountName??=accountName}
+    if(accountId){
+     const booking=c.data.bookings.find(b=>b.id===old.bookingId)
+     need(!booking?.channelAccountId||booking.channelAccountId===accountId,'This provider line belongs to another channel account; owner review required',409)
+     old.channelAccountId=accountId;old.channelAccountName??=accountName
+    }
     duplicates.push(old.id);continue
    }
    const eligible=matches(line,c.data.bookings,direct,propertyId)

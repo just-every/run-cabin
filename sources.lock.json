@@ -1820,7 +1820,7 @@
       "executable": false
     },
     "src/cabin/finance/import.ts": {
-      "sha256": "f811f34b15ffc399dc19f108fd6db2a9ae77344cab9b0624e10c82d99f4baa80",
+      "sha256": "e876a33e38ee9a3be23201ed20fa4e6dbf3e3064714134b38d1031aa99f593e6",
       "executable": false
     },
     "src/cabin/finance/month-close.ts": {
@@ -4952,7 +4952,7 @@
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "05c8045ff0987a396accc697720c011b798eb4af166f2e33cbe9268974d2b313",
+      "sha256": "8a46eb84b1a2937a70172e24c6124d969456d2635c934d42ec3e557c5378d6ea",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {

@@ -185,7 +185,8 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   await h.db.batch([
    h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.channelAccountId','$.channelAccountName') WHERE kind IN ('bookings','messages','payouts') AND (json_extract(data,'$.channel')='airbnb' OR json_extract(data,'$.source')='airbnb')"),
    h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentProfiles' AND id=?").bind(legacy.id),
-   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId)
+   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId),
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentReadSources' AND json_extract(data,'$.profileId')=?").bind(legacy.id)
   ])
   const initial=(await h.state()).channelAgent,profileA=initial.profiles.find(p=>p.channel==='airbnb'),accountA=profileA.accountId
   const oldProfileId=profileA.id,oldGeneration=profileA.generation
@@ -194,6 +195,7 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   await h.cmd('channelAgent.account.revoke',{id:accountA,confirm:'yes'},manager.cookie,403)
   await screens.accountSettings('rename',{id:accountA,nickname:'Mountain hosts'})
   assert.equal((await h.state()).channelAgent.profiles.find(p=>p.id===legacy.id).generation,legacy.generation)
+  const beforeUpgrade=await h.accessState()
   for(const kind of ['reservations','messages','payouts'])await read('airbnb',kind)
   const upgraded=await h.state(),legacyBooking=upgraded.bookings.find(b=>b.channel==='airbnb')
   const legacyMessage=upgraded.messages.find(m=>m.direction==='in'&&m.bookingId===legacyBooking.id)
@@ -204,8 +206,22 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
    const withoutAttribution=rows=>rows.map(({channelAccountId,channelAccountName,...row})=>row)
    assert.deepEqual(withoutAttribution(upgraded[kind]),withoutAttribution(legacyHistory[kind]),'upgrade preserves existing '+kind+' and their identities')
   }
+  for(const kind of ['bookings','messages','payouts']){
+   assert.deepEqual(upgraded[kind].map(r=>r.id),beforeUpgrade[kind].map(r=>r.id),'upgrade replay retains existing '+kind+' identities')
+   const owned=upgraded[kind].filter(r=>(r.channel??r.source)==='airbnb')
+   assert.ok(owned.length,'legacy '+kind+' are present')
+   assert.ok(owned.every(r=>r.channelAccountId===accountA&&r.channelAccountName==='Mountain hosts'),'legacy '+kind+' retain owning account')
+  }
+  assert.equal(legacyPayout.bookingId,beforeUpgrade.payouts.find(p=>p.id===legacyPayout.id).bookingId)
+  assert.equal(legacyPayout.netCents,97000)
+  assert.equal(legacyPayout.match,'matched')
   await screens.businessRecords(legacyBooking,'Mountain hosts','Lake Loft','legacy-')
   await h.restart()
+  const restarted=await h.accessState()
+  for(const kind of ['bookings','messages','payouts']){
+   const owned=restarted[kind].filter(r=>(r.channel??r.source)==='airbnb')
+   assert.ok(owned.every(r=>r.channelAccountId===accountA&&r.channelAccountName==='Mountain hosts'),'legacy '+kind+' retain owning account after restart')
+  }
   assert.equal((await h.state()).payouts.find(p=>p.id===legacyPayout.id).channelAccountId,accountA,'legacy attribution survives restart')
   assert.equal((await h.state()).bookings.length,3,'migration and replay retain the three original stays')
   assert.deepEqual((await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id),sourceIds)
