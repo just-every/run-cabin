@@ -9,87 +9,87 @@
       ]
     },
     "CABIN-02": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-02"
+        "SYNC-009"
       ]
     },
     "CABIN-03": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-03"
+        "WEB-001"
       ]
     },
     "CABIN-04": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-04"
+        "OPS-001"
       ]
     },
     "CABIN-05": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-05"
+        "EVIDENCE-001"
       ]
     },
     "CABIN-06": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-06"
+        "OPS-003"
       ]
     },
     "CABIN-07": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-07"
+        "MESSAGE-003"
       ]
     },
     "CABIN-08": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-08"
+        "AGENT-001"
       ]
     },
     "CABIN-09": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-09"
+        "FIN-004"
       ]
     },
     "CABIN-10": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-10"
+        "FIN-007"
       ]
     },
     "CABIN-11": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-11"
+        "MIGRATE-001"
       ]
     },
     "CABIN-12": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-12"
+        "CONTROL-002"
       ]
     },
     "CABIN-13": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "CABIN-13"
+        "DATA-001"
       ]
     },
     "PROPERTY-001": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "PROPERTY-001"
+        "CABIN-01"
       ]
     },
     "AUTH-001": {
-      "how": "kept",
+      "how": "merged",
       "to": [
-        "AUTH-001"
+        "AUTH-002"
       ]
     },
     "AUTH-002": {
@@ -429,9 +429,11 @@
       ]
     },
     "FIN-006": {
-      "how": "kept",
+      "how": "split",
       "to": [
-        "FIN-006"
+        "FIN-006",
+        "FIN-010",
+        "FIN-011"
       ]
     },
     "FIN-007": {
@@ -567,10 +569,9 @@
       ]
     },
     "RUNTIME-002": {
-      "how": "kept",
-      "to": [
-        "RUNTIME-002"
-      ]
+      "how": "retired",
+      "to": [],
+      "now": "moved to Base BASE-INSTALL-001"
     },
     "AGENT-001": {
       "how": "kept",

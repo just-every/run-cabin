@@ -4,8 +4,8 @@ import {readFile} from 'node:fs/promises'
 import {createHash} from 'node:crypto'
 import {harness} from './harness.mjs'
 
-// PROPERTY-001: property content and immutable effective management terms through product doors.
-test('PROPERTY-001: two units retain their content and original stay allocations after an agreement amendment',async()=>{
+// CABIN-01: property content and immutable effective management terms through product doors.
+test('CABIN-01: two units retain their content and original stay allocations after an agreement amendment',async()=>{
  const h=await harness()
  try{
   const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64')

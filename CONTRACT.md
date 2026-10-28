@@ -1,205 +1,126 @@
-# Cabin target target product contract
+# Cabin target product contract
 
-Target approved **16 October 2026** · US first buyer: an owner or manager of **3–40 vacation rentals**, operating in **USD**.
+Cabin is vacation-rental property management and channel software for US owners and managers of 3–40 homes operating in USD. It replaces Guesty, Hostaway, OwnerRez and Lodgify across booking, guest service, field readiness and owner close, and must also beat Hospitable’s small-host automation and Breezeway’s field operations.
 
 ## Product target
 
 | | |
 | --- | --- |
-| Category | Vacation rental property management software (PMS) with channel manager |
-| Incumbents a buyer switches from | Guesty, Hostaway, OwnerRez, Lodgify, Hospitable, Breezeway |
-| First buyer | A US owner or manager of 3–40 vacation rentals operating in USD, selling stays on Airbnb, Vrbo, Booking.com and their own website, who must be able to run the complete booking-to-owner-close business in Cabin |
+| Category | Vacation-rental property management software with channel manager |
+| Incumbents a buyer switches from | Guesty, Hostaway, OwnerRez, Lodgify |
+| Up-and-comers it must also beat | Hospitable, Breezeway |
+| First buyer | A US owner or manager of 3–40 vacation rentals, in USD and each property’s local time zone, selling through Airbnb, Vrbo, Booking.com and their own website |
 
-The primary journey: Exercise the capabilities and acceptance journeys below.
+The primary journey: Connect homes and channels, quote and reserve a stay, collect its consent and payment, keep the home ready and accessible, serve the guest, reconcile source settlements and close the rental owner’s books.
 
 ## How to read this contract
 
 - This follows the RER contract standard.
 - Core, Agent surface and Later are reported separately.
-- Done means every acceptance point has recorded proof.
-- Field proof is kept in its register.
-- ACCEPTANCE.md and the homepage claims document are generated from this file.
+- Done requires every acceptance outcome to have recorded proof; Status names the current evidence and gap.
+- The Field proof register records real-world proof separately.
+- ACCEPTANCE.md and docs/CLAIMS.md are generated from this file.
+
+## Door rules
+
+- **D-1.** Stay changes. Every stay amendment re-evaluates its shared inventory, contractual balance, scheduled guest messages, work, access and owner allocations against the exact saved revision.
 
 ## Shared duties (Base)
 
 | Base duty | Duty | Delta clauses | Base journey |
 | --- | --- | --- | --- |
+| BASE-ACCESS-001 | Sign-in | none | not run |
+| BASE-ACCESS-002 | Sessions | AUTH-002, GUEST-002, MOBILE-001, HTTP-001 | not run |
+| BASE-ACCESS-003 | Public endpoints | none | not run |
+| BASE-ACCESS-004 | Server-side authorisation | AUTH-002 | not run |
+| BASE-INPUT-001 | Validation | INTERFACE-001 | not run |
+| BASE-INPUT-002 | HTML | none | not run |
+| BASE-INPUT-003 | Uploads | EVIDENCE-001 | not run |
+| BASE-SECRET-001 | No leakage | WEB-002, GUEST-002, DATA-001, SECURITY-001 | not run |
+| BASE-SECRET-002 | Startup | RUNTIME-001 | not run |
+| BASE-DATA-001 | Export and import | DATA-001 | not run |
+| BASE-DATA-002 | Retention | none | not run |
+| BASE-DATA-003 | Erasure | DATA-002, AUDIT-001 | not run |
+| BASE-DATA-004 | Outbound flows | DATA-003, SECURITY-001 | not run |
+| BASE-DATA-005 | Independence | DATA-003, OPEN-001 | not run |
+| BASE-PUBLIC-001 | Privacy | WEB-001, WEB-002 | not run |
+| BASE-PUBLIC-002 | Origins | WEB-002 | not run |
+| BASE-PUBLIC-003 | Accessibility | none | not run |
+| BASE-OPS-001 | Health | HTTP-001 | not run |
+| BASE-OPS-002 | Migrations | none | not run |
+| BASE-OPS-003 | Idempotency | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, FIN-007, RUNTIME-001 | not run |
+| BASE-OPS-004 | Failure is visible | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, RUNTIME-001 | not run |
+| BASE-OPS-005 | Audit | AUDIT-001 | not run |
+| BASE-ROLE-001 | Roles through every door | CABIN-01, AUTH-002, EVIDENCE-001, FIN-007, MOBILE-001 | not run |
+| BASE-AUDIT-001 | Searchable, durable audit | DATA-002, AUDIT-001 | not run |
+| BASE-BACKUP-001 | Independent backup, restore and rollback | DATA-001 | not run |
+| BASE-DATA-006 | Erasure respects retention and legal hold | DATA-002 | not run |
+| BASE-SIGNIN-001 | Standards-based SSO and lifecycle | CABIN-01, AUTH-002 | not run |
+| BASE-SIGNIN-002 | Native multi-factor authentication | none | not run |
+| BASE-INSTALL-001 | Free self-host and removal | DATA-003, RUNTIME-001, OPEN-001 | not run |
+| BASE-MAIL-001 | Truthful mail outcomes | MESSAGE-001, MESSAGE-002, MESSAGE-003, GUEST-002, FIN-007 | not run |
+| BASE-ACCESSIBILITY-001 | One accessibility bar | WEB-001, WEB-002, INTERFACE-001 | not run |
+| BASE-DOCS-001 | On-site docs from one contract | none | not run |
+| BASE-AGENT-001 | One MCP door per seed | none | not run |
+| BASE-AGENT-002 | The seed's jobs are tools, through the UI's own actions | AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-001 | not run |
+| BASE-AGENT-003 | Records are resources | SECURITY-001, SURFACE-004 | not run |
+| BASE-AGENT-004 | Business identity and short-lived, audience-bound tokens | CONTROL-002, SURFACE-008 | not run |
+| BASE-AGENT-005 | An agent acts as a person in a role, never more | CONTROL-002, MESSAGE-004, SECURITY-001, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-003, SURFACE-008 | not run |
+| BASE-AGENT-006 | Every action declares its risk class | CONTROL-002, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-001, SURFACE-002, SURFACE-003 | not run |
+| BASE-AGENT-007 | The company's policy decides, at one chokepoint | CONTROL-001, CONTROL-002, MESSAGE-002, MESSAGE-003, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-005, SURFACE-006 | not run |
+| BASE-AGENT-008 | Truthful attribution | CONTROL-001, CONTROL-002, MESSAGE-004, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-003, SURFACE-006 | not run |
+| BASE-AGENT-009 | Every agent action is audited with its class and decision | AUDIT-001, SURFACE-007 | not run |
+| BASE-AGENT-010 | Agents can follow changes | SURFACE-004 | not run |
+| BASE-AGENT-011 | Limits are policy, and Pause stops everything | SURFACE-007 | not run |
+| BASE-AGENT-012 | Writes are idempotent and conflict-safe | RUNTIME-001, AGENT-001, AGENT-002, AGENT-003, AGENT-004, AGENT-005, AGENT-006, SURFACE-006, SURFACE-008 | not run |
+| BASE-AGENT-013 | Manifest, docs and the conformance journey | SURFACE-001, SURFACE-005 | not run |
 
 ## Published clauses
 
-- `CABIN-01`: *Tier:* Core
-- `CABIN-02`: *Tier:* Core
-- `CABIN-03`: *Tier:* Core
-- `CABIN-04`: *Tier:* Core
-- `CABIN-05`: *Tier:* Core
-- `CABIN-06`: *Tier:* Core
-- `CABIN-07`: *Tier:* Core
-- `CABIN-08`: *Tier:* Core
-- `CABIN-09`: *Tier:* Core
-- `CABIN-10`: *Tier:* Core
-- `CABIN-11`: *Tier:* Core
-- `CABIN-12`: *Tier:* Core
-- `CABIN-13`: *Tier:* Core
+- `CABIN-01`: *Tier:* Core · *From:* CABIN-01, PROPERTY-001 · *Cites:* BASE-SIGNIN-001, BASE-ROLE-001
 
 ### Released operations
 
-#### CABIN-01 — Homes, people and roles
+#### CABIN-01 — Homes, rental owners and effective management terms
 
-**Requirement.** An owner adds homes with their owner, owner email and management commission, and managers and cleaners who sign in through an invitation (emailed when hosted). Every private door checks the signed-in person's current role on each request; a cleaner sees only their own jobs and Maintenance, and deactivated access stops at once.
-
-**Acceptance.**
-1. Add two homes with owners and commissions; invite a manager and two cleaners, inspect private routes under each role, then deactivate one and verify the next request is refused.
-2. Current evidence: `src/cabin/people.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 17).
-
-#### CABIN-02 — Calendars both ways by iCal
-
-**Requirement.** Each home polls its Airbnb, Vrbo and Booking.com calendar links every 15 to 60 minutes and shows last-synced time and errors, and publishes its own link per channel listing every night held anywhere else, direct bookings included. A request for held nights is declined with the overlapping stay named; a collision arriving from two channels is kept and shown as a double booking to resolve.
+**Requirement.** An operator maintains properties, units, addresses, local time zones, owners and management agreements, occupancy limits, amenities, photos, house rules, check-in/out times, emergency contacts and channel listing IDs. Effective-dated terms preserve the agreement used for each reservation and owner allocation. The home register includes its rental owner’s name, contact email and management commission. Managers and cleaners are invited under AUTH-002.
 
 **Acceptance.**
-1. Connect channel iCal links, poll a changed stay, fetch each secret export, decline overlapping held nights and retain an arriving cross-channel collision for resolution.
-2. Current evidence: `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs` (lines 144, 179).
-
-#### CABIN-03 — Direct bookings with payment, agreement, ID check and deposit hold
-
-**Requirement.** A published home's booking page quotes nights, fees and lodging tax under its stay rules; the guest signs the agreement, pays through the owner's Stripe account, passes Stripe Identity when required, and a separate damage deposit is held on the card and released after check-out or captured with a reason. A guest is marked checked out only after their check-in time. The receipt itemizes the charges and states the hold as it is.
-
-**Acceptance.**
-1. Publish a home; quote and book it as a guest, sign the agreement, pay through Stripe, complete the required identity step and inspect the separate damage hold and itemized receipt; release or capture the hold with a reason.
-2. Current evidence: `src/cabin/direct/`; `tests/direct.test.mjs` (lines 8, 55, 75).
-
-#### CABIN-04 — Turnovers, door codes and cleaner notices
-
-**Requirement.** Every confirmed stay from any channel creates one turnover between its check-out and the next check-in, a guest door code for the stay and, once assigned, the cleaner's own code for the window; the cleaner is emailed the window, address and code, and a moved or canceled stay re-emails or cancels it.
-
-**Acceptance.**
-1. Confirm, move and cancel channel and direct stays; verify one turnover per stay, time-scoped guest/cleaner codes and the corresponding cleaner emails.
-2. Current evidence: `src/cabin/dispatch.ts`; `src/cabin/codes.ts`; `src/cabin/notices.ts`; `tests/turnovers.test.mjs` (line 15).
-
-#### CABIN-05 — Cleaner completion with checklist and photos
-
-**Requirement.** The assigned cleaner records the guests' departure, ticks every checklist item and marks the home ready with the required photos. A job finished after the next guests' check-in stays done and is labeled late; a job reopened because its stay or check-out time changed says why and can be marked ready again without storing its photos twice.
-
-**Acceptance.**
-1. As the assigned cleaner, record departure, complete the checklist and upload photos; finish late, then amend the stay, reopen and complete again without duplicated photos.
-2. Current evidence: `src/cabin/turnovers.ts`; `src/cabin/turnover-window.ts`; `src/cabin/photos.ts`; `tests/turnovers.test.mjs` (lines 15, 162); `tests/cabin.test.mjs` (line 67).
-
-#### CABIN-06 — Readiness and maintenance
-
-**Requirement.** Readiness shows for any day whether each home's turnover before its next arrival is done with its photos and no blocking task is open. A cleaner reports a broken thing with photos; it becomes a task for the home's maintenance person, emailed to them.
-
-**Acceptance.**
-1. Inspect readiness for a chosen day; report a photographed fault as its cleaner and follow the blocking task and maintenance assignment notice.
-2. Current evidence: `src/cabin/readiness.ts`; `src/cabin/maintenance.ts`; `tests/turnovers.test.mjs` (line 15).
-
-#### CABIN-07 — Guest inbox and scheduled messages
-
-**Requirement.** One thread per guest joins their stays and email. Check-in details with the door code, a checkout reminder and a review request are sent on time in the home's time zone, move with the stay and are sent again only when their words change. Every guest message gets a drafted reply that is sent only when a person sends it.
-
-**Acceptance.**
-1. Receive a guest email linked across stays; move the stay and verify timezone-correct scheduled messages and code details, then review and send a drafted reply.
-2. Current evidence: `src/cabin/inbox/`; `tests/inbox.test.mjs` (lines 17, 154).
-
-#### CABIN-08 — Stay recovery within approved limits
-
-**Requirement.** When a cleaner cancels, a recovery case proposes an available backup cleaner, a new door code and a guest credit; it acts only on exact approval or within the owner's per-home limits, posts a reversible owner adjustment and closes once the home is verified ready.
-
-**Acceptance.**
-1. Cancel a cleaner, inspect the recovery proposal, approve its exact actions or a bounded owner limit, verify code and guest-credit outcomes and close only on verified readiness.
-2. Current evidence: `src/cabin/recovery/`; `tests/recovery.test.mjs` (line 9).
-
-### Released owner money and custody
-
-#### CABIN-09 — Payout-matched owner statements and portal
-
-**Requirement.** Imported Airbnb and Vrbo USD payout lines match their stays; a monthly statement of gross, actual channel fees, paid owner expenses and management commission is approved, frozen and emailed to the owner, who signs in separately and sees only their own homes, stays and approved statements.
-
-**Acceptance.**
-1. Import Airbnb/Vrbo USD payout lines, reconcile actual fees and paid expenses, approve a frozen monthly statement and sign in as its separate owner to inspect only permitted homes and statements.
-2. Current evidence: `src/cabin/finance/`; `src/cabin/statements.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` (line 7).
-
-#### CABIN-10 — Books posted once to Pantry and QuickBooks exports
-
-**Requirement.** An approved statement is posted once to the owner's Pantry with a scoped, revocable integration credential and its matched evidence attached; replays keep the original journal and a revoked credential shows a broken connection. QuickBooks Online CSV and Desktop IIF journal files are exported for a person to import.
-
-**Acceptance.**
-1. Post an approved statement twice to an authorized Pantry and find one journal with evidence; revoke its scoped credential and inspect the broken connection.
-2. Download QuickBooks CSV and IIF files for human import.
-3. Current evidence: `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-posting.ts`; `tests/finance.test.mjs` (line 7).
-
-#### CABIN-11 — Move-in with preview, reconciliation and undo
-
-**Requirement.** A property register, or the three supported reservation-system CSV report formats, are previewed with each refused row, imported into homes, stays, guests, owner balances and channel links, reconciled and signed off, and can be undone without losing records changed since.
-
-**Acceptance.**
-1. Preview property-register and Guesty/Hostaway/OwnerRez CSVs with refused rows, apply accepted records, reconcile and sign off, then edit one record and undo without losing the edit.
-2. Current evidence: `src/cabin/movein/`; `tests/movein.test.mjs` (line 9); `tests/cabin.test.mjs` (line 125).
-
-#### CABIN-12 — Agent access prepares, people approve
-
-**Requirement.** An owner-made bearer key lets an assistant read and prepare work but reach no approval door; revoking it stops access at once.
-
-**Acceptance.**
-1. Create a bearer key, read context and prepare work; attempt an approval and verify refusal, revoke the key and reject its next read.
-2. Current evidence: `src/cabin/credentials.ts`; `tests/cabin.test.mjs` (line 109).
-
-#### CABIN-13 — Backup and restore
-
-**Requirement.** `rer export` and `rer import` save and restore the copy on the owner's computer, refusing damaged or populated stores; `rer run backup:hosted` saves a hosted Cabin to an owner-only file without printing a download link and restores it into a fresh hosted environment.
-
-**Acceptance.**
-1. Export and restore a populated local installation through rer, refuse damaged/populated restores, then back up a hosted installation to an owner-only file and restore into a fresh hosted environment without disclosing a download link.
-2. Current evidence: `src/cabin/archive-policy.mjs`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs` (line 27).
+1. Create two US properties with different time zones and owners through the property editor; amend one agreement and show that existing bookings retain their original terms while new quotes use the new terms.
+2. Add two homes with their owners and commissions; invite a manager and two cleaners, then verify their property-specific views and refusal after deactivation.
 
 ## Target clauses
 
 ### Portfolio, authority and the existing approval foundation
 
-#### PROPERTY-001 — A usable vacation-rental property register
-
-*Tier:* Core
-
-**Requirement.** An operator maintains properties, units, addresses, local time zones, owners and management agreements, occupancy limits, amenities, photos, house rules, check-in/out times, emergency contacts and channel listing IDs. Effective-dated terms preserve the agreement used for each reservation and owner allocation.
-
-**Acceptance.**
-1. Create two US properties with different time zones and owners through the property editor; amend one agreement and show that existing bookings retain their original terms while new quotes use the new terms.
-
-#### AUTH-001 — Current native authority on every private door
-
-*Tier:* Core
-
-**Requirement.** Native sessions guard private documents, state, commands, photos and statement downloads. Only the installation owner grants manager or cleaner access. Cleaners see only assigned published jobs and redacted associated booking/property data. Revocation applies on the next request and mutation authority is fenced at commit; human POSTs require the installation Origin.
-
-**Acceptance.**
-1. Use signed-out, owner, manager and two cleaner sessions against state and mutation routes; reject a cross-origin POST, cleaner financial access, another cleaner’s photo and a revoked grant.
-
 #### AUTH-002 — PMS roles and property-specific permissions
 
-*Tier:* Core
+*Tier:* Core · *From:* AUTH-002, AUTH-001 · *Cites:* BASE-ACCESS-002, BASE-ACCESS-004, BASE-ROLE-001, BASE-SIGNIN-001
 
-**Requirement.** Installation administration is separate from rental ownership. Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners receive explicit property and action scopes. Owners see only their interests; service staff receive necessary access instructions without guest identity documents or owner banking details. Offboarding revokes app, API and device access.
-
-**Scope semantics:** Current scopes are the intersection of the explicitly selected properties and actions; installation-owner administration remains separate. Current native pages, JSON, exports/downloads, agent context and queued effects recheck these grants; connected device codes are revoked on offboarding. API-001 and MOBILE-001 inherit these property/action grants and offboarding checks when their doors ship.
+**Requirement.** Portfolio managers, reservation staff, guest-service staff, accountants, inspectors, cleaners, maintenance vendors and rental owners have the intersection of explicitly selected properties and actions. Installation administration is distinct from rental ownership. The installation owner grants manager and cleaner membership; native rental submissions are bound to the installation’s own origin. Cleaners see assigned published jobs and redacted associated stay and home details; service staff receive necessary entry instructions without guest identity documents or owner banking details. Offboarding also withdraws connected device codes. API-001 and MOBILE-001 use these same rental roles and scopes.
 
 **Acceptance.**
 1. Invite each role from team settings; use its session to perform an allowed action and attempt the same action on another property, statement, identity document and credential; revoke a role during a queued job and verify execution is refused.
+2. Using owner, manager and two cleaner sessions, exercise the stay, statement and photo doors; refuse cross-origin submissions, cleaner financial access and another cleaner’s photo.
 
-#### CONTROL-001 — Exact human approval and immutable publication
+#### CONTROL-001 — Exact revisions and immutable publication
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-007, BASE-AGENT-008
 
-**Requirement.** Calendar snapshot, turnover and operational statement drafts do not publish themselves. A manager approves the exact immutable revision with actor and time recorded. Changed calendar baselines, booking revisions, cleaner authority or property terms invalidate stale approval. Duplicate approval and duplicate completion cannot overwrite the published record.
+**Requirement.** Calendar snapshot, turnover and operational statement drafts do not publish themselves. Publication binds the exact immutable revision with actor and time recorded. Changed calendar baselines, booking revisions, cleaner authority or property terms invalidate stale approval. Duplicate approval and duplicate completion cannot overwrite the published record. An agent's publication or sign-off carries commitment, plus the classes of its effects; the company’s policy decides the call.
 
 **Acceptance.**
 1. Prepare competing revisions through the command API, approve one, then submit the stale and duplicate approvals; change booking/property terms and prove the outdated turnover or statement cannot publish.
 
-#### CONTROL-002 — Revocable draft-only bearer access
+#### CONTROL-002 — Scoped agent preparation and classified execution
 
-*Tier:* Core
+*Tier:* Core · *From:* CONTROL-002, CABIN-12 · *Cites:* BASE-AGENT-004, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008
 
-**Requirement.** The existing bearer door can prepare only calendar, turnover and statement drafts. It cannot approve, finish work, invite users, change grants, erase records or apply imports. Bearer and native-session doors are distinct. Keys are shown once, stored hashed, owner-version bound, expiring and immediately revocable. Broader agent execution requires the separate scoped controls in AGENT-006.
+**Requirement.** Calendar, turnover and statement preparation use the sponsoring person’s selected homes and actions. Preparation carries standard; publishing a revision or signing off a statement carries commitment, plus money for a charge or changed payable and external for an outside recipient. Finishing field work records the actor’s own attestation, never a different person’s physical inspection. The company’s policy decides these calls. The broader recovery actions are AGENT-006.
 
 **Acceptance.**
-1. Issue a key in Agent access; prepare all three draft types through the bearer API, reject their approval commands and a bearer request to a human door, then revoke the key and reject its next context read.
+1. Under the held company policy, issue access in Agent access, prepare all three draft types and verify that unapproved publication has no effect; after revocation the next context read is refused.
+2. Under the all-autonomous company policy, publish the same exact revisions with their computed commitment and applicable money or external classes, while preserving the separate signed-in-person confirmation door.
 
 ### Distribution and reservations
 
@@ -214,7 +135,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-002 — Airbnb two-way channel management
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
 **Requirement.** Through an approved Airbnb API or contracted channel partner, Cabin receives reservations, modifications and cancellations and sends rates, availability and restrictions for mapped listings. It retains provider IDs, revisions and acknowledgments; authorization failures and channel constraints remain visible. Listing connection is proven before a manager enables selling. Several Airbnb host accounts, including co-hosted listings, connect side by side under SYNC-010. Inquiries, requests to book, pre-approvals, special offers and alteration requests are SYNC-008.
 
@@ -223,7 +144,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-003 — Vrbo two-way channel management
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
 **Requirement.** An approved Vrbo API or channel partner connection exchanges reservation lifecycle, live availability, rates, fees and supported stay restrictions. Account/listing mapping, payment-collection responsibility, acknowledgments and rejected fields are explicit; a failed connection cannot be labeled synchronized. Several Vrbo accounts connect side by side under SYNC-010.
 
@@ -232,7 +153,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-004 — Booking.com two-way channel management
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
 **Requirement.** An approved Booking.com connectivity connection receives bookings, guest/date changes and cancellations, and publishes room/rate-plan availability, prices and restrictions. It tracks channel-versus-property collection and actionable channel rejections. Payments by Booking.com virtual credit cards are charged and reconciled under PAY-005, property-collect guest cards are charged, reported invalid and followed up under PAY-006, and several Booking.com property accounts connect side by side under SYNC-010.
 
@@ -242,7 +163,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-005 — Listing content and distribution
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
 **Requirement.** A manager publishes property descriptions, photos, amenities, occupancy, house rules and supported fees from the property record to Airbnb, Vrbo and Booking.com. Channel-specific overrides, validation and review previews prevent accidental replacement of channel-only content. Google Vacation Rentals connects eligible direct-booking listings through approved connectivity with working price/availability landing links.
 
@@ -251,7 +172,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-006 — Inventory holds, measured closure latency and double-booking prevention
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Every sale, quote hold, owner block, maintenance closure and imported iCal block uses one durable unit/night inventory allocation. Concurrent Cabin checkouts cannot sell the same inventory. From the commit of any allocation change, Cabin submits the closure or reopening to every connected API channel (Airbnb, Vrbo and Booking.com) within 15 seconds, and each channel’s provider-acknowledged closure must arrive within **2 minutes** of commit; Cabin’s own iCal export feeds (SYNC-009) reflect the change within 60 seconds. Connections shows the measured commit-to-acknowledgment time per channel and change; a breach of the 2-minute maximum, a refused acknowledgment or a disconnected channel raises an alert and an assigned exception and offers stop-sell for the affected inventory. Late channel collisions remain visible and open a recovery case rather than being overwritten.
 
@@ -268,11 +189,11 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 **Acceptance.**
 1. From Connections revoke authorization, deliver duplicate/out-of-order events, throttle a push and lose its response; restart Cabin, reconnect and reconcile against the provider, preserving one reservation and the newest accepted prices with every unresolved exception visible.
-2. As this clause’s provider jobs are built, interrupt each channel job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+2. As this clause’s provider jobs are built, interrupt each channel job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### SYNC-008 — Inquiries, booking requests, special offers and alterations
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Airbnb inquiries arrive as Inquiry-status records linked to their inbox thread, with requested dates, guests and quoted USD price, and hold no inventory. From the thread, staff pre-approve an inquiry, send a special offer with a custom price and terms, withdraw and re-send an offer, accept or decline a request to book inside Airbnb’s 24-hour response window, and accept or decline a guest’s alteration request. Every pending request shows its channel deadline; approaching deadlines escalate through MESSAGE-002 and expiry is recorded, never hidden. Hosts can enable automatic pre-approval per listing against saved criteria (stay rules, guest count, lead time, guest verification and no SYNC-006 conflict); inquiries that miss any criterion route to a person. Vrbo inquiries and booking requests and Booking.com request-to-book flows, where the channel offers them, use the same states and actions. Accepting a request, offer or alteration revalidates price and inventory through SYNC-006 and RES-004 and then updates downstream payments, messages, tasks and access through RES-002. Each outcome is recorded only on the channel’s acknowledgment. A request to book or alteration whose nights are already allocated to another reservation is declined at the channel with the overlapping reservation named: automatically when the host enables automatic decline for overlaps, otherwise routed to a person before the channel deadline.
 
@@ -287,9 +208,9 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-009 — Automatic iCal sync for channels without an API
 
-*Tier:* Core
+*Tier:* Core · *From:* SYNC-009, CABIN-02 · *Cites:* BASE-OPS-003, BASE-OPS-004
 
-**Requirement.** For channels with no API connection, such as Furnished Finder, Hipcamp or a partner’s PMS, a manager connects any external iCal URL per unit. Cabin polls each URL on a configurable interval of 15 to 60 minutes (default 15), applies new, changed and removed events as channel blocks that take inventory through SYNC-006, and publishes a per-unit secret iCal export URL listing every Cabin reservation and block, which the manager can regenerate to revoke old links. Each feed shows last successful fetch, last applied change and next poll. An unreachable or malformed feed enters a visible stale state with an alert and assigned exception, keeps its last applied blocks rather than releasing nights, and recovers on the next good fetch. Connections and the listing settings state plainly that iCal sync is polled and does not guarantee against double booking; API channels carry that guarantee. Imported events never trigger guest messages or charges. SYNC-001 remains the manual review path for migration and diagnosis.
+**Requirement.** For channels with no API connection, such as Furnished Finder, Hipcamp or a partner’s PMS, a manager connects any external iCal URL per unit. Cabin polls each URL on a configurable interval of 15 to 60 minutes (default 15), applies new, changed and removed events as channel blocks that take inventory through SYNC-006, and publishes a per-unit secret iCal export URL listing every Cabin reservation and block, which the manager can regenerate to revoke old links. Each feed shows last successful fetch, last applied change and next poll. An unreachable or malformed feed enters a visible stale state with an alert and assigned exception, keeps its last applied blocks rather than releasing nights, and recovers on the next good fetch. Connections and the listing settings state plainly that iCal sync is polled and does not guarantee against double booking; API channels carry that guarantee. Imported events never trigger guest messages or charges. SYNC-001 remains the manual review path for migration and diagnosis. Channel-specific exports omit that channel’s own stays, include direct stays and preserve an arriving collision for resolution under SYNC-006.
 
 **Acceptance.**
 1. Connect an external iCal URL served by a test host; add a block there and verify Cabin applies it within the configured polling interval and then refuses a direct booking for those nights.
@@ -298,7 +219,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-010 — Multiple connected accounts per channel and Airbnb co-hosting
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
 **Requirement.** Each channel holds any number of connected accounts in one Cabin installation: several Airbnb host accounts, several Vrbo accounts and several Booking.com property accounts. Each account is authorized, given a manager-chosen nickname, monitored (last exchange, lag, exceptions) and revoked separately in Connections. Every listing, room and rate plan maps to the connected account that owns it, and its reservations, inbox threads (MESSAGE-001), reviews (GUEST-004), payouts (FIN-002) and acknowledgments are attributed to that account. Airbnb listings where the manager is a co-host connect through the co-host’s grant wherever Airbnb gives the co-host full access, after the listing owner’s host account authorizes; Connections shows each co-hosted listing’s granted permissions, and an action the grant lacks is refused with that reason rather than attempted. One account’s authorization failure, expiry or revocation stop-sells only that account’s inventory through SYNC-006 and opens SYNC-007 exceptions for it, while every other account keeps syncing. One listing cannot be mapped under two accounts at once, and moving a listing between accounts is a reviewed remap that keeps its reservation history.
 
@@ -310,16 +231,16 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### SYNC-011 — Channel agents in the host's own accounts
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-5
 
-**Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Every action is logged with who acted, what they did, when and a screenshot, with secrets protected under SECURITY-001. At any CAPTCHA, 2FA challenge or terms prompt, the agent stops and hands control back to the host; it never solves or bypasses them or accepts terms for the host. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the channel-specific terms risks below, the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (owner decision, 19 Oct 2026); the broader channel-management requirements remain in SYNC-002–010.
+**Requirement.** For launch, the host connects their own Airbnb, Booking.com and Vrbo accounts to an AI agent with computer use. Acting on the host's behalf in each channel's extranet, the agent closes nights (blocks dates), reads and answers guest messages, and reads reservations. Each channel action keeps its exact source revision and protected before/after screenshot under AUDIT-001 and SECURITY-001. At any CAPTCHA, 2FA challenge or terms prompt, the agent stops and hands control back to the host; it never solves or bypasses them or accepts terms for the host. Credentials stay with the host's session and Cabin never stores them beyond what the host explicitly grants. Before connection the host sees the [channel-specific terms risks](/docs/channel-terms), the session/data custody and the exact authority being granted. This is the launch route for homepage rows 12, 15, 16, 17, 42 and 46 (RL-1); the broader channel-management requirements remain in SYNC-002–010.
 
 **Acceptance.**
 1. Separately on Airbnb, Booking.com and Vrbo, inspect the risk notice, connect the host's own account, close a night, read and answer a guest message, and read a reservation in the extranet.
 2. Inspect each action's who/what/when log and screenshot and compare its result with the channel.
 3. Encounter a 2FA prompt on each channel and verify automation stops and hands control to the host without entering a code; also verify CAPTCHA and terms prompts stop work without solving, bypassing or accepting them.
 4. Inspect session custody against the host's explicit grant and revoke access to stop further actions.
-5. As this clause’s provider jobs are built, interrupt each channel job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+5. As this clause’s provider jobs are built, interrupt each channel job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### RES-001 — Portfolio calendar with operational context
 
@@ -332,7 +253,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### RES-002 — Complete reservation lifecycle
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Staff create direct, phone and manual reservations, record channel bookings, modify guest/date/unit/price details, handle no-shows and cancellations, and retain policy, source IDs and full revision history. A change recomputes inventory, payment balance, messages, tasks, access and owner allocations; conflicting edits require reconciliation rather than silently replacing another revision.
 
@@ -341,7 +262,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### RES-003 — Owner stays and maintenance blocks
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Managers and permitted rental owners create, edit and cancel personal-stay or maintenance blocks, with reasons and date ranges. Blocks reserve the same inventory as guest stays, publish to channels and affect billable owner-use rules and readiness tasks without inventing guest revenue.
 
@@ -368,7 +289,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### RES-006 — Quotes and conversion to a reserved stay
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Staff issue itemized USD quotes with guest counts, fees, taxes, cancellation terms, expiry, optional inventory hold and a secure direct-reservation link. Revisions and accepted terms are retained. Expired quotes release holds; concurrent quote acceptance revalidates price and inventory before payment. Staff enter expiry with an explicit time zone; it is stored in UTC and expires when the current time is at or after that instant. A revision retains earlier itemized terms and replaces its optional hold; changed home terms require a new staff revision. Acceptance atomically replaces the quote hold with the checkout hold; repeat acceptance returns the same booking.
 
@@ -410,19 +331,20 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### WEB-001 — Branded direct-booking website
 
-*Tier:* Core
+*Tier:* Core · *From:* WEB-001, CABIN-03 · *Cites:* BASE-PUBLIC-001, BASE-ACCESSIBILITY-001
 
-**Requirement.** Hosts publish a mobile booking website on their custom domain with their branding, property search, galleries, amenities, guide content, policies and live prices/availability. They control pages, SEO metadata, analytics consent and domain portability. One guest checkout collects whatever the property requires: the Stripe payment (PAY-001), the signed rental agreement (WEB-003), the identity check (WEB-004) and the damage-deposit hold (PAY-003). Cabin operates the guest booking site as a product feature; this round does not change the owner-approved Cabin homepage.
+**Requirement.** Hosts publish a mobile booking website on their custom domain with their branding, property search, galleries, amenities, guide content, policies and live prices/availability. They control pages, SEO metadata, analytics consent and domain portability. One guest checkout collects whatever the property requires: the Stripe payment (PAY-001), the signed rental agreement (WEB-003), the identity check (WEB-004) and the damage-deposit hold (PAY-003). Cabin operates the guest booking site as a product feature; the Cabin marketing homepage remains separate. A guest can be marked checked out only after the stay’s check-in time; the booking receipt itemizes charges and describes the actual separate damage hold.
 
 **Acceptance.**
 1. Publish a two-property site on a test custom domain, edit a property page, search real available dates at 1440 and 390 pixels and complete a guest booking with the exact advertised total and terms.
 2. For a property that requires a rental agreement, ID check and damage deposit, complete checkout once and verify the Stripe payment, signed agreement, verification outcome and deposit hold all attach to the one reservation before it is confirmed.
+3. Attempt checkout before check-in and verify refusal; inspect the itemized receipt and release or capture the separate hold with its reason.
 
 #### WEB-002 — Embeddable booking engine
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-PUBLIC-001, BASE-PUBLIC-002, BASE-SECRET-001, BASE-ACCESSIBILITY-001
 
-**Requirement.** A documented booking widget and WordPress-compatible embed use the same live search, inventory, price and Stripe checkout as the hosted site. Hosts authorize embedding origins; the embed does not expose staff data or provider secrets. Payment/confirmation return safely to the host’s chosen page with accessibility and mobile support.
+**Requirement.** A documented booking widget and WordPress-compatible embed use the same live search, inventory, price and Stripe checkout as the hosted site. The embed uses the same property and stay permissions as the hosted booking door. Payment/confirmation return safely to the host’s chosen page on desktop and phone.
 
 **Acceptance.**
 1. Install the widget on an allowed external site and WordPress page, complete a stay and verify one reservation; refuse an unapproved origin and an attempt to query private reservation/guest records.
@@ -447,7 +369,7 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### WEB-005 — Promotions, upsells and gap-night offers
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Hosts offer scoped coupons, repeat-guest rates, paid extras, early check-in, late checkout and gap-night extensions. Eligibility, inventory, cleaner capacity, minimum net contribution, consent and owner allocations are checked before an offer is sent or charged. Acceptance updates the original stay and every downstream system; expiration/cancellation releases inventory and follows the refund policy.
 
@@ -467,18 +389,16 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### PAY-002 — Scheduled collection and payment follow-up
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-OPS-003, BASE-OPS-004 · *Rules:* D-1
 
 **Requirement.** Deposit, installment and balance schedules use the reservation’s policy and authorized payment mandate. Due jobs collect through Stripe, record receipts and chase failed/overdue payments with assigned deadlines. Date changes and cancellation reschedule or suppress future collection; uncertain charges require provider reconciliation before another attempt.
-
-**Current implementation semantic (ct, 22 October 2026):** Native priced direct reservations use integer USD cents, an immediate deposit, optional installment and pre-arrival balance at the home's local arrival time. Guest-card schedules require exact consent through the verified reservation-email portal before Stripe-hosted card setup. Date, price, policy or property changes invalidate consent; started effects must be reconciled before amendment or renewed consent, and payments/attempts stay preserved. A human host amendment that only lowers an amount or defers the stay and its due dates retains consent, never charging more or sooner. Contact changes invalidate payment consent only when the normalized verified email changes. Failed/overdue follow-up continues as an assigned task and message while consent is invalid, never a charge; retry requires a provider-confirmed zero-received failure and human approval after renewed consent. Cancellation suppresses unstarted work while uncertain effects retain readback. This guest-card rule also binds PAY-006 property-collect cards when their intake ships. PAY-005 Booking.com virtual cards use their activation, expiry and loaded-amount limits rather than guest consent. Both inherit scheduling, authority, receipt and reconciliation; their source mandates remain unimplemented.
 
 **Acceptance.**
 1. Configure a deposit and pre-arrival balance in Payments, advance the schedule, fail one collection, resolve its reminder and change/cancel the stay before the next charge; inspect processor records and Cabin’s durable job outcomes after restart.
 
 #### PAY-003 — Damage deposits, refunds and cancellation settlement
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1
 
 **Requirement.** Cabin distinguishes security-deposit authorizations, refundable deposits and rent, tracks authorization expiry and release, and requests approved full/partial refunds through Stripe. Claims require evidence and human approval; canceled/changed stays calculate amounts from saved terms. Duplicate callbacks or repeated operator clicks cannot double-capture, refund or release funds. A damage-deposit hold is placed on the guest’s card at checkout or before arrival and released automatically within the configured window after checkout when no claim is opened; a hold the card authorization would outlive is renewed under the guest’s mandate or flagged to a person before it expires.
 
@@ -534,30 +454,28 @@ The primary journey: Exercise the capabilities and acceptance journeys below.
 
 #### MESSAGE-001 — Unified channel, SMS, email and WhatsApp inbox
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-MAIL-001, BASE-OPS-003, BASE-OPS-004
 
-**Requirement.** Airbnb, Vrbo and Booking.com conversations, guest email, Twilio SMS and WhatsApp join reservation-linked threads with attachments and delivery history. Twilio/SendGrid or the selected Base mail adapter supplies email delivery; provider approval, US messaging registration and consent are implementation work. Inquiry, request-to-book, special-offer and alteration actions (SYNC-008) are taken from the thread. Cabin preserves channel reply rules and distinguishes submitted, provider-accepted, delivered and failed messages. Messages from the same guest on any channel, SMS or email join one thread per guest, linked through GUEST-001’s guest record and grouped by reservation.
+**Requirement.** Airbnb, Vrbo and Booking.com conversations, guest email, Twilio SMS and WhatsApp join reservation-linked threads with attachments and delivery history. Twilio/SendGrid or the selected Base mail adapter supplies email delivery; provider approval, US messaging registration and consent are implementation work. Inquiry, request-to-book, special-offer and alteration actions (SYNC-008) are taken from the thread. Cabin preserves channel reply rules. Messages from the same guest on any channel, SMS or email join one thread per guest, linked through GUEST-001’s guest record and grouped by reservation.
 
 **Acceptance.**
 1. Receive and reply on all three OTA channels, email, SMS and WhatsApp through the inbox; attach the correct reservation, replay an inbound event and simulate a rejected/outage send, proving one visible message and an assigned delivery failure without false delivery claims.
 2. Have one guest write about the same stay on Airbnb, then by SMS and by email, and verify all three appear in order in one thread for that guest, with each reply sent on the channel its message came from.
-3. As this clause’s provider jobs are built, interrupt each message job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+3. As this clause’s provider jobs are built, interrupt each message job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### MESSAGE-002 — Team routing and response accountability
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-MAIL-001, BASE-OPS-003, BASE-OPS-004, BASE-AGENT-007
 
-**Requirement.** Templates, internal notes, labels, assignments, collision indicators and property/urgency routing support a guest-service team. Response deadlines, shift coverage and escalation continue until an accountable person accepts the issue; private notes cannot be sent as guest messages. Handover preserves the reservation, open operational tasks and prior promises.
-
-Exact behavior. Staff are active managers; the owner acts as administrator. A guest message that arrives after the team settings are first saved opens a case on its thread. The most specific matching route assigns it (a home beats all homes, urgent beats any); a routed manager who has shifts and is off shift at the home's local time is replaced by whoever is on shift, and with nobody on shift the escalation manager takes it. A response deadline runs from the guest's unanswered message (urgent threads sooner than normal ones); the escalation manager is notified with the full context and again every repeat interval until a person accepts the thread. Only a person's sent reply answers a thread; scheduled messages, drafts and failed sends do not. A person replying, or who replied in the last two minutes, blocks another person's reply. Every future source of guest threads (MESSAGE-001 channel replies, SYNC-008 requests) inherits this routing before it ships.
+**Requirement.** Templates, internal notes, labels, assignments, collision indicators and property/urgency routing support a guest-service team. Response deadlines, shift coverage and escalation continue until an accountable person accepts the issue; private notes cannot be sent as guest messages. Handover preserves the reservation, open operational tasks and prior promises. A reply by an agent carries external and the company’s policy decides it; where that policy holds replies, only the approved exact revision is sent.
 
 **Acceptance.**
 1. Route an after-hours access thread, add an internal note, have two staff attempt replies and hand the issue to the next shift; miss its response deadline and confirm escalation reaches an assigned manager with the full context.
-2. As this clause’s provider jobs are built, interrupt each message job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+2. As this clause’s provider jobs are built, interrupt each message job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### MESSAGE-003 — Lifecycle messaging and post-stay follow-up
 
-*Tier:* Core
+*Tier:* Core · *From:* MESSAGE-003, CABIN-07 · *Cites:* BASE-MAIL-001, BASE-OPS-003, BASE-OPS-004, BASE-AGENT-007
 
 **Requirement.** Hosts configure booking confirmation, payment/signature/ID reminders, pre-arrival instructions, arrival checks, checkout, review requests and repeat-stay follow-up using property-local schedules and event triggers. Conditions withhold access secrets until payment/verification/readiness rules pass. Changes, cancellation, opt-out, channel policy and quiet hours re-evaluate queued messages; sends have deduplication and visible failure handling. Each scheduled message is submitted within 5 minutes of its property-local due time; one that misses that window is shown as late with its delay rather than hidden.
 
@@ -567,21 +485,20 @@ Exact behavior. Staff are active managers; the owner acts as administrator. A gu
 
 #### MESSAGE-004 — Source-grounded AI replies with controlled sending
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008
 
-**Requirement.** Reply assistance uses the actual reservation, approved property instructions, guest thread and current operational facts, linking its sources and uncertainty. Humans edit/send drafts by default; opt-in automatic replies are limited by property, topic, confidence, hours and policy. Refunds, relocation, safety assurances and new spending require their own authority; unanswered questions and low confidence notify a person.
+**Requirement.** Reply assistance uses the actual reservation, approved property instructions, guest thread and current operational facts, linking its sources and uncertainty. Replies carry external with recipient and counterparty facts; compensation adds money, and a new binding guest promise adds commitment. The company’s policy decides whether a grounded reply is sent, reviewed, held for approval or refused. Property, topic, confidence and local hours remain scope facts. Unsupported facts, safety assurances and new spending cannot acquire authority from a guest’s words; unanswered questions and low confidence identify the missing evidence and notify the responsible person.
 
 **Acceptance.**
-1. Ask the inbox assistant a supported check-in question, an undocumented amenity question and a compensation request; inspect sources, edit a draft, enable a narrow automatic rule and prove unsupported or unauthorized promises route to a human without being sent.
-2. Leave an assistant draft unapproved past the time its reply was due and verify nothing is sent; approve it and verify exactly the approved text is sent once.
+1. Under the held company policy, ask a supported check-in question, an undocumented amenity question and a compensation request; inspect sources, edit a draft and verify unsupported facts or out-of-scope promises are not sent.
+2. Under that held policy, leave a reply past its due time and verify nothing is sent before approval; approve the exact revision and verify that text is sent once.
+3. Under the all-autonomous company policy, a supported in-scope reply runs with its external class; compensation and binding promises also carry money and commitment, as applicable.
 
 #### GUEST-002 — Guest check-in and stay portal
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-MAIL-001, BASE-ACCESS-002, BASE-SECRET-001
 
-**Requirement.** A secure mobile guest portal exposes only the holder’s reservation, payment/verification/signature tasks, arrival instructions, timed access code, house rules, digital guidebook, extras and issue reporting. Expiring/revocable links and verified identity protect access. Updated instructions show their version; access secrets disappear after cancellation/checkout and do not leak through shared/public pages.
-
-Link-holder identity (ct, 21 October 2026): the portal link alone never renders private details. An unverified holder sees only the home's public name, a masked hint of the saved address (its first character and the domain's first character) and "Send code". A verified session is required for reservation details and dates, guest names, tasks, guide, instructions, door code, offers, issue reporting, downloads and their JSON. "Send code" emails a one-use 6-digit code through the installation's existing mail provider to the reservation's own saved email (trimmed and lowercased; never another address merged into the guest profile). The code is bound to the browser that asked for it, valid for 10 minutes, stored only as a hash and consumed by the first correct entry. Five wrong entries lock that reservation's challenges for 15 minutes, and sends are limited to three per 15 minutes. The send shows "accepted by the mail provider" or "failed", never "delivered". A correct code starts a reservation-scoped guest session (HttpOnly, Secure, SameSite=Lax, host-only cookie) that is separate from staff, owner and cleaner sessions and reads only that reservation. The session ends at the earliest of: the link's own expiry; link replacement or revocation; cancellation; a change to the saved email; erasure of the guest or reservation; or staff ending guest sessions. A different browser must verify again. A stay with no saved email shows "Ask your host to add your email" and nothing private until staff record one, and that edit is audited. This is separate from WEB-004. The email check proves the holder controls the booking's address, and WEB-004's Stripe Identity or manual decision still gates door codes, locks and access messages on its own. Portal-started WEB-004 checks require a verified session. Challenges and sessions are never archived or restored, so a restore requires fresh verification, and erasure deletes them. Sends, verifications, lockouts and session ends enter AUDIT-001 history with a masked recipient and never the code.
+**Requirement.** A secure mobile guest portal exposes only the holder’s reservation, payment/verification/signature tasks, arrival instructions, timed access code, house rules, digital guidebook, extras and issue reporting. Expiring/revocable links and verified identity protect access. Updated instructions show their version; access secrets disappear after cancellation/checkout and do not leak through shared/public pages. Reservation-email verification is separate from identity verification in WEB-004; the detailed link-holder rules are in the [workflow specification](/docs/workflow-semantics).
 
 **Acceptance.**
 1. Open a guest link on a phone, finish pre-arrival tasks, view the correctly timed code and report an issue; use another reservation’s ID, an expired link and a canceled stay and confirm private details and access are refused.
@@ -610,9 +527,9 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### OPS-001 — Reservation-triggered turnover dispatch
 
-*Tier:* Core
+*Tier:* Core · *From:* OPS-001, CABIN-04 · *Rules:* D-1
 
-**Requirement.** Confirmed reservations, checkout, amendments and cancellations create or revise the appropriate cleaning/inspection tasks exactly once. Managers configure per-property templates, timing, rates and approved teams; cleaners accept or decline, receive reminders, and can be replaced without losing history. Overdue or declined jobs escalate before arrival. Each cleaner or team has a saved daily capacity (jobs and hours) and home base; travel time between consecutive jobs comes from property addresses through a routing provider such as the Google Maps Distance Matrix API, or from manager-entered drive times. An assignment that would exceed capacity or cannot reach the next job within its window is never made silently: it routes to the next eligible backup or is flagged to a manager with the reason.
+**Requirement.** Confirmed reservations, checkout, amendments and cancellations create or revise the appropriate cleaning/inspection tasks exactly once. Managers configure per-property templates, timing, rates and approved teams; cleaners accept or decline, receive reminders, and can be replaced without losing history. Overdue or declined jobs escalate before arrival. Each cleaner or team has a saved daily capacity (jobs and hours) and home base; travel time between consecutive jobs comes from property addresses through a routing provider such as the Google Maps Distance Matrix API, or from manager-entered drive times. An assignment that would exceed capacity or cannot reach the next job within its window is never made silently: it routes to the next eligible backup or is flagged to a manager with the reason. Cleaner notices carry the work window, address and authorized entry details and are updated or canceled with the stay; guest and cleaner codes remain OPS-005.
 
 **Acceptance.**
 1. Confirm, extend and cancel a stay through reservation doors, inspect generated tasks, have a cleaner decline and a backup accept, and verify deadlines, changed instructions and cancellation propagate with no duplicate payable turnover.
@@ -620,12 +537,13 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### EVIDENCE-001 — Private immutable cleaner completion evidence
 
-*Tier:* Core
+*Tier:* Core · *From:* EVIDENCE-001, CABIN-05 · *Cites:* BASE-INPUT-003, BASE-ROLE-001
 
-**Requirement.** Only the assigned currently authorized cleaner completes an approved turnover, once, using every approved checklist item and a valid PNG/JPEG with caption. Cabin checks image structure and keeps persisted private bytes, digest, actor and completion time. A changed booking invalidates stale completion authority; authorized photo retrieval rechecks current permissions.
+**Requirement.** Only the assigned currently authorized cleaner completes an approved turnover, once, using every approved checklist item and a valid PNG/JPEG with caption. Completion retains original photos, their digest and caption, the completing cleaner and time. A changed booking invalidates stale completion authority; authorized photo retrieval rechecks current permissions. Work finished after the next check-in remains done and is labeled late. A reopened job names the stay or checkout change and can be completed again while reusing its original photos.
 
 **Acceptance.**
 1. Complete a job through the cleaner command/photo doors; reject missing checks, malformed images, another cleaner and a duplicate completion, then retrieve the original photo only with an authorized session.
+2. Finish late, amend the stay, inspect the reason for reopening and complete again without duplicated photos.
 
 #### OPS-002 — Cleaner mobile work with reliable uploads
 
@@ -638,9 +556,9 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### OPS-003 — Readiness is verified before arrival
 
-*Tier:* Core
+*Tier:* Core · *From:* OPS-003, CABIN-06
 
-**Requirement.** A per-stay readiness record combines accepted cleaning, maintenance blockers, inspection evidence, supplies and access verification. Per-property supply and restock items (for example linens, toiletries, coffee and paper goods) are readiness items: a failed or short item keeps the arrival unready until it is restocked and attested, or a manager explicitly excepts it. Named people attest physical completion; pending/failed evidence remains unready. Managers see at-risk arrivals, chase overdue work and explicitly approve exceptions with guest impact recorded. A cleaner upload alone cannot certify building safety.
+**Requirement.** A per-stay readiness record combines accepted cleaning, maintenance blockers, inspection evidence, supplies and access verification. Per-property supply and restock items (for example linens, toiletries, coffee and paper goods) are readiness items: a failed or short item keeps the arrival unready until it is restocked and attested, or a manager explicitly excepts it. Named people attest physical completion; pending/failed evidence remains unready. Managers see at-risk arrivals, chase overdue work and explicitly approve exceptions with guest impact recorded. A cleaner upload alone cannot certify building safety. The readiness board is available for any chosen property-local day; photographed maintenance reports remain OPS-004.
 
 **Acceptance.**
 1. Open an arrival with completed cleaning but failed lock and maintenance checks and a failed restock item; verify it stays unready, resolve the tasks and restock and attest the item, obtain inspector acceptance and show the manager and guest-service team the final readiness state and evidence.
@@ -657,7 +575,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### OPS-005 — Stay-bound smart-lock automation
 
-*Tier:* Core
+*Tier:* Core · *Rules:* D-1 · *Register:* R-6
 
 **Requirement.** Schlage, Yale, August, Kwikset, RemoteLock, Igloohome, Nuki and Salto locks connect directly or through an approved bridge such as Seam; Connections shows which path each lock uses. Cabin provisions a unique stay-bound code for every confirmed reservation at a lock-equipped property without staff action, verifies provider/device state, sends them only when release rules pass, updates windows for changed stays and revokes them on cancellation/checkout. Battery/offline alerts trigger assigned action and a manager-approved backup entry plan; an API acknowledgment alone is not a tested door. Hub-dependent and offline-PIN locks follow OPS-007.
 
@@ -665,7 +583,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 1. Connect each named lock family, directly or through the bridge; for each, provision and verify a stay code, extend then cancel the booking and observe expiry/revocation at the device or provider test harness.
 2. Route a low-battery/offline lock to a person before arrival.
 3. Confirm a reservation through a channel and verify its code is provisioned with no staff action, shown as active only once the provider or device confirms it, and sent to the guest only after release rules pass; a stay with an unresolved payment or ID check keeps its code unsent.
-4. As this clause’s provider jobs are built, interrupt each lock job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+4. As this clause’s provider jobs are built, interrupt each lock job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### OPS-006 — Breezeway specialist operations handoff
 
@@ -678,7 +596,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### OPS-007 — Hub-dependent and offline-PIN locks
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-6
 
 **Requirement.** Each connected lock records its connectivity mode: cloud or Wi-Fi, hub-bridged (for example Schlage Sense, Bluetooth Yale and August models, or Nuki through its bridge) or offline (for example Igloohome time-bound PINs). Before enablement Cabin states when a hub is required and then shows the hub’s online state. For an offline-only lock Cabin generates the provider’s time-bound PIN for the stay window, labels it as unverifiable at the device and not revocable early, and requires a manager-approved fallback (a code-change task or lockbox) for cancellations and early checkouts. A hub going offline before arrival opens an assigned case, and code delivery still waits for release rules.
 
@@ -686,7 +604,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 1. Connect an Igloohome lock in offline mode and a Schlage Sense through its hub; verify the hub requirement is stated before enablement.
 2. Provision an offline time-bound PIN, confirm it is labeled unverifiable, then cancel the stay and verify the fallback task.
 3. Take the hub offline before an arrival and verify the assigned case and that code delivery waits for release rules.
-4. As this clause’s provider jobs are built, interrupt each lock job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+4. As this clause’s provider jobs are built, interrupt each lock job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 #### OPS-008 — A day board of departures, arrivals and readiness
 
@@ -730,9 +648,9 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### FIN-004 — Reconciled frozen owner statements and monthly delivery
 
-*Tier:* Core
+*Tier:* Core · *From:* FIN-004, CABIN-09
 
-**Requirement.** Monthly USD owner statements derive from the reconciled ledger and show opening balance, each stay, gross revenue, fees, commissions, tax responsibility, expenses, reserves, refunds, distributions and closing payable. Managers review differences and exact revisions before release; scheduled generation/delivery follows configured approval policy. Approved PDF/CSV and portal versions freeze the terms and totals; corrections issue traceable adjustments rather than rewriting sent statements.
+**Requirement.** Monthly USD owner statements derive from the reconciled ledger and show opening balance, each stay, gross revenue, fees, commissions, tax responsibility, expenses, reserves, refunds, distributions and closing payable. Managers review differences and exact revisions before release; scheduled generation/delivery follows configured approval policy. Approved PDF/CSV and portal versions freeze the terms and totals; corrections issue traceable adjustments rather than rewriting sent statements. Imported Airbnb and Vrbo payout lines match individual stays with actual channel fees and paid owner expenses; the separate owner portal is FIN-005.
 
 **Acceptance.**
 1. Run month-end with a missing payout, resolve its exception, review and approve the USD statement, deliver it once to the owner portal/email and compare every line to the ledger; verify every Airbnb, Vrbo, Booking.com and Stripe payout received for the month appears on its owner’s statement split to the stays it paid, with none omitted or counted twice; later amend property terms and correct a posted item without changing the original safe CSV/PDF.
@@ -750,25 +668,25 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 *Tier:* Core
 
-**Requirement.** Accountants manage multiple designated trust/operating cash accounts, import or connect US bank feeds through Plaid or an approved banking partner, and perform bank-to-ledger-to-owner-liability reconciliation. Approved owner/vendor distributions use Stripe or licensed ACH/payout partners with verified payees, reserves and available-funds checks. Pending, settled, failed and returned transfers are distinct; Cabin does not itself custody funds.
-
-**Current implementation semantic (conservative default ADOPTED, 23 October 2026):** Accountants with current property/action grants designate USD trust/operating accounts for one home and a frozen legal entity, retaining institution and last four digits only. Source-backed bank CSVs, exact immutable journal attribution and signed-amount matches produce frozen bank/ledger/owner-liability controls without posting a second receipt. Unassigned journals and unmatched bank rows prevent reconciliation. Only the native installation owner approves an exact unexecuted distribution plan against that owner's reconciled cash and liability, excluding reserves, advances, taxes, other payables and other owners' money. Plans reserve internally, never submit ACH or post a distribution; an approved licensed partner, verified payee and fresh execution approval are prerequisites to actual movement. Restored plans are inactive history. This conservative approval/custody boundary awaits ct approval; no live distribution is claimed.
+**Requirement.** Scoped accountants designate trust and operating accounts and reconcile source-backed bank cash, immutable ledger attribution and each owner liability by property and frozen legal entity. Bank feeds use Plaid or an approved US banking partner. Unmatched bank rows and unassigned journals prevent reconciliation; a matched bank row does not post another receipt. RL-101 governs this preparation boundary; distribution reservation is FIN-010 and money execution is FIN-011, with FIN-001 custody and closed-period rules.
 
 **Acceptance.**
-1. Reconcile two trust accounts and their owner liabilities, approve a distribution, reject one that would use another owner’s funds, and follow a returned ACH through bank evidence, restored liability and corrected owner statement.
+1. Reconcile two trust accounts and their separate owner liabilities to bank and ledger sources; refuse unmatched or unassigned sources and any use of another owner’s funds.
 
 #### FIN-007 — QuickBooks Online accounting synchronization
 
-*Tier:* Core
+*Tier:* Core · *From:* FIN-007, CABIN-10 · *Cites:* BASE-ROLE-001, BASE-OPS-003, BASE-MAIL-001
 
-**Requirement.** Cabin provides its own QuickBooks Online connector with accountant-approved mappings for properties/classes, owners/vendors, revenue, deposits, fees, taxes, expenses and settlements. Previewed exports/sync batches retain external IDs, errors and reconciliation totals; duplicates and edits are handled without double posting. Guesty Connect is a migration reference, not an available Cabin connector.
+**Requirement.** Cabin provides its own QuickBooks Online connector with accountant-approved mappings for properties/classes, owners/vendors, revenue, deposits, fees, taxes, expenses and settlements. Previewed exports/sync batches retain external IDs, errors and reconciliation totals; duplicates and edits are handled without double posting. Guesty Connect is a migration reference, not an available Cabin connector. The same approved-statement journal can be posted once to the owner’s Pantry with its matched source evidence and a scoped revocable connection; retry retains the original journal and revocation shows a broken connection. QuickBooks CSV and Desktop IIF journals are also available for a person’s import.
 
 **Acceptance.**
 1. Authorize a QuickBooks Online test company, map accounts, sync a month including a refund and expense, reconcile totals, repeat the batch and handle an externally edited or rejected transaction without duplication.
+2. Post an approved statement twice to Pantry and read one journal with its evidence; revoke the scoped connection and inspect its broken state.
+3. Download the QuickBooks CSV and Desktop IIF journals for a person’s import.
 
 #### FIN-008 — US occupancy, lodging and sales-tax obligations
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-9
 
 **Requirement.** Property jurisdiction and stay dates drive configured occupancy/lodging and applicable sales-tax rules, exemptions and filing periods. Cabin separates channel-collected/remitted amounts from host liability, adjusts cancellations/refunds and tracks registration, filing and payment evidence. Avalara MyLodgeTax or an approved filing/remittance partner receives reviewed obligations; unsupported jurisdictions remain explicit work items until supported, without removing the tax workflow. Quotes and direct checkout show each lodging-tax line with its jurisdiction and rate before the guest commits, and each state, county and city levy is tracked, filed and reconciled as its own obligation.
 
@@ -778,7 +696,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### FIN-009 — US owner and contractor tax reporting
 
-*Tier:* Core
+*Tier:* Core · *Register:* R-9
 
 **Requirement.** Restricted W-9/payee records, owner and contractor payment histories, filing classifications and accountant adjustments support US 1099 preparation. Managers review totals and recipient details, generate accountant/e-file exports and submit through an authorized filing partner; acceptance, rejection, correction and recipient delivery are tracked. Tax IDs are masked outside the authorized tax workflow.
 
@@ -789,17 +707,10 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 *Tier:* Core
 
-**Requirement.** Live reports show occupancy with owner/maintenance blocks separated, ADR, RevPAR, booking pace, channel mix, gross/net revenue, cancellations, collection/settlement exceptions, owner performance, cleaning cost and readiness/service deadlines. Filters use property-local dates and explicit cash/accrual or stay/booking-date bases. Totals drill to permitted source records and export without hidden truncation.
+**Requirement.** Live reports show occupancy with owner/maintenance blocks separated, ADR, RevPAR, booking pace, channel mix, gross/net revenue, cancellations, collection/settlement exceptions, owner performance, cleaning cost and readiness/service deadlines. Filters use property-local dates and explicit cash/accrual or stay/booking-date bases. Totals drill to permitted source records and export without hidden truncation. REPORT-002 and AGENT-005 use the same property-local, end-exclusive accounting and occupancy definitions documented with these reports.
 
 **Acceptance.**
 1. Use a mixed-channel month with owner blocks, refunds and incomplete payouts; filter a portfolio report, explain its occupancy denominator and accounting basis, and reconcile exported totals and drill-downs to reservations and ledger records.
-2. **Reporting semantics:** Date windows and checkout are end-exclusive in each home’s zone.
-3. Occupancy counts distinct guest nights over calendar nights less distinct owner, maintenance and other blocks; channel/owner filters select the guest cohort while retaining those inventory blocks.
-4. ADR uses known rental cents over priced guest nights; RevPAR uses the same rental cents over available nights, with missing prices explicit and cent remainders allocated to the earliest nights.
-5. Booking dates are the first saved revision, not the latest amendment.
-6. Financial rows use journal effective dates: cash shows recorded trust receipts/paid costs; accrual shows posted earning events/costs, with contractual rent, liability movements and cash movements labelled separately.
-7. `docs/reports.md` states the precise event classification and reconciliation rules used by the code.
-8. REPORT-002 and AGENT-005 inherit these report definitions, permitted source links and cutoff; INTERFACE-001 retains its own scale/performance obligation.
 
 #### REPORT-002 — Saved reports and scheduled sharing
 
@@ -809,7 +720,7 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 **Acceptance.**
 1. Schedule two owner reports and a manager digest, revoke one owner before run time, advance the schedule and inspect artifacts/delivery history; verify unauthorized delivery is refused and a failed send is assigned for resolution.
-2. As this clause’s provider jobs are built, interrupt each report job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (inherited from RUNTIME-001, ct 22 October 2026).
+2. As this clause’s provider jobs are built, interrupt each report job before and after provider acceptance and prove restart reconciliation prevents duplicate external effects (RL-2).
 
 ### Integrations, migration, mobility and durable custody
 
@@ -819,16 +730,14 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 **Requirement.** A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. Third-party access is revocable and cannot bypass approval, payment or property scopes.
 
-**Inherited authority:** API-001 carries AUTH-002 property/action grants and offboarding checks on its credentials, reads, mutations and queued work.
-
 **Acceptance.**
 1. Create/read a reservation through documented API credentials, consume a signed webhook in Zapier, repeat a mutation and replay a delivered event; revoke credentials and show private/financial actions and stale queued jobs are refused.
 
 #### MIGRATE-001 — Reviewed property-register move-in
 
-*Tier:* Core
+*Tier:* Core · *From:* MIGRATE-001, CABIN-11
 
-**Requirement.** The owner can preview a property-register CSV without publishing, inspect normalized rows/refusals and the source fingerprint, approve the exact plan, read a durable journal and safely undo unchanged imported records. Source-byte custody, collision/authority guards and dependency-aware reversal preserve native edits; retained source can be retired on erasure. No import may create users, sell inventory or move funds implicitly.
+**Requirement.** The owner can preview a property-register CSV without publishing, inspect normalized rows/refusals and the source fingerprint, approve the exact plan, read a durable journal and safely undo unchanged imported records. Source-byte custody, collision/authority guards and dependency-aware reversal preserve native edits; retained source can be retired on erasure. No import may create users, sell inventory or move funds implicitly. The Guesty, Hostaway and OwnerRez report adapters retain their full migration requirements in MIGRATE-002, MIGRATE-003 and MIGRATE-004.
 
 **Acceptance.**
 1. Use Move in to preview/apply the documented CSV, reject a changed fingerprint, inspect the durable job, edit one imported property and undo; retain that native edit with its disposition, then erase another imported property and verify source retirement.
@@ -892,20 +801,18 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### MOBILE-001 — Native manager and field-team apps
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-ACCESS-002 · *Register:* R-8
 
 **Requirement.** US iOS and Android apps provide role-scoped reservation/calendar, inbox, arrival/readiness, cleaner/vendor tasks, camera uploads and actionable push notifications. Offline work is encrypted on device and reconciles revision/authority on reconnect; sign-out or revocation prevents stale data/credentials granting access. The mobile owner portal supports statements and owner stays without exposing staff-only records.
-
-**Inherited authority:** MOBILE-001 carries AUTH-002 property/action grants and offboarding checks on its credentials, reads, mutations and queued work.
 
 **Acceptance.**
 1. On iOS and Android as manager, cleaner and rental owner, handle a changed arrival, reply to a guest, complete an evidenced task and open a statement; test offline conflict, push acknowledgment and grant revocation while offline/reconnecting.
 
 #### INTERFACE-001 — Responsive accessible and honest operations
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ACCESSIBILITY-001, BASE-INPUT-001 · *Register:* R-3, R-4
 
-**Requirement.** Desktop and mobile pages expose textual statuses, source freshness, errors, pending work and actionable empty states. Keyboard, labels, focus and screen-reader feedback support WCAG 2.2 AA journeys; failed actions remain visible and do not erase user inputs or masquerade as success. Cabin is proven at the top of its buyer range: 40 properties with three years of history (at least 10,000 reservations, 100,000 guest messages and 15,000 turnover tasks) and 25 staff. At that size the portfolio calendar month view loads in under 2 seconds, inbox search returns in under 1 second, and reports render and export every row with totals matching ledger records. Lists use explicit pagination, never silent truncation; operators see provider/usage costs before enabling paid services.
+**Requirement.** Desktop and mobile pages expose textual statuses, source freshness, errors, pending work and actionable empty states. Failed actions remain visible and do not erase user inputs or masquerade as success. Cabin is proven at the top of its buyer range: 40 properties with three years of history (at least 10,000 reservations, 100,000 guest messages and 15,000 turnover tasks) and 25 staff. At that size the portfolio calendar month view loads in under 2 seconds, inbox search returns in under 1 second, and reports render and export every row with totals matching ledger records. Lists use explicit pagination, never silent truncation; operators see provider/usage costs before enabling paid services.
 
 **Acceptance.**
 1. At 1440 and 390 pixels, use realistic properties/stays through calendar review, cleaner photo completion and statement download; exercise keyboard/error recovery and the full target booking/inbox journey.
@@ -913,27 +820,27 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### DATA-001 — Complete portable product records and safe restore
 
-*Tier:* Core
+*Tier:* Core · *From:* DATA-001, CABIN-13 · *Cites:* BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001
 
-**Requirement.** Owners export versioned structured records, guest/thread history, signed documents, work/photos, reservations, financial ledger, statements, audit and import journals with integrity checks and a documented schema, plus usable CSV/PDF/media downloads. Restore into empty product data validates before commit, preserves evidence and pauses outbound jobs until reconnection/review; secrets, sessions and payment credentials remain installation-local. No old charge, message, payout or access code is replayed.
+**Requirement.** The portable Cabin archive preserves reservation sources and revisions, guest and thread history, signed agreements, cleaner originals, trust-ledger attribution, frozen statements and import journals in its documented schema, with usable CSV, PDF and media downloads. Historical payments and provider outcomes remain evidence rather than runnable work; restored connections, scheduled sends, distribution plans and access-code jobs stay inactive until the owner reauthorizes their actual destinations. The hosted backup produces an owner-only file without exposing a temporary download link.
 
 **Acceptance.**
 1. Use the public rer export/import commands to round-trip a populated installation, compare all record families/media and totals, reject damaged or populated restores and verify restored jobs/connections remain inactive until the new owner reauthorizes them.
 
 #### DATA-002 — Erasure, retention and later-journal fencing
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-DATA-003, BASE-DATA-006, BASE-AUDIT-001
 
-**Requirement.** An owner can review and erase guest/member/property personal data, attachments and retained import sources, with durable completion evidence and anonymized audit attribution. Legal/accounting retention holds identify exactly what remains, why and until when; no erased contact is reused by automation. Local archive fencing refuses older copies when supplied the later erasure journal. External deliveries, partner records and already downloaded backups require explicit partner/deletion steps; an isolated old backup cannot discover future erasures.
+**Requirement.** Guest, invited-member and property erasure includes original cleaner attachments and retained import sources. Dated signed-document holds and immutable accounting obligations identify the exact retained records and expiry or release condition. Automation never reuses an erased contact. Local archive fencing rejects an older copy when supplied the later erasure journal. External partner records and downloaded backups require the receipt’s explicit external steps; an isolated old backup cannot discover future erasures.
 
 **Acceptance.**
 1. Erase a property/guest with photos, threads and source files, verify all public/private read and queued-action doors, inspect retained legal records and anonymized audit, then attempt old restore with the later journal and confirm refusal without partial writes.
 
 #### DATA-003 — Every booking, guest and payout stays in the owner’s installation
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-DATA-004, BASE-DATA-005, BASE-INSTALL-001
 
-**Requirement.** Reservations, guest records and threads, payout and ledger records, photos and documents are stored only in the owner’s own installation: its database and file storage on the owner’s computer or on a server account the owner controls. Cabin sends no product data to its authors or to any hosted Cabin service; outbound data goes only to the providers the owner has connected, each declared under SECURITY-001, and disconnecting a provider stops further sharing. Running and keeping an installation never requires an account with the Cabin authors.
+**Requirement.** Disconnecting an owner-connected provider fences further manual and queued sharing of Cabin reservation, guest, payout and cleaner-photo data while preserving historical records in the owner’s installation. Connections identifies the affected product workflows and the authority needed to reconnect.
 
 **Acceptance.**
 1. Run a populated installation through a channel booking, a guest conversation, a payout import and a cleaner photo with every outbound network request recorded; verify each resulting record is in the owner’s database or file storage and that the only outbound requests went to the connected providers named in Connections.
@@ -941,50 +848,62 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 
 #### AUDIT-001 — Permanent attributable business and automation history
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-OPS-005, BASE-AUDIT-001, BASE-DATA-003, BASE-AGENT-009
 
-**Requirement.** Role changes, approvals, reservation revisions, access release, outbound provider actions, financial postings, imports, erasures and agent decisions retain actor/agent, time, scope, source revision and result in a portable audit. Original business events cannot be silently rewritten; sensitive content, access codes and secrets are excluded or minimized. Erasure anonymizes identity references while preserving necessary accounting/action history; operators can search and export it beyond the current view window.
+**Requirement.** The Cabin trail links rental-role changes, exact approvals, reservation revisions, released guest access, channel and lock actions, trust postings, move-in journals and recovery decisions to their stay, property, source revision and result. It excludes personal message bodies and active entry capabilities while preserving the accounting attribution needed after guest erasure.
 
 **Acceptance.**
 1. Follow a stay from booking through task, message, lock, refund and owner statement; export its human/agent/provider history, erase the guest and verify useful anonymized attribution remains without secrets or personal message bodies.
 
 #### SECURITY-001 — Provider custody and declared external data
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-SECRET-001, BASE-DATA-004, BASE-AGENT-003, BASE-AGENT-005
 
-**Requirement.** Connections use least-privilege grants, encrypted provider credentials, verified inbound signatures and owner-controlled revocation. Secrets, ID images, tax IDs, bank details and door codes are excluded from ordinary views, logs, agent prompts and archives unless explicitly required and separately authorized. Before enablement, each integration declares the destination, purpose, data, authority and costs; AI sees only the scoped facts needed and cannot follow instructions embedded in guest text as authority.
+**Requirement.** Before a provider connection is enabled, Connections discloses its destination, rental-data families, purpose, action/home authority and provider cost. Credential rotation fences old inbound events and queued effects. Ordinary staff and agent views omit guest identity copies, tax and bank details and active door capabilities unless their job-specific scope permits them. Reply assistance uses only the current matched stay and property instructions; guest-authored text cannot confer authority.
 
 **Acceptance.**
 1. Enable, rotate and revoke a provider connection, submit forged events and adversarial guest text, inspect role-limited API/export/log/agent outputs and prove revoked queued actions stop while historical evidence remains readable.
 
 #### HTTP-001 — Real Worker health and document dispatch
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-OPS-001, BASE-ACCESS-002
 
-**Requirement.** Cabin serves its real installed homepage and health response from the built Worker; unknown API/document paths return real 404s. Private product routes retain their native authorization. Health proves the configured app dependencies, not live channel acceptance, physical readiness or delivery to a guest.
+**Requirement.** The built Cabin Worker serves the installed Cabin homepage, keeps unknown document and API paths as real not-found responses, and dispatches private stay operations through native authority. Its installation health does not certify a live channel, a physical home or receipt by a guest.
 
 **Acceptance.**
-1. Run the emitted Worker on migrated local storage; request /health, the installed homepage and unknown document/API paths, verifying successful health/branding and true 404s.
+1. Run the emitted Worker on migrated local storage; request the health door, installed homepage and unknown document/API doors, verifying successful health/branding and true 404s.
 
 #### RUNTIME-001 — Owner-run lifecycle and durable background work
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-INSTALL-001, BASE-SECRET-002, BASE-OPS-003, BASE-OPS-004, BASE-AGENT-012 · *Register:* R-1, R-2
 
-**Requirement.** The shared rer install/setup/dev/build/verify/export/import lifecycle remains usable with native owner authority, real Worker/D1 data and no operational dependence on the author. Production channel/message/payment/lock/report jobs persist due time, claims, attempt and external outcome across restart, with visible errors and safe reconciliation of uncertain effects. Required configuration fails clearly without printing values; provider approvals, contracts, credentials and quotas are tracked prerequisites to enabling each feature.
+**Requirement.** A fresh Cabin source installation supports a native owner completing a saved rental job across a development-server restart. Rental channel, guest-message, payment, lock and report work retains its due time, claimed attempt, provider evidence and unresolved outcome across interruption before or after provider acceptance. Reconciliation establishes the external state before another effect; each future adapter inherits that same boundary (RL-2).
 
 **Acceptance.**
 1. Start a fresh source checkout with rer dev, sign in and complete a product job, stop/restart and recover durable state; interrupt each external job before/after provider acceptance and prove reconciliation prevents duplicate charges, sends or unlocks.
 2. Run the homepage’s five commands on a clean Linux machine to a signed-in installation.
-3. The clean macOS and owner-cloud receipts are carried by RUNTIME-002.
 
-#### RUNTIME-002 — Owner-machine and owner-cloud receipts
+### Honest boundaries and partner obligations
 
-*Tier:* Core
+#### BOUNDARY-001 — A separate complete vacation-rental product with named partners
 
-**Requirement.** The five documented commands (clone, `cd`, `rer install`, `rer setup`, `rer dev`) bring Cabin up on the owner’s own computer, and `rer deploy` runs the same installation on a server account the owner controls.
+*Tier:* Core · *Register:* R-5
+
+**Requirement.** Cabin owns the short-stay booking-to-owner-close job. It connects OTAs through the host-account agents in SYNC-011, subject to the [recorded terms risks](/docs/channel-terms), or approved partner connections rather than operating a booking marketplace, uses Stripe/licensed banking partners for rails and custody, Avalara or qualified filing partners/accountants for remittance and filings, licensed protection partners for insurance, and real cleaners/inspectors for physical work. Telecom providers carry messages and bounded workers carry long-running work. Partnership approval, US tax/financial configuration, provider agreements and native-app distribution remain required engineering/delivery work with named owners, supported data and unresolved blockers visible; none removes a promised PMS workflow.
 
 **Acceptance.**
-1. Run the homepage’s five commands on a clean macOS and a clean Linux machine to a signed-in installation, then `rer deploy` the same source to an owner-controlled Cloudflare account and sign in there.
+1. Inspect each channel's terms warning and explicit session/action grant before connecting its host-account agent.
+2. Use Connections/onboarding to inspect each required approval/configuration and its responsible party; attempt activation without approval, complete the documented partner setup and run a booking through externally acknowledged service, tax/payment outcomes and human readiness.
+3. Disconnected features remain visibly incomplete, never replaced by simulated success.
+
+#### OPEN-001 — Free and open source under the MIT license
+
+*Tier:* Core · *Cites:* BASE-DATA-005, BASE-INSTALL-001
+
+**Requirement.** The complete Cabin vacation-rental product is published under the MIT license, including every property, staff, channel and volume capability without an author payment tier. Provider fees remain their own and are disclosed with their source before enabling under INTERFACE-001.
+
+**Acceptance.**
+1. Verify the public source licence and declared package licence are MIT; install from the public source with no account or key from the Cabin authors and reach every product area with 40 properties and 25 staff without a payment, upgrade or license prompt; enable a paid provider and verify its cost is shown as the provider’s before activation.
 
 ### Public hosted demo
 
@@ -1002,34 +921,186 @@ Link-holder identity (ct, 21 October 2026): the portal link alone never renders 
 5. Record outbound effects during the journey and prove no real message, charge, payout or lock/provider action occurred; launch a fresh owner installation and find no sample records.
 6. Separately verify the public demo hostname and homepage link open the working hosted demo.
 
-### Honest boundaries and partner obligations
+### US money, owner accounting and reporting
 
-#### BOUNDARY-001 — A separate complete vacation-rental product with named partners
+#### FIN-010 — Exact internally reserved distribution plans
 
-*Tier:* Core
+*Tier:* Core · *From:* FIN-006
 
-**Requirement.** Cabin owns the short-stay booking-to-owner-close job. It connects OTAs through the host-account agents in SYNC-011, subject to the recorded terms risks, or approved partner connections rather than operating a booking marketplace, uses Stripe/licensed banking partners for rails and custody, Avalara or qualified filing partners/accountants for remittance and filings, licensed protection partners for insurance, and real cleaners/inspectors for physical work. Telecom providers carry messages and bounded workers carry long-running work. Partnership approval, US tax/financial configuration, provider agreements and native-app distribution remain required engineering/delivery work with named owners, supported data and unresolved blockers visible; none removes a promised PMS workflow.
-
-**Acceptance.**
-1. Inspect each channel's terms warning and explicit session/action grant before connecting its host-account agent.
-2. Use Connections/onboarding to inspect each required approval/configuration and its responsible party; attempt activation without approval, complete the documented partner setup and run a booking through externally acknowledged service, tax/payment outcomes and human readiness.
-3. Disconnected features remain visibly incomplete, never replaced by simulated success.
-
-#### OPEN-001 — Free and open source under the MIT license
-
-*Tier:* Core
-
-**Requirement.** Cabin is free. The complete product this contract describes is published under the MIT license and installs from its public source, and no feature, property count, user, channel or volume sits behind a payment, license key or paid tier from the Cabin authors. Fees charged by the providers an owner connects (channel commissions, Stripe, lock bridges, pricing tools, filing partners) are those providers’ own, shown with their source before enabling under INTERFACE-001, and never collected by Cabin.
+**Requirement.** Under RL-101 the native installation owner alone approves an exact, unexecuted plan binding payee, amount, bank account and legal entity. Available funds exclude reserves, taxes, advances, other payables and other owners’ money. Approval reserves internally and creates neither a bank payout nor a ledger distribution. Restored plans are inactive. This is a conservative preparation boundary; an agent’s preparation carries standard and an execution call carries money and commitment, decided by the company’s policy subject to FIN-011’s verified external authority.
 
 **Acceptance.**
-1. Verify the repository’s `LICENSE` is the MIT license and the package declares MIT; install from the public source with no account or key from the Cabin authors and reach every product area with 40 properties and 25 staff without a payment, upgrade or license prompt; enable a paid provider and verify its cost is shown as the provider’s before activation.
+1. Prepare an owner or vendor plan from reconciled balances and approve its exact payee, amount, account and entity as native owner; refuse any use of reserved funds or another owner’s money.
+2. Read the internal reservation and verify that no bank request or ledger payout was made; restore it and verify inactive history.
+
+#### FIN-011 — Verified ACH execution and returned distributions
+
+*Tier:* Core · *From:* FIN-006 · *Register:* R-7
+
+**Requirement.** Actual distribution uses a separately verified licensed ACH/payout partner, funded trust arrangement, verified owner or vendor payee and bank execution authority. Fresh exact execution approval under RL-101 binds the chosen payee, amount, account and entity; an agent’s equivalent call carries money and commitment and the company’s policy decides it, without manufacturing a person’s approval. Only provider pending, settled, failed and returned evidence drives the money outcome. A return restores liability and corrects the owner statement through FIN-001’s immutable custody and closed-period rules; Cabin itself never custodies funds.
+
+**Acceptance.**
+1. Execute an exactly authorized owner or vendor distribution using the verified partner and payee, with available funds net of all reserves and liabilities.
+2. Follow pending, settled, failed and returned transfers from provider evidence; read bank evidence of a return, restored owner liability and the corrected owner statement.
+3. Refuse execution lacking fresh exact authority, including any attempt to use another owner’s funds.
 
 ### Agent surface
 
-Inherits BASE-AGENT-001 to BASE-AGENT-013. The company's policy decides every call.
+**Specialist: rental operations coordinator.** It sells and services stays, keeps homes ready, pursues missing money evidence and closes each rental owner’s books.
 
-| Tool | Core clauses | Classes this call can carry |
-| --- | --- | --- |
+Inherits BASE-AGENT-001 to BASE-AGENT-013. The company’s policy decides every call.
+
+**How Cabin computes each class.**
+- standard: reversible internal plans, notes, assignments, quotes and reads; measure items from the selected records.
+- external: publishing listings or availability, guest/vendor/channel messages, outside reports and any newly exposed record; count recipients and derive internal, known, new or public counterparty from saved contacts and publication scope.
+- money: payments, credits, refunds, distribution execution, changed rates, vendor costs and changed owner payables; compute integer USD amount, currency and payee from the exact stay, ledger or provider record.
+- commitment: signed rental terms, binding guest offers, vendor acceptance and owner/accounting sign-off; compute value and counterparty from the exact revision.
+- gated: a channel’s consent or terms step, Stripe-hosted card entry, identity verification or bank/payee verification that its outside provider keeps for a person; name the provider and step from the provider’s response.
+- access: invitations, rental-role/property scopes, portal or device grants and revocations; count people or devices and compute widening or narrowing from current authority.
+- security: connection credentials, secret rotation, provider protections and backup recovery settings; name the changed setting.
+- destructive: permanent erasure or an irreversible accounting discard; count affected records from the current dependency graph.
+- sensitive: unmasked identity, tax, bank or payment evidence; count records and name the regulated data kind from the selected fields.
+
+| Tool | Does | Core clauses | Risk class | Today |
+| --- | --- | --- | --- | --- |
+| `cabin.integrations.manage` | Create scoped API connections and lifecycle deliveries | API-001 | access · security (+ external) | Native capability or target; MCP adapter not yet proven |
+| `cabin.homes.manage` | Maintain homes and effective owner terms | CABIN-01 | standard or commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.team.manage` | Change rental roles and property scopes | AUTH-002 | access | Native capability or target; MCP adapter not yet proven |
+| `cabin.calendar.review` | Review and publish exact calendar revisions | SYNC-001, CONTROL-001 | standard or commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.channel.connect` | Connect accounts and publish channel content | SYNC-002, SYNC-003, SYNC-004, SYNC-005, SYNC-010, SYNC-011, BOUNDARY-001 | security · external (+ gated) | Native capability or target; MCP adapter not yet proven |
+| `cabin.inventory.update` | Change and reconcile held nights and requests | SYNC-006, SYNC-007, SYNC-008, SYNC-009, RES-003, RES-005 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.reservations.manage` | Find, quote, create and amend stays | RES-001, RES-002, RES-004, RES-006 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.pricing.publish` | Preview and publish channel rates | PRICE-001, PRICE-002, PRICE-003 | money · external | Native capability or target; MCP adapter not yet proven |
+| `cabin.website.publish` | Edit and publish booking sites and embeds | WEB-001, WEB-002 | standard or external | Native capability or target; MCP adapter not yet proven |
+| `cabin.agreements.sign` | Prepare or sign exact rental terms | WEB-003 | standard or commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.verification.review` | Handle consented identity cases | WEB-004 | sensitive (+ commitment) (+ gated) | Native capability or target; MCP adapter not yet proven |
+| `cabin.promotions.offer` | Offer and accept paid stay extensions and extras | WEB-005 | external · money (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.payments.collect` | Collect, reconcile, refund or dispute stay charges | PAY-001, PAY-002, PAY-003, PAY-004, PAY-005, PAY-006 | money (+ sensitive) (+ gated) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.guests.manage` | Maintain guest identity, portal and review work | GUEST-001, GUEST-002, GUEST-003, GUEST-004 | standard or external (+ access) (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.messages.reply` | Route, draft, schedule and send guest replies | MESSAGE-001, MESSAGE-002, MESSAGE-003, MESSAGE-004 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.work.dispatch` | Dispatch cleaning, readiness and maintenance | OPS-001, OPS-003, OPS-004, OPS-006, OPS-008 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.work.complete` | Record the actor’s cleaner evidence and completion | EVIDENCE-001, OPS-002 | standard or commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.locks.manage` | Provision, inspect and withdraw stay access | OPS-005, OPS-007 | access · security (+ external) | Native capability or target; MCP adapter not yet proven |
+| `cabin.ledger.post` | Allocate source-backed trust entries and corrections | FIN-001, FIN-003 | money · commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.finance.reconcile` | Reconcile bank and provider settlements | FIN-002, FIN-006 | standard (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.statements.release` | Close books and share exact owner statements | FIN-004, FIN-005 | commitment (+ external) (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.distributions.plan` | Prepare exact internally reserved plans | FIN-010 | standard or commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.distributions.execute` | Execute verified owner/vendor ACH | FIN-011 | money · commitment (+ gated) | Native capability or target; MCP adapter not yet proven |
+| `cabin.books.sync` | Publish journals to Pantry or QuickBooks | FIN-007 | external · commitment | Native capability or target; MCP adapter not yet proven |
+| `cabin.taxes.file` | Prepare and file authorized US obligations | FIN-008, FIN-009 | sensitive · commitment (+ external) (+ money) (+ gated) | Native capability or target; MCP adapter not yet proven |
+| `cabin.reports.run` | Read and schedule scoped rental reports | REPORT-001, REPORT-002 | standard or external (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.archives.export` | Export or restore rental records | DATA-001 | standard or security (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.erasure.run` | Erase reviewed rental personal records | DATA-002 | destructive (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.providers.manage` | Review, rotate and revoke connected sharing | DATA-003, SECURITY-001 | security (+ access) (+ gated) | Native capability or target; MCP adapter not yet proven |
+| `cabin.activity.read` | Read source-linked rental history | AUDIT-001 | standard (+ sensitive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.agents.prepare` | Prepare or execute classified rental work | CONTROL-002 | standard or commitment (+ external) (+ money) | Native capability or target; MCP adapter not yet proven |
+| `cabin.recovery.run` | Recover a stay and inspect outstanding work | AGENT-001, AGENT-006 | standard or external (+ money) (+ commitment) (+ access) (+ security) | Native capability or target; MCP adapter not yet proven |
+| `cabin.exceptions.resolve` | Pursue missing records and exact corrections | AGENT-002 | standard or commitment (+ external) (+ money) (+ destructive) | Native capability or target; MCP adapter not yet proven |
+| `cabin.issues.resolve` | Pursue inspected guest issue resolution | AGENT-003 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.revenue.plan` | Evaluate and publish profitable stay offers | AGENT-004 | standard or external (+ money) (+ commitment) | Native capability or target; MCP adapter not yet proven |
+| `cabin.questions.ask` | Answer source-linked portfolio questions | AGENT-005 | standard or external (+ commitment) | Native capability or target; MCP adapter not yet proven |
+
+**Resources.** cabin://homes/{id}, cabin://stays/{id}, cabin://guests/{id}, cabin://threads/{id}, cabin://tasks/{id}, cabin://readiness/{stay}, cabin://statements/{id}, cabin://journals/{id}, cabin://distributions/{id}, cabin://cases/{id}, cabin://reports/{id}.
+
+**Events.** stay.changed, inventory.changed, message.changed, work.changed, readiness.changed, settlement.changed, statement.changed, distribution.changed, case.changed and the inherited policy/approval/review events.
+
+**Prompts.** Prepare arrivals (RES-001, OPS-003, OPS-008); recover a disrupted stay (AGENT-001, AGENT-003, AGENT-006); reconcile owner close (FIN-004, FIN-006, AGENT-002); explain the portfolio (AGENT-005); improve net occupancy (AGENT-004).
+
+**Not tools, and why.** MIGRATE-001: the reviewed import door owns source custody and cutover. MIGRATE-002: the Guesty import door owns provider mappings. MIGRATE-003: the Hostaway import door owns provider mappings. MIGRATE-004: the OwnerRez import door owns source agreements and mandates. MIGRATE-005: the Lodgify import door owns website cutover. MIGRATE-006: the Hospitable and Breezeway import/connector doors own source handoff. MIGRATE-007: the import door owns parallel-run cutover and rollback. MOBILE-001: native installation, camera capture, offline device storage and push are device work; their server jobs use the corresponding tools. INTERFACE-001: the responsive interaction and measured rendering are a person’s screen; each underlying server job is a tool. HTTP-001: Worker dispatch and installation health are installation facts. RUNTIME-001: installation and process restart are installation facts; durable job actions use their originating tools. SITE-002: the isolated visitor demo is a person’s interactive screen. OPEN-001: public licensing and price are installation facts.
+
+**Limits.** Calendar bytes, attachment/photo size and request rate follow the documented capacity limits. Business volume and spend caps are the company’s policy. No agent access promise implies provider quota or channel permission.
+
+**Handoffs.** Listens for booking, payment, guest-message and field-work changes and source settlement arrivals. Emits typed readiness, missing-record and owner-close events with their record references for the accounting and records specialists.
+
+#### SURFACE-001 — The rental action registry covers the contract
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-002, BASE-AGENT-006, BASE-AGENT-013
+
+**Requirement.** The rental registry covers this tool table and the named non-tool reasons, including every Core rental workflow.
+
+**Acceptance.**
+1. Compare discovered rental tools and Core clause coverage with the table and non-tool reasons.
+2. Invoke each rental tool on its stay/property fixture and compare its native action result and source-linked record state.
+
+#### SURFACE-002 — Compute stay, exposure and financial classes
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-006
+
+**Requirement.** Rental class computation uses current stays, recipients, owner ledgers and exact terms.
+
+**Acceptance.**
+1. A reversible internal plan or note carries standard with its item count.
+2. The same action publishing outside the business carries external with recipient count and saved known, new or public counterparty; moving a record into an externally visible destination also carries external.
+3. A stay price, credit, refund, cost or distribution computes money with exact USD amount and payee, including changed owner liabilities.
+4. Signing terms, issuing a binding offer, accepting vendor work or releasing an owner close adds commitment with its exact value and counterparty.
+
+#### SURFACE-003 — Compute rental authority and regulated-data classes
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-008
+
+**Requirement.** Connection, identity and custody calls derive their classes from the current authority and data.
+
+**Acceptance.**
+1. Changing a rental role, property scope or stay/device grant carries access with the affected people/devices and widening or narrowing.
+2. Rotating connection credentials or changing recovery protections carries security with the changed setting.
+3. Erasing personal records or irreversibly discarding an accounting close carries destructive with the affected record count.
+4. Reading unmasked ID, W-9, bank or payment evidence carries sensitive with record count and data kind.
+5. Channel consent, hosted card entry, identity verification and payee/bank verification add gated when the named provider keeps that step for a person; its provider and step match the actual response.
+
+#### SURFACE-004 — Rental record resources and change handoffs
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-003, BASE-AGENT-010
+
+**Requirement.** The rental resource templates and event families are those named above, linked through the exact stay and property.
+
+**Acceptance.**
+1. Read each declared rental resource type and follow a mutation’s resource link to the changed source revision.
+2. Change a stay, issue, task, statement and distribution fixture and read their declared typed events with the same record references across the supported channels.
+3. Remove a property grant mid-run and verify its later rental events no longer reach that subscriber.
+
+#### SURFACE-005 — A stranger coordinator completes the seeded rental week
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-007, BASE-AGENT-013 · *Register:* R-10
+
+**Requirement.** A stranger agent completes a seeded week using only the installation URL and rental MCP surface, under two named company policies.
+
+**Acceptance.**
+1. Under all-autonomous policy, prepare arrivals, resolve a cleaner cancellation, send the updated guest instructions, post a supported credit and reconcile an owner statement without a policy wait or policy refusal.
+2. Under held policy, standard work enters review and every other declared class waits for its exact approval; the signed-in test person grants those actions and the same rental outcomes reconcile.
+3. Compare the stay, inventory, photos, guest confirmation, provider receipts, owner liability and unresolved work across both runs; no missing source becomes a claimed settlement.
+4. Before policy setup is answered, attempt the same first rental action and inspect the setup question and absence of effect.
+
+#### SURFACE-006 — Rental decisions retain exact source authority
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
+
+**Requirement.** Pending rental actions bind the stay, recipient, inventory, source revision and exact terms they use.
+
+**Acceptance.**
+1. Change a stay, payee, recipient or price while its action is held by company policy and verify the old saved revision has no effect.
+2. After the exact current action runs, distinguish its preparer, deciding actor and physical inspector in the rental record and owner close.
+3. Retry an interrupted guest send, charge and lock change and reconcile one external effect or an explicitly unresolved source outcome.
+
+#### SURFACE-007 — The rental overview reconciles the week
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-009, BASE-AGENT-011
+
+**Requirement.** The rental overview connects the seeded week’s actions to its stays, owners, cases, provider costs and class measures.
+
+**Acceptance.**
+1. Reconcile action counts, outside recipients, USD movements and provider spend to the week’s rental records and policy decisions.
+2. Open the held week’s review items, exact pending actions and provider handoffs and follow each to its permitted stay or case.
+3. Pause the coordinator midway through a due arrival and verify pending rental work retains its source state while agent effects stop.
+
+#### SURFACE-008 — Restore never reactivates rental authority
+
+*Tier:* Agent surface · *From:* new · *Cites:* BASE-AGENT-004, BASE-AGENT-005, BASE-AGENT-012
+
+**Requirement.** Restored rental evidence does not revive a distribution, guest-send mandate or access-code job.
+
+**Acceptance.**
+1. Restore the seeded week and read historical plans and receipts without activating its provider credentials, distribution execution or scheduled guest sends.
+2. Reauthorize one exact destination through the current owner flow, resume its current work and verify that historical provider outcomes do not replay.
 
 ## Push further
 
@@ -1037,72 +1108,85 @@ Inherits BASE-AGENT-001 to BASE-AGENT-013. The company's policy decides every ca
 
 #### AGENT-001 — Recover a disrupted stay through verified readiness
 
-*Tier:* Core
+*Tier:* Core · *From:* AGENT-001, CABIN-08 · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012 · *Rules:* D-1
 
-**Requirement.** When a cleaner cancels, a reservation conflicts or a guest reports a problem, a recovery agent correlates actual channel revisions, guest threads, accepted tasks, photos, access events, alternative inventory and balances. It secures an approved replacement cleaner, chases acceptance/completion, provisions and verifies new door codes, and offers approved compensation or an alternative stay. Manager approval binds spend, relocation and guest promises; a person verifies readiness. The case closes only after guest/field confirmation, reconciled channels/access and the final owner balance, or remains explicitly escalated.
+**Requirement.** When a cleaner cancels, a reservation conflicts or a guest reports a problem, a recovery agent correlates actual channel revisions, guest threads, accepted tasks, photos, access events, alternative inventory and balances. It secures a replacement cleaner, chases acceptance/completion, provisions and verifies new door codes, and offers compensation or an alternative stay. Compensation and changed owner payables carry money; relocation and binding guest promises carry commitment; outside contact carries external. The company’s policy decides each agent call, binding its exact stay, recipient, price and revision. A person’s physical readiness attestation remains their own. The case closes only after guest/field confirmation, reconciled channels/access and the final owner balance, or remains explicitly escalated.
 
 **Acceptance.**
 1. Cancel the cleaner shortly before an arrival, then report a failed lock as the guest.
-2. From the recovery case approve a budget and relocation/compensation choice; verify backup acceptance, completed evidence, new code state, guest confirmation and corrected owner net.
-3. Stop/restart midway and exercise denied approval; no step or unresolved balance may be silently skipped.
+2. Under the held company policy, approve the exact budget and relocation or compensation choice; verify backup acceptance, completed evidence, new code state, guest confirmation and corrected owner net.
+3. Stop and restart midway and reject a pending action under that held policy; inspect every unresolved step and balance rather than silently skipping it.
 
 #### AGENT-002 — Close reservation-to-owner financial exceptions
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
 
-**Requirement.** A reconciliation agent uses source settlement events, bank receipts, reservation revisions, refunds, fees and effective owner agreements to explain discrepancies and seek missing provider records. It proposes correcting entries and statements with source links, follows the exception until balanced and verifies final owner payable/distribution. The owner/accountant approves refunds, postings, period reopening and payouts; unsupported assumptions never become ledger entries.
+**Requirement.** A reconciliation agent uses source settlement events, bank receipts, reservation revisions, refunds, fees and effective owner agreements to explain discrepancies and seek missing provider records. It proposes correcting entries and statements with source links, follows the exception until balanced and verifies final owner payable/distribution. Refunds and payouts carry money; postings or period sign-off carry commitment, with destructive when reopening irreversibly discards a close. The company’s policy decides the agent’s call; unsupported assumptions never become ledger entries. RL-4 preserves the interim native correction boundary, and RL-101 governs distribution preparation and separately authorized execution in FIN-006, FIN-010 and FIN-011.
 
 **Acceptance.**
-1. Create a stay with split payout, missing channel fee and later refund; inspect the agent’s evidence, obtain the missing record, reject one proposed correction, approve the right adjustment and verify the ledger, frozen statement adjustment and actual owner distribution settle to the same net.
+1. Under the held company policy, create a stay with split payout, missing channel fee and later refund; inspect the agent’s evidence, obtain the missing record, reject one correction, approve the exact adjustment and reconcile the ledger, frozen-statement adjustment and actual owner distribution to the same net.
 
 #### AGENT-003 — Resolve guest issues through accepted field work
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
 
-**Requirement.** An issue agent classifies guest messages against approved property instructions and current stay facts, proposes safe troubleshooting, dispatches approved maintenance/cleaning under manager limits and follows vendor acceptance, inspection and guest confirmation. It checks recurrence after the fix. Safety/emergency cases reach a named human and appropriate emergency-service instructions immediately; the agent never assures structural/physical safety or closes on a drafted reply alone.
+**Requirement.** An issue agent classifies guest messages against approved property instructions and current stay facts, proposes safe troubleshooting, dispatches maintenance or cleaning with money for costs, commitment for a binding vendor assignment and external for guest/vendor contact, as decided by the company’s policy and its limits. It follows vendor acceptance, inspection and guest confirmation. It checks recurrence after the fix. Safety/emergency cases reach a named human and appropriate emergency-service instructions immediately; the agent never assures structural/physical safety or closes on a drafted reply alone.
 
 **Acceptance.**
-1. Report an access failure and leaking appliance through the guest portal/inbox; approve dispatch, decline one vendor, complete inspected work and obtain guest confirmation plus a recurrence check.
+1. Under the held company policy, report an access failure and leaking appliance through the guest portal or inbox; approve the exact dispatch, decline one vendor, complete inspected work and obtain guest confirmation plus a recurrence check.
 2. Send an emergency report and verify immediate human escalation without automated safety claims.
 
 #### AGENT-004 — Optimize profitable occupancy without breaking readiness
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
 
-**Requirement.** A revenue agent combines booking pace, PriceLabs/Wheelhouse/Beyond feeds, actual inventory, stay rules, cleaner capacity, taxes and cleaning/commission costs to propose rates and gap-night offers by expected net contribution. Hosts control floors, maximum changes, audience and publish approval. It verifies actual channel acceptance and measures realized contribution; forecasts cannot establish availability or readiness.
+**Requirement.** A revenue agent combines booking pace, PriceLabs/Wheelhouse/Beyond feeds, actual inventory, stay rules, cleaner capacity, taxes and cleaning/commission costs to propose rates and gap-night offers by expected net contribution. Hosts set floors, maximum changes and audience. Rate publication and changed charges carry money, guest offers carry external and binding offers add commitment; the company’s policy decides each agent call. It verifies actual channel acceptance and measures realized contribution; forecasts cannot establish availability or readiness.
 
 **Acceptance.**
-1. Show an orphan-night opportunity that conflicts with cleaning, reject it, then approve a feasible bounded offer; verify the accepted channel prices, one guest purchase, changed operational/access windows and realized owner net against the agent’s forecast.
+1. Under the held company policy, inspect an orphan-night opportunity that conflicts with cleaning, reject it, then approve a feasible exact offer; verify accepted channel prices, one guest purchase, changed work/access windows and realized owner net against the forecast.
 
 #### AGENT-005 — Source-linked portfolio questions and actionable follow-up
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
 
-**Requirement.** Staff ask natural-language questions over permissioned live reservations, conversations, readiness and financial data. Answers cite records, cutoff, filters and uncertainty, reconcile figures to reports and can propose assigned follow-up. Rental owners get only their properties; no answer fabricates a settlement, silently changes a booking or claims unavailable live data.
-
-**Question semantics:** Natural-language topics are grounded in the current REPORT-001 records; the visible property, end-exclusive dates, channel and accounting controls define the cohort. Net comparisons use the immediately preceding window of equal calendar-day length and reconcile gross, refunds, fees, commissions, owner expenses and tax to journal sources. Unknown readiness counts as risk. Answers distinguish the saved installation revision from provider freshness; absent, failed or more-than-60-minute-old calendar reads never establish live state. Unsupported questions remain explicitly ungrounded. A human-approved investigation binds the answer digest, source revision, filters, current property and action grants, and a named authorized assignee; it creates only an internal task. API-001 and MOBILE-001 inherit these question-scope, source and approval boundaries when exposing the same capability.
+**Requirement.** Staff ask natural-language questions over permissioned live reservations, conversations, readiness and financial data. Answers cite records, cutoff, filters and uncertainty, reconcile figures to reports and can propose assigned follow-up. Rental owners get only their properties; no answer fabricates a settlement, silently changes a booking or claims unavailable live data. An assigned internal investigation carries standard; any outside follow-up adds external and a binding promise adds commitment. The company’s policy decides the agent’s call. Answers use the accounting definitions in REPORT-001 and preserve exact source revision, filters, property scope and named assignee.
 
 **Acceptance.**
-1. Ask why one property’s owner net fell and which arrivals are at risk; follow the cited records to matching reports, approve an assigned investigation, and ask as an unrelated owner and during a stale provider read to verify scope and explicit uncertainty.
+1. Ask why one property’s owner net fell and which arrivals are at risk; follow the cited records to matching reports. Under the held company policy, approve an exact assigned investigation. Ask as an unrelated owner and during a stale provider read and verify scope and explicit uncertainty.
 
 #### AGENT-006 — Bounded action authority and durable agent cases
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-AGENT-002, BASE-AGENT-005, BASE-AGENT-006, BASE-AGENT-007, BASE-AGENT-008, BASE-AGENT-012
 
-**Requirement.** Expanded agents execute only separately granted property/action scopes, approved providers, spend/compensation ceilings and time windows. Exact approvals bind the proposed external action and relevant current revisions; changed price, inventory, recipient or terms invalidates approval. Agents record plans, attempts, acknowledgments, pending human work and verified end states; pause/revoke stops new effects while uncertain started effects reconcile. They cannot sign agreements, authorize payouts or declare readiness for people.
+**Requirement.** Recovery work binds each exact plan to its stay, recipient, inventory, price, provider, terms and current property/action grant. Changed facts invalidate the saved plan. Credits and cleaning spend carry money; outside messages carry external; relocation, agreements and relied-on sign-off carry commitment; changing grants carries access, and changing provider credentials carries security. The company’s policy sets dispositions and any spending ceilings or time windows. The recovery case preserves its plan, attempts, provider evidence and unresolved work. An agent records only its own decisions; people’s signatures, execution approvals and physical inspections are attributed only after those people act.
 
 **Acceptance.**
-1. In a recovery case approve a specific vendor/payment limit, change the recipient or booking, and reject the stale action; exceed a budget, inject guest instructions and revoke the agent during an uncertain provider response.
-2. Inspect the case after restart for no unauthorized effect and an explicit unresolved outcome.
-3. Set a $100 guest-credit limit for stay recovery; verify the agent offers a $75 credit within it without asking again and posts it to the owner balance through FIN-001, and that a $150 credit routes to a person unsent.
+1. Under the held company policy, prepare a specific vendor or payment action, change the recipient or booking and refuse the stale revision; cross a company spending cap, inject guest instructions and revoke access during an uncertain provider response.
+2. After restart verify no unauthorized effect and an explicit unresolved outcome.
+3. Under the company policy that makes recovery money calls up to $100 autonomous and larger calls require approval, a $75 guest credit posts the owner adjustment once; a $150 credit remains unsent until the named person approves it.
 
 ## Field proof register
 
-No field proof is recorded yet.
+| ID | Proof | Clauses | State | Date | Receipt |
+| --- | --- | --- | --- | --- | --- |
+| R-1 | A clean macOS installation completing the Cabin rental journey | RUNTIME-001 | not run | | |
+| R-2 | A working installation in an owner-controlled Cloudflare account, with signed-in rental journey and removal receipt | RUNTIME-001 | not run | | |
+| R-3 | A human screen-reader pass on the rental journeys | INTERFACE-001 | not run | | |
+| R-4 | A dated VPAT for the rental operator and guest surfaces | INTERFACE-001 | not run | | |
+| R-5 | Real authenticated Airbnb, Vrbo and Booking.com host-account and partner acceptance, with actual channel terms permission | SYNC-002, SYNC-003, SYNC-004, SYNC-005, SYNC-010, SYNC-011, BOUNDARY-001 | not run | | |
+| R-6 | Physical operation and emergency fallback on each named lock family | OPS-005, OPS-007 | not run | | |
+| R-7 | Licensed ACH partner, funded trust arrangement, legal authority and verified real payee/bank execution and return receipts | FIN-011 | not run | | |
+| R-8 | iOS and Android store distribution approval | MOBILE-001 | not run | | |
+| R-9 | Authorized US tax/legal review and real agency filing/remittance receipts | FIN-008, FIN-009 | not run | | |
+| R-10 | Rental MCP operation in Claude, ChatGPT, Codex and Copilot clients | SURFACE-005 | not run | | |
 
 ## Boundaries
 
-No additional boundaries are recorded.
+- Long-term residential leasing, rent collection and resident management belong to [Terrace](https://github.com/just-every/run-terrace); Cabin exchanges property/accounting references where needed. General small-business books belong to [Pantry](https://github.com/just-every/run-pantry) or QuickBooks Online; Cabin retains the complete reservation/trust subledger and owner close required above. General customer support belongs to [HappyToHelp](https://github.com/just-every/run-happytohelp); Cabin owns guest conversations and stay recovery with links/integrations for wider support. These are separate products. No unowned category is absorbed.
+
+- Cabin does not operate payment or telecom networks, underwrite insurance, provide professional legal/tax certification or itself perform a cleaner/inspector’s physical work. Named partner connections, actual remittance/distribution outcomes and human verification deliver those parts of the buyer’s workflow. US tax rules, agreements, W-9/1099 classification, bank and partner configuration require authorized professional review; international currencies/jurisdictions are later expansion, while the complete US job remains the target.
+
+- Base native sessions, command lifecycle and import-kit custody remain the foundation. The existing local portability interpretation excludes transient installation credentials and uses later-journal erasure fencing; DATA-001 and DATA-002 retain those limits while extending the portable product data. No claim of complete Base equivalence follows from copied modules, an inherited manifest or a passing health check. New embeds, guest documents, provider calls, uploads and agent actions must meet their own access, input, custody and audit clauses; the old absence of those features is not a security exemption for their future implementation. External downloaded backups cannot be recalled, and provider acceptance cannot prove physical readiness or human receipt.
 
 ## Homepage claims
 
@@ -1117,7 +1201,7 @@ No additional boundaries are recorded.
 | 7 | Ready ✓ · Pine Ridge Cabin; Checked out 10:00 am · Sandy Shores | OPS-008, OPS-003, RES-002 |
 | 8 | Guest arriving 4 pm · Airbnb · Lake Loft | OPS-008, RES-002, GUEST-001 |
 | 9 | Door code 4417 active | OPS-005, OPS-008 |
-| 10 | Cleaning · Luis · Desert Casita | OPS-008, AUTH-001 |
+| 10 | Cleaning · Luis · Desert Casita | OPS-008, AUTH-002 |
 | 11 | Vrbo request declined · overlaps Airbnb | SYNC-008, SYNC-006, SYNC-003 |
 | 12 | "Booked once. Closed everywhere." / "Seconds later those nights close on Vrbo, Booking.com and your own site" | SYNC-006, SYNC-002, SYNC-003, SYNC-004, SYNC-011 |
 | 13 | Lake Loft calendar: channel rows, stay bar and Closed bars, end-exclusive checkout | RES-001, SYNC-001, SYNC-006 |
@@ -1159,97 +1243,103 @@ No additional boundaries are recorded.
 | 49 | "Open source vacation rental software for hosts and managers" / "Free and open source, MIT licensed" | OPEN-001 |
 | 50 | "Try the demo" | SITE-002 |
 
+## Retired clauses
+
+| ID | Now | Reason |
+| --- | --- | --- |
+| PROPERTY-001 | merged into CABIN-01 | The release summary or overlapping definition repeats the CABIN-01 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-02 | merged into SYNC-009 | The release summary or overlapping definition repeats the SYNC-009 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-03 | merged into WEB-001 | The release summary or overlapping definition repeats the WEB-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-04 | merged into OPS-001 | The release summary or overlapping definition repeats the OPS-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-05 | merged into EVIDENCE-001 | The release summary or overlapping definition repeats the EVIDENCE-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-06 | merged into OPS-003 | The release summary or overlapping definition repeats the OPS-003 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-07 | merged into MESSAGE-003 | The release summary or overlapping definition repeats the MESSAGE-003 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-08 | merged into AGENT-001 | The release summary or overlapping definition repeats the AGENT-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-09 | merged into FIN-004 | The release summary or overlapping definition repeats the FIN-004 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-10 | merged into FIN-007 | The release summary or overlapping definition repeats the FIN-007 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-11 | merged into MIGRATE-001 | The release summary or overlapping definition repeats the MIGRATE-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-12 | merged into CONTROL-002 | The release summary or overlapping definition repeats the CONTROL-002 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| CABIN-13 | merged into DATA-001 | The release summary or overlapping definition repeats the DATA-001 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| AUTH-001 | merged into AUTH-002 | The release summary or overlapping definition repeats the AUTH-002 capability; distinct outcomes are retained there and duplicate outcomes remain in their detailed clauses. |
+| RUNTIME-002 | moved to Base BASE-INSTALL-001 | The shared installation duty owns the lifecycle; real clean-machine and owner-cloud receipts are retained as R-1 and R-2. |
+
 ## Status
 
 Judged from the code and tests at commit `a124cd29ea9575bf4b077e4aef05088f7c2ef04a` (21 October 2026).
 
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
-| Published | 13 | 0 | 0 | 13 |
-| Target and push further | 47 | 25 | 19 | 91 |
-| All | 60 | 25 | 19 | 104 |
+| Published | 0 | 1 | 0 | 1 |
+| Target and push further | 15 | 56 | 27 | 98 |
+| All | 15 | 57 | 27 | 99 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
-| `CABIN-01` | Homes, people and roles | published | done | `src/cabin/people.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 17) |  |
-| `CABIN-02` | Calendars both ways by iCal | published | done | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs` (lines 144, 179) |  |
-| `CABIN-03` | Direct bookings with payment, agreement, ID check and deposit hold | published | done | `src/cabin/direct/`; `tests/direct.test.mjs` (lines 8, 55, 75) |  |
-| `CABIN-04` | Turnovers, door codes and cleaner notices | published | done | `src/cabin/dispatch.ts`; `src/cabin/codes.ts`; `src/cabin/notices.ts`; `tests/turnovers.test.mjs` (line 15) |  |
-| `CABIN-05` | Cleaner completion with checklist and photos | published | done | `src/cabin/turnovers.ts`; `src/cabin/turnover-window.ts`; `src/cabin/photos.ts`; `tests/turnovers.test.mjs` (lines 15, 162); `tests/cabin.test.mjs` (line 67) |  |
-| `CABIN-06` | Readiness and maintenance | published | done | `src/cabin/readiness.ts`; `src/cabin/maintenance.ts`; `tests/turnovers.test.mjs` (line 15) |  |
-| `CABIN-07` | Guest inbox and scheduled messages | published | done | `src/cabin/inbox/`; `tests/inbox.test.mjs` (lines 17, 154) |  |
-| `CABIN-08` | Stay recovery within approved limits | published | done | `src/cabin/recovery/`; `tests/recovery.test.mjs` (line 9) |  |
-| `CABIN-09` | Payout-matched owner statements and portal | published | done | `src/cabin/finance/`; `src/cabin/statements.ts`; `src/cabin/owners/`; `tests/finance.test.mjs` (line 7) |  |
-| `CABIN-10` | Books posted once to Pantry and QuickBooks exports | published | done | `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-posting.ts`; `tests/finance.test.mjs` (line 7) |  |
-| `CABIN-11` | Move-in with preview, reconciliation and undo | published | done | `src/cabin/movein/`; `tests/movein.test.mjs` (line 9); `tests/cabin.test.mjs` (line 125) |  |
-| `CABIN-12` | Agent access prepares, people approve | published | done | `src/cabin/credentials.ts`; `tests/cabin.test.mjs` (line 109) |  |
-| `CABIN-13` | Backup and restore | published | done | `src/cabin/archive-policy.mjs`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs` (line 27) |  |
-| `PROPERTY-001` | A usable vacation-rental property register | target | done | `src/cabin/properties/`; `src/cabin/homes.ts`; `src/cabin/direct/`; `src/cabin/statements.ts`; `src/cabin/ledger/store.ts`; `tests/property-register.test.mjs`; `docs/properties.md` | Independently rentable homes/units retain addresses, local times, occupancy, amenities, private photos, house rules, emergency contacts and channel IDs. Immutable effective-dated management terms are captured on each reservation and selected by new quotes; later amendments preserve earlier owner/commission allocations in statements and journals. Two US homes, editor uploads, amendment, source record and statement draft exercised at 1440 and 390. |
-| `AUTH-001` | Current native authority on every private door | target | done | `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts`; `tests/cabin.test.mjs` (lines 17, 67) |  |
-| `AUTH-002` | PMS roles and property-specific permissions | target | done | `tests/cabin.test.mjs` — “PMS team invitations enforce each role’s property/actions, private read scopes and immediate offboarding”: all eight role invitations/allowed actions, cross-property actions/state/statement/identity/credential refusal, queued revocation and connected-device code removal; `tests/allocations.test.mjs` — “FIN-003: frozen revenue allocations explain commission bases, fixed fees, tax, reserves and multiple owners across amendments”: current co-owner interests and scoped owner/report downloads; `tests/cleaner-mobile.test.mjs` — “AUTH-002: desktop and phone team invitations enforce a single home and offboarding on the next request”: real team forms, scoped staff/native rental-owner pages and offboarding at 1440/390. `docs/team-access.md`. | |
-| `CONTROL-001` | Exact human approval and immutable publication | target | done | `src/cabin/model.ts`; `src/cabin/storage.ts`; `src/cabin/calendars.ts`; `src/cabin/turnovers.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` (lines 31, 55, 67, 90) |  |
-| `CONTROL-002` | Revocable draft-only bearer access | target | done | `src/cabin/credentials.ts`; `src/cabin/http.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 109) |  |
-| `SYNC-001` | Reviewed calendar files remain honest snapshots | target | done | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` (lines 31, 55) |  |
-| `SYNC-002` | Airbnb two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (lines 143, 178)  `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`;| Live iCal both ways: Cabin polls the listing's Airbnb calendar link on a 15–60 minute schedule and publishes a per-channel export link. No partner API, rates, restrictions, acknowledgments or co-host grants.  The new browser core is locally exercised only; live channel proof is pending.|
-| `SYNC-003` | Vrbo two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs` (lines 143, 178)  `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`;| Vrbo calendar links are polled and Vrbo gets its own export link; Vrbo requests are checked in Cabin. No partner API, reservation lifecycle, rates, fees or acknowledgments.  The new browser core is locally exercised only; live channel proof is pending.|
-| `SYNC-004` | Booking.com two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs` (lines 31, 143)  `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`;| Booking.com calendar links both ways (its feed marks every closed night alike, so they import as blocks); connectivity, rate plans, collection-method tracking and live acknowledgments do not exist.  The new browser core is locally exercised only; live channel proof is pending.|
+| `CABIN-01` | Homes, rental owners and effective management terms | published | partial | `src/cabin/people.ts`; `src/cabin/credentials.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs`; `src/cabin/properties/`; `src/cabin/homes.ts`; `src/cabin/direct/`; `src/cabin/statements.ts`; `src/cabin/ledger/store.ts`; `tests/property-register.test.mjs`; `docs/properties.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Both differently zoned properties are exercised through the property editor; Two homes retain their named rental owners and commissions; Manager and both cleaner invitations retain scoped property views; Deactivated cleaner cannot read on the next request. |
+| `AUTH-002` | PMS roles and property-specific permissions | target | partial | `tests/cabin.test.mjs`; `tests/allocations.test.mjs`; `tests/cleaner-mobile.test.mjs`; `docs/team-access.md`; `src/cabin/credentials.ts`; `src/cabin/storage.ts`; `src/cabin/domain.ts`; `src/cabin/http.ts` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Every rental role has an allowed action; Cleaner financial mutation is refused without changing state. |
+| `CONTROL-001` | Exact revisions and immutable publication | target | partial | `src/cabin/model.ts`; `src/cabin/storage.ts`; `src/cabin/calendars.ts`; `src/cabin/turnovers.ts`; `src/cabin/statements.ts`; `tests/cabin.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Stale calendar publication cannot replace the current revision; Stale statement and duplicate approval preserve the published statement; Changed booking and property terms prevent stale turnover or statement publication. |
+| `CONTROL-002` | Scoped agent preparation and classified execution | target | partial | `src/cabin/credentials.ts`; `src/cabin/http.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Held-policy preparation, no pre-approval effect and revocation; All-autonomous classified publication and separate person-confirmation door. The old bearer tests prove preparation, refusal of publication and immediate revocation. Company-policy classification and execution under both held and all-autonomous policies are unasserted; the bearer implementation still hard-codes draft-only access. |
+| `SYNC-001` | Reviewed calendar files remain honest snapshots | target | partial | `src/cabin/calendar-file.ts`; `src/cabin/calendars.ts`; `src/cabin/ui/calendar.ts`; `tests/cabin.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Stale baseline and malformed calendar are refused without changing bookings. |
+| `SYNC-002` | Airbnb two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs`; `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` | Live iCal both ways: Cabin polls the listing's Airbnb calendar link on a 15–60 minute schedule and publishes a per-channel export link. No partner API, rates, restrictions, acknowledgments or co-host grants.  The new browser core is locally exercised only; live channel proof is pending. |
+| `SYNC-003` | Vrbo two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs`; `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` | Vrbo calendar links are polled and Vrbo gets its own export link; Vrbo requests are checked in Cabin. No partner API, reservation lifecycle, rates, fees or acknowledgments.  The new browser core is locally exercised only; live channel proof is pending. |
+| `SYNC-004` | Booking.com two-way channel management | target | partial | `src/cabin/channels.ts`; `src/cabin/ical-export.ts`; `src/cabin/calendars.ts`; `tests/cabin.test.mjs`; `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` | Booking.com calendar links both ways (its feed marks every closed night alike, so they import as blocks); connectivity, rate plans, collection-method tracking and live acknowledgments do not exist.  The new browser core is locally exercised only; live channel proof is pending. |
 | `SYNC-005` | Listing content and distribution | target | missing |  | No implementing flow in the audited tree. |
-| `SYNC-006` | Inventory holds, measured closure latency and double-booking prevention | target | partial | `src/cabin/inventory.ts`; `src/cabin/storage.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/calendar-grid.ts`; `tests/cabin.test.mjs` (lines 143, 178)  `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`;| Every stay, hold and block takes its unit/nights; overlapping and concurrent requests cannot both hold a night (version-guarded commits) and export links reflect each change on the next read. No API channel submission or acknowledgment timing, breach alerts, stop-sell or recovery cases; polled iCal collisions are kept and shown, not assigned.  The new browser core is locally exercised only; live channel proof is pending.|
-| `SYNC-007` | Inspectable sync failures and safe recovery | target | partial | `src/cabin/channels.ts`; `src/cabin/ui/channels.ts`; `tests/cabin.test.mjs` (line 143)  `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`;| Each calendar link shows last success, last change, next poll and its error; a failed read goes stale, keeps its nights and recovers on the next good read. No provider events, throttling, uncertain-write reconciliation or assigned exceptions.  The new browser core is locally exercised only; live channel proof is pending.|
-| `SYNC-008` | Inquiries, booking requests, special offers and alterations | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178) | Requests taken in Cabin are declined with the overlapping reservation named, or held; no inquiry states, channel deadlines, offers, alterations or channel-side answers (partner APIs). |
-| `SYNC-009` | Automatic iCal sync for channels without an API | target | done | `src/cabin/channels.ts`; `src/cabin/calendars.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/channels.ts`; `tests/calendars-sync.test.mjs`; `docs/channel-calendars.md` | |
+| `SYNC-006` | Inventory holds, measured closure latency and double-booking prevention | target | partial | `src/cabin/inventory.ts`; `src/cabin/storage.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/calendar-grid.ts`; `tests/cabin.test.mjs`; `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` | Every stay, hold and block takes its unit/nights; overlapping and concurrent requests cannot both hold a night (version-guarded commits) and export links reflect each change on the next read. No API channel submission or acknowledgment timing, breach alerts, stop-sell or recovery cases; polled iCal collisions are kept and shown, not assigned.  The new browser core is locally exercised only; live channel proof is pending. |
+| `SYNC-007` | Inspectable sync failures and safe recovery | target | partial | `src/cabin/channels.ts`; `src/cabin/ui/channels.ts`; `tests/cabin.test.mjs`; `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` | Each calendar link shows last success, last change, next poll and its error; a failed read goes stale, keeps its nights and recovers on the next good read. No provider events, throttling, uncertain-write reconciliation or assigned exceptions.  The new browser core is locally exercised only; live channel proof is pending. |
+| `SYNC-008` | Inquiries, booking requests, special offers and alterations | target | partial | `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` | Requests taken in Cabin are declined with the overlapping reservation named, or held; no inquiry states, channel deadlines, offers, alterations or channel-side answers (partner APIs). |
+| `SYNC-009` | Automatic iCal sync for channels without an API | target | partial | `src/cabin/channels.ts`; `src/cabin/calendars.ts`; `src/cabin/ical-export.ts`; `src/cabin/ui/channels.ts`; `tests/calendars-sync.test.mjs`; `docs/channel-calendars.md`; `src/cabin/inventory.ts`; `tests/cabin.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Applied polling occurs within the configured interval; A direct reservation appears in the exported unit calendar within 60 seconds. |
 | `SYNC-010` | Multiple connected accounts per channel and Airbnb co-hosting | target | missing |  | No implementing flow in the audited tree. |
-| `SYNC-011` | Channel agents in the host's own accounts | target | partial | `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs` (SYNC-011); `docs/channel-agent.md` | Local calendar and source-table reading slices connect isolated granted sessions, preserve native reservations/inbox/payouts, log who/what/when with encrypted screenshots, and stop for CAPTCHA/2FA/terms. Risk/session disclosures, listing identity, replay/revision guards, paid-only settlement imports, erasure and inactive restore are locally exercised with synthetic pages. Exact-approved browser replies, real authenticated layouts and all three live host-account acceptance journeys remain unproven. |
-| `RES-001` | Portfolio calendar with operational context | target | done | `src/cabin/ui/calendar.ts`; `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar-state.ts`; `src/cabin/ui/calendar-detail.ts`; `public/calendar.css`; `tests/calendar.test.mjs`; `docs/portfolio-calendar.md` | |
-| `RES-002` | Complete reservation lifecycle | target | done | `src/cabin/reservations/`; `src/cabin/calendars.ts`; `src/cabin/agreements/records.ts`; `tests/reservations.test.mjs`; `tests/direct.test.mjs`; `tests/turnovers.test.mjs`; `docs/reservation-lifecycle.md` | Priced direct/phone/manual/channel records retain source references, saved cancellation/no-show policy and attributable revisions. Exact amendments and source-event deduplication reconcile guest/date/home/price changes with inventory, contractual balances, frozen agreement allocations, messages, work, renewed consent and access. Source changes after native edits wait for reconciliation; actual receipts/refunds remain distinct from charges and refund due. Desktop and phone creation, extension/home transfer and cancellation exercised; paid direct cancellation withdraws tasks without claiming a processor refund. Live channel acknowledgment, processor refund execution and physical lock outcomes remain their separately partial SYNC/PAY/OPS clauses. |
-| `RES-003` | Owner stays and maintenance blocks | target | done | `src/cabin/blocks.ts`; `src/cabin/inventory.ts`; `src/cabin/owners/`; `src/cabin/dispatch.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/blocks.ts`; `migrations/core/0030_owner_blocks.sql`; `tests/owners.test.mjs`; `docs/owner-blocks.md` | Managers and permitted rental owners create, revise and cancel reasoned personal-use and maintenance blocks against current inventory and exact revisions. Channel calendar exports, cleaning/checklists/photos and cleaner access follow the block; readiness includes its use. The frozen owner-use cleaning agreement posts one completed-work payable, never guest revenue or cash. Hosted owner mail sign-in, manager approval, overlap refusal, owner edit/cancel, all-channel export readback and cleaner completion with owner payable exercised at 1440 and 390; received owner and cleaner mail passed SPF/DKIM/DMARC. |
-| `RES-004` | Stay rules, fees and cancellation policies | target | partial | `tests/direct.test.mjs` — “direct booking enforces dated rates, notice, buffers, saved terms and checkout refusals” (effective date boundaries, weekday matching and fallback, exact nightly breakdown and total, advance notice, booking window, preparation buffers including linked physical rooms, stale terms, signed checkout and retained cancellation policy after restart); “a signed direct checkout receives Stripe test payment, verifies identity, holds a deposit and closes every channel export” (paid total and fees); “PAY-003 settles approved claims, rent refunds, saved cancellations and changes once with receipts and balanced tax and owner books” (saved cancellation settlement); `tests/quotes-browser.test.mjs` — “dated native rates and preparation settings govern the guest breakdown and refusal on desktop and phone” through `tests/direct-rules-browser.mjs` (native settings, priced breakdown and refusal at 1440 and 390); `docs/direct-bookings.md`. | Native quotes and direct checkout support dated seasonal and weekday rates, notice, booking windows and preparation buffers alongside the existing stay limits, gaps, occupancy, cleaning and extra-guest fees. Saved cancellation terms already exist and remain frozen. Still open: arrival and departure restrictions, pet fees, effective-dated cancellation policy selection, inclusive fee and tax options, and consistent OTA rate and restriction publication with named unsupported restrictions and actual accepted channel readback. Authorized Airbnb, Vrbo and Booking.com host listings and sessions remain an external dependency; synthetic edges do not prove live publication. Per-channel adjustments and length discounts belong to PRICE-002. |
-| `RES-005` | Linked rooms and whole-property inventory | target | partial | `tests/cabin.test.mjs` — “linked physical rooms preserve independent capacity through source cancellation and whole-home sale” (explicit room assignment, independent room B, room and whole-home refusal, source cancellation, surviving holds, both room exports, exclusive checkout, blocks and retained source conflicts); `tests/quotes-browser.test.mjs` — “RES-006: staff issue and revise a quote, then a mobile or desktop guest signs and completes one checkout” (saved assignment, quote and checkout refusal before payment, source cancellation, signed whole-home checkout and both room exports; property, calendar, refusal, quote and confirmation screens at 1440 and 390); `tests/channel-agent.test.mjs` — “channel agent connects isolated profiles, closes other channels from an iCal booking, and safely reopens its own closures” (separate listing profiles on the same channel, duplicate listing refusal, both rooms closed on all three channels, acknowledged synthetic browser outcomes, isolated disconnect and reconnect, restart and refusal to reopen while another room holds capacity; native connection forms and outcomes at 1440 and 390 through `tests/linked-channel-browser.mjs`); `tests/quotes-archive.test.mjs` — “RES-006 / DATA-001: public archive restore retains quoted terms without reviving links, inventory holds or email” (physical assignments survive archive); `docs/shared-inventory.md`. | Native physical-unit inventory is built. Still requires an authorized actual OTA room sale and cancellation, whole-home sale, accepted room closures and reconciled acknowledgments from every connected channel. Synthetic source calendars, browser edges and exports do not prove those receipts. Interchangeable units require explicit assignment before booking. |
-| `RES-006` | Quotes and conversion to a reserved stay | target | done | `src/cabin/reservations/quotes.ts`; `src/cabin/reservations/quotes-ui.ts`; `src/cabin/direct/checkout.ts`; `tests/reservations.test.mjs`; `tests/quotes-browser.test.mjs`; `tests/quotes-archive.test.mjs`; `docs/reservation-quotes.md` | Staff issuance/email, itemized USD price and cancellation terms, retained revisions, optional expiring holds, secure guest review and once-only signed checkout. Current terms and competing inventory are checked before Stripe creation; stale and expired quotes cannot charge. Public-door tests exercise restart, concurrent acceptance, timed and manual expiry and rival availability; staff and guest screens are exercised at 1440 and 390 with Stripe isolated only at the network edge. |
+| `SYNC-011` | Channel agents in the host's own accounts | target | partial | `src/cabin/channel-agent/`; `scripts/channel-agent/`; `tests/channel-agent.test.mjs`; `docs/channel-agent.md` | Local calendar and source-table reading slices connect isolated granted sessions, preserve native reservations/inbox/payouts, log who/what/when with encrypted screenshots, and stop for CAPTCHA/2FA/terms. Risk/session disclosures, listing identity, replay/revision guards, paid-only settlement imports, erasure and inactive restore are locally exercised with synthetic pages. Exact-approved browser replies, real authenticated layouts and all three live host-account acceptance journeys remain unproven. |
+| `RES-001` | Portfolio calendar with operational context | target | partial | `src/cabin/ui/calendar.ts`; `src/cabin/ui/calendar-grid.ts`; `src/cabin/ui/calendar-state.ts`; `src/cabin/ui/calendar-detail.ts`; `public/calendar.css`; `tests/calendar.test.mjs`; `docs/portfolio-calendar.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: The same calendar source drill-down works on desktop and phone. |
+| `RES-002` | Complete reservation lifecycle | target | done | `src/cabin/reservations/`; `src/cabin/calendars.ts`; `src/cabin/agreements/records.ts`; `tests/reservations.test.mjs`; `tests/direct.test.mjs`; `tests/turnovers.test.mjs`; `docs/reservation-lifecycle.md` |  |
+| `RES-003` | Owner stays and maintenance blocks | target | partial | `src/cabin/blocks.ts`; `src/cabin/inventory.ts`; `src/cabin/owners/`; `src/cabin/dispatch.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/blocks.ts`; `migrations/core/0030_owner_blocks.sql`; `tests/owners.test.mjs`; `docs/owner-blocks.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: The resulting calendar state is read after cancellation. |
+| `RES-004` | Stay rules, fees and cancellation policies | target | partial | `tests/direct.test.mjs`; `tests/quotes-browser.test.mjs`; `tests/direct-rules-browser.mjs`; `docs/direct-bookings.md` | Native quotes and direct checkout support dated seasonal and weekday rates, notice, booking windows and preparation buffers alongside the existing stay limits, gaps, occupancy, cleaning and extra-guest fees. Saved cancellation terms already exist and remain frozen. Still open: arrival and departure restrictions, pet fees, effective-dated cancellation policy selection, inclusive fee and tax options, and consistent OTA rate and restriction publication with named unsupported restrictions and actual accepted channel readback. Authorized Airbnb, Vrbo and Booking.com host listings and sessions remain an external dependency; synthetic edges do not prove live publication. Per-channel adjustments and length discounts belong to PRICE-002. |
+| `RES-005` | Linked rooms and whole-property inventory | target | partial | `tests/cabin.test.mjs`; `tests/quotes-browser.test.mjs`; `tests/channel-agent.test.mjs`; `tests/linked-channel-browser.mjs`; `tests/quotes-archive.test.mjs`; `docs/shared-inventory.md` | Native physical-unit inventory is built. Still requires an authorized actual OTA room sale and cancellation, whole-home sale, accepted room closures and reconciled acknowledgments from every connected channel. Synthetic source calendars, browser edges and exports do not prove those receipts. Interchangeable units require explicit assignment before booking. |
+| `RES-006` | Quotes and conversion to a reserved stay | target | done | `src/cabin/reservations/quotes.ts`; `src/cabin/reservations/quotes-ui.ts`; `src/cabin/direct/checkout.ts`; `tests/reservations.test.mjs`; `tests/quotes-browser.test.mjs`; `tests/quotes-archive.test.mjs`; `docs/reservation-quotes.md` |  |
 | `PRICE-001` | Revenue planner and dynamic pricing connections | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-002` | Per-channel markups and length-of-stay discounts | target | missing |  | No implementing flow in the audited tree. |
 | `PRICE-003` | One rate sent to every channel | target | missing |  | No rates, channel price publication, read-back or drift exceptions exist. |
-| `WEB-001` | Branded direct-booking website | target | done | `src/cabin/website/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `migrations/core/0036_booking_website.sql`; `tests/website.test.mjs`; `tests/direct.test.mjs`; `tests/archive.test.mjs`; `docs/booking-website.md` | Host branding, editable pages and SEO, explicitly published galleries, amenities, guide/policies and exact available-date/guest/amenity search. Owner-verified HTTPS routing enables portable custom domains with same-origin forms and checkout returns; consented anonymous page counts omit identity and query data. Withdrawn photos/domains refuse access and restored domains require verification. Hosted two-home custom-domain search, native editor and gallery at 1440/390; one USD Stripe test-paid reservation retained its signed agreement, consented manual identity decision and actual damage authorization before confirmation. Owner and guest receipt mail arrived with SPF/DKIM/DMARC passing. |
-| `WEB-002` | Embeddable booking engine | target | done | `src/cabin/website/embed.ts`; `src/cabin/website/store.ts`; `src/cabin/website/ui.ts`; `src/cabin/direct/http.ts`; `src/cabin/direct/checkout.ts`; `tests/website.test.mjs`; `tests/website-browser.test.mjs`; `docs/booking-website.md` | Owner-authorized exact HTTPS origins frame only the public catalog and quotes using the hosted inventory, price, agreement and Stripe checkout. Native forms retain origin checks; Stripe opens in the full window and returns to private confirmation with a currently authorized host-return link that carries no guest capability. External and actual locally published WordPress Custom HTML pages exercised search, signature, one reservation and return at 1440/390, with synthetic Stripe only at the paid network edge; refused origins, private reads and immediate revocation are asserted. |
-| `WEB-003` | Signed rental agreements | target | done | `src/cabin/agreements/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/dispatch.ts`; `src/cabin/guest.ts`; `src/cabin/inbox/deliver.ts`; `tests/direct.test.mjs`; `docs/rental-agreements.md` | Versioned per-property US templates and reservation rules; exact guest consent with signer evidence and immutable signed downloads. Dates, guest and check-in term amendments require renewed consent and gate configured access/instructions while preserving earlier signatures. Direct paid stays retain their price. Hosted initial and renewal guest mail, signing, downloads and access exercised at 1440 and 390. |
-| `WEB-004` | Guest identity verification | target | done | `src/cabin/verification/`; `src/cabin/direct/`; `src/cabin/codes.ts`; `src/cabin/agreements/records.ts`; `src/cabin/guest.ts`; `src/cabin/audit/privacy.ts`; `migrations/core/0031_verification.sql`; `tests/direct.test.mjs`; `docs/identity-verification.md` | Reservation snapshots retain objective property risk rules, responsible review and independent confirmation/access policy. Guests explicitly consent to Stripe Identity or human review; only the assigned current reviewer or installation owner decides, with method/reference/reason and distinct provider outcomes. Incomplete checks fence code creation, guest access, locks and access messages. Minimal state/references, erasure, revocable links and durable asynchronous Stripe redaction ship without ID copies. Real hosted Stripe test success/failure, consented manual approval, access withholding/release, authentic guest/reviewer mail and erased-link refusal exercised at 1440 and 390. Stripe acknowledged the erasure request as processing; private references remain only until Stripe confirms redaction complete, with confirmed cleanup covered at the network edge. |
+| `WEB-001` | Branded direct-booking website | target | partial | `src/cabin/website/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `migrations/core/0036_booking_website.sql`; `tests/website.test.mjs`; `tests/direct.test.mjs`; `tests/archive.test.mjs`; `docs/booking-website.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Booking at both widths retains the exact advertised total and terms; Checkout before check-in is refused; Capture and release retain the entered reason in read-back. |
+| `WEB-002` | Embeddable booking engine | target | done | `src/cabin/website/embed.ts`; `src/cabin/website/store.ts`; `src/cabin/website/ui.ts`; `src/cabin/direct/http.ts`; `src/cabin/direct/checkout.ts`; `tests/website.test.mjs`; `tests/website-browser.test.mjs`; `docs/booking-website.md` |  |
+| `WEB-003` | Signed rental agreements | target | done | `src/cabin/agreements/`; `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/dispatch.ts`; `src/cabin/guest.ts`; `src/cabin/inbox/deliver.ts`; `tests/direct.test.mjs`; `docs/rental-agreements.md` |  |
+| `WEB-004` | Guest identity verification | target | done | `src/cabin/verification/`; `src/cabin/direct/`; `src/cabin/codes.ts`; `src/cabin/agreements/records.ts`; `src/cabin/guest.ts`; `src/cabin/audit/privacy.ts`; `migrations/core/0031_verification.sql`; `tests/direct.test.mjs`; `docs/identity-verification.md` |  |
 | `WEB-005` | Promotions, upsells and gap-night offers | target | partial | `src/cabin/promotions/`; `src/cabin/guests/offers.ts`; `src/cabin/direct/`; `src/cabin/finance/import.ts`; `tests/promotions.test.mjs`; `tests/guests.test.mjs`; `tests/direct.test.mjs`; `docs/promotions.md`; `docs/remaining-dependencies.md` | Scoped coupons and returning rates; signed paid gap, early/late and extra supplements; live eligibility, inventory, cleaner capacity, consent, contribution and frozen owner allocation checks. Durable Stripe reconciliation updates the original reservation, balance, work, messages, access, exports and ledger; cancellation/refunds restore prior terms. Hosted USD 218 gap and USD 54.50 early-arrival payments/refunds, real authenticated offer/receipt/refund mail, cleaner conflict refusal and 1440/390 operator/guest journeys proven. Full owner-statement acceptance remains unproven: monthly close correctly refused missing original-stay settlement records, and the supplied Australian Stripe account settles AUD rather than eligible USD payouts. Route tests cover source-backed statement allocation at the provider network edge. Live OTA/device acknowledgments retain SYNC/OPS prerequisites. |
-| `PAY-001` | Processor-backed USD checkout and manual payments | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Stripe-hosted USD test-card checkout, server reconciliation, saved mandate and distinct holds/paid/confirmed states. Real test-card browser acceptance plus network-edge route test. Source-backed cash and cleared-check receipts now post once through Payments with immutable provenance, explicit actual-receipt confirmation and correct reservation balances: `src/cabin/direct/manual-receipts.ts`; `tests/direct.test.mjs` — source-backed cash and cleared-check receipts post once, retain evidence and reduce only the correct outstanding balance; `tests/collection-browser.mjs` at 1440/390. US ACH pending/returned proof needs a US Stripe test account with ACH enabled and live-mode authority. One test-mode held-key us_bank_account probe verified country US but returned HTTP 400 for the removed payment_method_types parameter (req_CPx0gLKmzR4cI6, 23 October 2026); ACH capability is unproved and the single-probe authorization is exhausted. `docs/ach-probe.md` records the exact blocker; no live-mode request was made. |
-| `PAY-002` | Scheduled collection and payment follow-up | target | done | `tests/direct.test.mjs` — scheduled collections require current reservation terms, guest consent and Stripe configuration before any external effect (saved schedule, missing configuration and cancellation); scheduled collection reconciles provider interruptions, failed follow-up, revised mandates and revoked authority without duplicate charges, invoking `tests/collection-support.mjs` — collectionProviderJourney (deposit, uncertain acceptance/restart readback, receipt/balance, failed installment, assigned task/message while consent is invalid, reviewed retry and cancellation) and `tests/collection-consent-flow.mjs` — collectionConsentFlow (favourable reductions/deferrals, contact verification email, adverse dates/price/policy/property, verified renewal and channel-mandate refusal); `tests/collection-browser.mjs` (the Payments form configures a deposit and pre-arrival balance; Payments, the failed payment’s reminder and assigned task, and the verified portal at 1440/390); `tests/collection-stripe.mjs` (held-key real Stripe sandbox: hosted guest setup, exact deposit/installment/balance, accepted-response loss and restart readback, declined collection, overdue task/message under invalid consent, replacement card, changed arrival, cancellation and once-only receipts); `docs/scheduled-collection.md`; real Stripe sandbox receipt 22 October 2026: five distinct attempts (four successful USD collections, one zero-received decline), no duplicate POST after restart. Ct’s 22 October 23:59Z carve applies. |  |
-| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | done | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/ledger/`; `src/cabin/reservations/finance.ts`; `src/cabin/taxes/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Separate Stripe authorization, actual expiry and long-stay warning; evidenced human partial capture and remainder release; automatic post-checkout and cancellation release. Exact approved partial/full rent and captured-damage refunds use frozen levy amounts and saved cancellation/change terms, with durable provider reconciliation, nonduplicating owner/tax/processor journals and itemized real guest receipts. Hosted Stripe test-card and mailbox journeys at 1440 and 390 plus repeated public-route operations exercise provider totals and balanced liabilities once. |
+| `PAY-001` | Processor-backed USD checkout and manual payments | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Stripe-hosted USD test-card checkout, server reconciliation, saved mandate and distinct holds/paid/confirmed states. Real test-card browser acceptance plus network-edge route test. Source-backed cash and cleared-check receipts now post once through Payments with immutable provenance, explicit actual-receipt confirmation and correct reservation balances: src/cabin/direct/manual-receipts.ts; tests/direct.test.mjs — source-backed cash and cleared-check receipts post once, retain evidence and reduce only the correct outstanding balance; tests/collection-browser.mjs at 1440/390. US ACH pending/returned proof needs a US Stripe test account with ACH enabled and live-mode authority. One test-mode held-key us_bank_account probe verified country US but returned HTTP 400 for the removed payment_method_types parameter (req_CPx0gLKmzR4cI6, 23 October 2026); ACH capability is unproved and the single-probe authorization is exhausted. docs/ach-probe.md records the exact blocker; no live-mode request was made. |
+| `PAY-002` | Scheduled collection and payment follow-up | target | done | `tests/direct.test.mjs`; `tests/collection-support.mjs`; `tests/collection-consent-flow.mjs`; `tests/collection-browser.mjs`; `tests/collection-stripe.mjs`; `docs/scheduled-collection.md` |  |
+| `PAY-003` | Damage deposits, refunds and cancellation settlement | target | partial | `src/cabin/direct/`; `src/cabin/ui/direct.ts`; `src/cabin/ledger/`; `src/cabin/reservations/finance.ts`; `src/cabin/taxes/direct.ts`; `tests/direct.test.mjs`; `docs/direct-bookings.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Partial evidenced capture is read back with the retained reason; Every processor callback replay preserves each captured, refunded and released outcome; No-claim checkout releases the authorization within the configured window. |
 | `PAY-004` | Protection partners and chargeback casework | target | missing |  | No implementing flow in the audited tree. |
 | `PAY-005` | Booking.com virtual credit cards | target | missing |  | No implementing flow in the audited tree. Inherits PAY-002's schedule, current authority, receipt and reconciliation; its channel card intake and provider acceptance remain account-blocked. |
 | `PAY-006` | Booking.com property-collect guest cards | target | missing |  | No implementing flow in the audited tree. Inherits PAY-002's schedule, current authority, receipt and reconciliation; its channel card intake and provider acceptance remain account-blocked. |
-| `GUEST-001` | Guest profiles and repeat-stay context | target | done | `src/cabin/guests/`; `src/cabin/inbox/threads.ts`; `src/cabin/direct/`; `src/cabin/audit/privacy.ts`; `src/cabin/privacy.ts`; `tests/guests.test.mjs`; `tests/inbox.test.mjs`; `docs/guests.md` | Independent reservation identity origins retain channel references, observed contacts, staff-attested verification, facts and their sources. Contact matches suggest explicit reviewed merges; undo preserves original reservation, communication, fact and consent ownership. Owner-only notes are excluded from manager, cleaner and agent reads. Home policy and explicit consent gate returning preferences and private expiring one-use 10% rent offers; changed guest contact, consent, group membership or terms invalidates the offer. Returning checkout requires the verified contact and guest consent, preserving the discounted quote, Stripe payment, agreement and receipt. Guest/property erasure clears operational context and revokes offers. Hosted merge, opt-out, paid return, undo and role-limited reads exercised at 1440 and 390. |
-| `MESSAGE-001` | Unified channel, SMS, email and WhatsApp inbox | target | partial | `src/cabin/inbox/threads.ts`; `src/cabin/inbox/inbound.ts`; `src/cabin/inbox/deliver.ts`; `src/cabin/inbox/adapters/twilio.ts`; `src/cabin/inbox/adapters/booking.ts`; `src/cabin/ui/inbox.ts`; `tests/inbox.test.mjs` (line 17) | One thread per guest, keyed by the email (else phone) on their stays, joins every stay from any channel or direct, guest email routed to the install's address (Reply-To honored, quoted history left out, other addresses refused unread), the host's replies by email threaded under the guest's message, and submitted, sent, suppressed, unavailable and failed states. Twilio texts and Booking.com messages run through adapters tested only against documented-shape fixtures: texting waits on the owner's US A2P registration and Booking.com on a connectivity partner account, and the page says so. Airbnb and Vrbo messaging, WhatsApp, attachments, inquiry and alteration actions are absent. |
-| `MESSAGE-002` | Team routing and response accountability | target | done | `src/cabin/inbox/team/`; `src/cabin/inbox/commands.ts`; `src/cabin/ui/inbox.ts`; `src/cabin/storage.ts`; `tests/replies.test.mjs` (line 93); `docs/inbox.md` |  |
-| `MESSAGE-003` | Lifecycle messaging and post-stay follow-up | target | done | `src/cabin/inbox/`; `src/cabin/ui/inbox.ts`; `tests/lifecycle.test.mjs`; `tests/inbox.test.mjs`; `docs/lifecycle-messages.md` | Per-home event/local-time templates cover confirmation, required payment/signature/identity tasks, pre-arrival, arrival, checkout, reviews and consented repeat stays. Current payment, agreement, identity and physical readiness gate every template's access capabilities. Quiet hours, cancellation, contact/channel policy and signed guest opt-out fence waiting sends; durable due/attempt records show delays and assign failures or interrupted uncertainty without blind replay. Native restart, current conditions and exact correction/deduplication tests pass. Hosted authenticated confirmation, payment and withheld-access mail, product configuration and email preference before/after states exercised at 1440 and 390. SMS/OTA transport prerequisites remain MESSAGE-001. |
-| `MESSAGE-004` | Source-grounded AI replies with controlled sending | target | done | `src/cabin/inbox/`; `tests/replies.test.mjs`; `tests/inbox.test.mjs`; `docs/inbox.md` | Replies retain reservation, approved instruction and readiness sources. Exact human edits/send remain default; property/topic/confidence/local-hour policy permits source-rendered automatic answers only, rechecked at send claim. Unknowns, changes, money and safety require a person; uncertain and overdue drafts notify an assigned manager or the installation owner without sending. Source changes fence old drafts. Human early-arrival approval requires completed cleaning/photos and no blockers, moves access and sends one update. Real hosted incoming mail, Anthropic draft, automatic reply, escalation and exact approved reply exercised at 1440 and 390 with received mail. |
-| `GUEST-002` | Guest check-in and stay portal | target | done | `tests/guest-portal.test.mjs` — “GUEST-002: the stay page lists the guest’s tasks, shows the versioned guide and timed code to the holder only, and withdraws access on cancellation, checkout, expiry or replacement”: tasks, timed code, offers, scope and expiry; “GUEST-002: browser-bound one-use email proof fences HTML, JSON and writes, rate limits guessing and ends sessions on every reservation authority change”: ct challenge/session, no-email, invalidations and audit; “GUEST-002: blocked stays have a verified portal before a code, guide originals are versioned private downloads and channel receipts settle payment tasks”: pre-code links, original files and channel-paid balance. `tests/promotions.test.mjs` — “WEB-005: signed gap supplement survives restart, applies once to the original stay, access, cleaner plan, balance and owner ledger, then refunds under its policy” and “WEB-005: paid early arrival, late checkout and extras layer on one stay and cancel in dependency order”: verified portal offer/extra acceptance and paid follow-through. `tests/website-browser.test.mjs` — “GUEST-002: desktop and phone guests verify their own email, finish blocked tasks, read the released guide and report an issue”: real guide upload, verification/signature, code, guide/download and issue forms at 1440/390. `tests/archive.test.mjs` — “DATA-001: public CLI archive round trip refuses damaged or populated stores and respects erasure”: auth excluded from restore and erased, retained original guide bytes. `docs/guest-portal.md`. | |
+| `GUEST-001` | Guest profiles and repeat-stay context | target | done | `src/cabin/guests/`; `src/cabin/inbox/threads.ts`; `src/cabin/direct/`; `src/cabin/audit/privacy.ts`; `src/cabin/privacy.ts`; `tests/guests.test.mjs`; `tests/inbox.test.mjs`; `docs/guests.md` |  |
+| `MESSAGE-001` | Unified channel, SMS, email and WhatsApp inbox | target | partial | `src/cabin/inbox/threads.ts`; `src/cabin/inbox/inbound.ts`; `src/cabin/inbox/deliver.ts`; `src/cabin/inbox/adapters/twilio.ts`; `src/cabin/inbox/adapters/booking.ts`; `src/cabin/ui/inbox.ts`; `tests/inbox.test.mjs` | One thread per guest, keyed by the email (else phone) on their stays, joins every stay from any channel or direct, guest email routed to the install's address (Reply-To honored, quoted history left out, other addresses refused unread), the host's replies by email threaded under the guest's message, and submitted, sent, suppressed, unavailable and failed states. Twilio texts and Booking.com messages run through adapters tested only against documented-shape fixtures: texting waits on the owner's US A2P registration and Booking.com on a connectivity partner account, and the page says so. Airbnb and Vrbo messaging, WhatsApp, attachments, inquiry and alteration actions are absent. |
+| `MESSAGE-002` | Team routing and response accountability | target | partial | `src/cabin/inbox/team/`; `src/cabin/inbox/commands.ts`; `src/cabin/ui/inbox.ts`; `src/cabin/storage.ts`; `tests/replies.test.mjs`; `docs/inbox.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Interrupted message submission reconciles across restart without duplicate external effect. |
+| `MESSAGE-003` | Lifecycle messaging and post-stay follow-up | target | partial | `src/cabin/inbox/`; `src/cabin/ui/inbox.ts`; `tests/lifecycle.test.mjs`; `tests/inbox.test.mjs`; `docs/lifecycle-messages.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: A message due across actual restart meets the same due-time limit. |
+| `MESSAGE-004` | Source-grounded AI replies with controlled sending | target | partial | `src/cabin/inbox/`; `tests/replies.test.mjs`; `tests/inbox.test.mjs`; `docs/inbox.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Held-policy reply stays unsent past due time until exact approval; All-autonomous policy computes external, money and commitment for the relevant replies. Cited tests assert source-grounded drafts, exact person-sent replies, a narrow automatic rule and refusal of unsupported promises. The shared company-policy decision and external/money/commitment computations under both policies are unasserted. |
+| `GUEST-002` | Guest check-in and stay portal | target | done | `tests/guest-portal.test.mjs`; `tests/promotions.test.mjs`; `tests/website-browser.test.mjs`; `tests/archive.test.mjs`; `docs/guest-portal.md` |  |
 | `GUEST-003` | Reviews and consented repeat-guest marketing | target | missing |  | No implementing flow in the audited tree. |
 | `GUEST-004` | Automated host reviews of Airbnb guests | target | missing |  | No implementing flow in the audited tree. |
-| `OPS-001` | Reservation-triggered turnover dispatch | target | done | `src/cabin/dispatch.ts`; `src/cabin/dispatch/`; `src/cabin/turnovers.ts`; `src/cabin/homes.ts`; `src/cabin/settle.ts`; `tests/dispatch.test.mjs`; `tests/turnovers.test.mjs`; `docs/turnover-dispatch.md` | Reservation revisions keep one cleaning/inspection job with saved work, rate, timing and approved team. Configured jobs require cleaner acceptance; decline/cancellation seeks eligible backups, including three simultaneous offers ranked by saved home-base drive time. Capacity counts jobs, work and driving; unknown or changed address routes and infeasible windows stay explicit manager tasks. Five-minute Cron advances deduplicated reminders, expiry and pre-arrival escalation. Recovery uses the same guarded acceptance. Hosted invitation, offer, assignment/access and reassignment mail received in the QA inbox; manager and cleaner paths exercised at 1440 and 390. |
-| `EVIDENCE-001` | Private immutable cleaner completion evidence | target | done | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs` (line 67); `tests/turnovers.test.mjs` (line 15) |  |
-| `OPS-002` | Cleaner mobile work with reliable uploads | target | done | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `src/cabin/maintenance.ts`; `public/cleaner-drafts.js`; `public/cleaner-draft-store.js`; `public/photo-upload.js`; `tests/cleaner-mobile.test.mjs`; `tests/turnovers.test.mjs`; `docs/cleaner-mobile.md` | Assigned phone schedules, acceptance, directions, entry instructions, checklist, notes, photos and issues. Private person-scoped device drafts survive connection loss and reload; current assignment and booking revisions are checked before uploads, changed work requires explicit review, and server authority/revision checks fence completion and issue photos. |
-| `OPS-003` | Readiness is verified before arrival | target | done | `src/cabin/readiness.ts`; `src/cabin/readiness/`; `src/cabin/ui/readiness.ts`; `tests/readiness.test.mjs`; `tests/turnovers.test.mjs`; `tests/replies.test.mjs`; `tests/recovery.test.mjs`; `docs/readiness.md` | Per-arrival cleaning acceptance and photos, blocking maintenance, configurable supply/restock checks, physical access verification and named inspector acceptance determine readiness. Named attestations retain evidence/history; changed stays or work invalidate them. Managers see at-risk/overdue arrivals, record responsible-person follow-up and approve explicit exceptions with guest impact. Recovery and early arrival require the same verified state. Product forms exercised locally at 1440 and 390; no lock-provider verification or building-safety certification is implied. |
-| `OPS-004` | Maintenance, inspections and work-order expenses | target | done | `src/cabin/work-orders/`; `src/cabin/maintenance.ts`; `src/cabin/ui/maintenance.ts`; `src/cabin/guest.ts`; `src/cabin/ledger/store.ts`; `tests/work-orders.test.mjs`; `tests/turnovers.test.mjs`; `tests/readiness.test.mjs`; `docs/maintenance.md` | Cleaner, inspector and guest photo reports dispatch to the home's vendor with real mail. Asset/checklist/priority/due date, vendor acceptance, exact quote and invoice approvals, spend ceilings, owner-linked vendor payables, evidence and named inspection gate closure. Durable inventory blocks reopen only on verified completion; one fresh recurring visit follows. Hosted guest-to-vendor-to-inspection journey, authenticated mail receipt and end states exercised at 1440 and 390. |
-| `OPS-005` | Stay-bound smart-lock automation | target | partial | `src/cabin/codes.ts`; `src/cabin/dispatch.ts`; `src/cabin/locks.ts`; `src/cabin/guest.ts`; `tests/turnovers.test.mjs` (line 15) | Every confirmed stay gets a guest code valid check-in to check-out and each assigned turnover a cleaner code for its window, without staff action; windows move with the stay and codes are revoked on cancellation or reassignment; the guest sees theirs on a secret stay page. Codes are pushed through a Seam adapter tested only against Seam-shaped fixtures: the owner's lock account is not connected, so codes are set by hand and the page says so (unavailable on RER Managed until its provider relay). A human may approve early arrival from the inbox only after verified readiness, moving the guest and preceding cleaner windows with one confirmation (`src/cabin/inbox/arrival.ts`, `tests/replies.test.mjs`). No device state checks, battery/offline alerts or backup entry plans. Held-key read-only discovery on 23 October confirms one sandbox Schlage Encode; the provider list has no RemoteLock entry, so the required eight-family journey needs an authorized RemoteLock-capable connection outside this held route. Metadata is not provisioning proof; `docs/lock-sandbox.md`. |
+| `OPS-001` | Reservation-triggered turnover dispatch | target | partial | `src/cabin/dispatch.ts`; `src/cabin/dispatch/`; `src/cabin/turnovers.ts`; `src/cabin/homes.ts`; `src/cabin/settle.ts`; `tests/dispatch.test.mjs`; `tests/turnovers.test.mjs`; `docs/turnover-dispatch.md`; `src/cabin/codes.ts`; `src/cabin/notices.ts` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: No duplicate payable work is manufactured on cancellation. |
+| `EVIDENCE-001` | Private immutable cleaner completion evidence | target | partial | `src/cabin/turnovers.ts`; `src/cabin/photos.ts`; `src/cabin/domain.ts`; `tests/cabin.test.mjs`; `tests/turnovers.test.mjs`; `src/cabin/turnover-window.ts` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Missing checklist items and malformed images are refused without effect; Duplicate completion is refused with no second completion. |
+| `OPS-002` | Cleaner mobile work with reliable uploads | target | done | `src/cabin/ui/turnovers.ts`; `src/cabin/turnovers.ts`; `src/cabin/maintenance.ts`; `public/cleaner-drafts.js`; `public/cleaner-draft-store.js`; `public/photo-upload.js`; `tests/cleaner-mobile.test.mjs`; `tests/turnovers.test.mjs`; `docs/cleaner-mobile.md` |  |
+| `OPS-003` | Readiness is verified before arrival | target | partial | `src/cabin/readiness.ts`; `src/cabin/readiness/`; `src/cabin/ui/readiness.ts`; `tests/readiness.test.mjs`; `tests/turnovers.test.mjs`; `tests/replies.test.mjs`; `tests/recovery.test.mjs`; `docs/readiness.md`; `src/cabin/maintenance.ts` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: The failed restock item is separately read before resolution; The manager and guest-service team both read the same final readiness evidence. |
+| `OPS-004` | Maintenance, inspections and work-order expenses | target | partial | `src/cabin/work-orders/`; `src/cabin/maintenance.ts`; `src/cabin/ui/maintenance.ts`; `src/cabin/guest.ts`; `src/cabin/ledger/store.ts`; `tests/work-orders.test.mjs`; `tests/turnovers.test.mjs`; `tests/readiness.test.mjs`; `docs/maintenance.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Approved quote and invoice are both read back with their exact evidence; The new task retains both the original photo and turnover link. |
+| `OPS-005` | Stay-bound smart-lock automation | target | partial | `src/cabin/codes.ts`; `src/cabin/dispatch.ts`; `src/cabin/locks.ts`; `src/cabin/guest.ts`; `tests/turnovers.test.mjs` | Every confirmed stay gets a guest code valid check-in to check-out and each assigned turnover a cleaner code for its window, without staff action; windows move with the stay and codes are revoked on cancellation or reassignment; the guest sees theirs on a secret stay page. Codes are pushed through a Seam adapter tested only against Seam-shaped fixtures: the owner's lock account is not connected, so codes are set by hand and the page says so (unavailable on RER Managed until its provider relay). A human may approve early arrival from the inbox only after verified readiness, moving the guest and preceding cleaner windows with one confirmation (src/cabin/inbox/arrival.ts, tests/replies.test.mjs). No device state checks, battery/offline alerts or backup entry plans. Held-key read-only discovery on 23 October confirms one sandbox Schlage Encode; the provider list has no RemoteLock entry, so the required eight-family journey needs an authorized RemoteLock-capable connection outside this held route. Metadata is not provisioning proof; docs/lock-sandbox.md. |
 | `OPS-006` | Breezeway specialist operations handoff | target | missing |  | No implementing flow in the audited tree. |
-| `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. Whole-clause blocker: an authorized Schlage Sense provider/device/hub path; Seam lists Sense as unavailable, so the held sandbox cannot prove the named hub leg. Igloohome capability alone cannot complete it. `docs/lock-sandbox.md`. |
-| `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/departures.ts`; `src/cabin/ui/requests.ts`; `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/readiness.test.mjs`; `tests/readiness-browser.test.mjs`; `tests/turnovers.test.mjs`; `tests/cabin.test.mjs`; `docs/day-board.md` | The chosen property-local day now lists all confirmed stay departures, scheduled checkout from the reservation/home, current cleaner/staff checkout time and source, explicit unknowns and source links even without another arrival or turnover. Existing readiness cards show the next arrival, cleaner/window, locally generated code state and photos with the readiness summary. Multiple Eastern/Hawaii homes, unrecorded departures, cancellations, role limits and source links are asserted; desktop/phone day selection and navigation exercised at 1440/390. Selected-day declined non-direct stay requests now retain their historical reasons and exact request/overlap source links, including records older than the recent-request window. These are explicitly Cabin decisions, not channel acknowledgments. Guest-portal/lock-event checkout, provider-confirmed access state, channel-side declined/expired outcomes and the full five-home integrated acceptance journey remain open. Whole-clause blocker: real OTA accounts for externally acknowledged declined/expired decisions and the provider-confirmed access acceptance, not just local request records; `docs/lock-sandbox.md`. |
-| `FIN-001` | Reservation-linked USD trust subledgers | target | done | `src/cabin/ledger/`; `src/cabin/ui/ledger.ts`; `migrations/core/0022_ledger.sql`; `tests/ledger.test.mjs`; `tests/recovery.test.mjs`; `docs/trust-ledger.md` | Balanced immutable USD journals separate receivables, advances, non-cash damage holds, owner funds, manager income, fees, expenses, taxes and cash by entity/home/owner/stay. Source revisions, effective/posting dates, period closure and exact linked reversals ship. Source-backed manual posting does not execute payments; bank reconciliation/distributions remain FIN-006. |
+| `OPS-007` | Hub-dependent and offline-PIN locks | target | missing |  | No implementing flow in the audited tree. Whole-clause blocker: an authorized Schlage Sense provider/device/hub path; Seam lists Sense as unavailable, so the held sandbox cannot prove the named hub leg. Igloohome capability alone cannot complete it. docs/lock-sandbox.md. |
+| `OPS-008` | A day board of departures, arrivals and readiness | target | partial | `src/cabin/ui/departures.ts`; `src/cabin/ui/requests.ts`; `src/cabin/ui/readiness.ts`; `src/cabin/readiness.ts`; `src/cabin/ui/turnovers.ts`; `src/cabin/ui/calendar.ts`; `tests/readiness.test.mjs`; `tests/readiness-browser.test.mjs`; `tests/turnovers.test.mjs`; `tests/cabin.test.mjs`; `docs/day-board.md` | The chosen property-local day now lists all confirmed stay departures, scheduled checkout from the reservation/home, current cleaner/staff checkout time and source, explicit unknowns and source links even without another arrival or turnover. Existing readiness cards show the next arrival, cleaner/window, locally generated code state and photos with the readiness summary. Multiple Eastern/Hawaii homes, unrecorded departures, cancellations, role limits and source links are asserted; desktop/phone day selection and navigation exercised at 1440/390. Selected-day declined non-direct stay requests now retain their historical reasons and exact request/overlap source links, including records older than the recent-request window. These are explicitly Cabin decisions, not channel acknowledgments. Guest-portal/lock-event checkout, provider-confirmed access state, channel-side declined/expired outcomes and the full five-home integrated acceptance journey remain open. Whole-clause blocker: real OTA accounts for externally acknowledged declined/expired decisions and the provider-confirmed access acceptance, not just local request records; docs/lock-sandbox.md. |
+| `FIN-001` | Reservation-linked USD trust subledgers | target | partial | `src/cabin/ledger/`; `src/cabin/ui/ledger.ts`; `migrations/core/0022_ledger.sql`; `tests/ledger.test.mjs`; `tests/recovery.test.mjs`; `docs/trust-ledger.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: The operator drills every named balance to its source transaction. |
 | `FIN-002` | Payout reconciliation per reservation | target | partial | `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs` | Airbnb/Vrbo USD payout CSVs match stays with actual imported fees and unmatched review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible automatic USD payout (fleet test account settles AUD). Partner APIs, FX, bank receipt and full exception closure remain later. |
-| `FIN-003` | Management agreements and expense allocation | target | done | `src/cabin/properties/terms.ts`; `src/cabin/finance/allocation-commands.ts`; `src/cabin/finance/cost-commands.ts`; `src/cabin/finance/allocation-statements.ts`; `src/cabin/work-orders/expenses.ts`; `src/cabin/blocks.ts`; `tests/allocations.test.mjs`; `docs/management-allocations.md` | Effective-dated frozen models select commission bases, fixed/percentage fees, cleaning, pass-through/tax responsibility, reserves and owner interests. Exact source-backed revenue and shared-invoice approval retains accountant-reviewed mappings and evidence, posts balanced owner/manager liabilities and feeds frozen statement totals. Desktop and phone product forms exercised. |
-| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | done | `src/cabin/finance/month-close.ts`; `src/cabin/finance/close-schedule.ts`; `src/cabin/statements.ts`; `src/cabin/owners/sections.ts`; `src/cabin/owners/http.ts`; `tests/month-close.test.mjs`; `docs/monthly-close.md`; `docs/statement-settlements.md` | Effective-date owner trust closes freeze opening/activity/closing payable, every received settlement split to its stay and saved owner interests, fees, commission, tax responsibility, costs, reserves, refunds and recorded distributions. Missing or changed evidence refuses release; exact approvals and owner-authorized monthly review/release policies retain current native authority. Scoped portal, immutable CSV/PDF, linked later-period corrections and same-month supplements preserve sent originals. Hosted four-provider receipt coverage, missing-source refusal, exact approval, separate owner mail sign-in and clicked CSV/PDF downloads, correction/supplement and automatic scheduled delivery exercised at 1440 and 390; statement and sign-in mail received with SPF/DKIM/DMARC passing. Live source retrieval and payment execution remain FIN-002/FIN-006. |
-| `FIN-005` | Rental-owner portal and personal stays | target | done | `src/cabin/owners/`; `src/cabin/ui/owners-operations.ts`; `migrations/core/0028_owner_operations.sql`; `tests/owners.test.mjs`; `tests/finance.test.mjs`; `docs/statements.md` | One-use mail sign-in and separate owner sessions scope homes, agreed calendar visibility, occupancy, approved receipts, frozen statements, shared invoice/record text, source-backed reserve reports, owner-key ledger activity, recorded distributions and open issues. Exact expense decisions obey agreement limits; personal stays require manager approval and a fresh inventory/rules check, then block published nights. Actual HTML views/downloads append events and show name/date on the operator card; previews/API reads do not count. Explicit revocable grants retain only original-recipient statements after transfer; old documents, guest details and successor records stay private. Local public-door tests and hosted two-owner mail/browser journey at 1440 and 390 cover isolation, approval, transfer and revocation. Records report money; distribution execution and bank reconciliation remain FIN-006. |
-| `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | partial | `src/cabin/finance/banking/`; `tests/ledger.test.mjs` — trust accounts reconcile bank, ledger and owner controls and reserve only the approved owner’s funds without executing transfers: two bank accounts, owner liability/cash controls, exact source matching, cross-owner refusal, once-only unexecuted approval, stale evidence, scoped accountant access and restart; `tests/banking-browser.mjs` — native account/import/assignment/match/reconciliation/plan forms at 1440/390; `tests/archive.test.mjs` with `tests/banking-archive.mjs` — bank evidence and frozen reconciliation preserved, restored approval inactive; `docs/trust-banking.md` | Buildable bank model and reconciliation implemented. Conservative default ADOPTED: current scoped accountants reconcile; native owner alone approves unexecuted plans; no ACH egress or invented settlement. Pending ct approval of this boundary. Remaining: selected licensed US ACH partner approval and funded trust-account arrangement, verified owner/vendor payees and execution authority; real pending/settled/failed/returned transfers, bank evidence of a return, restored liability and corrected owner statement are unproved. Existing Stripe checkout and Plaid Transactions credentials do not authorize trust-bank ACH distributions. |
-| `FIN-007` | QuickBooks Online accounting synchronization | target | done | `tests/finance.test.mjs` — “QuickBooks owner-approved month sync reconciles source journals, survives response loss and detects external edits without duplicates” proves owner authorization, mappings, frozen month reconciliation, repeat, response-loss recovery and edit refusal through native routes; `tests/qbo-sandbox.mjs` — held sandbox journey proves authorized test company, 16 accounts plus property class and owner vendor, nine October journals including refund and expense, 371500 debit and credit cents, repeat with zero duplicates and an external edit without replacement (`evidence/fin-007-qbo-sandbox-2026-10-26.json`); `tests/qbo-browser.mjs` — native connection, mapping, preview, posted identities and conflict forms at 1440 and 390; `tests/archive.test.mjs` with `tests/qbo-archive.mjs` — portable identities, excluded grants and inactive restored batches; `docs/statements.md` | None. Owner-reviewed accountant mappings and explicit approval of the exact frozen batch; external edits require manual reconciliation. Existing file exports and Pantry remain available. |
+| `FIN-003` | Management agreements and expense allocation | target | done | `src/cabin/properties/terms.ts`; `src/cabin/finance/allocation-commands.ts`; `src/cabin/finance/cost-commands.ts`; `src/cabin/finance/allocation-statements.ts`; `src/cabin/work-orders/expenses.ts`; `src/cabin/blocks.ts`; `tests/allocations.test.mjs`; `docs/management-allocations.md` |  |
+| `FIN-004` | Reconciled frozen owner statements and monthly delivery | target | partial | `src/cabin/finance/month-close.ts`; `src/cabin/finance/close-schedule.ts`; `src/cabin/statements.ts`; `src/cabin/owners/sections.ts`; `src/cabin/owners/http.ts`; `tests/month-close.test.mjs`; `docs/monthly-close.md`; `docs/statement-settlements.md`; `src/cabin/finance/`; `src/cabin/owners/`; `tests/finance.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Missing payout prevents close until its source arrives; All four providers’ received settlements are included exactly once; Every individual statement line reconciles to the ledger. |
+| `FIN-005` | Rental-owner portal and personal stays | target | done | `src/cabin/owners/`; `src/cabin/ui/owners-operations.ts`; `migrations/core/0028_owner_operations.sql`; `tests/owners.test.mjs`; `tests/finance.test.mjs`; `docs/statements.md` |  |
+| `FIN-006` | Trust accounts, bank reconciliation and approved ACH distributions | target | partial | `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md` | Source-backed bank imports and frozen bank/ledger/owner controls are implemented. Live bank-feed and complete two-account reconciliation proof remain open; separately reserved plans and actual ACH execution are FIN-010 and FIN-011. |
+| `FIN-007` | QuickBooks Online accounting synchronization | target | partial | `tests/finance.test.mjs`; `tests/qbo-sandbox.mjs`; `evidence/fin-007-qbo-sandbox-2026-10-26.json`; `tests/qbo-browser.mjs`; `tests/archive.test.mjs`; `tests/qbo-archive.mjs`; `docs/statements.md`; `src/cabin/finance/books.ts`; `src/cabin/finance/pantry-posting.ts` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Month refund and expense values reconcile across every external line; Authorized QuickBooks CSV content is read back. |
 | `FIN-008` | US occupancy, lodging and sales-tax obligations | target | partial | `src/cabin/taxes/`; `migrations/core/0029_taxes.sql`; `tests/taxes.test.mjs`; `docs/taxes.md`; `src/cabin/direct/`; `tests/direct.test.mjs` | Effective-dated monthly state/county/city obligations separate documented channel remittances from host liability. Source-led exemptions/refunds and paid direct receipt matching retain original levy evidence; host tax/payment records post to the trust ledger. Exact frozen reviews are sent separately to named accountant recipients, and human-recorded acknowledgment/rejection/payment documents remain distinct from mail acceptance. Hosted monthly review, freeze and authentic accountant-packet receipt exercised at 1440 and 390; no statutory filing/payment record invented. Real statutory partner filing/remittance, nonmonthly periods, differing taxable bases and automatic jurisdiction/rate lookup remain open. Released checkout still collects its configured state/county lines; the monthly workflow does not silently reprice existing receipts. |
 | `FIN-009` | US owner and contractor tax reporting | target | missing |  | No implementing flow in the audited tree. |
-| `REPORT-001` | Operational, revenue and owner performance reports | target | done | `src/cabin/reports/`; `docs/reports.md`; `tests/finance.test.mjs` — “REPORT-001: filtered mixed-channel reports reconcile occupancy, bases, exceptions and complete exports to permitted sources” (inventory/ADR/RevPAR, pace/channel/owner filters, cash/accrual, refunds/exceptions, cleaning/readiness/deadlines, all source rows and exports, authority); `tests/readiness-browser.test.mjs` — “REPORT-001: desktop and phone reports filter, explain denominators, drill to sources and download complete totals” (manager HTML, filters/definitions, source links and CSV at 1440/390); `tests/allocations.test.mjs` — “FIN-003: frozen revenue allocations explain commission bases, fixed fees, tax, reserves and multiple owners across amendments” (co-owner reporting); `tests/promotions.test.mjs` — “WEB-005: signed gap supplement survives restart, applies once to the original stay, access, cleaner plan, balance and owner ledger, then refunds under its policy” (supplement reporting/refunds) | Mixed-channel month, owner and maintenance blocks, refunds, incomplete settlements, source/ledger reconciliation and 128-row payout export are proven through public doors. Exact bases are stated above and in the report. |
-| `REPORT-002` | Saved reports and scheduled sharing | target | done | `tests/finance.test.mjs` — “REPORT-002: approved owner and team schedules freeze scoped artifacts, refuse changed access and assign failed delivery”: saved filters, two owner reports and manager digest, revoked owner, exact cutoff/artifact/history, unauthorized delivery/download and assigned generation/delivery failures. `tests/allocations.test.mjs` — “FIN-003: frozen revenue allocations explain commission bases, fixed fees, tax, reserves and multiple owners across amendments”: co-owner row isolation. `tests/readiness-browser.test.mjs` — “REPORT-002: desktop and phone save current filters and explicitly approve visible scoped delivery”: filter/schedule/consent, artifact/history and failure resolution at 1440/390. `docs/reports.md`. | |
-| `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` (lines 31, 109) | Versioned domain APIs, scoped application grants, signed durable webhooks and live Zapier consumption remain unshipped. Unpublished foundation work awaits publication tooling; an authorized Zapier account and receiver are also required. |
-| `MIGRATE-001` | Reviewed property-register move-in | target | done | `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md` | Exact original CSV bytes and source fingerprint accompany normalized accepted rows and persisted per-row refusals. Owner-only immutable-plan approval publishes homes without users, inventory or funds. Commit-time collision/authority guards, resumable batches and durable journals support safe undo that preserves edits and dependent owner/tax/ledger/operational work. Erasure retires retained source and withdrawn previews. Product forms, reload, approval, native edit and retained undo dispositions exercised locally at 1440 and 390. |
+| `REPORT-001` | Operational, revenue and owner performance reports | target | done | `src/cabin/reports/`; `docs/reports.md`; `tests/finance.test.mjs`; `tests/readiness-browser.test.mjs`; `tests/allocations.test.mjs`; `tests/promotions.test.mjs` |  |
+| `REPORT-002` | Saved reports and scheduled sharing | target | done | `tests/finance.test.mjs`; `tests/allocations.test.mjs`; `tests/readiness-browser.test.mjs`; `docs/reports.md` |  |
+| `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` | Versioned domain APIs, scoped application grants, signed durable webhooks and live Zapier consumption remain unshipped. Unpublished foundation work awaits publication tooling; an authorized Zapier account and receiver are also required. |
+| `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md`; `src/cabin/movein/`; `tests/movein.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed fingerprint is refused without applying rows. |
 | `MIGRATE-002` | Migration from reservation source A | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-003` | Migration from reservation source B | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-004` | Migration from reservation source C | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |
@@ -1257,21 +1347,30 @@ Judged from the code and tests at commit `a124cd29ea9575bf4b077e4aef05088f7c2ef0
 | `MIGRATE-006` | Switching from automation and field-operations sources | target | missing |  | No implementing flow in the audited tree. |
 | `MIGRATE-007` | CSV history, cutover rehearsal and accountable go-live | target | partial | `src/cabin/movein/reconcile.ts`; `src/cabin/movein/provider-import.ts`; `src/cabin/ui/movein.ts`; `tests/movein.test.mjs` | Source versus saved reservation counts, future nights and opening owner balances; owner sign-off requires every difference and refused row accounted for. Stable listing IDs retain iCal links and imported holds; undo preserves edited/dependent data by refusing reversal. Full vendor history, live API parallel-run cutover and channel partner account reconnection remain open. |
 | `MOBILE-001` | Native manager and field-team apps | target | missing |  | No implementing flow in the audited tree. |
-| `INTERFACE-001` | Responsive accessible and honest operations | target | done | `tests/readiness-browser.test.mjs` — “native calendar and inbox preserve a keyboard-submitted failed reply and complete the booking conversation at desktop and phone sizes”: native booking/calendar records, complete guest-page navigation/search, keyboard refusal focus/input retention, successful reply, approved PDF and provider cost/source disclosure before authorization at 1440/390; `tests/cleaner-mobile.test.mjs` — “OPS-002: offline cleaner photos and issue survive a changed job and require current review”: photo completion and retained failed inputs at both widths; “AUTH-002: desktop and phone team invitations enforce a single home and offboarding on the next request”: named current roles and phone menu; `tests/interface-accessibility.mjs`: WCAG A/AA checks alongside those keyboard journeys, with gradient contrast manually checked; `tests/inbox.test.mjs` — “guest search covers retained message history and explicit guest/message pages without merging shared contacts”: full history, exact counts and truthful pending badge; `tests/interface-scale.mjs` — standalone 40-property/25-staff/three-year journey: 10000 reservations, 100000 messages, 15000 turnovers, calendar/search timing, all 400 guest pages and complete HTML/JSON/CSV reports matching ledger totals. Exact-candidate heavy-slot run is cited in the landing report. `docs/interface.md`. | |
-| `DATA-001` | Complete portable product records and safe restore | target | done | `src/cabin/archive/`; `src/cabin/archive-policy.mjs`; `scripts/backup/`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs`; `tests/hosted-backup.test.mjs`; `docs/portable-records.md` | Versioned structured archives retain all current business families, signed evidence, ledger totals, journals and original media; native CSV/PDF/media downloads remain usable. Staged integrity checks refuse damage and populated stores. Credentials, sessions and private capabilities are removed; restored jobs, provider sharing and reservation service require explicit owner review/reconnection, with historical payments and queued effects retired. Local public CLI and hosted-only remote round trips exercised; restore review/restart and approved PDF download used at 1440 and 390. |
-| `DATA-002` | Erasure, retention and later-journal fencing | target | done | `src/cabin/privacy/`; `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/verification/retention.ts`; `migrations/core/0034_erasure.sql`; `tests/privacy.test.mjs`; `tests/archive.test.mjs`; `docs/erasure.md` | Exact owner-reviewed erasure covers guests, invited members and properties, original attachments and retained sources. Isolated dated document holds and named immutable accounting holds explain every retained record; owner-only downloads, permanent completion receipts, anonymous attribution, contact-delivery fences and later-journal archive refusal are exercised. Independent provider copies and downloaded backups require the receipt’s explicit external steps. Desktop and phone review/erase/download journeys passed. |
-| `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | done | `src/cabin/connections/`; `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/data-custody.test.mjs`; `docs/data-custody.md` | Installation-owned records and media, declared provider destinations/data, owner-only durable sharing revocation at every provider and product-mail boundary, blocked calendar exports and explicit reconnection. Populated route journey records outbound requests and proves disconnection stops manual and Cron effects while retaining history. |
-| `AUDIT-001` | Permanent attributable business and automation history | target | done | `src/cabin/audit/`; `src/cabin/ui/activity.ts`; `migrations/core/0023_audit.sql`; `tests/audit.test.mjs`; `docs/activity.md` | Append-only events retain safe actor/agent/authority, scope, source revision and controlled outcomes for domain changes, approvals, guest access, providers, money, imports and erasures. Search and full paginated export include legacy native history without its value field. Guest erasure preserves stable anonymous action references and necessary accounting; broader retention controls remain DATA-002. |
-| `SECURITY-001` | Provider custody and declared external data | target | done | `src/cabin/connections/`; `src/cabin/inbox/reply-sources.ts`; `src/cabin/inbox/ai.ts`; `src/cabin/archive/transform.mjs`; `migrations/core/0035_provider_security.sql`; `tests/security.test.mjs`; `docs/provider-security.md` | Owner-reviewed destination/data/cost disclosures, action/home grants, encrypted credential rotation and durable revocation fence provider calls and signed inbound events. Current matched-stay AI facts and message history omit private capabilities and treat guest text as untrusted. Ordinary API/agent and archive representations remove credentials, sensitive fields and access capabilities; purpose-specific native human/guest doors retain only authorized access. Stale grants, forged/old-key events, repeated callbacks, unrelated-home scope, native multi-selection forms, adversarial input and revoked queued effects are exercised. Credential save/rotate/revoke and ordinary-versus-authorized access were used at 1440 and 390. These controls do not establish live messaging, payment, channel or physical-lock acceptance. |
+| `INTERFACE-001` | Responsive accessible and honest operations | target | partial | `tests/readiness-browser.test.mjs`; `tests/cleaner-mobile.test.mjs`; `tests/interface-accessibility.mjs`; `tests/inbox.test.mjs`; `tests/interface-scale.mjs`; `docs/interface.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Calendar, photo and statement journeys run at both widths with keyboard error recovery; The complete target booking and inbox journeys pass. |
+| `DATA-001` | Complete portable product records and safe restore | target | partial | `src/cabin/archive/`; `src/cabin/archive-policy.mjs`; `scripts/backup/`; `scripts/backup-hosted.mjs`; `tests/archive.test.mjs`; `tests/hosted-backup.test.mjs`; `docs/portable-records.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Damaged and populated destinations are refused without partial data; Restored jobs and connections remain inactive until exact reauthorization. |
+| `DATA-002` | Erasure, retention and later-journal fencing | target | partial | `src/cabin/privacy/`; `src/cabin/privacy.ts`; `src/cabin/audit/privacy.ts`; `src/cabin/verification/retention.ts`; `migrations/core/0034_erasure.sql`; `tests/privacy.test.mjs`; `tests/archive.test.mjs`; `docs/erasure.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Later erasure journal fences old restore without partial writes. |
+| `DATA-003` | Every booking, guest and payout stays in the owner’s installation | target | done | `src/cabin/connections/`; `src/cabin/storage.ts`; `src/cabin/photos.ts`; `tests/data-custody.test.mjs`; `docs/data-custody.md` |  |
+| `AUDIT-001` | Permanent attributable business and automation history | target | partial | `src/cabin/audit/`; `src/cabin/ui/activity.ts`; `migrations/core/0023_audit.sql`; `tests/audit.test.mjs`; `docs/activity.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Human, agent, provider, lock, refund and statement outcomes are each present. |
+| `SECURITY-001` | Provider custody and declared external data | target | partial | `src/cabin/connections/`; `src/cabin/inbox/reply-sources.ts`; `src/cabin/inbox/ai.ts`; `src/cabin/archive/transform.mjs`; `migrations/core/0035_provider_security.sql`; `tests/security.test.mjs`; `docs/provider-security.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Logs, exports and all agent outputs omit every named sensitive field. |
 | `HTTP-001` | Real Worker health and document dispatch | target | done | `src/server.ts`; `src/base/deployment-health.ts`; `tests/runtime.mjs` |  |
-| `RUNTIME-001` | Owner-run lifecycle and durable background work | target | done | `tests/launch.test.mjs` — “a fresh public-source clone installs, sets up, signs in and preserves a native product job across rer dev restart” (Linux five-command source lifecycle, native sign-in and saved job restart; Linux remote run 20261026T090909184894Z-cabin-runtime-cd37ba90); `tests/archive.test.mjs` — “DATA-001: public CLI archive round trip refuses damaged or populated stores and respects erasure” (restored provider claims inactive); `tests/direct.test.mjs` — “scheduled collection reconciles provider interruptions, failed follow-up, revised mandates and revoked authority without duplicate charges” via `tests/collection-support.mjs` (collectionProviderJourney, payment boundaries); `tests/recovery-authority.test.mjs` — “ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes” (lock boundaries); `tests/lifecycle.test.mjs` — “interrupted guest replies retain claims, assign uncertainty and require owner provider evidence before any resend” via `tests/message-interruption-support.mjs` (guest sends and team notices); `tests/channel-agent.test.mjs` — “interrupted browser work before or after channel acceptance expires into assigned uncertainty and never repeats the action” (channel claims, restart and assigned uncertainty); `tests/finance.test.mjs` — “REPORT-002: approved owner and team schedules freeze scoped artifacts, refuse changed access and assign failed delivery” (generation and delivery boundaries); `tests/recovery-browser.mjs` — native recovery and owner reconciliation at 1440 and 390 | Current payment, channel, message, lock and report jobs preserve claims, attempts and outcomes across restart. Before and after acceptance, reconciliation reads provider state or assigns an uncertain failure without blind repetition. Expired guest sends and notices are owner-assigned; only exact owner evidence can permit a distinct retry. Future provider jobs inherit the same obligation through SYNC-007, SYNC-011, MESSAGE-001, MESSAGE-002, OPS-005, OPS-007 and REPORT-002 under ct’s 22 October ruling. Their live account and provider-family acceptance remains in those clauses. Clean macOS and owner-controlled Cloudflare receipts remain RUNTIME-002. The Base pin is unchanged. |
-| `RUNTIME-002` | Owner-machine and owner-cloud receipts | target | missing |  | Needs a clean Mac and an owner-approved Cloudflare account for signed-in five-command and deploy receipts. Linux receipt remains with RUNTIME-001. |
-| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `tests/recovery.test.mjs` — “cancelled cleaner recovery binds approval, rebooks, rotates only changed messages, credits, verifies photos and posts a reversible owner balance” (cleaner cancellation, budget, denied authority, accepted backup, photos, code, balance and restart); “a channel collision is recovered through an exact approved alternative, real preparation, guest acceptance and recurrence without transferring owner funds” via `tests/recovery-alternative-support.mjs` (same-stay cleaner cancellation, actual confirmed channel collision, inventory recheck, rejected proposal, approved relocation and date rescheduling, guest-reported failed lock with accepted field work and independent inspection, exact guest acceptance, readiness, recurrence and original-owner net); `tests/channel-agent.test.mjs` — “channel agent connects isolated profiles, closes other channels from an iCal booking, and safely reopens its own closures” (pending channel closure refuses recovery closure); `tests/recovery-authority.test.mjs` — “ordinary lock jobs reconcile interruptions before and after create, update and removal without repeating provider writes” (provider readback and previous-code removal); `tests/recovery-browser.mjs` — native proposal, acceptance, preparation, readiness, guest confirmation and closure at 1440 and 390; `tests/recovery-sandbox.mjs` — held-key Seam journey; `tests/recovery-mail-sandbox.mjs` — actual authenticated SendGrid readiness receipt ee7d7102-476c-4f26-8e62-bfd274032d80, provider message lzkdNRBUT4mmUdB0K_A5_g, verified guest confirmation and person follow-up with the -10000-cent original-owner adjustment (manual-keypad path) | Collision, approved native relocation and rescheduling, inspected preparation, guest confirmation, recurrence and original-owner adjustment are implemented and asserted. Channel-controlled or paid terms remain explicitly escalated until accepted at their source; pending channel outcomes and previous access removal prevent closure. Production SendGrid readiness mail is received and authenticated. Latest isolated Kwikset sandbox run confirmed initial programming and previous-code removal, then assigned the replacement failure because no matching provider code was visible; it never repeated the uncertain create. Remaining live sandbox proof: verified replacement programming and complete native recovery closure. All owned codes and the test connection were removed. |
-| `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/finance/exceptions/`; `docs/financial-exceptions.md`; `tests/ledger.test.mjs` — “financial exception cases pursue split-payment fee and refund sources, reject and exactly approve a linked frozen-statement correction without inventing a distribution” (split settlement evidence, tracked missing fee, refund and bank records, rejected correction, exact approved open-period reversal and replacement, stale, duplicate and closed-period refusal, immutable original statement and linked adjustments, cash and accrual report reconciliation including a returned refund fee, imported frozen-statement source review and linked later-period adjustments, refusal of bank evidence until matched to this reservation, readable historical evidence after a reservation transfer with correction refusal, obsolete imported-statement and allocation refusal, restart and restricted authority); `tests/financial-exceptions-browser.mjs` (native case forms, keyboard, control-label audit and accessibility at 1440/390); `tests/archive.test.mjs` — “DATA-001: public CLI archive round trip refuses damaged or populated stores and respects erasure” via `tests/financial-exceptions-archive.mjs` (restored proposals inactive). | Source-linked native cases and manually obtained provider records now support exact correction of unallocated native payout postings, preserving historical owner and entity and frozen statements. Legacy imported frozen statements now enter exact source review and receive linked later-period adjustments without rewriting their files; unmatched bank statements cannot resolve a bank-record request. Remaining: automatic provider-record pursuit, allocated and transferred correction workflows, legacy statement commission and paid costs not posted to the ledger, processor-funded corrections, full source and bank completeness and verified actual owner distribution. FIN-002 and FIN-006 external settlement and authorized transfer dependencies remain; local matching and unexecuted plans are not distribution evidence. Ct approved the interim installation-owner-only boundary on 23 October 2026: exact local append-only corrections keep their reason and before and after evidence; no new accountant exposure, outbound request, refund, period reopening or payout authority. BLOCKED for actual distribution by FIN-006: a selected licensed US payout partner, authorized funded trust accounts, verified owner and vendor payees and fresh execution authority are not held. FIN-002 still needs complete eligible source settlements and actual bank receipts. |
-| `AGENT-003` | Resolve guest issues through accepted field work | push-further | done | `src/cabin/issues/`; `src/cabin/work-orders/`; `src/cabin/inbox/inbound.ts`; `src/cabin/guest.ts`; `tests/issues.test.mjs`; `tests/work-orders.test.mjs`; `tests/recovery.test.mjs`; `docs/guest-issues.md` | Source-linked portal/inbox cases classify access, maintenance, cleaning and emergency reports against owner-approved instructions and current stay facts. Exact proposals bind active field staff, inspection and spending policy; declines retain history and require a reviewed replacement. Accepted work, photo evidence, named inspection, guest confirmation and a separately delayed recurrence check gate closure. Emergency reports prioritize immediate named-host notice with 911 instructions, without safety assurances or AI delay. Hosted appliance report, decline/replacement, inspected completion, actual delayed guest checks and emergency handover exercised at 1440 and 390; assignment, inspection, guest follow-up and emergency mail received with SPF/DKIM/DMARC passing. |
+| `RUNTIME-001` | Owner-run lifecycle and durable background work | target | partial | `tests/launch.test.mjs`; `tests/archive.test.mjs`; `tests/direct.test.mjs`; `tests/collection-support.mjs`; `tests/recovery-authority.test.mjs`; `tests/lifecycle.test.mjs`; `tests/message-interruption-support.mjs`; `tests/channel-agent.test.mjs`; `tests/finance.test.mjs`; `tests/recovery-browser.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Every payment, send and lock boundary reconciles without duplicate external effects. |
+| `AGENT-001` | Recover a disrupted stay through verified readiness | push-further | partial | `tests/recovery.test.mjs`; `tests/recovery-alternative-support.mjs`; `tests/channel-agent.test.mjs`; `tests/recovery-authority.test.mjs`; `tests/recovery-browser.mjs`; `tests/recovery-sandbox.mjs`; `tests/recovery-mail-sandbox.mjs`; `src/cabin/recovery/` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Cleaner cancellation and failed lock are followed through the same recovery case; Held-policy exact budget and relocation produce backup acceptance, photos and guest confirmation; New code and corrected owner net are reconciled; Interrupted held-policy work preserves every unresolved step and balance. Collision, approved native relocation and rescheduling, inspected preparation, guest confirmation, recurrence and original-owner adjustment are implemented and asserted. Channel-controlled or paid terms remain explicitly escalated until accepted at their source; pending channel outcomes and previous access removal prevent closure. Production SendGrid readiness mail is received and authenticated. Latest isolated Kwikset sandbox run confirmed initial programming and previous-code removal, then assigned the replacement failure because no matching provider code was visible; it never repeated the uncertain create. Remaining live sandbox proof: verified replacement programming and complete native recovery closure. All owned codes and the test connection were removed. |
+| `AGENT-002` | Close reservation-to-owner financial exceptions | push-further | partial | `src/cabin/finance/exceptions/`; `docs/financial-exceptions.md`; `tests/ledger.test.mjs`; `tests/financial-exceptions-browser.mjs`; `tests/archive.test.mjs`; `tests/financial-exceptions-archive.mjs` | Source-linked native cases and manually obtained provider records now support exact correction of unallocated native payout postings, preserving historical owner and entity and frozen statements. Legacy imported frozen statements now enter exact source review and receive linked later-period adjustments without rewriting their files; unmatched bank statements cannot resolve a bank-record request. Remaining: automatic provider-record pursuit, allocated and transferred correction workflows, legacy statement commission and paid costs not posted to the ledger, processor-funded corrections, full source and bank completeness and verified actual owner distribution. FIN-002 and FIN-006 external settlement and authorized transfer dependencies remain; local matching and unexecuted plans are not distribution evidence. BLOCKED for actual distribution by FIN-006: a selected licensed US payout partner, authorized funded trust accounts, verified owner and vendor payees and fresh execution authority are not held. FIN-002 still needs complete eligible source settlements and actual bank receipts. |
+| `AGENT-003` | Resolve guest issues through accepted field work | push-further | partial | `src/cabin/issues/`; `src/cabin/work-orders/`; `src/cabin/inbox/inbound.ts`; `src/cabin/guest.ts`; `tests/issues.test.mjs`; `tests/work-orders.test.mjs`; `tests/recovery.test.mjs`; `docs/guest-issues.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Inspected field work resolves both access failure and leaking appliance; Held company policy decides the exact dispatch classes. |
 | `AGENT-004` | Optimize profitable occupancy without breaking readiness | push-further | missing |  | No implementing flow in the audited tree. |
-| `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | done | `src/cabin/questions/`; `docs/portfolio-questions.md`; `tests/finance.test.mjs` — “portfolio questions reconcile a falling owner net to current and comparison report sources without changing the books” (natural question, cutoff and filters, exact current and comparison report totals, source citations, cash and accrual); “portfolio arrival and conversation questions retain explicit stale uncertainty and treat guest instructions only as cited data” (arrival risks, linked conversations, stale provider read, active-code redaction, unsupported questions and no unintended action); “portfolio questions fence rental owners, scoped staff, direct transports and changed grants” (unrelated owner, direct source URLs, staff action and property grants, revocation and changed ownership); “an exact approved portfolio investigation assigns one durable task and refuses missing consent, stale evidence and an unauthorized recipient” (exact approval, named assignment, audit, restart and duplicate refusal). `tests/allocations.test.mjs` — “FIN-003: frozen revenue allocations explain commission bases, fixed fees, tax, reserves and multiple owners across amendments” (owner-key question totals and source links for portal and native co-owner sessions). `tests/readiness-browser.test.mjs` — “portfolio questions on desktop and phone reconcile sources, show uncertainty and approve a named investigation by keyboard” and “rental-owner portfolio questions and their report citations stay within the owner’s homes on desktop and phone” (native staff and owner forms, report drill-downs, keyboard error recovery, assigned task, scope, overflow and accessibility at 1440 and 390). | |
-| `AGENT-006` | Bounded action authority and durable agent cases | push-further | done | `src/cabin/recovery/`; `src/cabin/connections/mail.ts`; `src/cabin/locks.ts`; `src/cabin/ui/recovery.ts`; `tests/recovery-authority.test.mjs`; `tests/recovery.test.mjs`; `docs/recovery-authority.md` | Separate owner-granted per-home action/provider scopes, time windows and cumulative compensation/cleaning ceilings fence the native recovery agent. Exact plans bind current stay, recipient, inventory, cleaner and terms; changed grants require reviewed continuation. Durable queued/started/acknowledged/uncertain effects stop at pause/revoke and reconcile provider evidence across restart without blind resend. A $75 credit under $100 posts a balanced owner adjustment automatically; $150 waits unsent for a person. Native grant, automatic credit, actual authenticated guest mail, provider outcomes and pause/resume/revoke used at 1440 and 390. Uncertain lock responses are isolated at the network edge; no live-lock acceptance is claimed. Bearer keys stay draft-only and human signature, payout and readiness doors remain separate. |
+| `AGENT-005` | Source-linked portfolio questions and actionable follow-up | push-further | partial | `src/cabin/questions/`; `docs/portfolio-questions.md`; `tests/finance.test.mjs`; `tests/allocations.test.mjs`; `tests/readiness-browser.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Held company policy computes and decides the investigation class. |
+| `AGENT-006` | Bounded action authority and durable agent cases | push-further | partial | `src/cabin/recovery/`; `src/cabin/connections/mail.ts`; `src/cabin/locks.ts`; `src/cabin/ui/recovery.ts`; `tests/recovery-authority.test.mjs`; `tests/recovery.test.mjs`; `docs/recovery-authority.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed recipient or booking refuses the old held action revision; Company policy cap and injected guest instructions cannot widen authority; The named company policy makes $75 autonomous and holds $150 for exact approval. |
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
-| `OPEN-001` | Free and open source under the MIT license | target | done | `LICENSE`; `package.json`; `src/cabin/people.ts`; `src/cabin/connections/store.ts`; `src/cabin/connections/ui.ts`; `src/cabin/connections/security-ui.ts`; `docs/free-source.md` | Public MIT source installs and creates its local owner without an author account or key. An anonymous public clone was used with 40 homes, 25 active invited staff and all 20 linked product areas without an author payment/upgrade gate; browser requests stayed on localhost. Desktop/phone provider cost and source-term disclosure preceded a scoped owner authorization. Providers collect their own fees; Cabin collects none. This free-access clause does not complete other unfinished PMS target clauses. |
+| `OPEN-001` | Free and open source under the MIT license | target | partial | `LICENSE`; `package.json`; `src/cabin/people.ts`; `src/cabin/connections/store.ts`; `src/cabin/connections/ui.ts`; `src/cabin/connections/security-ui.ts`; `docs/free-source.md` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Public source licence and declared package licence are MIT; Installation needs no author account or key; Every product area supports 40 homes and 25 staff without an author payment gate; Provider cost and its source are shown before activation. |
 | `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |
+| `FIN-010` | Exact internally reserved distribution plans | target | partial | `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md` | Bank reconciliation and internally reserved native-owner plans are implemented. Full exact payee/account/entity and net-liability proof must be judged; no actual execution is claimed. |
+| `FIN-011` | Verified ACH execution and returned distributions | target | missing | `src/cabin/finance/banking/`; `tests/ledger.test.mjs`; `tests/banking-browser.mjs`; `tests/archive.test.mjs`; `tests/banking-archive.mjs`; `docs/trust-banking.md` | Licensed-partner approval, funded trust arrangement, verified payees, execution authority and actual pending/settled/failed/returned transfers, bank return evidence, restored liability and corrected owner statement are absent. Stripe checkout and Plaid read credentials convey no payout authority. |
+| `SURFACE-001` | The rental action registry covers the contract | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-002` | Compute stay, exposure and financial classes | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-003` | Compute rental authority and regulated-data classes | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-004` | Rental record resources and change handoffs | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-005` | A stranger coordinator completes the seeded rental week | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-006` | Rental decisions retain exact source authority | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-007` | The rental overview reconciles the week | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |
+| `SURFACE-008` | Restore never reactivates rental authority | target | missing |  | The rental MCP adapter, computed classes and company-policy conformance journey for these outcomes are not implemented or asserted. |

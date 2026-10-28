@@ -12,7 +12,7 @@ A bank request is obtained only after an imported bank transaction is matched to
 
 Legacy statement commission or paid-cost amounts that were never posted to the ledger still require accounting reconciliation; retaining a statement link does not manufacture those postings.
 
-The case displays recorded owner payable, recorded distribution and the portion matched to bank evidence separately. It remains open. Matching local records does not establish an actual provider transfer, completeness of a source export, physical receipt of money or FIN-006 execution authority. The full AGENT-002 acceptance still requires actual owner-distribution evidence and the remaining provider workflows.
+The case displays recorded owner payable, recorded distribution and the portion matched to bank evidence separately. It remains open. Matching local records does not establish an actual provider transfer, completeness of a source export, physical receipt of money or FIN-011 execution authority. The full AGENT-002 acceptance still requires actual owner-distribution evidence and the remaining provider workflows.
 
 Ct approved the interim installation-owner-only boundary on 23 October 2026: exact local append-only corrections retain their reason and before and after evidence. Case access and decisions stay with the installation owner. Accountants retain their existing finance tools; this feature grants no additional access or external authority. Every change records actor, revision and history. Archive export keeps evidence but pauses cases; **Review current sources** retires pending proposals before new work. Property and guest erasure retains case accounting evidence under the existing reviewed accounting-retention policy.
 

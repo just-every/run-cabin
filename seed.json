@@ -19,7 +19,6 @@
     {
       "id": "channel-calendars",
       "clauses": [
-        "CABIN-02",
         "SYNC-009",
         "RES-001",
         "RES-002"
@@ -28,70 +27,68 @@
     {
       "id": "direct-bookings",
       "clauses": [
-        "CABIN-03",
+        "WEB-001",
         "WEB-003"
       ]
     },
     {
       "id": "turnovers-and-door-codes",
       "clauses": [
-        "CABIN-04"
+        "OPS-001"
       ]
     },
     {
       "id": "cleaner-completion",
       "clauses": [
-        "CABIN-05",
+        "EVIDENCE-001",
         "OPS-002"
       ]
     },
     {
       "id": "readiness-and-maintenance",
       "clauses": [
-        "CABIN-06"
+        "OPS-003"
       ]
     },
     {
       "id": "guest-inbox",
       "clauses": [
-        "CABIN-07"
+        "MESSAGE-003"
       ]
     },
     {
       "id": "stay-recovery",
       "clauses": [
-        "CABIN-08"
+        "AGENT-001"
       ]
     },
     {
       "id": "owner-statements-and-portal",
       "clauses": [
-        "CABIN-09",
         "FIN-004"
       ]
     },
     {
       "id": "books",
       "clauses": [
-        "CABIN-10"
+        "FIN-007"
       ]
     },
     {
       "id": "move-in",
       "clauses": [
-        "CABIN-11"
+        "MIGRATE-001"
       ]
     },
     {
       "id": "agent-access",
       "clauses": [
-        "CABIN-12"
+        "CONTROL-002"
       ]
     },
     {
       "id": "backup-and-restore",
       "clauses": [
-        "CABIN-13",
         "DATA-001"
       ]
     },

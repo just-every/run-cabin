@@ -43,7 +43,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | OPS-007 | missing | Supported hub/offline-PIN provider accounts and physical devices for time/revocation proof. |
 | OPS-008 | partial | Guest/lock checkout events, provider-confirmed code state and complete departures list. |
 | FIN-002 | partial | Eligible automatic USD payout, partner settlement APIs, FX, actual bank receipt and exception closure. Supplied Stripe test account settles AUD. |
-| FIN-006 | partial | Native source-backed trust-bank model and reconciliation exist. Actual distributions and returned ACH need selected licensed US partner approval, authorized funded trust accounts, verified payees and execution authority; the owner-only unexecuted planning boundary awaits ct. |
+| FIN-006 | partial | Native source-backed trust-bank model and reconciliation exist. Actual distributions and returned ACH need selected licensed US partner approval, authorized funded trust accounts, verified payees and execution authority; RL-101 adopts the FIN-010 owner-only unexecuted planning boundary with its execution-authority rider. |
 | FIN-007 | done | Closed 26 October: native authorized QBO month, refund, expense, exact totals, repeat and external-edit handling proved by `tests/qbo-sandbox.mjs` and `evidence/fin-007-qbo-sandbox-2026-10-26.json`. |
 | FIN-008 | partial | Authorized statutory filing/remittance partner; nonmonthly periods, taxable-base differences and jurisdiction/rate lookup. |
 | FIN-009 | missing | Authorized US tax-reporting partner/account, taxpayer identity custody, filing/correction acceptance. |
@@ -60,7 +60,7 @@ These are all remaining target/push-further clauses: **27 partial and 25 missing
 | INTERFACE-001 | partial | Full accessibility/error-recovery journeys, pagination and 40-home/three-year volume proof; complete reports and target booking/inbox workflows. |
 | RUNTIME-001 | partial | Remaining provider job implementations/accounts plus interrupted external acceptance and clean macOS/Linux lifecycle proof. |
 | AGENT-001 | partial | Automatic relocation/rescheduling, collision/recurrence handling and real channel/lock readiness evidence. |
-| AGENT-002 | partial | Source-seeking reconciliation worker, actual bank/settlement evidence and approved distribution through FIN-006. |
+| AGENT-002 | partial | Source-seeking reconciliation worker, actual bank/settlement evidence and approved distribution through FIN-011. |
 | AGENT-004 | missing | Occupancy optimization with rate, inventory, capacity and owner-contribution constraints; live publication depends on channel/pricing accounts. |
 | AGENT-005 | missing | Source-linked portfolio question and approved follow-up implementation, with complete reports/data scope. |
 | BOUNDARY-001 | missing | Named approved OTA, payments/banking, tax, protection and telecom partners plus end-to-end acknowledged product delivery. |

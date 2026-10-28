@@ -3,34 +3,141 @@
     {
       "title": "Start here",
       "pages": [
-        { "slug": "getting-started", "title": "Getting started", "file": "getting-started.md", "summary": "Start Cabin on your own computer in one line, confirm yourself as the owner and open the app." },
-        { "slug": "homes-and-people", "title": "Homes and people", "file": "homes-and-people.md", "summary": "Add each home with its owner and commission, then give managers and cleaners their own access." },
-        { "slug": "hosting", "title": "Put Cabin online", "file": "hosting.md", "summary": "Configure private mail and Stripe settings, deploy to your Cloudflare account, back up hosted data and remove a deployment." }
+        {
+          "slug": "getting-started",
+          "title": "Getting started",
+          "file": "getting-started.md",
+          "summary": "Start Cabin on your own computer in one line, confirm yourself as the owner and open the app."
+        },
+        {
+          "slug": "homes-and-people",
+          "title": "Homes and people",
+          "file": "homes-and-people.md",
+          "summary": "Add each home with its owner and commission, then give managers and cleaners their own access."
+        },
+        {
+          "slug": "hosting",
+          "title": "Put Cabin online",
+          "file": "hosting.md",
+          "summary": "Configure private mail and Stripe settings, deploy to your Cloudflare account, back up hosted data and remove a deployment."
+        }
       ]
     },
     {
       "title": "Run your homes",
       "pages": [
-        { "slug": "calendars", "title": "Channel calendars", "file": "calendars.md", "summary": "Connect each home's Airbnb, Vrbo and Booking.com calendar links, publish Cabin's own links back, read the calendar grid and take requests without double bookings." },
-        {"slug": "direct-bookings", "title": "Direct bookings", "file": "direct-bookings.md", "summary": "Publish each home's booking page, set stay rules and taxes, collect Stripe test payments, and retain signed agreements, ID checks and damage holds."},
-        { "slug": "inbox", "title": "Guest inbox", "file": "inbox.md", "summary": "One thread per guest across stays, email and texts; check-in details, checkout reminders and review requests on time; drafted replies that wait for your nod." },
-        { "slug": "turnovers", "title": "Turnovers", "file": "turnovers.md", "summary": "Every stay makes its turnover and door codes; the cleaner is emailed, marks the home ready with photos, and Readiness shows which homes are ready." },
-        { "slug": "statements", "title": "Owner statements", "file": "statements.md", "summary": "Import channel payout CSVs, match stays, review management fees and owner payout, approve and deliver frozen statements, and export to Pantry or QuickBooks." },
-        { "slug": "financial-exceptions", "title": "Financial exception cases", "file": "financial-exceptions.md", "summary": "Investigate split settlements, missing fees and refunds, review source-linked corrections and keep unresolved owner distributions visible." },
-        { "slug": "portfolio-questions", "title": "Portfolio questions", "file": "portfolio-questions.md", "summary": "Ask scoped questions about owner net, arrivals, reservations and saved conversations, follow their sources and approve assigned investigations." },
-        { "slug": "agent-access", "title": "Agent access", "file": "agent-access.md", "summary": "Give the agent you already use a token to prepare calendar reviews, turnovers and statements for a person to approve." }
+        {
+          "slug": "calendars",
+          "title": "Channel calendars",
+          "file": "calendars.md",
+          "summary": "Connect each home's Airbnb, Vrbo and Booking.com calendar links, publish Cabin's own links back, read the calendar grid and take requests without double bookings."
+        },
+        {
+          "slug": "direct-bookings",
+          "title": "Direct bookings",
+          "file": "direct-bookings.md",
+          "summary": "Publish each home's booking page, set stay rules and taxes, collect Stripe test payments, and retain signed agreements, ID checks and damage holds."
+        },
+        {
+          "slug": "inbox",
+          "title": "Guest inbox",
+          "file": "inbox.md",
+          "summary": "One thread per guest across stays, email and texts; check-in details, checkout reminders and review requests on time; drafted replies that wait for your nod."
+        },
+        {
+          "slug": "turnovers",
+          "title": "Turnovers",
+          "file": "turnovers.md",
+          "summary": "Every stay makes its turnover and door codes; the cleaner is emailed, marks the home ready with photos, and Readiness shows which homes are ready."
+        },
+        {
+          "slug": "statements",
+          "title": "Owner statements",
+          "file": "statements.md",
+          "summary": "Import channel payout CSVs, match stays, review management fees and owner payout, approve and deliver frozen statements, and export to Pantry or QuickBooks."
+        },
+        {
+          "slug": "financial-exceptions",
+          "title": "Financial exception cases",
+          "file": "financial-exceptions.md",
+          "summary": "Investigate split settlements, missing fees and refunds, review source-linked corrections and keep unresolved owner distributions visible."
+        },
+        {
+          "slug": "portfolio-questions",
+          "title": "Portfolio questions",
+          "file": "portfolio-questions.md",
+          "summary": "Ask scoped questions about owner net, arrivals, reservations and saved conversations, follow their sources and approve assigned investigations."
+        },
+        {
+          "slug": "agent-access",
+          "title": "Agent access",
+          "file": "agent-access.md",
+          "summary": "Give the agent you already use a token to prepare calendar reviews, turnovers and statements for a person to approve."
+        }
       ]
     },
     {
       "title": "Keep your data",
       "pages": [
-        { "slug": "move-in", "title": "Move in your homes", "file": "move-in.md", "summary": "Upload Guesty, Hostaway or OwnerRez exports, review records and refusals, reconcile totals and sign off or undo." },
-        { "slug": "move-in-formats", "title": "Provider export formats", "file": "move-in-formats.md", "summary": "Documented provider CSV columns, missing export data and the supplementary cutover file." },
-        { "slug": "backup", "title": "Back up, restore and erase", "file": "backup.md", "summary": "Export the whole installation to one archive, restore it into a fresh copy, and erase a home for good." },
-        { "slug": "erasure", "title": "Erasure and retention", "file": "erasure.md", "summary": "Review and erase personal data, inspect legal holds and receipts, and prevent erased contacts being reused." },
-        { "slug": "management-allocations", "title": "Management allocations", "file": "management-allocations.md", "summary": "Allocate source-backed receipts, shared invoices, reserves and multiple owner interests under frozen agreements." },
-        { "slug": "portable-records", "title": "Portable records", "file": "portable-records.md", "summary": "Inspect the archive schema, retained evidence, excluded credentials and review steps before restarting restored work." },
-        { "slug": "commands", "title": "Command reference", "file": "commands.md", "summary": "Every command the app and the agent door accept, with its input and who may run it." }
+        {
+          "slug": "move-in",
+          "title": "Move in your homes",
+          "file": "move-in.md",
+          "summary": "Upload Guesty, Hostaway or OwnerRez exports, review records and refusals, reconcile totals and sign off or undo."
+        },
+        {
+          "slug": "move-in-formats",
+          "title": "Provider export formats",
+          "file": "move-in-formats.md",
+          "summary": "Documented provider CSV columns, missing export data and the supplementary cutover file."
+        },
+        {
+          "slug": "backup",
+          "title": "Back up, restore and erase",
+          "file": "backup.md",
+          "summary": "Export the whole installation to one archive, restore it into a fresh copy, and erase a home for good."
+        },
+        {
+          "slug": "erasure",
+          "title": "Erasure and retention",
+          "file": "erasure.md",
+          "summary": "Review and erase personal data, inspect legal holds and receipts, and prevent erased contacts being reused."
+        },
+        {
+          "slug": "management-allocations",
+          "title": "Management allocations",
+          "file": "management-allocations.md",
+          "summary": "Allocate source-backed receipts, shared invoices, reserves and multiple owner interests under frozen agreements."
+        },
+        {
+          "slug": "portable-records",
+          "title": "Portable records",
+          "file": "portable-records.md",
+          "summary": "Inspect the archive schema, retained evidence, excluded credentials and review steps before restarting restored work."
+        },
+        {
+          "slug": "commands",
+          "title": "Command reference",
+          "file": "commands.md",
+          "summary": "Every command the app and the agent door accept, with its input and who may run it."
+        }
+      ]
+    },
+    {
+      "title": "Contract and authority",
+      "pages": [
+        {
+          "slug": "workflow-semantics",
+          "title": "Workflow semantics",
+          "file": "workflow-semantics.md",
+          "summary": "Detailed reservation, report, guest-verification and payment rules behind the contract."
+        },
+        {
+          "slug": "channel-terms",
+          "title": "Channel terms and custody",
+          "file": "channel-terms.md",
+          "summary": "Read each channel\u2019s terms risks before granting session and action access."
+        }
       ]
     }
   ]
