@@ -1,3 +1,4 @@
+import { assertAccount } from './accounts'
 import { queuedAuthority } from '../permissions/commands'
 import type { Bindings } from '../../auth.server'
 import { need } from '../model'
@@ -8,6 +9,7 @@ import { overlaps } from '../inventory'
 import type { Action,Profile } from './types'
 /** Recheck at the browser-effect boundary, including provider revoke and changed inventory. */
 export async function authorizeEffect(env:Bindings,a:Action,profile:Profile){
+ await assertAccount(env.DB,profile,a)
  need(await queuedAuthority(env.DB,a.authority,a.authorityAction??'calendar.approve',a.propertyId),'The initiating team grant changed before channel execution',403)
  need(profile.status===(a.kind==='connect'?'connecting':'connected'),'Channel profile is paused',409)
  await sharingAllowed(env.DB,'calendars',a.kind==='connect'||a.kind.startsWith('read-')?'calendar:read':'calendar:publish',a.propertyId)

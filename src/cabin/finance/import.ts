@@ -1,3 +1,7 @@
+import { accountIdFor,accountRows } from '../channel-agent/accounts'
+import { rows } from '../channel-agent/store'
+import { PROFILE,type Profile } from '../channel-agent/types'
+import type { Context } from '../model'
 import { promotionPayments } from '../promotions/settlement'
 import type { Bindings } from '../../auth.server'
 import { record, type AuditActor } from '../audit/write'
@@ -8,7 +12,7 @@ import { parsePayoutCsv, stripePayoutLines, type SourceLine } from './sources'
 import type { Payout } from './types'
 const sameRef=(uid:string,ref:string)=>{const u=uid.toLowerCase(),r=ref.toLowerCase();return u===r||(r.length>=6&&u.split(/[^a-z0-9]+/).includes(r))}
 export function candidates(line:SourceLine,bookings:Booking[],propertyId?:string|null){
- return bookings.filter(b=>(!propertyId||b.propertyId===propertyId)&&b.channel===(line.source==='stripe'?'direct':line.source)&&(b.kind??'stay')==='stay'&&(
+ return bookings.filter(b=>(!propertyId||b.propertyId===propertyId)&&b.channel===(line.source==='stripe'?'direct':line.source)&&(b.kind??'stay')==='stay'&&(!(line as Payout).channelAccountId||b.channelAccountId===(line as Payout).channelAccountId)&&(
  sameRef(b.uid,line.reference)||!!(b.lifecycle?.sourceId&&sameRef(b.lifecycle.sourceId,line.reference))||!!(b.channelRef&&sameRef(b.channelRef,line.reference))||!!(line.start&&line.end&&b.start.slice(0,10)===line.start&&b.end.slice(0,10)===line.end)))
 }
 function matches(line:SourceLine,bookings:Booking[],direct:{paymentId?:string;bookingId:string;promotion?:boolean}[],propertyId?:string|null){
@@ -26,7 +30,7 @@ function unchanged(old:Payout,line:SourceLine){
   (!old.transactionId||!line.transactionId||old.transactionId===line.transactionId)&&
   (!old.evidenceReference||!line.evidenceReference||old.evidenceReference===line.evidenceReference)
 }
-export async function financeImport(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>){
+export async function financeImport(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>,channelRead?:{accountId:string;check:(c:Context)=>Promise<void>}){
  manager(actor);await assertLive(env.DB,actor)
  if(name==='payout.match')return mutate(env.DB,actor,name,async c=>{
   const row=c.data.payouts.find(r=>r.id===text(input.id,'payout line'));need(row,'Payout line not found',404);need(!row.statementId,'A frozen statement already contains this line',409)
@@ -52,11 +56,17 @@ export async function financeImport(env:Bindings,actor:Actor,name:string,input:R
   lines=parsePayoutCsv(input.source,text(input.csv,'payout CSV',2_000_000),evidence)
  }
  const direct=[...await stays(env.DB),...await promotionPayments(env.DB)]
- return mutate(env.DB,actor,name,c=>{
+ return mutate(env.DB,actor,name,async c=>{
+  if(channelRead)await channelRead.check(c)
+  const profiles=await rows<Profile>(c.db,PROFILE)
+  const accounts=new Set(profiles.filter(p=>p.propertyId===propertyId&&p.channel===input.source).map(accountIdFor))
+  const accountId=channelRead?.accountId??(accounts.size===1?[...accounts][0]:undefined)
+  const accountName=(await accountRows(c.db,profiles)).find(a=>a.id===accountId)?.nickname
   if(propertyId)need(c.data.properties.some(p=>p.id===propertyId),'Home not found',404)
   const imported:Payout[]=[],duplicates:string[]=[]
-  for(const line of lines){
-   const old=c.data.payouts.find(r=>r.source===line.source&&r.externalId===line.externalId)
+  for(const sourceLine of lines){
+   const line={...sourceLine,...(accountId?{channelAccountId:accountId,channelAccountName:accountName}:{})}
+   const old=c.data.payouts.find(r=>r.source===line.source&&r.externalId===line.externalId&&(r.channelAccountId===accountId||!r.channelAccountId&&r.propertyId===propertyId))
    if(old){need(unchanged(old,line),'A provider line changed after import; reconcile the source report before posting',409);need(!propertyId||old.propertyId===propertyId,'This provider line is already imported for another home',409);duplicates.push(old.id);continue}
    const eligible=matches(line,c.data.bookings,direct,propertyId)
    const b=eligible.length===1?eligible[0]:null

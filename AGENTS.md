@@ -134,3 +134,24 @@ their maintenance.
 
 Pinned reference: https://github.com/runeditrun/base/blob/ada9f574d8a7247edc3a1180b593ad182b1fbb37/TANSTACK-START-MIGRATION.md
 Native-session/runtime evidence: https://github.com/runeditrun/base/tree/ada9f574d8a7247edc3a1180b593ad182b1fbb37/default-seed
+
+## Lander-Regenerate
+
+CONTRACT.md owns clause status, Evidence and Gap. Keep existing acceptance
+journey prose and older homepage assessments intact. For touched clause rows:
+
+```sh
+node scripts/cabin-contract-docs.mjs write --clauses SYNC-010
+node scripts/cabin-contract-docs.mjs check --clauses SYNC-010
+```
+
+The generator updates the selected acceptance evidence, its bounded claims
+projection and all Status summary counts. Pass additional touched clause IDs
+after `--clauses`. Check without arguments validates all managed projections.
+After the last source, test or documentation edit, regenerate and check the
+edition source lock:
+
+```sh
+node scripts/edition-authoring/cli.mjs lock
+node scripts/edition-authoring/cli.mjs check
+```

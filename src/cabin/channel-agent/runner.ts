@@ -74,7 +74,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
    const state=profile.stateSealed?await unseal(env.SESSION_SECRET,`channel-profile:${profile.id}`,profile.stateSealed):null
    if(profile.stateSealed&&!state){profile.status='needs_you';profile.challenge='signin';save(c,PROFILE,profile);return {job:null}}
    candidate.status='running';candidate.attempts++;candidate.lease=newId();candidate.leaseUntil=new Date(Date.now()+20*60000).toISOString();save(c,ACTION,candidate)
-   return {job:{id:candidate.id,lease:candidate.lease,kind:candidate.kind,channel:candidate.channel,propertyId:candidate.propertyId,listingUrl:profile.listingUrl,readUrl:candidate.readUrl,profileGeneration:candidate.profileGeneration,start:candidate.start,end:candidate.end,bookingId:candidate.bookingId,storageState:state?JSON.parse(state):null}}
+   return {job:{id:candidate.id,lease:candidate.lease,kind:candidate.kind,channel:candidate.channel,propertyId:candidate.propertyId,accountId:profile.accountId,listingId:profile.listingId,listingUrl:profile.listingUrl,readUrl:candidate.readUrl,profileGeneration:candidate.profileGeneration,start:candidate.start,end:candidate.end,bookingId:candidate.bookingId,storageState:state?JSON.parse(state):null}}
   }
   need(p.op==='complete'||p.op==='checkpoint','Unknown runner operation')
   const a=actions.find(a=>a.id===p.id),profile=profiles.find(r=>r.id===a?.profileId)
@@ -83,6 +83,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
    need(a.kind!=='connect','Sign-in screenshots are never retained');await authorizeEffect(env,a,profile)
    need(p.before,'Operational screenshot required');a.beforeSealed=await screenshot(env,c,a.id,'before',p.before);save(c,ACTION,a);return {recorded:true}
   }
+  await authorizeEffect(env,a,profile)
   need(['succeeded','needs_you','failed','uncertain'].includes(String(p.outcome)),'Invalid browser outcome')
   const outcome=(readError?'needs_you':p.outcome) as Action['status']
   const isRead=a.kind.startsWith('read-')
