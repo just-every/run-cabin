@@ -150,5 +150,6 @@ test('source inquiries require exact reviewed identity, deduplicate replay and l
   await source.connect();await source.read(undefined,'needs_you');await source.read([{...sourceInquiry,status:'confirmed'}],'needs_you');await source.read([{...sourceInquiry,reservationId:'synthetic-cabin-new-inquiry'}],'needs_you')
   s=await h.state();assert.ok(s.inquiries.every(q=>q.status==='erased'),'erasure covers the entire reviewed source conversation');assert.ok(s.privacy.receipts.some(r=>r.entity==='inquiry'));assert.ok(s.messages.every(m=>m.status==='discarded'));assert.equal((await h.db.prepare("SELECT COUNT(*) n FROM cb_records WHERE kind='channelAgentEvidence'").first()).n,0,'erasure withdraws source screenshots');assert.doesNotMatch(JSON.stringify(s.inquiries),/Synthetic guest|May we stay/)
   assert.equal((await h.send('/app/reservations',undefined,source.cleaner.cookie)).status,403)
+  const {inquiryErasureJourney}=await import('./inquiries-support.mjs');await inquiryErasureJourney()
  }finally{await h.close()}
 })
