@@ -1,3 +1,4 @@
+import { inquiriesPanel } from '../reservations/inquiries-ui'
 import { lifecyclePreference } from '../inbox/lifecycle-ui'
 import { h, heading, form, hidden, empty, propertyName, select, area } from './shared'
 import { chip, atHome } from './ops'
@@ -61,7 +62,7 @@ function conversation(s: any, t: Thread, p:InboxPage) {
   const lastIn = p.latestIncoming
   const compose = browserRead(s,lastIn)?channelReply(lastIn):form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="${h(inboxLink(p,{thread:null,messages:null}))}">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
-  ${contact(s, t)}${pagination(p,true)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${teamPanel(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
+  ${inquiriesPanel(s,t.id)}${contact(s, t)}${pagination(p,true)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${teamPanel(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
 }
 export function inbox(s: any, thread?: string | null) {
   const p:InboxPage = s.inboxPage ?? localInboxPage(s,thread), open=p.open

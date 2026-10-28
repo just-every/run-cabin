@@ -1,3 +1,4 @@
+import { syncInquiryDeadlines, inquiryDeadlinesDue } from './inquiries'
 import { type Context, type Data, newId } from '../../model'
 import { wall, zoneAbbr } from '../../clock'
 import { threads, type Thread } from '../threads'
@@ -39,6 +40,7 @@ export function syncTeam(c: Context) {
   } else if (!waiting && row.status !== 'answered') Object.assign(row, { status: 'answered', dueAt: null })
   if (row.status === 'open' && row.dueAt && Date.parse(row.dueAt) <= now) escalate(c, row, t, team)
  }
+ syncInquiryDeadlines(c)
  for (const row of c.data.threadCases) { const before = c.before.threadCases.find(r => r.id === row.id); if (!before || JSON.stringify({ ...before, revision: '' }) !== JSON.stringify({ ...row, revision: '' })) row.revision = newId() }
 }
 const time = (c: Context, row: ThreadCase, iso: string) => { const zone = zoneOf(c.data, row.propertyId); return `${wall(Date.parse(iso), zone).replace('T', ' ')} ${zoneAbbr(Date.parse(iso), zone)}` }
@@ -66,7 +68,7 @@ function escalate(c: Context, row: ThreadCase, t: Thread, team: TeamSettings) {
  row.assigneeId ??= to.id
  notifyMember(c, row, t, to.id, `Guest thread unanswered: ${row.guest}`, `${row.guest} has not had a reply in time (escalation ${row.escalations.length}). Accept the thread in Cabin to stop further escalation.`)
 }
-export function dueCases(data: Data, now: number) { const team = teamSettings(data); return !!team.since && data.threadCases.some(r => r.status === 'open' && r.dueAt && Date.parse(r.dueAt) <= now) }
+export function dueCases(data: Data, now: number) { const team = teamSettings(data); return inquiryDeadlinesDue(data,now) || !!team.since && data.threadCases.some(r => r.status === 'open' && r.dueAt && Date.parse(r.dueAt) <= now) }
 /** A guest's erasure removes their words from retained cases; the case keeps its history without them. */
 export function eraseCases(c: Context, bookingIds: Set<string>) {
  for (const row of c.data.threadCases.filter(r => r.bookingId && bookingIds.has(r.bookingId))) {

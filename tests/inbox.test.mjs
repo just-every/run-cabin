@@ -265,3 +265,8 @@ test('guest search covers retained message history and explicit guest/message pa
 
  } finally {await h.close()}
 })
+
+test('source inquiry deadlines reopen assigned team follow-up across restart without inventing channel expiry',async()=>{
+ const {inquirySource,inquiryClock,inquiryDeadlineJourney}=await import('./inquiries-support.mjs'),h=await harness({now:inquiryClock})
+ try{await inquiryDeadlineJourney(h,await inquirySource(h))}finally{await h.close()}
+})
