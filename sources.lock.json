@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "eb65eaabd422802bb5cb0cd0ead13d8710953fb1b945b380d6b0841d646f3497",
+      "sha256": "97221a59e38369a974f4ad50985ea7bb854ff8cf383d9520a255f6c97d273306",
       "executable": false
     },
     "AGENTS.md": {
@@ -1248,7 +1248,7 @@
       "executable": false
     },
     "src/base/contract-docs.mjs": {
-      "sha256": "50779f8e4131a334bf84cc8070ae91056b544ab1bf6661b32ce08f0ad3e9eb13",
+      "sha256": "241afc52a58ab926b4550a38ab2dfe3fc3f895c4b70d34b397d2f700660609ee",
       "executable": false
     },
     "src/base/contract-filter.ts": {
