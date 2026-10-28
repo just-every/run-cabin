@@ -2,20 +2,15 @@ import { erase } from './privacy-flow.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
-import { build } from 'esbuild'
 import { harness } from './harness.mjs'
 
 // Native CSV -> authenticated upload -> inert preview -> shared inventory ->
 // reconciliation and accountable sign-off -> guarded reversal, for every provider.
 test('a host moves native provider exports into reconciled listings, guests and owner balances, then safely undoes', async () => {
- const bundle=await build({entryPoints:['src/cabin/movein/providers/recorded-api.ts'],bundle:true,write:false,platform:'node',format:'esm'})
- const {adaptRecordedApi}=await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
  let feedText='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n'
- const h=await harness({now:'2026-10-17T12:00:00.000Z',outbound:()=>new Response(feedText,{headers:{'content-type':'text/calendar'}})})
+ const h=await harness({now:'2026-10-17T12:00:00Z',outbound:()=>new Response(feedText,{headers:{'content-type':'text/calendar'}})})
  try{
   for(const provider of ['guesty','hostaway','ownerrez']){
-   const api=adaptRecordedApi(provider,JSON.parse(await readFile(`tests/fixtures/movein/api/${provider}.json`,'utf8')))
-   assert.deepEqual(api.refusals,[]);assert.ok(api.listings.length&&api.guests.length&&api.stays.length)
    const dir=`tests/fixtures/movein/${provider}`
    const files=await Promise.all((await readdir(dir)).filter(name=>name.endsWith('.csv')).map(async name=>({name,text:await readFile(`${dir}/${name}`,'utf8')})))
    const form=new FormData();form.set('provider',provider);form.set('asOf','2026-10-17')

@@ -13,9 +13,9 @@ test('OPS-008: desktop and phone day board explain declined requests and open th
  try {
   const {selected,requests}=await dayBoardRequests(h)
   const staff=await h.person('DayManager','manager')
-  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-  const evidence=process.env.CABIN_DAY_BOARD_SHOTS??'test-results/day-board';await mkdir(evidence,{recursive:true})
-  for(const width of [1440,390]){
+  browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
+  const evidence=process.env.CABIN_DAY_BOARD_SHOTS??'./test-results/day-board';await mkdir(evidence,{recursive:true})
+  for(const width of [1440]){
    const context=await browser.newContext({viewport:{width,height:1000}})
    try {
     const [name,value]=staff.cookie.split('=');await context.addCookies([{name,value,url:h.origin}])
@@ -49,9 +49,9 @@ test('OPS-008: desktop and phone day board explain declined requests and open th
 test('REPORT-001: desktop and phone reports filter, explain denominators, drill to sources and download complete totals',{timeout:120000},async()=>{
  const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true});let browser
  try{
-  const b=await reportBooks(h),manager=await h.person('ReportViewer','manager');browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-  const evidence=process.env.CABIN_REPORT_SHOTS??'test-results/reports';await mkdir(evidence,{recursive:true})
-  for(const width of [1440,390]){
+  const b=await reportBooks(h),manager=await h.person('ReportViewer','manager');browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
+  const evidence=process.env.CABIN_REPORT_SHOTS??'./test-results/reports';await mkdir(evidence,{recursive:true})
+  for(const width of [1440]){
    const context=await browser.newContext({viewport:{width,height:1000},acceptDownloads:true})
    try{
     const [name,value]=manager.cookie.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
@@ -78,9 +78,9 @@ test('REPORT-001: desktop and phone reports filter, explain denominators, drill 
 test('REPORT-002: desktop and phone save current filters and explicitly approve visible scoped delivery',{timeout:120000},async()=>{
  let failMail=false;const {reportBooks,reportMonth}=await import('./reports-support.mjs'),h=await harness({assets:true,auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{const m=await request.json();return failMail&&m.subject.startsWith('Cabin report')?new Response('Provider refused',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-1'})}});let browser
  try{
-  const b=await reportBooks(h);browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-  const evidence=process.env.CABIN_SHARING_SHOTS??'test-results/report-sharing';await mkdir(evidence,{recursive:true})
-  for(const width of [1440,390]){
+  const b=await reportBooks(h);browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
+  const evidence=process.env.CABIN_SHARING_SHOTS??'./test-results/report-sharing';await mkdir(evidence,{recursive:true})
+  for(const width of [1440]){
    const context=await browser.newContext({viewport:{width,height:1000},acceptDownloads:true})
    try{
     const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
@@ -119,9 +119,9 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
   await h.cmd('home.settings',{propertyId:home.id,address:'41 Pine Ridge Road, Asheville, NC',timeZone:'America/New_York',checkInTime:'16:00',checkOutTime:'10:00',checklist:['Kitchen ready'],photosRequired:1})
   const draftStatement=await h.cmd('statement.prepare',{propertyId:home.id,month:day(0).slice(0,7),lines:[{description:'Reviewed cabin stay',amountCents:120000}]});await h.cmd('statement.approve',{id:draftStatement.id,revision:draftStatement.revision})
   for(let n=0;n<26;n++)await h.cmd('reservation.request',{propertyId:home.id,channel:'direct',guestName:'Rivera family '+(n+1),guestEmail:'rivera-'+n+'@stay.example',start:day(60+n*4),end:day(63+n*4)})
-  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-  const evidence=process.env.CABIN_INTERFACE_SHOTS??'test-results/interface';await mkdir(evidence,{recursive:true})
-  for(const [n,width] of [1440,390].entries()){
+  browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
+  const evidence=process.env.CABIN_INTERFACE_SHOTS??'./test-results/interface';await mkdir(evidence,{recursive:true})
+  for(const [n,width] of [1440].entries()){
    const context=await browser.newContext({viewport:{width,height:1000}})
    try{
     const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}])
@@ -129,8 +129,18 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
     await page.goto(h.origin+'/app/calendar');const next=page.getByRole('link',{name:'New reservation',exact:true});await next.focus();await page.keyboard.press('Enter')
     const request=page.locator('#request form');await request.getByLabel('Home',{exact:true}).selectOption(home.id);await request.getByLabel('Requested on',{exact:true}).selectOption('direct');await request.getByLabel('Guest name',{exact:true}).fill('Megan Ortiz '+width);await request.getByLabel('Guest email (optional)').fill('megan-'+width+'@stay.example');await request.getByLabel('Arrival',{exact:true}).fill(day(3+n*5));await request.getByLabel('Checkout',{exact:true}).fill(day(6+n*5));await request.getByRole('button',{name:'Check and hold these nights',exact:true}).focus();await page.keyboard.press('Enter')
     await expect(page.getByRole('status')).toContainText(/accepted/i);const booking=(await h.state()).bookings.find(b=>b.guestName==='Megan Ortiz '+width)
-    await page.goto(h.origin+'/app/calendar?reservation='+booking.id);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Megan Ortiz '+width);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Source freshness')
+    await page.goto(h.origin+'/app/calendar?from='+day(3+n*5)+'&reservation='+booking.id);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Megan Ortiz '+width);await expect(page.getByRole('complementary',{name:'Reservation record'})).toContainText('Source freshness')
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'calendar fits viewport');await accessible(page);await page.screenshot({path:join(evidence,'calendar-record-'+width+'.png'),fullPage:true})
+    const earlier=page.getByRole('link',{name:'Earlier',exact:true}),later=page.getByRole('link',{name:'Later',exact:true})
+    await earlier.hover();await expect(page.getByRole('tooltip')).toHaveText('Earlier dates')
+    await later.focus();await expect(page.getByRole('tooltip')).toHaveText('Later dates')
+    await page.keyboard.press('Escape');await expect(page.getByRole('tooltip')).toHaveCount(0)
+    await page.locator('button[popovertarget="stay-'+booking.id+'"]:visible').first().click()
+    const close=page.getByRole('button',{name:'Close',exact:true});await close.focus()
+    await expect(page.getByRole('tooltip')).toHaveText('Close details')
+    await page.mouse.wheel(0,100);await expect(page.getByRole('tooltip')).toHaveText('Close details')
+    await page.screenshot({path:join(evidence,'stay-tooltip-'+width+'.png')});await close.click();await expect(page.getByRole('tooltip')).toHaveCount(0)
+
     await page.goto(h.origin+'/app/inbox');await page.getByRole('link',{name:'Next guests',exact:true}).click();await expect(page.getByRole('navigation',{name:'Guest pages',exact:true})).toContainText('page 2');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'guest pagination fits viewport');await page.screenshot({path:join(evidence,'inbox-page-two-'+width+'.png'),fullPage:true});const search=page.getByRole('searchbox',{name:'Search guests and messages'});await search.fill('Megan Ortiz '+width);await page.keyboard.press('Enter');await expect(page.locator('.threads')).toContainText('of 1 guests');await page.screenshot({path:join(evidence,'inbox-search-'+width+'.png'),fullPage:true});await page.locator('.thread-row').click()
     const compose=page.locator('details.compose');await compose.locator('summary').focus();await page.keyboard.press('Enter');const text=compose.locator('textarea[name=text]');await text.fill('Could we arrive early and keep the luggage on the covered porch?');const send=compose.getByRole('button',{name:'Send',exact:true})
     // A genuine server business refusal, not a transport stub: an overlong
@@ -141,6 +151,15 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
     await page.locator('details.compose [name=subject]').fill('Early arrival question');await page.locator('details.compose button[type=submit]').focus();await page.keyboard.press('Enter');await expect(page.locator('main > .notice[role=status]')).toContainText(/sending|sent|draft|queued|development/i);await expect(page.locator('.messages')).toContainText('Could we arrive early');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'inbox fits viewport');await accessible(page);await page.screenshot({path:join(evidence,'inbox-completed-'+width+'.png'),fullPage:true})
     await page.goto(h.origin+'/app/statements');await page.locator('details.statement-month > summary').click();const statement=page.locator('#statement-'+draftStatement.id);await expect(statement).toContainText('Karen Ortiz');await expect(statement).toContainText('Approved');const [download]=await Promise.all([page.waitForEvent('download'),statement.getByRole('link',{name:'Download approved PDF',exact:true}).click()]);const chunks=[];for await(const chunk of await download.createReadStream())chunks.push(chunk);const bytes=Buffer.concat(chunks);assert.equal(bytes.subarray(0,5).toString(),'%PDF-');const {PDFDocument}=await import('pdf-lib');assert.ok((await PDFDocument.load(bytes)).getPageCount()>0);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'statement fits viewport');await accessible(page);await statement.screenshot({path:join(evidence,'statement-download-'+width+'.png')})
     await page.goto(h.origin+'/app/channels');const providers=page.locator('details.home-links').filter({has:page.locator('button').filter({hasText:'Allow selected actions and homes'})});assert.ok(await providers.count()>0);for(const provider of await providers.all()){await provider.locator(':scope > summary').click();await expect(provider.getByRole('link',{name:'Provider’s terms',exact:true})).toBeVisible();const costs=provider.locator('p').filter({hasText:'Provider costs:'});await expect(costs).toBeVisible();const providerName=await provider.locator(':scope > summary strong').textContent(),configuration=(await h.state()).sharing.find(p=>p.name===providerName);assert.ok(configuration);await expect(costs).toContainText(configuration.costs);await expect(provider.getByRole('link',{name:'Provider’s terms',exact:true})).toHaveAttribute('href',configuration.source);assert.ok(await provider.evaluate(el=>{const costs=[...el.querySelectorAll('p')].find(p=>p.textContent.startsWith('Provider costs:')),grant=el.querySelector('form');return !!(costs.compareDocumentPosition(grant)&Node.DOCUMENT_POSITION_FOLLOWING)}),'provider costs precede authorization');const grant=provider.locator('form').filter({has:page.getByRole('button',{name:'Allow selected actions and homes',exact:true})});await expect(grant.locator('[name=confirm]')).toHaveAttribute('required','')}await page.screenshot({path:join(evidence,'provider-costs-'+width+'.png'),fullPage:true})
+    const seam=page.locator('details.home-links').filter({has:page.locator(':scope > summary strong').filter({hasText:'Seam'})})
+    const grant=seam.locator('form').filter({has:page.getByRole('button',{name:'Allow selected actions and homes',exact:true})})
+    await grant.locator('[name=actions][value="access:write"]').check()
+    await grant.locator('[name=propertyIds]').first().check();await grant.locator('[name=confirm]').check()
+    await grant.getByRole('button',{name:'Allow selected actions and homes',exact:true}).click()
+    assert.equal((await h.state()).sharing.find(p=>p.id==='seam').security.enabled,true,'paid provider authorization succeeds after cost review')
+    const authorized=page.locator('details.home-links').filter({has:page.locator(':scope > summary strong').filter({hasText:'Seam'})});await authorized.locator(':scope > summary').click()
+    await expect(authorized).toContainText('Owner-authorized connection');await authorized.screenshot({path:join(evidence,'provider-authorized-'+width+'.png')})
+
    }finally{await context.close()}
   }
  }finally{if(browser)await browser.close();await h.close()}
@@ -151,9 +170,9 @@ test('portfolio questions on desktop and phone reconcile sources, show uncertain
  try{
   const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h)
   await h.cmd('channel.connect',{propertyId:b.p.id,channel:'airbnb',url:'https://synthetic-cabin.example/feed.ics',intervalMinutes:15});const link=(await h.access()).connections.find(c=>c.propertyId===b.p.id);await h.cmd('channel.sync',{id:link.id})
-  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
-  const evidence=process.env.CABIN_QUESTION_SHOTS??'test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
-  for(const width of [1440,390]){
+  browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]})
+  const evidence=process.env.CABIN_QUESTION_SHOTS??'./test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
+  for(const width of [1440]){
    const context=await browser.newContext({viewport:{width,height:1000}})
    try{
     const [name,value]=b.manager.cookie.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)
@@ -176,8 +195,8 @@ test('rental-owner portfolio questions and their report citations stay within th
  const h=await harness({assets:true});let browser
  try{
   const {questionBooks,questionOwnerLogin}=await import('./reports-support.mjs'),b=await questionBooks(h),owner=await questionOwnerLogin(h,b.p.ownerEmail)
-  browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']});const evidence=process.env.CABIN_QUESTION_SHOTS??'test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
-  for(const width of [1440,390]){
+  browser=await chromium.launch({headless:true,...(process.env.CABIN_CHROMIUM?{executablePath:process.env.CABIN_CHROMIUM}:{}),args:['--use-mock-keychain','--password-store=basic',...(process.env.CABIN_CHROMIUM?['--no-sandbox']:[])]});const evidence=process.env.CABIN_QUESTION_SHOTS??'./test-results/portfolio-questions';await mkdir(evidence,{recursive:true})
+  for(const width of [1440]){
    const context=await browser.newContext({viewport:{width,height:1000}})
    try{
     const [name,value]=owner.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(12000)

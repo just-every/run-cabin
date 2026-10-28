@@ -187,3 +187,5 @@
 }
 .cabin .statement-month{margin:0;padding:12px 0;border-top:1px solid var(--line-2)}.cabin .statement-month>summary{font-size:14px}.cabin .statement-month[open]>summary{margin-bottom:12px}
 .cabin .panel.narrow{max-width:640px}
+
+.cabin-icon-tooltip{position:fixed;inset:auto;margin:0;border:0;z-index:10000;max-width:240px;padding:6px 10px;border-radius:6px;background:#123c31;color:#fff;font-size:13px;line-height:1.4;pointer-events:none;box-shadow:0 2px 8px #0002}
