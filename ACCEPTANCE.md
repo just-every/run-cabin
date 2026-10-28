@@ -379,7 +379,7 @@ Core · target · **done**
 
 #### WEB-004 — Guest identity verification
 
-Core · target · **partial**
+Core · target · **partial** · Cites BASE-ROLE-001, BASE-DATA-003, BASE-DATA-006
 
 **Requirement.** Managers configure risk-based identity verification through Stripe Identity or an approved verification partner, with explicit guest consent, restricted access and a manual review alternative. Cabin retains necessary verification state and provider references while minimizing identity-document copies. Failed or incomplete checks enter an assigned review queue and obey saved access-release policy.
 
@@ -405,7 +405,7 @@ Core · target · **partial** · Rules D-1
 
 #### PAY-001 — Processor-backed USD checkout and manual payments
 
-Core · target · **partial**
+Core · target · **partial** · Cites BASE-ROLE-001, BASE-SECRET-001
 
 **Requirement.** Stripe checkout collects guest card payments and supported US ACH payments against itemized reservations; hosted/tokenized processor controls keep raw card/bank credentials out of Cabin. Payment success, pending ACH, failed authentication and failure are distinct from a booking hold. Staff record authorized cash/check/manual receipts with provenance, never as invented processor settlements.
 
@@ -429,7 +429,7 @@ Core · target · **done** · Cites BASE-OPS-003, BASE-OPS-004 · Rules D-1
 
 #### PAY-003 — Damage deposits, refunds and cancellation settlement
 
-Core · target · **partial** · Rules D-1
+Core · target · **partial** · Cites BASE-OPS-003 · Rules D-1
 
 **Requirement.** Cabin distinguishes security-deposit authorizations, refundable deposits and rent, tracks authorization expiry and release, and requests approved full/partial refunds through Stripe. Claims require evidence and human approval; canceled/changed stays calculate amounts from saved terms. Duplicate callbacks or repeated operator clicks cannot double-capture, refund or release funds. A damage-deposit hold is placed on the guest’s card at checkout or before arrival and released automatically within the configured window after checkout when no claim is opened; a hold the card authorization would outlive is renewed under the guest’s mandate or flagged to a person before it expires.
 
@@ -499,7 +499,7 @@ Core · target · **missing** · From PAY-006 · Cites BASE-MAIL-001, BASE-AGENT
 
 #### GUEST-001 — Guest profiles and repeat-stay context
 
-Core · target · **done**
+Core · target · **done** · Cites BASE-ROLE-001
 
 **Requirement.** Guest records join channel identities, verified contact details, reservations, communications, consent, preferences and service history without silently merging different people or exposing sensitive notes. Staff can review and undo a duplicate merge, restrict sensitive fields and see the source of each fact; returning guests receive their saved preferences only within consent and property policy.
 
@@ -631,7 +631,7 @@ Core · target · **partial** · From EVIDENCE-001, CABIN-05 · Cites BASE-INPUT
 
 #### OPS-002 — Cleaner mobile work with reliable uploads
 
-Core · target · **done**
+Core · target · **done** · Cites BASE-ROLE-001, BASE-INPUT-003
 
 **Requirement.** The cleaner app provides assigned schedules, directions, safe entry instructions, checklists, notes, multiple required work photos and issue reporting. Poor connectivity preserves private local drafts; reconnect reconciles the current assignment and booking revision before completing or uploading. Mobile capture cannot manufacture completion or expose another property’s data.
 
@@ -776,7 +776,7 @@ Core · target · **partial** · From FIN-004, CABIN-09
 
 #### FIN-005 — Rental-owner portal and personal stays
 
-Core · target · **done**
+Core · target · **done** · Cites BASE-ACCESS-002, BASE-ROLE-001
 
 **Requirement.** Rental owners securely view only their properties, agreed calendar visibility, occupancy/revenue, reconciled statements, invoices, reserves, distributions and open issues. They download records, approve authorized expenses and request personal stays subject to inventory/management rules. Ownership changes retain historical statement access under explicit grants without exposing other owners or guest identity documents.
 
@@ -893,9 +893,9 @@ Core · target · **done**
 
 #### API-001 — Documented API, webhooks and Zapier automation
 
-Core · target · **partial**
+Core · target · **partial** · Cites BASE-ROLE-001, BASE-OPS-003, BASE-OPS-004
 
-**Requirement.** A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. Third-party access is revocable and cannot bypass approval, payment or property scopes.
+**Requirement.** A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. API credentials use the rental property/action grants in AUTH-002; approval and payment actions keep their own exact rental-business constraints.
 
 **Acceptance.**
 1. Create/read a reservation through documented API credentials, consume a signed webhook in Zapier, repeat a mutation and replay a delivered event; revoke credentials and show private/financial actions and stale queued jobs are refused.
@@ -913,7 +913,7 @@ Core · target · **partial** · From MIGRATE-001, CABIN-11
 1. Use Move in to preview/apply the documented CSV, reject a changed fingerprint, inspect the durable job, edit one imported property and undo; retain that native edit with its disposition, then erase another imported property and verify source retirement.
 
 **Evidence.** `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md`; `src/cabin/movein/`; `tests/movein.test.mjs`
-**Gap.** Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed fingerprint is refused without applying rows.
+**Gap.** Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed fingerprint is refused without applying rows. Provider fixture counts, balances, first exported stay, duplicate refusals, sign-off and removal are asserted. Independently complete original channel mappings and read-back of a native edit after refused provider undo remain unasserted.
 
 #### MIGRATE-002 — Migration from reservation source A
 
@@ -992,7 +992,7 @@ Core · target · **partial**
 
 #### MOBILE-001 — Native manager and field-team apps
 
-Core · target · **missing** · Cites BASE-ROLE-001, BASE-ACCESS-002 · Register R-8
+Core · target · **missing** · Cites BASE-ROLE-001, BASE-ACCESS-002, BASE-INPUT-003 · Register R-8
 
 **Requirement.** US iOS and Android apps provide role-scoped reservation/calendar, inbox, arrival/readiness, cleaner/vendor tasks, camera uploads and actionable push notifications. Offline work is encrypted on device and reconciles revision/authority on reconnect; sign-out or revocation prevents stale data/credentials granting access. The mobile owner portal supports statements and owner stays without exposing staff-only records.
 
@@ -1017,7 +1017,7 @@ Core · target · **partial** · Cites BASE-ACCESSIBILITY-001, BASE-INPUT-001 ·
 
 #### DATA-001 — Complete portable product records and safe restore
 
-Core · target · **partial** · From DATA-001, CABIN-13 · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001
+Core · target · **partial** · From DATA-001, CABIN-13 · Cites BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001, BASE-INPUT-001
 
 **Requirement.** The portable Cabin archive preserves reservation sources and revisions, guest and thread history, signed agreements, cleaner originals, trust-ledger attribution, frozen statements and import journals in its documented schema, with usable CSV, PDF and media downloads. Historical payments and provider outcomes remain evidence rather than runnable work; restored connections, scheduled sends, distribution plans and access-code jobs stay inactive until the owner reauthorizes their actual destinations. The hosted backup produces an owner-only file without exposing a temporary download link.
 

@@ -458,3 +458,27 @@ Old reference: `788f46c517989e287d82885783eddb61961d632b`.
 | `DATA-001` | 2 | Fresh hosted restore retains the rental records | none | none |
 | `WEB-004` | 1 | The configured identity retention period is exercised independently of explicit erasure | none | none |
 | `GUEST-002` | 1 | Verified guest portal is used in the phone-width browser journey | `tests/website-browser.test.mjs:127` | asserted |
+| `SYNC-009` | old CABIN-02 1 | Native overlapping request is declined | `tests/cabin.test.mjs:196` | asserted |
+| `SYNC-009` | old CABIN-02 1 | Decline identifies the overlapping reservation | `tests/cabin.test.mjs:196` | asserted |
+| `SYNC-009` | old CABIN-02 1 | Decline identifies its source channel | `tests/cabin.test.mjs:196` | asserted |
+| `SYNC-009` | old CABIN-02 1 | Selected calendar view displays the recorded overlap reason | `tests/cabin.test.mjs:210` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Imported homes match the preview count | `tests/movein.test.mjs:38` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Imported reservations match the preview count | `tests/movein.test.mjs:38` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Imported guest count matches the preview | `tests/movein.test.mjs:41` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Imported opening balances match source cents | `tests/movein.test.mjs:42` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Recorded source reservation count equals the known fixture | `tests/movein.test.mjs:34` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination reservation count equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Recorded source future-night count equals the known fixture | `tests/movein.test.mjs:34` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination future-night count equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Recorded source owner opening balance equals the known fixture | `tests/movein.test.mjs:34` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination owner opening balance equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Imported future stay is present in the public calendar feed | `tests/movein.test.mjs:46` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Exact imported plan records completed sign-off | `tests/movein.test.mjs:49` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Refused duplicate retains source filename | `tests/movein.test.mjs:59` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Refused duplicate retains source row | `tests/movein.test.mjs:59` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Refused duplicate retains external identity | `tests/movein.test.mjs:59` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Undo removes imported homes | `tests/movein.test.mjs:51` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Undo removes imported reservations | `tests/movein.test.mjs:51` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Undo withdraws imported channel connections | `tests/movein.test.mjs:51` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Every original provider channel mapping is independently asserted against the export, beyond its generated preview | none | none |
+| `MIGRATE-001` | old CABIN-11 1 | Refused provider-import undo reads back the retained native edit | none | none |

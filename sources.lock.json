@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "8ef3f37d0258fe842931761bba5e0763e375bc67fd254c6699573e12072b0f78",
+      "sha256": "4d647cc8a91ac101c616d4ee6dc603c12c0008f0f250a21197dcff20b463542d",
       "executable": false
     },
     "AGENTS.md": {
@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "7cc05183bddaf8e4b8e350c5dfedf61c8a7536927042f86ed1d3a6603174df32",
+      "sha256": "e4065dd5712ee3f05e0f48af478ec3354117fce08602e8cff7b7f03d4691b0ed",
       "executable": false
     },
     "DEMO.md": {
@@ -192,11 +192,11 @@
       "executable": false
     },
     "docs/contract/COVERAGE.json": {
-      "sha256": "db24bb97575eb688339614a81a94749c944ac655d0b69f316b8dcf8c9aad5979",
+      "sha256": "adfcc16f46cb42835c19824b72e21db00eeece6f282d08b00036b31ff3755020",
       "executable": false
     },
     "docs/contract/DONE-AUDIT.md": {
-      "sha256": "f097ca8dfaba6d1840058657f59a2bd2c7f271e54cc4feb52a9dc7ea7e2a53b4",
+      "sha256": "156cb5011f70440ac12b904cfe6f4950972815f47b2b7b573866e2fc93b8e966",
       "executable": false
     },
     "docs/contract/ID-MAP.json": {
@@ -4928,7 +4928,7 @@
       "executable": false
     },
     "tests/cabin.test.mjs": {
-      "sha256": "a7317406be6d8842471b2c492a9ad359ad35769a83d0e22035731f292e3de66d",
+      "sha256": "481f19ee7e6027e4d50383890ec4cb91958412001accc910d46bcbac887933c3",
       "executable": false
     },
     "tests/calendar.test.mjs": {
@@ -5192,7 +5192,7 @@
       "executable": false
     },
     "tests/movein.test.mjs": {
-      "sha256": "225adafbea0ae1e216a1e846e50027707ebf48de1ae078aa203695aa58eb37be",
+      "sha256": "3aaf443dd469615ceca4b0646721a26b41e0ac874ecdb8c17b827d86e7afbe1a",
       "executable": false
     },
     "tests/owners.test.mjs": {

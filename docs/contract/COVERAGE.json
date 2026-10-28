@@ -1642,7 +1642,25 @@
     {
       "file": "CONTRACT.md",
       "line": 462,
-      "text": "A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. Third-party access is revocable and cannot bypass approval, payment or property scopes.",
+      "text": "A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. ",
+      "to": "clause",
+      "ids": [
+        "API-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 462,
+      "text": "Third-party access is revocable",
+      "to": "base",
+      "ids": [
+        "BASE-ROLE-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 462,
+      "text": " and cannot bypass approval, payment or property scopes.",
       "to": "clause",
       "ids": [
         "API-001"

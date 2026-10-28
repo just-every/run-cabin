@@ -30,17 +30,17 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 | Base duty | Duty | Delta clauses | Base journey |
 | --- | --- | --- | --- |
 | BASE-ACCESS-001 | Sign-in | none | not run |
-| BASE-ACCESS-002 | Sessions | AUTH-002, GUEST-002, MOBILE-001, HTTP-001 | not run |
+| BASE-ACCESS-002 | Sessions | AUTH-002, GUEST-002, FIN-005, MOBILE-001, HTTP-001 | not run |
 | BASE-ACCESS-003 | Public endpoints | none | not run |
 | BASE-ACCESS-004 | Server-side authorisation | AUTH-002 | not run |
-| BASE-INPUT-001 | Validation | EVIDENCE-001, INTERFACE-001 | not run |
+| BASE-INPUT-001 | Validation | EVIDENCE-001, INTERFACE-001, DATA-001 | not run |
 | BASE-INPUT-002 | HTML | none | not run |
-| BASE-INPUT-003 | Uploads | EVIDENCE-001 | not run |
-| BASE-SECRET-001 | No leakage | WEB-002, GUEST-002, DATA-001, SECURITY-001 | not run |
+| BASE-INPUT-003 | Uploads | EVIDENCE-001, OPS-002, MOBILE-001 | not run |
+| BASE-SECRET-001 | No leakage | WEB-002, PAY-001, GUEST-002, DATA-001, SECURITY-001 | not run |
 | BASE-SECRET-002 | Startup | RUNTIME-001 | not run |
 | BASE-DATA-001 | Export and import | DATA-001 | not run |
 | BASE-DATA-002 | Retention | none | not run |
-| BASE-DATA-003 | Erasure | DATA-002, AUDIT-001 | not run |
+| BASE-DATA-003 | Erasure | WEB-004, DATA-002, AUDIT-001 | not run |
 | BASE-DATA-004 | Outbound flows | DATA-003, SECURITY-001 | not run |
 | BASE-DATA-005 | Independence | DATA-003, OPEN-001 | not run |
 | BASE-PUBLIC-001 | Privacy | WEB-001, WEB-002 | not run |
@@ -48,13 +48,13 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 | BASE-PUBLIC-003 | Accessibility | none | not run |
 | BASE-OPS-001 | Health | HTTP-001 | not run |
 | BASE-OPS-002 | Migrations | none | not run |
-| BASE-OPS-003 | Idempotency | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, FIN-007, RUNTIME-001 | not run |
-| BASE-OPS-004 | Failure is visible | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, RUNTIME-001 | not run |
+| BASE-OPS-003 | Idempotency | SYNC-009, PAY-002, PAY-003, MESSAGE-001, MESSAGE-002, MESSAGE-003, FIN-007, API-001, RUNTIME-001 | not run |
+| BASE-OPS-004 | Failure is visible | SYNC-009, PAY-002, MESSAGE-001, MESSAGE-002, MESSAGE-003, API-001, RUNTIME-001 | not run |
 | BASE-OPS-005 | Audit | AUDIT-001 | not run |
-| BASE-ROLE-001 | Roles through every door | CABIN-01, AUTH-002, SYNC-011, EVIDENCE-001, FIN-007, MOBILE-001 | not run |
+| BASE-ROLE-001 | Roles through every door | CABIN-01, AUTH-002, SYNC-011, WEB-004, PAY-001, GUEST-001, EVIDENCE-001, OPS-002, FIN-005, FIN-007, API-001, MOBILE-001 | not run |
 | BASE-AUDIT-001 | Searchable, durable audit | SYNC-011, DATA-002, AUDIT-001 | not run |
 | BASE-BACKUP-001 | Independent backup, restore and rollback | DATA-001 | not run |
-| BASE-DATA-006 | Erasure respects retention and legal hold | DATA-002 | not run |
+| BASE-DATA-006 | Erasure respects retention and legal hold | WEB-004, DATA-002 | not run |
 | BASE-SIGNIN-001 | Standards-based SSO and lifecycle | CABIN-01, AUTH-002 | not run |
 | BASE-SIGNIN-002 | Native multi-factor authentication | none | not run |
 | BASE-INSTALL-001 | Free self-host and removal | DATA-003, RUNTIME-001, OPEN-001 | not run |
@@ -360,7 +360,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### WEB-004 — Guest identity verification
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-DATA-003, BASE-DATA-006
 
 **Requirement.** Managers configure risk-based identity verification through Stripe Identity or an approved verification partner, with explicit guest consent, restricted access and a manual review alternative. Cabin retains necessary verification state and provider references while minimizing identity-document copies. Failed or incomplete checks enter an assigned review queue and obey saved access-release policy.
 
@@ -380,7 +380,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### PAY-001 — Processor-backed USD checkout and manual payments
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-SECRET-001
 
 **Requirement.** Stripe checkout collects guest card payments and supported US ACH payments against itemized reservations; hosted/tokenized processor controls keep raw card/bank credentials out of Cabin. Payment success, pending ACH, failed authentication and failure are distinct from a booking hold. Staff record authorized cash/check/manual receipts with provenance, never as invented processor settlements.
 
@@ -398,7 +398,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### PAY-003 — Damage deposits, refunds and cancellation settlement
 
-*Tier:* Core · *Rules:* D-1
+*Tier:* Core · *Cites:* BASE-OPS-003 · *Rules:* D-1
 
 **Requirement.** Cabin distinguishes security-deposit authorizations, refundable deposits and rent, tracks authorization expiry and release, and requests approved full/partial refunds through Stripe. Claims require evidence and human approval; canceled/changed stays calculate amounts from saved terms. Duplicate callbacks or repeated operator clicks cannot double-capture, refund or release funds. A damage-deposit hold is placed on the guest’s card at checkout or before arrival and released automatically within the configured window after checkout when no claim is opened; a hold the card authorization would outlive is renewed under the guest’s mandate or flagged to a person before it expires.
 
@@ -453,7 +453,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### GUEST-001 — Guest profiles and repeat-stay context
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001
 
 **Requirement.** Guest records join channel identities, verified contact details, reservations, communications, consent, preferences and service history without silently merging different people or exposing sensitive notes. Staff can review and undo a duplicate merge, restrict sensitive fields and see the source of each fact; returning guests receive their saved preferences only within consent and property policy.
 
@@ -555,7 +555,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### OPS-002 — Cleaner mobile work with reliable uploads
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-INPUT-003
 
 **Requirement.** The cleaner app provides assigned schedules, directions, safe entry instructions, checklists, notes, multiple required work photos and issue reporting. Poor connectivity preserves private local drafts; reconnect reconciles the current assignment and booking revision before completing or uploading. Mobile capture cannot manufacture completion or expose another property’s data.
 
@@ -667,7 +667,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### FIN-005 — Rental-owner portal and personal stays
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ACCESS-002, BASE-ROLE-001
 
 **Requirement.** Rental owners securely view only their properties, agreed calendar visibility, occupancy/revenue, reconciled statements, invoices, reserves, distributions and open issues. They download records, approve authorized expenses and request personal stays subject to inventory/management rules. Ownership changes retain historical statement access under explicit grants without exposing other owners or guest identity documents.
 
@@ -757,9 +757,9 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### API-001 — Documented API, webhooks and Zapier automation
 
-*Tier:* Core
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-OPS-003, BASE-OPS-004
 
-**Requirement.** A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. Third-party access is revocable and cannot bypass approval, payment or property scopes.
+**Requirement.** A versioned scoped API covers property, reservation, availability, messages, work, financial records and exports with pagination and idempotent mutations. Signed outbound webhooks expose lifecycle and financial events with delivery history, bounded retry and replay controls; Zapier uses the same grants and durable events. API credentials use the rental property/action grants in AUTH-002; approval and payment actions keep their own exact rental-business constraints.
 
 **Acceptance.**
 1. Create/read a reservation through documented API credentials, consume a signed webhook in Zapier, repeat a mutation and replay a delivered event; revoke credentials and show private/financial actions and stale queued jobs are refused.
@@ -832,7 +832,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### MOBILE-001 — Native manager and field-team apps
 
-*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-ACCESS-002 · *Register:* R-8
+*Tier:* Core · *Cites:* BASE-ROLE-001, BASE-ACCESS-002, BASE-INPUT-003 · *Register:* R-8
 
 **Requirement.** US iOS and Android apps provide role-scoped reservation/calendar, inbox, arrival/readiness, cleaner/vendor tasks, camera uploads and actionable push notifications. Offline work is encrypted on device and reconciles revision/authority on reconnect; sign-out or revocation prevents stale data/credentials granting access. The mobile owner portal supports statements and owner stays without exposing staff-only records.
 
@@ -851,7 +851,7 @@ The primary journey: Connect homes and channels, quote and reserve a stay, colle
 
 #### DATA-001 — Complete portable product records and safe restore
 
-*Tier:* Core · *From:* DATA-001, CABIN-13 · *Cites:* BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001
+*Tier:* Core · *From:* DATA-001, CABIN-13 · *Cites:* BASE-DATA-001, BASE-BACKUP-001, BASE-SECRET-001, BASE-INPUT-001
 
 **Requirement.** The portable Cabin archive preserves reservation sources and revisions, guest and thread history, signed agreements, cleaner originals, trust-ledger attribution, frozen statements and import journals in its documented schema, with usable CSV, PDF and media downloads. Historical payments and provider outcomes remain evidence rather than runnable work; restored connections, scheduled sends, distribution plans and access-code jobs stay inactive until the owner reauthorizes their actual destinations. The hosted backup produces an owner-only file without exposing a temporary download link.
 
@@ -1350,7 +1350,7 @@ Judged from the code and tests at commit `a124cd29ea9575bf4b077e4aef05088f7c2ef0
 | `REPORT-001` | Operational, revenue and owner performance reports | target | done | `src/cabin/reports/`; `docs/reports.md`; `tests/finance.test.mjs`; `tests/readiness-browser.test.mjs`; `tests/allocations.test.mjs`; `tests/promotions.test.mjs` |  |
 | `REPORT-002` | Saved reports and scheduled sharing | target | done | `tests/finance.test.mjs`; `tests/allocations.test.mjs`; `tests/readiness-browser.test.mjs`; `docs/reports.md` |  |
 | `API-001` | Documented API, webhooks and Zapier automation | target | partial | `src/cabin/http.ts`; `docs/commands.md`; `tests/cabin.test.mjs` | Versioned domain APIs, scoped application grants, signed durable webhooks and live Zapier consumption remain unshipped. Unpublished foundation work awaits publication tooling; an authorized Zapier account and receiver are also required. |
-| `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md`; `src/cabin/movein/`; `tests/movein.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed fingerprint is refused without applying rows. |
+| `MIGRATE-001` | Reviewed property-register move-in | target | partial | `src/cabin/movein/csv.ts`; `src/cabin/movein/index.ts`; `src/cabin/movein/targets.ts`; `src/cabin/ui/movein.ts`; `tests/movein-register.test.mjs`; `tests/cabin.test.mjs`; `tests/archive.test.mjs`; `docs/move-in.md`; `src/cabin/movein/`; `tests/movein.test.mjs` | Cited evidence asserts the outcomes marked asserted in DONE-AUDIT. Unasserted: Changed fingerprint is refused without applying rows. Provider fixture counts, balances, first exported stay, duplicate refusals, sign-off and removal are asserted. Independently complete original channel mappings and read-back of a native edit after refused provider undo remain unasserted. |
 | `MIGRATE-002` | Migration from reservation source A | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-003` | Migration from reservation source B | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |
 | `MIGRATE-004` | Migration from reservation source C | target | partial | `./src/cabin/movein/providers/`; `src/cabin/movein/provider-import.ts`; `src/cabin/movein/provider-records.ts`; `docs/move-in-formats.md`; `tests/movein.test.mjs` | Documented CSV reports plus explicit supplementary owner terms, USD opening balances and iCal links; immutable preview, row refusals, guarded apply and undo and totals sign-off. API response adapters use recorded synthetic fixtures only. Live API credentials, threads and attachments, fees, rules, tasks and settlement history, full channel account and co-host mappings and inaccessible source history remain open. |

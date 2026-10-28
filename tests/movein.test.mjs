@@ -11,7 +11,7 @@ test('a host moves native provider exports into reconciled listings, guests and 
  const bundle=await build({entryPoints:['src/cabin/movein/providers/recorded-api.ts'],bundle:true,write:false,platform:'node',format:'esm'})
  const {adaptRecordedApi}=await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString('base64')}`)
  let feedText='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n'
- const h=await harness({outbound:()=>new Response(feedText,{headers:{'content-type':'text/calendar'}})})
+ const h=await harness({now:'2026-10-17T12:00:00.000Z',outbound:()=>new Response(feedText,{headers:{'content-type':'text/calendar'}})})
  try{
   for(const provider of ['guesty','hostaway','ownerrez']){
    const api=adaptRecordedApi(provider,JSON.parse(await readFile(`tests/fixtures/movein/api/${provider}.json`,'utf8')))
