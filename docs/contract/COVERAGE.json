@@ -133,7 +133,23 @@
     {
       "file": "CONTRACT.md",
       "line": 30,
-      "text": "**CABIN-04 \u2014 Turnovers, door codes and cleaner notices.** Every confirmed stay from any channel creates one turnover between its check-out and the next check-in, a guest door code for the stay and, once assigned, the cleaner's own code for the window; the cleaner is emailed the window, address and code, and a moved or canceled stay re-emails or cancels it.",
+      "text": "**CABIN-04 \u2014 Turnovers, door codes and cleaner notices.** ",
+      "to": "clause",
+      "ids": [
+        "OPS-005"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 30,
+      "text": "Every confirmed stay from any channel creates one turnover between its check-out and the next check-in,",
+      "to": "deleted",
+      "note": "Duplicate of OPS-001 acceptance 1, which creates and revises the turnover once for the stay. Guest and cleaner access remain in receiving OPS-005."
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 30,
+      "text": " a guest door code for the stay and, once assigned, the cleaner's own code for the window; the cleaner is emailed the window, address and code, and a moved or canceled stay re-emails or cancels it.",
       "to": "clause",
       "ids": [
         "OPS-005"
@@ -151,7 +167,7 @@
     {
       "file": "CONTRACT.md",
       "line": 32,
-      "text": "**CABIN-06 \u2014 Readiness and maintenance.** Readiness shows for any day whether each home's turnover before its next arrival is done with its photos and no blocking task is open. A cleaner reports a broken thing with photos; it becomes a task for the home's maintenance person, emailed to them.",
+      "text": "**CABIN-06 \u2014 Readiness and maintenance.** Readiness shows for any day whether each home's turnover before its next arrival is done with its photos and no blocking task is open. ",
       "to": "clause",
       "ids": [
         "OPS-003"
@@ -159,12 +175,26 @@
     },
     {
       "file": "CONTRACT.md",
+      "line": 32,
+      "text": "A cleaner reports a broken thing with photos; it becomes a task for the home's maintenance person, emailed to them.",
+      "to": "deleted",
+      "note": "Duplicate of OPS-004 acceptance 2: photographed cleaner report, property maintenance assignment and notice."
+    },
+    {
+      "file": "CONTRACT.md",
       "line": 33,
-      "text": "**CABIN-07 \u2014 Guest inbox and scheduled messages.** One thread per guest joins their stays and email. Check-in details with the door code, a checkout reminder and a review request are sent on time in the home's time zone, move with the stay and are sent again only when their words change. Every guest message gets a drafted reply that is sent only when a person sends it.",
+      "text": "**CABIN-07 \u2014 Guest inbox and scheduled messages.** One thread per guest joins their stays and email. Check-in details with the door code, a checkout reminder and a review request are sent on time in the home's time zone, move with the stay and are sent again only when their words change. ",
       "to": "clause",
       "ids": [
         "MESSAGE-003"
       ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 33,
+      "text": "Every guest message gets a drafted reply that is sent only when a person sends it.",
+      "to": "deleted",
+      "note": "Superseded fixed agent-send disposition. MESSAGE-004 acceptance 1\u20133 retains source-grounded replies and exact held-policy sending; the company policy decides the external, money and commitment classes."
     },
     {
       "file": "CONTRACT.md",
@@ -178,11 +208,18 @@
     {
       "file": "CONTRACT.md",
       "line": 38,
-      "text": "**CABIN-09 \u2014 Payout-matched owner statements and portal.** Imported Airbnb and Vrbo USD payout lines match their stays; a monthly statement of gross, actual channel fees, paid owner expenses and management commission is approved, frozen and emailed to the owner, who signs in separately and sees only their own homes, stays and approved statements.",
+      "text": "**CABIN-09 \u2014 Payout-matched owner statements and portal.** Imported Airbnb and Vrbo USD payout lines match their stays; a monthly statement of gross, actual channel fees, paid owner expenses and management commission is approved, frozen and emailed to the owner, ",
       "to": "clause",
       "ids": [
         "FIN-004"
       ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 38,
+      "text": "who signs in separately and sees only their own homes, stays and approved statements.",
+      "to": "deleted",
+      "note": "Duplicate of FIN-005 acceptance 1: separate rental-owner access to only the owner\u2019s homes, stays and approved statements."
     },
     {
       "file": "CONTRACT.md",
@@ -196,7 +233,23 @@
     {
       "file": "CONTRACT.md",
       "line": 40,
-      "text": "**CABIN-11 \u2014 Move-in with preview, reconciliation and undo.** A property register, or the three supported reservation-system CSV report formats, are previewed with each refused row, imported into homes, stays, guests, owner balances and channel links, reconciled and signed off, and can be undone without losing records changed since.",
+      "text": "**CABIN-11 \u2014 Move-in with preview, reconciliation and undo.** A property register, ",
+      "to": "clause",
+      "ids": [
+        "MIGRATE-001"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 40,
+      "text": "or the three supported reservation-system CSV report formats,",
+      "to": "deleted",
+      "note": "Duplicate of the reviewed Guesty, Hostaway and OwnerRez import doors in MIGRATE-002, MIGRATE-003 and MIGRATE-004 acceptance 1."
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 40,
+      "text": " are previewed with each refused row, imported into homes, stays, guests, owner balances and channel links, reconciled and signed off, and can be undone without losing records changed since.",
       "to": "clause",
       "ids": [
         "MIGRATE-001"
@@ -205,7 +258,23 @@
     {
       "file": "CONTRACT.md",
       "line": 41,
-      "text": "**CABIN-12 \u2014 Agent access prepares, people approve.** An owner-made bearer key lets an assistant read and prepare work but reach no approval door; revoking it stops access at once.",
+      "text": "**CABIN-12 \u2014 Agent access prepares, people approve.** An owner-made bearer key lets an assistant read and prepare work ",
+      "to": "clause",
+      "ids": [
+        "CONTROL-002"
+      ]
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 41,
+      "text": "but reach no approval door;",
+      "to": "deleted",
+      "note": "Superseded fixed bearer disposition. CONTROL-002 acceptance 1\u20132 carries held and all-autonomous company policies; the implementation limitation remains an explicit Gap."
+    },
+    {
+      "file": "CONTRACT.md",
+      "line": 41,
+      "text": " revoking it stops access at once.",
       "to": "clause",
       "ids": [
         "CONTROL-002"
@@ -2018,6 +2087,12 @@
           "ids": [
             "R-1",
             "R-2"
+          ]
+        },
+        {
+          "to": "clause",
+          "ids": [
+            "RUNTIME-001"
           ]
         }
       ]
@@ -5084,6 +5159,12 @@
           "ids": [
             "R-1",
             "R-2"
+          ]
+        },
+        {
+          "to": "clause",
+          "ids": [
+            "RUNTIME-001"
           ]
         }
       ]
