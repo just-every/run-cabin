@@ -10,7 +10,7 @@ const categories: Record<string, string[]> = {
   properties: ['calendar', 'reservations', 'operations', 'finance', 'inbox', 'identity', 'access', 'reports', 'owners'],
   propertyProfiles: ['calendar', 'reservations', 'operations', 'access'],
   bookings: ['calendar', 'reservations', 'operations', 'inbox', 'finance', 'reports'],
-  feeds: ['calendar'], calendarDrafts: ['calendar'], requests: ['reservations'], staffQuotes: ['reservations'],
+  inquiries: ['reservations', 'inbox'], feeds: ['calendar'], calendarDrafts: ['calendar'], requests: ['reservations'], staffQuotes: ['reservations'],
   homeSettings: ['operations', 'access'], turnovers: ['operations'], tasks: ['operations'],
   readinessPlans: ['operations'], readinessRecords: ['operations'], recoveries: ['operations'],
   recoveryPolicies: ['operations'], messages: ['inbox'], threadCases: ['inbox'], scheduled: ['inbox'],

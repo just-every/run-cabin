@@ -1,3 +1,4 @@
+import { inquiryCommand } from './reservations/inquiries'
 import { financialCaseCommand } from './finance/exceptions/commands'
 import { caseState } from './finance/exceptions/store'
 import { caseEvidence } from './finance/exceptions/evidence'
@@ -55,12 +56,12 @@ export async function command(db:D1Database,actor:Actor,name:string,input:Record
  const before=await load(db),c:Context={db,actor,before,data:structuredClone(before),queries:[],now:new Date().toISOString(),entityId:null}
 expireQuotes(c)
 if(name.startsWith('privacy.'))return privacyCommand(c,input,name)
- for(const handler of [financialCaseCommand,bankCommand,questionCommand,reportSharingCommand,issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
+ for(const handler of [inquiryCommand,financialCaseCommand,bankCommand,questionCommand,reportSharingCommand,issueCommand,lifecycleCommand,allocationCommand,workOrderCommand,managementCommand,propertyProfileCommand,readinessCommand,ownerCommand,guestCommand,ledgerCommand,recoveryCommand,peopleCommand,portalCommand,calendarCommand,reservationCommand,exportCommand,turnoverCommand,homeCommand,taskCommand,statementCommand]){const result=await handler(c,name,input);if(result!==undefined){await commit(c,name);return result}}
  need(false,'Unknown command',404)
 }
 export async function snapshot(env:Bindings,actor:Actor,page?:{data:import('./model').Data;balanceBookingIds?:string[]}){
  await assertLive(env.DB,actor);const data=page?.data??await load(env.DB)
- if(actor.role==='cleaner'){data.guestPortalLinks=[];data.staffQuotes=[];
+ if(actor.role==='cleaner'){data.guestPortalLinks=[];data.staffQuotes=[];data.inquiries=[];
   data.statementSchedules=[];
   data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[]; data.managementTerms=[];
   data.readinessPlans=[];data.readinessRecords=[];
@@ -78,7 +79,7 @@ export async function snapshot(env:Bindings,actor:Actor,page?:{data:import('./mo
   data.ledgerSettings=[];data.members=data.members.filter(m=>m.id===actor.memberId);data.feeds=[];data.calendarDrafts=[];data.statements=[];data.events=[];data.connections=[];data.exports=[];data.requests=[]
   data.approvals=data.approvals.filter(a=>a.kind==='turnover'&&turnoverIds.has(a.recordId))
  }
- if(actor.isAgent){data.staffQuotes=[];data.statementSchedules=[];data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
+ if(actor.isAgent){data.staffQuotes=[];data.inquiries=[];data.statementSchedules=[];data.financialAllocations=[];data.sharedCosts=[];data.workExpenses=[];data.propertyProfiles=[];data.managementTerms=[];data.readinessPlans=[];data.readinessRecords=[];data.rentalTemplates=[];data.rentalAgreements=[];data.recoveries=[];data.recoveryPolicies=[]}
  // Channel links and export tokens are capabilities; a bearer agent reads availability, not them.
  if(actor.isAgent){data.bookings=data.bookings.map(({lifecycle:_l,...b})=>b);data.connections=data.connections.map(r=>({...r,url:''}));data.exports=[];data.codes=[];data.notices=data.notices.map(n=>({...n,text:''}));data.messages=[];data.threadCases=[];data.scheduled=[];data.inbox=[];data.recoveryPolicies=[];data.recoveries=[];data.homeSettings=data.homeSettings.map(r=>({...r,guide:undefined}))}
  // The inbox's AI key stays sealed on the server; people see only its last four characters.

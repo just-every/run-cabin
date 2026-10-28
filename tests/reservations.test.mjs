@@ -114,3 +114,27 @@ test('RES-006: issued quotes retain revisions, reserve until expiry and convert 
   assert.doesNotMatch(JSON.stringify((await h.state()).staffQuotes),/alex@stay\.example|Alex Rivera/)
  }finally{await h.close()}
 })
+
+test('source inquiries require exact reviewed identity, deduplicate replay and leave inventory and channel outcomes unchanged',async()=>{
+ const {inquirySource,sourceInquiry,inquiryClock}=await import('./inquiries-support.mjs'),h=await harness({now:inquiryClock})
+ try{
+  const source=await inquirySource(h)
+  await source.read();let s=await h.state(),q=s.inquiries[0]
+  assert.equal(q.status,'needs_review');assert.equal(s.messages.length,0);assert.equal(s.bookings.length,0)
+  await source.review(q,h.owner,409);await source.settings()
+  await source.review(q,source.cleaner.cookie,403);await source.review(q,source.manager.cookie,403)
+  await source.review(q,h.owner,409,'Same guest name is not source identity')
+  await source.read([{...sourceInquiry,threadId:'synthetic-cabin-other-thread'}],'needs_you')
+  await source.read([sourceInquiry,{...sourceInquiry,reservationId:'synthetic-cabin-4',guestName:'Different guest'}],'needs_you')
+  assert.equal((await h.state()).inquiries.length,1)
+  await source.review(q);await source.read();await h.restart();await source.read()
+  s=await h.state();q=s.inquiries[0]
+  assert.equal(s.inquiries.length,1);assert.equal(s.messages.filter(m=>m.direction==='in').length,1)
+  assert.equal(q.status,'inquiry');assert.equal(q.quoteCents,58325);assert.equal(q.guests,3);assert.equal(q.deadline,sourceInquiry.deadline);assert.ok(q.threadId)
+  assert.equal(s.bookings.length,0);assert.equal(s.requests.length,0);assert.equal(s.codes.length,0);assert.equal(s.turnovers.length,0)
+  await h.cmd('channelAgent.disconnect',{id:source.profile.id});await h.cmd('inquiry.erase',{id:q.id,revision:q.revision,confirm:'yes'})
+  await source.connect();await source.read(undefined,'needs_you')
+  s=await h.state();assert.equal(s.inquiries[0].status,'erased');assert.ok(s.messages.every(m=>m.status==='discarded'));assert.doesNotMatch(JSON.stringify(s.inquiries),/Synthetic guest|May we stay/)
+  assert.equal((await h.send('/app/reservations',undefined,source.cleaner.cookie)).status,403)
+ }finally{await h.close()}
+})
