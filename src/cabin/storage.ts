@@ -48,6 +48,7 @@ export async function load(db: D1Database): Promise<Data> {
 /** `audit` false suppresses an empty poll event; actual business/provider changes remain attributable. */
 export function transaction(c: Context, name: string, audit = true): Query[] {
  const a = authority(c.actor), q = [guard(a.sql, ...a.params), guard('(SELECT version FROM cb_meta WHERE id=1)=?', c.before.version)]
+ if(c.actor.agent)for(const kind of ['calendarDrafts','turnovers','statements'] as const)for(const row of c.data[kind])if(row.preparedBy===c.actor.id&&!c.before[kind].some(before=>before.id===row.id))Object.assign(row,{preparedByAgent:{id:c.actor.agent.id,name:c.actor.agent.name},preparedByLabel:c.actor.agent.label})
  for (const kind of kinds) {
   const old = new Map(c.before[kind].map(row => [row.id, JSON.stringify(row)]))
   for (const row of c.data[kind]) if (old.get(row.id) !== JSON.stringify(row)) q.push(query('INSERT INTO cb_records(kind,id,revision,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision,data=excluded.data', kind, row.id, 'revision' in row ? row.revision : row.id, JSON.stringify(row)))

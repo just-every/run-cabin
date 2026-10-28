@@ -16,6 +16,7 @@ import { syncDue } from './cabin/channels'
 import { settle } from './cabin/settle'
 import { emailHandler, pollChannels } from './cabin/inbox/inbound'
 import { seedDemo } from './demo'
+import { cabinAgentDoor, cabinBusinessSettings } from './cabin/agent-door/index.ts'
 
 const api = new Hono<{ Bindings: Bindings }>()
 api.get('/health', (context) => context.json({ status: 'ok', ...deploymentHealth(context.env) }))
@@ -31,6 +32,10 @@ function noTransform(response: Response): Response {
 
 export default withDemo<Bindings, ExportedHandler<Bindings>>({
   async fetch(request, env, execution) {
+    const business = await cabinBusinessSettings(env).handle(request)
+    if (business) return business
+    const agent = await cabinAgentDoor(env).handle(request)
+    if (agent) return agent
     const asset = await staticAssetResponse(request, env)
     if (asset) return asset
     // Sign-in settings open inside the workspace (/app/signin); Base still saves them.

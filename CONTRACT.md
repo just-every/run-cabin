@@ -828,3 +828,13 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
 | `OPEN-001` | Free and open source under the MIT license | target | done | `LICENSE`; `package.json`; `src/cabin/people.ts`; `src/cabin/connections/store.ts`; `src/cabin/connections/ui.ts`; `src/cabin/connections/security-ui.ts`; `docs/free-source.md` | Public MIT source installs and creates its local owner without an author account or key. An anonymous public clone was used with 40 homes, 25 active invited staff and all 20 linked product areas without an author payment/upgrade gate; browser requests stayed on localhost. Desktop/phone provider cost and source-term disclosure preceded a scoped owner authorization. Providers collect their own fees; Cabin collects none. This free-access clause does not complete other unfinished PMS target clauses. |
 | `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |
+
+
+### Bounded shared agent door integration
+
+The shared Base door currently exposes visible record reads and the three existing
+CONTROL-002 draft preparations. It inherits the BASE-AGENT-010 event-list tool for
+door policy and review events. See `docs/company-agent-door.md` and
+`agent-surface.json` for its exact supported registry and public-door journey.
+This bounded integration does not complete the broader rental Agent surface,
+change any clause judgment or authorize queued provider work.

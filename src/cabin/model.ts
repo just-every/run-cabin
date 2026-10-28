@@ -14,7 +14,7 @@ import type { Recovery, RecoveryPolicy } from './recovery/types'
 import type { Payout, Delivery, Posting } from './finance/types'
 export type Role = 'owner' | 'manager' | 'cleaner' | 'agent' | 'system'
 export interface MemberScope { propertyIds:string[]; actions:string[]; revision:number; pmsRole:string }
-export interface Actor { interests?:ReturnType<typeof import('./permissions/interests').rentalInterests>; scope?:MemberScope; memberVersion?:number; id: string; email: string; role: Role; isAgent: boolean; memberId?: string; operatorVersion: number; keyId?: string }
+export interface Actor { agent?:{id:string;name:string;label:string}; interests?:ReturnType<typeof import('./permissions/interests').rentalInterests>; scope?:MemberScope; memberVersion?:number; id: string; email: string; role: Role; isAgent: boolean; memberId?: string; operatorVersion: number; keyId?: string }
 export interface Property { id: string; revision: number; name: string; ownerName: string; ownerEmail: string; commissionBps: number }
 export interface Member { id: string; revision: number; name: string; email: string; role: 'manager' | 'cleaner'; active: boolean; scope?:MemberScope }
 export type Channel = 'airbnb' | 'vrbo' | 'booking.com' | 'direct' | 'ical'

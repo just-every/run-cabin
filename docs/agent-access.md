@@ -31,3 +31,8 @@ The inputs for each are in the [Command reference](/docs/commands). Drafts appea
 ## Revoke a token
 
 Under **Credentials**, choose **Revoke agent access**. The token stops working on its next request. **Approval history** lists the approvals people have made, with who approved what and when.
+
+
+Company agents use the [shared agent door](company-agent-door.md). Its current
+bounded registry and local-key scopes are documented separately from this
+legacy draft-key door.
