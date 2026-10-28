@@ -5160,7 +5160,7 @@
       "executable": false
     },
     "tests/movein.test.mjs": {
-      "sha256": "225adafbea0ae1e216a1e846e50027707ebf48de1ae078aa203695aa58eb37be",
+      "sha256": "6f46f6163c1f79b4044a50b24c25f9037ccf53912d5ae8e89db01afd1f722e93",
       "executable": false
     },
     "tests/owners.test.mjs": {
