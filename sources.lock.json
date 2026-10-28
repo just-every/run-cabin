@@ -140,7 +140,7 @@
       "executable": false
     },
     "deploy.json": {
-      "sha256": "268b3fdf0bc5582b25b899aaa52677701e9d4189a63e8c5ffcbe2962ac12695a",
+      "sha256": "d08108521f4b417ea7e5665e01e33416a67a87167d68af1632ac89c4bc315d05",
       "executable": false
     },
     "docs/ach-probe.md": {
@@ -232,7 +232,7 @@
       "executable": false
     },
     "docs/hosting.md": {
-      "sha256": "cdc5072c8895079949554cb857105862b7ea98e4df41b790bba2714f5ccc5ce6",
+      "sha256": "84a73641f72623b143b4a4e51494fcdcf40ef9c584ff05abcb02b193e201e0d8",
       "executable": false
     },
     "docs/identity-verification.md": {
@@ -356,7 +356,7 @@
       "executable": false
     },
     "docs/statements.md": {
-      "sha256": "0d7b6c7f68e59647dc4b0c7c035d2ec0275a4c3b532e22b72c405c7f0e02792e",
+      "sha256": "b41322b286f09cc266427d36609feb46b26a814ea3170e96ed1561081094c044",
       "executable": false
     },
     "docs/stay-recovery.md": {
@@ -424,7 +424,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "83dec0039cbf68b49b345d531cbeeffba0ca623bcd50af04f1d7f37ad403ac13",
+      "sha256": "4860b52e6b722916370fd772afc7eebaaec223751b50878a25aa5a8528dd547a",
       "executable": false
     },
     "migrations/core/0001_owner.sql": {
@@ -972,7 +972,7 @@
       "executable": false
     },
     "README.md": {
-      "sha256": "5e185a4ba320d5432064b413a2657fe91b687bd0820d8253b7a4b569d2e79aa9",
+      "sha256": "993ea12f1c7548ed72d439fdd271b02abcec082c70aff2a060457f7e679dbee2",
       "executable": false
     },
     "release-history/0.1.0.json": {
@@ -992,7 +992,7 @@
       "executable": false
     },
     "RUN-LOCALLY.md": {
-      "sha256": "97848ac04347c38a24f23782055f396fbf6ae54ee67e20143b50fd88a9e8dea9",
+      "sha256": "16d8b56aeae55c957a791c178f6900a23614ea5a807d627ef419e218ecf8086a",
       "executable": false
     },
     "scripts/backup-hosted.mjs": {
@@ -5352,7 +5352,7 @@
       "executable": false
     },
     "wrangler.jsonc": {
-      "sha256": "2b8893000b3dfd74bf4e53f1e25d62f80bf5c27228fb1ebdc04a736da7868952",
+      "sha256": "ee510de7a70664ff965aef2684880041be6557224a483e39c5c25b0c22b02b7f",
       "executable": false
     }
   }
