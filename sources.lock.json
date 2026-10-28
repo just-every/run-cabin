@@ -659,12 +659,16 @@
       "sha256": "26912f5693e858ff88f50f41327131b5fd28142f9370cdb2577538f9c3605a5a",
       "executable": false
     },
+    "public/cabin-tooltips.js": {
+      "sha256": "2e617777953a5360f64b9abdded2a1be05506a6a8815696416a9e5d0a78de631",
+      "executable": false
+    },
     "public/cabin.css": {
-      "sha256": "101a5e3cbbb9a53bd86bca5f12ad887a40ebb2a7dbf2a2d7b2cd657892291430",
+      "sha256": "80f9c2694f135f5018cbbb14306ad0fb0cdc29d51f3290e9f42ca11c9c95e43c",
       "executable": false
     },
     "public/cabin.js": {
-      "sha256": "dfb2e560c98eb3fd54bca1b5ad6f65eeb10f1a2d5bd1b84f55df8ca571b87cf7",
+      "sha256": "84043d948951868fb7b235f42b36907457428c1fd0a5116e83a4e24011d831da",
       "executable": false
     },
     "public/calendar.css": {
@@ -5220,7 +5224,7 @@
       "executable": false
     },
     "tests/readiness-browser.test.mjs": {
-      "sha256": "66c338678b0598c0e1562201f11c90b717e43d6e24ba0d28d229d1bc944da3c5",
+      "sha256": "abac3b095f77be272f93840188365fb8889d9419bc4a7ec6a7894d958f71476e",
       "executable": false
     },
     "tests/readiness-helpers.mjs": {
