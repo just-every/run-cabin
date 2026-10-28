@@ -467,11 +467,11 @@ Old reference: `788f46c517989e287d82885783eddb61961d632b`.
 | `MIGRATE-001` | old CABIN-11 1 | Imported guest count matches the preview | `tests/movein.test.mjs:41` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Imported opening balances match source cents | `tests/movein.test.mjs:42` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Recorded source reservation count equals the known fixture | `tests/movein.test.mjs:34` | asserted |
-| `MIGRATE-001` | old CABIN-11 1 | Saved destination reservation count equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination reservation count equals its source record | `tests/movein.test.mjs:40` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Recorded source future-night count equals the known fixture | `tests/movein.test.mjs:34` | asserted |
-| `MIGRATE-001` | old CABIN-11 1 | Saved destination future-night count equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination future-night count equals its source record | `tests/movein.test.mjs:40` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Recorded source owner opening balance equals the known fixture | `tests/movein.test.mjs:34` | asserted |
-| `MIGRATE-001` | old CABIN-11 1 | Saved destination owner opening balance equals its source | `tests/movein.test.mjs:40` | asserted |
+| `MIGRATE-001` | old CABIN-11 1 | Saved destination owner opening balance equals its source record | `tests/movein.test.mjs:40` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Imported future stay is present in the public calendar feed | `tests/movein.test.mjs:46` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Exact imported plan records completed sign-off | `tests/movein.test.mjs:49` | asserted |
 | `MIGRATE-001` | old CABIN-11 1 | Refused duplicate retains source filename | `tests/movein.test.mjs:59` | asserted |
