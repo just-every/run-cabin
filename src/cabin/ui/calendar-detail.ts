@@ -22,7 +22,7 @@ export function reservationBody(s: any, b: any) {
     [block && !direct ? 'First night' : 'Arrival', block && !direct ? `${b.start.slice(0, 10)} (${settings.timeZone})` : bookingMoment(s, b, 'arrival')], [block && !direct ? 'Open again (exclusive)' : 'Departure', block && !direct ? `${b.end.slice(0, 10)} (${settings.timeZone})` : bookingMoment(s, b, 'departure')],
     ['Payment', paymentState(s, b).label], ['Readiness', `${readinessLabel(readiness)}${readiness?.reasons.length ? ' · ' + readiness.reasons.join(' · ') : ''}`],
     ['Availability', availability(s, b.propertyId).label], ['Email', b.guestEmail || direct?.email || ''], ['Phone', b.guestPhone || ''],
-    ['Source', source], ['Reservation', b.id], ['Revision', b.revision], ['Source event', b.uid], ['Channel reference', b.channelRef || ''],
+    ['Source', source], ['Reservation', b.id], ['Revision', b.revision], ['Source event', b.uid], ['Channel reference', b.channelRef || ''], ['Channel account', b.channelAccountName ? b.channelAccountName+' · '+b.channelAccountId : b.channelAccountId || ''],
     ['Management agreement', b.managementTerms ? `${b.managementTerms.ownerName} · ${b.managementTerms.commissionBps/100}% · ${b.managementTerms.effectiveFrom==='0001-01-01'?'initial agreement':'from '+b.managementTerms.effectiveFrom} · ${b.managementTerms.id}` : 'Not yet recorded'],
     ['Recorded', syncTime(b.approvedAt, settings.timeZone)],
     ['Source freshness', b.channel === 'direct' ? 'Cabin inventory · updated with each saved reservation' : links.length ? links.map((c: any) => `${connectionName(c)} · ${c.status} · last success ${syncTime(c.lastSuccessAt, settings.timeZone)}`).join('; ') : 'Unknown · no live source connection']

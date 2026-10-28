@@ -71,6 +71,7 @@ export function exportRow(table, row) {
  if (kind === 'bookings') { data.restorePaused = true; if(data.quoteId){data.status='cancelled';data.cancelled=true} }
  if (kind === 'collectionPlans') { if(!data.restored)data.history=[...(data.history??[]),{at:data.createdAt,detail:pause}]; data.restored=true; data.status='paused'; delete data.setup; delete data.consent }
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
+ if (kind === 'channelAgentAccounts') { data.status='revoked'; data.generation='restored:'+data.id }
  if (kind === 'channelAgentProfiles') { delete data.stateSealed; delete data.grantedAt; delete data.grantedBy; delete data.challenge; data.status='disconnected' }
  if (kind === 'channelAgentKeys') { delete data.hash; data.expiresAt='1970-01-01T00:00:00.000Z' }
  if (kind === 'channelAgentEvidence') delete data.bodySealed
