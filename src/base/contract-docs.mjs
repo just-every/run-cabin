@@ -7,10 +7,11 @@ if(!['write','check'].includes(mode)||flag!=='--clauses'||!list||process.argv.le
 const ids=list.split(','),source=readFileSync('CONTRACT.md','utf8'),rows=source.split('\n').filter(l=>/^\| `[^`]+` \|/.test(l)).map(l=>l.split('|').slice(1,-1).map(c=>c.trim()))
 const count=selected=>{const own=rows.filter(r=>selected.includes(r[2]));return [own.filter(r=>r[3]==='done').length,own.filter(r=>r[3]==='partial').length,own.filter(r=>r[3]==='missing').length,own.length]}
 const all=count(['published','target','push-further'])
-let contract=source.replace(/^\| (Published|Target and push further|All) \|[^\n]+$/gm,(_,label)=>`| ${label} | ${count(label==='Published'?['published']:label==='All'?['published','target','push-further']:['target','push-further']).join(' | ')} |`)
-contract=contract.replace(/\*\*\d+ clauses: \d+ done, \d+ partial, \d+ missing\.\*\*/,`**${all[3]} clauses: ${all[0]} done, ${all[1]} partial, ${all[2]} missing.**`)
+const summary=text=>text.replace(/^\| (Published|Target and push further|All) \|[^\n]+$/gm,(_,label)=>`| ${label} | ${count(label==='Published'?['published']:label==='All'?['published','target','push-further']:['target','push-further']).join(' | ')} |`)
+ .replace(/\*\*\d+ clauses: \d+ done, \d+ partial, \d+ missing\.\*\*/,`**${all[3]} clauses: ${all[0]} done, ${all[1]} partial, ${all[2]} missing.**`)
+let contract=summary(source)
 const parsed=parseContract(contract)
-let acceptance=readFileSync('ACCEPTANCE.md','utf8'),claims=readFileSync('docs/CLAIMS.md','utf8')
+let acceptance=summary(readFileSync('ACCEPTANCE.md','utf8')),claims=readFileSync('docs/CLAIMS.md','utf8')
 for(const id of ids){
  const clause=parsed.clauses.find(c=>c.id===id),row=rows.find(r=>r[0]==='`'+id+'`')
  if(!clause||!row)throw Error('Unknown clause: '+id)
