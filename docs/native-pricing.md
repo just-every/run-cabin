@@ -14,7 +14,8 @@ calculation, with no OTA publication, acknowledgment or settlement claim.
 Each night uses the saved native rate, then the channel adjustment, then the
 length discount. Seven through 27 nights use weekly savings; 28 nights and above
 use monthly savings instead. Length discounts affect rent only. Amounts round to
-the nearest cent at each nightly step, with a half cent rounded up. Percentage
+the nearest cent at each nightly step, with a half cent rounded up. The nightly
+percentage discount amount is rounded before subtraction. Percentage
 fee adjustments round each selected stay fee independently. Every final night
 is at least the listing's saved floor. The breakdown names every floor conflict
 and retains the requested amount as well as the enforced amount.
