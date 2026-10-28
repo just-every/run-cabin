@@ -206,7 +206,7 @@ test('an overlapping request is declined with its reason and the night is never 
     assert.ok(race.every(r => r.status === 200 || r.status === 409))
     state = await h.state()
     assert.equal(state.bookings.filter(b => b.status === 'confirmed' && b.start === day(12)).length, 1)
-    const page = await h.send('/app/calendar', undefined, h.owner)
+    const page = await h.send(`/app/calendar?from=${day(7)}&days=14`, undefined, h.owner)
     assert.equal(page.status, 200); assert.ok(page.text.includes(declined.reason))
   } finally { await h.close() }
 })
