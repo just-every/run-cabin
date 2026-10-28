@@ -1,4 +1,4 @@
-import { captureInquiry } from '../reservations/inquiries'
+import { captureInquiry, guardInquirySource } from '../reservations/inquiries'
 import type { Bindings } from '../../auth.server'
 import { type Actor, type Booking, type Context, need, manager, newId, sha, text } from '../model'
 import { assertContactsAllowed } from '../privacy/contacts'
@@ -79,8 +79,9 @@ async function observation(c:Context,p:Profile,a:ReadAction,payload:ReadPayload)
 async function reservations(c:Context,p:Profile,a:ReadAction,payload:ReadPayload){
  const saved=await rows<ReadSource>(c.db,READ_SOURCE),seen=new Set<string>(),ids:string[]=[]
  for(const raw of payload.records){
+  await guardInquirySource(c,p,raw.reservationId)
+  try{await assertContactsAllowed(c.db,[raw.guestEmail,raw.guestPhone])}catch(error){throw Object.assign(error as Error,{discardChannelEvidence:true})}
   if(raw.status.toLowerCase()==='inquiry'){const id=await captureInquiry(c,p,a,raw,payload.observedAt);need(!seen.has(id),'Repeated source inquiry ID');seen.add(id);ids.push(id);continue}
-  await assertContactsAllowed(c.db,[raw.guestEmail,raw.guestPhone])
   const r:Record<string,string>={...raw,status:raw.status.toLowerCase()};need(r.status==='confirmed'||r.status==='cancelled','Source reservation status must be confirmed or cancelled')
   date(r.start,'Arrival');date(r.end,'Checkout');need(r.start<r.end&&Date.parse(r.end)-Date.parse(r.start)<=365*86400000,'Source stay must hold 1 to 365 nights')
   const ref=await sourceKey(p,'reservation',r.reservationId),id='channel-read-source:'+ref,hash=await fingerprint(r),old=saved.find(s=>s.id===id)

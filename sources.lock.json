@@ -124,7 +124,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c00acce0b8676d3f2dc512cfc1513df611da0170c79227143e1d268a768d2bc4",
+      "sha256": "713d5875137445146249d984de4e996ac20f4e86bfe60652a998291578d4aaee",
       "executable": false
     },
     "DEMO.md": {
@@ -1384,7 +1384,7 @@
       "executable": false
     },
     "src/cabin/archive/transform.mjs": {
-      "sha256": "305795a9704d2a07df8ff431e9250b6277befd24c589a92cfcb9a7d58172e849",
+      "sha256": "0b7ab21202454bcff91588efa524a7eb354cd5edcff52e12ade6a28b0e259efd",
       "executable": false
     },
     "src/cabin/archive/ui.ts": {
@@ -1444,7 +1444,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/read-import.ts": {
-      "sha256": "df7681a99d5a586c763de9c54b9de2b21622a7249d066224787e6459283aef3f",
+      "sha256": "44fac480b65d64868b9af6d780b1b589dd101b06867e3eaa9bb8b2b48f886178",
       "executable": false
     },
     "src/cabin/channel-agent/read-types.ts": {
@@ -1456,7 +1456,7 @@
       "executable": false
     },
     "src/cabin/channel-agent/runner.ts": {
-      "sha256": "48336c5ed0dc010e5f8226d70685732cec26439bba00e412abb9707e25ff4597",
+      "sha256": "5dbba69349430577b087c98fe1f528035431b803afc4cb46332c07cff1cc4c56",
       "executable": false
     },
     "src/cabin/channel-agent/store.ts": {
@@ -2020,11 +2020,15 @@
       "executable": false
     },
     "src/cabin/inbox/team/cases.ts": {
-      "sha256": "7436bb8f9cb8114253021c1998acdbe26a4959f5941423ba0b54bf45d2152d5b",
+      "sha256": "e01e9bdd5a60f1498de2d18cca0a12f6378a490b2220b7a6d9517f295017c1cd",
       "executable": false
     },
     "src/cabin/inbox/team/commands.ts": {
       "sha256": "a614b134dc78dbbb079a11dec89044db57ebfbfb2b3c8283c11eed1e0ca43938",
+      "executable": false
+    },
+    "src/cabin/inbox/team/inquiries.ts": {
+      "sha256": "6de39c142e063f01a9ddc7abf39d707ca033c2c43af19ffa0c84f544bc88323d",
       "executable": false
     },
     "src/cabin/inbox/team/routing.ts": {
@@ -2048,7 +2052,7 @@
       "executable": false
     },
     "src/cabin/inbox/threads.ts": {
-      "sha256": "d3af57f995a5a2873245aaf287ddf998fe7e559ef0acb71e7d334c8625889505",
+      "sha256": "4841681d323790c289798ee6e28f171c19023de73ce7c543abc447076df95668",
       "executable": false
     },
     "src/cabin/inventory.ts": {
@@ -2256,7 +2260,7 @@
       "executable": false
     },
     "src/cabin/pages/inbox.ts": {
-      "sha256": "226d2c6ecb4100881921ba5e3888f5ef6610d2268eee46b2fd553aefd3589ba7",
+      "sha256": "dcffa45622a88341c1cd43cf5304debcb710116927766ee6fcf8f8f36f452a7f",
       "executable": false
     },
     "src/cabin/pages/index.ts": {
@@ -2296,7 +2300,7 @@
       "executable": false
     },
     "src/cabin/permissions/projection.ts": {
-      "sha256": "a4a67d32ab32ef8655f52e1d5bbba13020336cf0e13f4c9e51efd488debc8366",
+      "sha256": "903b3c02ce1708509c7f5970ffb504103e9659699a44790d9736faace7d266e3",
       "executable": false
     },
     "src/cabin/permissions/reads.ts": {
@@ -2404,7 +2408,7 @@
       "executable": false
     },
     "src/cabin/privacy/sources.ts": {
-      "sha256": "ecd513463af6781d36034254cb7d4db069923504e60c36dafcb31dd071dc9bc7",
+      "sha256": "b3b308708d7096c8a094f31468dd3e181cd07b431cf351a128f5888477e843e1",
       "executable": false
     },
     "src/cabin/promotions/booking-coupons.ts": {
@@ -2645,6 +2649,14 @@
     },
     "src/cabin/reservations/history.ts": {
       "sha256": "571dd55a3521fdf15fd7dd1b3f6af050b7a3c17d138ddbcdfc44d57e66074253",
+      "executable": false
+    },
+    "src/cabin/reservations/inquiries-ui.ts": {
+      "sha256": "b89bb4399a7a2433d60b13c20f2965ad0bdf8e63805e7e9081a89b7449383102",
+      "executable": false
+    },
+    "src/cabin/reservations/inquiries.ts": {
+      "sha256": "f5797021fbc82ce8b2e0d15ca1b3001de7cdc0e18e2bbcd39ca1d7acdbbaccd5",
       "executable": false
     },
     "src/cabin/reservations/quotes-ui.ts": {
@@ -4876,11 +4888,11 @@
       "executable": false
     },
     "tests/archive-records.mjs": {
-      "sha256": "ce37dd9cfbdcc1d005963f5251174fe357d32fe9c3b0ceb8c1d60ac5c18c3ccf",
+      "sha256": "5b45c3a4eed60a69d46a4750050dc298c294f369cac8051ac75d67ec5128c301",
       "executable": false
     },
     "tests/archive.test.mjs": {
-      "sha256": "7f4520a56cf2827faec2863c48ced34aaf6db25f2a6437e59fd8beac2f5e387b",
+      "sha256": "ffd52bab85facc20d30cf61a00f81af379c6288787c59091aedc05ea164b0991",
       "executable": false
     },
     "tests/audit.test.mjs": {
@@ -4916,11 +4928,11 @@
       "executable": false
     },
     "tests/channel-agent-edge.mjs": {
-      "sha256": "4e5f83bf5701fcd10c4a1f0cab10d3e8c2ccb57749cb1c32bd76ef0951da4a2a",
+      "sha256": "29e3a3334095bd770d4f8f285dc2b33970dddeb62eb87996768380a330c78dd9",
       "executable": false
     },
     "tests/channel-agent.test.mjs": {
-      "sha256": "0e6e1f551e18664950816df10ddb056ba53384c3e10de05a9f09b101d2a67482",
+      "sha256": "fc46a1ebdeadc985cf48db0be96467726510d87db53f0e147d6010db6c6f6a0f",
       "executable": false
     },
     "tests/cleaner-mobile.test.mjs": {
@@ -5016,7 +5028,7 @@
       "executable": false
     },
     "tests/fixtures/channel-pages/reads.html": {
-      "sha256": "b0600db8fe1b51b953aff8bf7a4860f3d00c934ab0dbcf0afbd922771757546a",
+      "sha256": "e675393b0898d0f5c8f933649640f84e15ff96ab011aa1f6a4b9825824563623",
       "executable": false
     },
     "tests/fixtures/checklist.png": {
@@ -5117,6 +5129,10 @@
     },
     "tests/inbox.test.mjs": {
       "sha256": "a89f3f8c4bfb18bf695c8294f79823886f946b3497c5fac505b95d32dcfc4b9f",
+      "executable": false
+    },
+    "tests/inquiries-support.mjs": {
+      "sha256": "bc84f1e3bbc52e96b1b1b3c63302386af8bc91b3e8fe68636d87e075588f7ced",
       "executable": false
     },
     "tests/interface-accessibility.mjs": {
@@ -5276,7 +5292,7 @@
       "executable": false
     },
     "tests/reservations.test.mjs": {
-      "sha256": "fbcf041d74fa57aea537acb7ba92e6207c72bbfa78c2af949c51688c6e796417",
+      "sha256": "3d37dec1cecf26dc22a1944564fb29b03363ac4cc1be07d1f88ddfb52a624ba8",
       "executable": false
     },
     "tests/runtime.mjs": {

@@ -27,6 +27,7 @@ export function route(c: Context, row: ThreadCase, team: TeamSettings) {
 /** Called on every commit: opens a case for each unanswered guest message after team settings were first saved, closes answered ones and escalates missed deadlines until a person accepts. */
 export function syncTeam(c: Context) {
  const team = teamSettings(c.data), now = Date.parse(c.now)
+ syncInquiryDeadlines(c)
  if (team.since) for (const t of threads(c.data)) {
   const erased = t.stays.some(b => b.guestErasedAt), last = awaiting(t.messages), waiting = erased || (last && last.createdAt < team.since) ? null : last
   let row = c.data.threadCases.find(r => r.id === t.id)
@@ -40,7 +41,6 @@ export function syncTeam(c: Context) {
   } else if (!waiting && row.status !== 'answered') Object.assign(row, { status: 'answered', dueAt: null })
   if (row.status === 'open' && row.dueAt && Date.parse(row.dueAt) <= now) escalate(c, row, t, team)
  }
- syncInquiryDeadlines(c)
  for (const row of c.data.threadCases) { const before = c.before.threadCases.find(r => r.id === row.id); if (!before || JSON.stringify({ ...before, revision: '' }) !== JSON.stringify({ ...row, revision: '' })) row.revision = newId() }
 }
 const time = (c: Context, row: ThreadCase, iso: string) => { const zone = zoneOf(c.data, row.propertyId); return `${wall(Date.parse(iso), zone).replace('T', ' ')} ${zoneAbbr(Date.parse(iso), zone)}` }
@@ -59,6 +59,7 @@ export function ensureCase(c: Context, t: Thread) {
 }
 export function notifyMember(c: Context, row: ThreadCase, t: Thread, memberId: string | null, subject: string, intro: string) {
  const to = activeManager(c.data, memberId); if (!to) return
+ if(to.scope&&(!row.propertyId||!to.scope.propertyIds.some(id=>id==='*'||id===row.propertyId)||!to.scope.actions.some(a=>a==='*'||a==='inbox:read')))return
  c.data.notices.push({ id: newId(), revision: newId(), propertyId: row.propertyId ?? '', memberId: to.id, email: to.email, kind: 'inbox', recordId: row.id, priority: row.urgency === 'urgent' ? 'urgent' : undefined, subject, text: `${intro}\n\n${context(c, row, t)}`, status: 'pending', detail: null, createdAt: c.now, sentAt: null })
 }
 /** The escalation manager is notified with the full context. It repeats every repeatMinutes until a person accepts the thread. */

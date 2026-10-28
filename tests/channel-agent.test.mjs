@@ -238,3 +238,7 @@ test('interrupted browser work before or after channel acceptance expires into a
   }finally{await edge.close();await h.close()}
  }
 })
+
+test('source inquiry intake reviews the exact thread and shows unresolved deadline handling in native reservations and inbox',{timeout:120000},async()=>{
+ const {inquiriesBrowserJourney}=await import('./inquiries-browser.mjs');await inquiriesBrowserJourney()
+})
