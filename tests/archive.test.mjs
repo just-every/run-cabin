@@ -43,27 +43,26 @@ test('DATA-001: public CLI archive round trip refuses damaged or populated store
     const turnover=await h.cmd('turnover.prepare',{bookingId:booking.id,cleanerId:cleaner.id,checklist:['Linen changed']})
     await h.cmd('turnover.approve',{id:turnover.id,revision:turnover.revision})
     await h.cmd('turnover.complete',{id:turnover.id,revision:turnover.revision,checks:turnover.checklist,photo:(await readFile('tests/fixtures/checklist.png')).toString('base64'),mimeType:'image/png',caption:'Linen ready'},cleaner.cookie)
-    const proof=await populateArchive(h,p,cleaner);console.log('Archive phase: populated',new Date().toISOString())
-    const inquiryProof=proof.inquiry
+    const proof=await populateArchive(h,p,cleaner)
     const website=await h.cmd('direct.site.save',{name:'Archive host',origin:'https://archive.example.com',color:'#214d3d',pages:[{slug:'about',title:'Our hosts',body:'Retained public page'}],listings:[]})
     const key=await h.cmd('agent.create',{label:'Excluded secret'})
     const agentHash=(await h.db.prepare('SELECT token_hash FROM cb_agent_keys').first()).token_hash
     const identity={auth:h.auth,owner:h.owner}
     await h.close();h=null
     const old=join(temporary,'before.rer'),later=join(temporary,'later.rer'),again=join(temporary,'again.rer')
-    await command(source,['export','--output',old]);console.log('Archive phase: exported',new Date().toISOString())
+    await command(source,['export','--output',old])
     const bytes=await readFile(old,'utf8');assert.ok(bytes.includes('Temporary property'));assert.ok(!bytes.includes('Excluded secret'));assert.ok(!bytes.includes(agentHash));assert.ok(!bytes.includes(key.token));assert.ok(!bytes.includes(proof.sealed));for(const token of proof.privateLinks)assert.ok(!bytes.includes(token), 'Private capability remained in '+bytes.split('\n').filter(Boolean).map(JSON.parse).filter(r=>r.kind==='part').flatMap(r=>r.items).filter(i=>JSON.stringify(i).includes(token)).map(i=>i.table+':'+i.row?.kind+':'+Object.entries(JSON.parse(i.row?.data??'{}')).filter(([k,v])=>JSON.stringify(v).includes(token)).map(([k])=>k).join(',')).join(','))
-    await command(restored,['import','--input',old,'--yes']);console.log('Archive phase: imported',new Date().toISOString())
+    await command(restored,['import','--input',old,'--yes'])
     await command(restored,['export','--output',again])
-    let outbound=0;h=await harness({root:restored,...identity,outbound:()=>{outbound++;return new Response('Refused',{status:599})}}); const signed=await h.signIn(h.auth.OWNER_EMAIL); const saved=await h.state(signed); assert.equal(saved.turnovers.find(t=>t.id===turnover.id).status,'completed'); assert.ok(saved.importJobs.some(j=>j.status==='completed')); assert.equal((await h.send(`/api/cabin/turnovers/${turnover.id}/photo`,undefined,signed)).status,200); await checkRestored(h,signed,proof);console.log('Archive phase: restored checks',new Date().toISOString());const restoredInquiry=(await h.state(signed)).inquiries.find(q=>q.id===inquiryProof.id);assert.equal(restoredInquiry.restorePaused,true);assert.equal((await h.state(signed)).threadCases.find(r=>r.id===inquiryProof.threadId).status,'answered');assert.ok((await h.state(signed)).messages.filter(m=>m.ref===inquiryProof.threadRef).every(m=>m.status==='discarded'));await h.cmd('inquiry.review',{id:restoredInquiry.id,revision:restoredInquiry.revision,sourceThreadId:restoredInquiry.sourceThreadId,confirm:'yes'},signed,409);const restoredSite=JSON.parse((await h.db.prepare("SELECT data FROM cb_booking_site WHERE id='site'").first()).data);assert.equal(restoredSite.pages[0].body,'Retained public page');assert.equal(restoredSite.domainVerified,false);assert.equal(restoredSite.domainChallenge,'');assert.equal(outbound,0);await h.close();h=null
-    console.log('Archive phase: restored snapshot',new Date().toISOString());const rows=text=>text.split('\n').filter(Boolean).map(JSON.parse).filter(r=>r.kind==='part')
+    let outbound=0;h=await harness({root:restored,...identity,outbound:()=>{outbound++;return new Response('Refused',{status:599})}}); const signed=await h.signIn(h.auth.OWNER_EMAIL); const saved=await h.state(signed); assert.equal(saved.turnovers.find(t=>t.id===turnover.id).status,'completed'); assert.ok(saved.importJobs.some(j=>j.status==='completed')); assert.equal((await h.send(`/api/cabin/turnovers/${turnover.id}/photo`,undefined,signed)).status,200); await checkRestored(h,signed,proof);const restoredSite=JSON.parse((await h.db.prepare("SELECT data FROM cb_booking_site WHERE id='site'").first()).data);assert.equal(restoredSite.pages[0].body,'Retained public page');assert.equal(restoredSite.domainVerified,false);assert.equal(restoredSite.domainChallenge,'');assert.equal(outbound,0);await h.close();h=null
+    const rows=text=>text.split('\n').filter(Boolean).map(JSON.parse).filter(r=>r.kind==='part')
     assert.ok(rows(bytes).length>0);assert.deepEqual(rows(await readFile(again,'utf8')),rows(bytes))
     await command(restored,['import','--input',old,'--yes'],4)
     const corrupt=join(temporary,'corrupt.rer');await writeFile(corrupt,bytes.replace('Temporary property','Changed property'),{mode:0o600})
     // Checksum damage is a transfer failure (1); restore policy conflicts remain 4.
     await command(erased,['import','--input',corrupt,'--yes'],1)
     h=await harness({root:source,...identity});await erase(h,{entity:'property',id:p.id,revision:p.revision},await h.signIn(h.auth.OWNER_EMAIL));await h.close();h=null
-    await command(source,['export','--output',later]);console.log('Archive phase: erased export',new Date().toISOString())
+    await command(source,['export','--output',later])
     await command(erased,['import','--input',old,'--journal',later,'--yes'],4)
     await command(erased,['import','--input',later,'--yes'])
     const proxy=await getPlatformProxy({configPath:join(erased,'wrangler.jsonc'),persist:{path:join(erased,'.wrangler/state/v3')},remoteBindings:false})
