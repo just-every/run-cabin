@@ -55,3 +55,7 @@ test('RES-006: staff issue and revise a quote, then a mobile or desktop guest si
 })
 
 test('dated native rates and preparation settings govern the guest breakdown and refusal on desktop and phone',{timeout:120000},datedRatesJourney)
+
+test('native pricing settings and channel previews explain fees, direct discounts and floor conflicts',{timeout:120000},async()=>{
+ const {pricingBrowserJourney}=await import('./pricing-browser.mjs');await pricingBrowserJourney()
+})
