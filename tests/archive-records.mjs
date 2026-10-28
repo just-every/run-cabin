@@ -40,7 +40,7 @@ async function populateChannelArchive(h,p) {
  const leased=await claimUntil(running.id);assert.equal(leased.id,running.id)
  await runner({op:'checkpoint',id:leased.id,lease:leased.lease,before:image})
  const queued=await h.cmd('channelAgent.read',{id:profile.id,kind:'read-payouts',readUrl:'https://www.vrbo.com/hosting/payouts/archive-home',confirm:'yes'})
- const records=(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
+ const records=(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentAccounts','channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
  const privateValues=[key.token,storageState.cookies[0].value,...records.flatMap(({data})=>[data.stateSealed,data.hash,data.bodySealed,data.lease].filter(Boolean))]
  const history=records.filter(row=>row.kind==='channelAgentActions'&&row.data.status==='succeeded').map(({data})=>({id:data.id,status:data.status,result:data.result,completedAt:data.completedAt,attempts:data.attempts}))
  return {profileId:profile.id,runnerToken:key.token,closureId:closure.id,cancelledIds:[stopped.id,running.id,queued.id],history,privateValues}
@@ -97,9 +97,10 @@ export async function checkRestored(h,owner,proof) {
  assert.equal(s.restore.reviewed,0)
  assert.ok(s.sharing.every(p=>!p.enabled))
  assert.equal(s.channelAgent.profiles.find(p=>p.id===proof.channelAgent.profileId).status,'disconnected')
- const agentRows=async()=>(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
+ const agentRows=async()=>(await h.db.prepare("SELECT kind,data FROM cb_records WHERE kind IN ('channelAgentAccounts','channelAgentProfiles','channelAgentKeys','channelAgentEvidence','channelAgentActions') ORDER BY rowid").all()).results.map(row=>({kind:row.kind,data:JSON.parse(row.data)})).sort((a,b)=>a.data.id.localeCompare(b.data.id))
  const restoredAgent=await agentRows()
  for(const {kind,data} of restoredAgent){
+  if(kind==='channelAgentAccounts')assert.equal(data.status,'revoked')
   if(kind==='channelAgentProfiles')assert.ok(!data.stateSealed&&!data.grantedAt&&!data.grantedBy)
   if(kind==='channelAgentKeys')assert.ok(!data.hash&&Date.parse(data.expiresAt)<Date.now())
   if(kind==='channelAgentEvidence')assert.ok(!data.bodySealed)

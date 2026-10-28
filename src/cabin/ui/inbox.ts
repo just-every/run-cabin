@@ -18,14 +18,14 @@ import { teamChips, teamPanel, teamSettingsCard } from '../inbox/team/ui'
 const CHANNEL: Record<string, string> = { email: 'Email', sms: 'Text', airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com' }
 const at = (s: any, propertyId: string | null, iso?: string | null) => atHome(s, propertyId ?? s.properties[0]?.id ?? '', iso)
 const page = (t: Thread | undefined) => t ? `inbox?thread=${t.id}` : 'inbox'
-const stayLine = (s: any, b: any) => `<span class="stay-chip ${b.status === 'confirmed' ? '' : 'gone'}"><span class="ch ch-${b.channel === 'booking.com' ? 'booking' : h(b.channel)}">${h(channelName(b.channel))}</span> ${h(propertyName(s, b.propertyId))} · ${h(span(b))}${b.status === 'confirmed' ? '' : ' · cancelled'}</span>`
+const stayLine = (s: any, b: any) => `<span class="stay-chip ${b.status === 'confirmed' ? '' : 'gone'}"><span class="ch ch-${b.channel === 'booking.com' ? 'booking' : h(b.channel)}">${h(channelName(b.channel))}</span> ${h(propertyName(s, b.propertyId))}${b.channelAccountId?' · '+h(b.channelAccountName??b.channelAccountId):''} · ${h(span(b))}${b.status === 'confirmed' ? '' : ' · cancelled'}</span>`
 function row(s: any, t: Thread, current: boolean, p:InboxPage) {
   const last = [...t.messages].reverse().find(m => m.status !== 'draft' && m.status !== 'drafting'), stay = t.stays[t.stays.length - 1]
   return `<a class="thread-row${current ? ' current' : ''}" href="${h(inboxLink(p,{thread:t.id,messages:null}))}"${current ? ' aria-current="true"' : ''}><span class="who"><strong>${h(t.name)}</strong>${t.drafts ? `<span class="draft-dot">Draft waiting</span>` : ''}</span>${teamChips(s, t)}<span class="muted">${stay ? `${h(propertyName(s, stay.propertyId))} · ${h(span(stay))}` : h(t.email ?? t.phone ?? 'No stay matched yet')}</span>${last ? `<span class="excerpt">${last.direction === 'in' ? '' : last.status === 'sent' ? 'You: ' : 'Not sent: '}${h(last.text.replace(/\s+/g, ' ').slice(0, 90))}</span>` : ''}</a>`
 }
 function status(s: any, m: any, t: Thread) {
   const when = at(s, m.propertyId, m.sentAt ?? m.createdAt)
-  if (m.direction === 'in') return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(when)}</p>`
+  if (m.direction === 'in') return `<p class="meta">${h(CHANNEL[m.channel])}${m.channelAccountId?' · '+h(m.channelAccountName??m.channelAccountId):''} · ${h(when)}</p>`
   const sched = m.scheduledId ? s.scheduled.find((r: any) => r.id === m.scheduledId) : null, late = sched ? lateMinutes(sched) : null
   const who = m.control?.automatic ? 'Automatic reply · property authority' : m.source === 'scheduled' ? (sched ? `Scheduled · ${RULE_NAMES[sched.rule as keyof typeof RULE_NAMES]}` : 'Direct booking · sent automatically') : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
   const state = m.status === 'sent' ? `Sent ${when}${sched ? (late !== null && late <= 5 ? ' · on time' : ` · ${late} min late`) : ''}` : m.status === 'suppressed' ? 'Not sent: development mode sends no email' : m.status === 'unavailable' ? `Not sent: ${(m.detail ?? '').split(/(?<=\.) /)[0]}` : m.status === 'failed' ? `Could not send: ${m.detail ?? ''}` : 'Sending…'
