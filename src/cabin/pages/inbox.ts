@@ -49,7 +49,7 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  const selectedBookings=JSON.stringify(keys.filter(([,key])=>selectedKeys.has(key)).map(([id])=>id))
  await records(db,data,['bookings'],inIds('id'),[selectedBookings])
  await records(db,data,['guests','scheduled'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
- await records(db,data,['homeSettings','threadCases'],inIds("json_extract(data,'$.propertyId')"),[homes])
+ await records(db,data,['homeSettings','threadCases','inquiries'],inIds("json_extract(data,'$.propertyId')"),[homes])
  await records(db,data,['inbox'])
  if(!constrained||actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
  const make=(key:string):Thread=>{

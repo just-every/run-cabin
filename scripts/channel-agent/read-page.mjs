@@ -6,7 +6,7 @@ export const READ_FIELDS = Object.freeze({
  'read-messages': ['listingId', 'reservationId', 'messageId', 'text', 'sentAt', 'direction'],
  'read-payouts': ['listingId', 'transactionId', 'payoutId', 'reservationId', 'date', 'currency', 'gross', 'fee', 'net', 'type', 'status'],
 });
-const OPTIONAL = { 'read-reservations': ['guestEmail', 'guestPhone'], 'read-messages': [], 'read-payouts': ['guestName'] };
+const OPTIONAL = { 'read-reservations': ['guestEmail', 'guestPhone', 'threadId', 'guests', 'currency', 'quote', 'deadline', 'message'], 'read-messages': [], 'read-payouts': ['guestName'] };
 
 // Values never enter the model request. The model maps visible headers to fields;
 // the browser copies the corresponding cells locally without interpreting text.

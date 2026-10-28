@@ -1,4 +1,5 @@
 import { accountIdFor,assertAccount } from './accounts'
+import { captureInquiry } from '../reservations/inquiries'
 import type { Bindings } from '../../auth.server'
 import { type Actor, type Booking, type Context, need, manager, newId, sha, text } from '../model'
 import { assertContactsAllowed } from '../privacy/contacts'
@@ -17,7 +18,7 @@ import { READ_SOURCE, READ_OBSERVATION, type ReadAction, type ReadPayload, type 
 function save<T extends {id:string}>(c:Context,kind:string,row:T){saveRecord(c,kind,row)}
 const hosts={airbnb:'airbnb.com',vrbo:'vrbo.com','booking.com':'booking.com'}
 const fields={
- 'read-reservations':{required:['listingId','reservationId','guestName','start','end','status'],optional:['guestEmail','guestPhone']},
+ 'read-reservations':{required:['listingId','reservationId','guestName','start','end','status'],optional:['guestEmail','guestPhone','threadId','guests','currency','quote','deadline','message']},
  'read-messages':{required:['listingId','reservationId','messageId','text','sentAt','direction'],optional:[]},
  'read-payouts':{required:['listingId','transactionId','payoutId','reservationId','date','currency','gross','fee','net','type','status'],optional:['guestName']}
 } as const
@@ -42,7 +43,7 @@ function payloadFor(action:ReadAction,value:unknown):ReadPayload{
   const row=value as Record<string,unknown>
   need(Object.keys(row).every(k=>allowed.has(k)&&typeof row[k]==='string'),'Unexpected or non-string source field')
   for(const k of spec.required){const max=k==='text'?8000:500;text(row[k],`source ${k}`,max);need((row[k] as string).length<=max,`Source ${k} is too long`)}
-  for(const k of spec.optional)if(k in row){text(row[k],`source ${k}`,500);need((row[k] as string).length<=500,`Source ${k} is too long`)}
+  for(const k of spec.optional)if(k in row){const max=k==='message'?8000:500;text(row[k],`source ${k}`,max);need((row[k] as string).length<=max,`Source ${k} is too long`)}
   return row as Record<string,string>
  })
  need(JSON.stringify(records).length<=2_000_000,'Source read is too large')
@@ -82,6 +83,7 @@ async function observation(c:Context,p:Profile,a:ReadAction,payload:ReadPayload)
 async function reservations(c:Context,p:Profile,a:ReadAction,payload:ReadPayload){
  const saved=await rows<ReadSource>(c.db,READ_SOURCE),seen=new Set<string>(),ids:string[]=[]
  for(const raw of payload.records){
+  if(raw.status.toLowerCase()==='inquiry'){const id=await captureInquiry(c,p,a,raw,payload.observedAt);need(!seen.has(id),'Repeated source inquiry ID');seen.add(id);ids.push(id);continue}
   await assertContactsAllowed(c.db,[raw.guestEmail,raw.guestPhone])
   const r:Record<string,string>={...raw,status:raw.status.toLowerCase()};need(r.status==='confirmed'||r.status==='cancelled','Source reservation status must be confirmed or cancelled')
   date(r.start,'Arrival');date(r.end,'Checkout');need(r.start<r.end&&Date.parse(r.end)-Date.parse(r.start)<=365*86400000,'Source stay must hold 1 to 365 nights')

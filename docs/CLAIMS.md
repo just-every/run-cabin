@@ -123,3 +123,11 @@ Evidence: `tests/channel-agent.test.mjs` — “SYNC-011 RES-002 MESSAGE-001 FIN
 
 Remaining: Native owner-controlled account identity and account-wide session revocation are implemented without adding browser action authority. Existing profile identities and history are retained; an existing listing cannot move to another account without a reviewed remap. Remaining: owner-authorized two Airbnb and two Vrbo host accounts and a co-host listing; actual account authorization, owner-approved co-host grants and permission readback, full account monitoring and reviewed remapping, room and rate-plan ownership, review attribution, real booking and message and review and payout journeys, acknowledged account-specific stop-sell with SYNC-007 exceptions, unaffected-account rate exchange and live reauthorization without duplicates. Synthetic channel pages prove only the native foundation.
 <!-- contract-status:SYNC-010:end -->
+
+<!-- contract-status:SYNC-008:start -->
+SYNC-008 · Inquiries, booking requests, special offers and alterations · partial.
+
+Evidence: `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.test.mjs` (line 178).
+
+Remaining: Requests taken in Cabin are declined with the overlapping reservation named, or held; no inquiry states, channel deadlines, offers, alterations or channel-side answers (partner APIs).
+<!-- contract-status:SYNC-008:end -->
