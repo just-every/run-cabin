@@ -1,4 +1,5 @@
 import { type Context, type GuestMessage, need, newId, owner, sha, text, integer } from '../model'
+import { eraseChannelEvidence } from '../channel-agent/retention'
 import { rows } from '../channel-agent/store'
 import { PROFILE, type Profile } from '../channel-agent/types'
 import type { ReadAction } from '../channel-agent/read-types'
@@ -20,6 +21,12 @@ function timestamp(value:unknown,label:string){
  return s
 }
 function date(value:string){need(/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value,'Inquiry dates must be real calendar dates');return value}
+/** Erased source IDs remain tombstones across profile reconnection and changed source states. */
+export async function guardInquirySource(c:Context,p:Profile,sourceId:string){
+ const id='inquiry:'+await sha(JSON.stringify([p.channel,p.id,sourceId])),old=c.data.inquiries.find(q=>q.id===id)
+ if(old&&(old.status==='erased'||old.restorePaused))throw Object.assign(new Error('Inquiry was erased or restored inactive; source replay is refused'),{status:409,discardChannelEvidence:true})
+ return {id,old}
+}
 /** Existing authorized reservation reads may observe inquiries; identity is reviewed natively before a thread is created. */
 export async function captureInquiry(c:Context,p:Profile,a:ReadAction,r:Record<string,string>,observedAt:string){
  const sourceId=text(r.reservationId,'source inquiry ID',500),sourceThreadId=text(r.threadId,'source thread ID',500)
@@ -28,11 +35,10 @@ export async function captureInquiry(c:Context,p:Profile,a:ReadAction,r:Record<s
  need(/^\d+(?:\.\d{1,2})?$/.test(r.quote),'Inquiry quote must be a nonnegative USD amount')
  const quoteCents=integer(Math.round(Number(r.quote)*100),'Inquiry quote cents'),guests=integer(Number(r.guests),'Inquiry guest count',1,1000)
  const deadline=timestamp(r.deadline,'Source deadline'),guestName=text(r.guestName,'source guest name',500),sourceText=text(r.message,'source inquiry message',8000)
- const id='inquiry:'+await sha(JSON.stringify([p.channel,p.id,sourceId]))
+ const {id,old}=await guardInquirySource(c,p,sourceId)
  const threadRef='inquiry-thread:'+await sha(JSON.stringify([p.channel,p.id,sourceThreadId]))
+ if(c.data.inquiries.some(q=>q.status==='erased'&&q.threadRef===threadRef))throw Object.assign(new Error('Source thread was erased; replay is refused'),{status:409,discardChannelEvidence:true})
  const fingerprint=await sha(JSON.stringify({sourceId,sourceThreadId,start,end,guests,quoteCents,deadline,guestName,sourceText}))
- const old=c.data.inquiries.find(q=>q.id===id)
- need(!old||!old.restorePaused&&old.status!=='erased','Inquiry was erased or restored inactive; source replay is refused',409)
  need(!old||old.fingerprint===fingerprint,'Source inquiry identity or terms changed; owner reconciliation required',409)
  need(!old||Date.parse(observedAt)>=Date.parse(old.observedAt),'Inquiry observation is stale',409)
  if(old){if(old.status==='needs_review'&&old.generation!==p.generation){old.generation=p.generation;old.observedAt=observedAt;old.revision=newId()}return old.id}
@@ -42,7 +48,7 @@ export async function captureInquiry(c:Context,p:Profile,a:ReadAction,r:Record<s
  c.data.inquiries.push(q);c.entityId=q.id;return q.id
 }
 export function eraseInquiry(c:Context,q:Inquiry){
- q.status='erased';q.guestName='Erased guest';q.sourceText='';q.sourceId='';q.sourceThreadId='';q.revision=newId()
+ q.status='erased';q.guestName='Erased guest';q.sourceText='';q.sourceId='';q.sourceThreadId='';q.sourceUrl='';q.revision=newId()
  for(const m of c.data.messages.filter(m=>m.id===q.messageId||m.ref===q.threadRef)){m.text='Erased inquiry';m.subject='Erased inquiry';m.status='discarded';m.revision=newId()}
  const row=c.data.threadCases.find(r=>r.id===q.threadId)
  if(row){row.guest='Erased guest';row.status='answered';row.waitingSince=null;row.dueAt=null;row.claim=null;row.notes=[];row.handovers=[];row.revision=newId()}
@@ -53,7 +59,7 @@ export async function inquiryCommand(c:Context,name:string,p:Record<string,unkno
  owner(c.actor);need(!c.actor.isAgent,'A native owner must review source identity',403)
  const q=c.data.inquiries.find(q=>q.id===text(p.id,'inquiry'));need(q,'Inquiry not found',404)
  need(q.revision===p.revision,'Inquiry changed. Review the current source record.',409);c.entityId=q.id
- if(name==='inquiry.erase'){need(p.confirm==='yes','Confirm inquiry erasure');need(!c.data.notices.some(n=>n.recordId===q.threadId&&n.status==='sending'),'Inquiry notice is in flight; reconcile it before erasing',409);eraseInquiry(c,q);return q}
+ if(name==='inquiry.erase'){need(p.confirm==='yes','Confirm inquiry erasure');need(!c.data.notices.some(n=>n.recordId===q.threadId&&n.status==='sending'),'Inquiry notice is in flight; reconcile it before erasing',409);await eraseChannelEvidence(c,{entity:'guest',id:q.id,revision:q.revision,bookings:new Set(),properties:new Set([q.propertyId]),values:[q.guestName,q.sourceText]});eraseInquiry(c,q);return q}
  need(name==='inquiry.review','Unknown inquiry command',404)
  need(q.status==='needs_review'&&!q.restorePaused,'This source inquiry is no longer awaiting review',409)
  need(p.confirm==='yes'&&p.sourceThreadId===q.sourceThreadId,'Confirm the exact source thread identity; name-only matches are refused',409)

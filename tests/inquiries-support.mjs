@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises'
 export const inquiryClock='2026-10-28T12:00:00.000Z'
 export const sourceInquiry={listingId:'synthetic-cabin-1',reservationId:'synthetic-cabin-2',guestName:'Synthetic guest',start:'2026-12-10',end:'2026-12-13',status:'inquiry',threadId:'synthetic-cabin-3',guests:'3',currency:'USD',quote:'583.25',deadline:'2026-10-28T13:00:00.000Z',message:'May we stay for these three nights?'}
 /** Synthetic source transport only; all product work uses the authenticated runner and native commands. */
-export async function inquirySource(h){
- const p=await h.cmd('property.save',{name:'Synthetic lakeside cabin',ownerName:'Synthetic owner',ownerEmail:h.auth.OWNER_EMAIL,commissionBps:1500})
- const manager=await h.person('InquiryManager','manager'),cleaner=await h.person('InquiryCleaner')
+export async function inquirySource(h,options={}){
+ const p=await h.cmd('property.save',{name:options.name??'Synthetic lakeside cabin',ownerName:'Synthetic owner',ownerEmail:h.auth.OWNER_EMAIL,commissionBps:1500})
+ const manager=await h.person('InquiryManager','manager'),cleaner=options.cleaner===false?null:await h.person('InquiryCleaner')
  const key=await h.cmd('channelAgent.runner.create',{}),headers={authorization:'Bearer '+key.token}
  const runner=async(body,status=200)=>{const r=await h.send('/api/cabin/channel-agent/runner',body,'',headers);assert.equal(r.status,status,r.text);return r.value}
  async function connect(){
@@ -14,12 +14,14 @@ export async function inquirySource(h){
   await runner({op:'complete',id:job.id,lease:job.lease,outcome:'succeeded',result:'connected',storageState:{cookies:[],origins:[]}})
  }
  await connect()
- const profile=(await h.state()).channelAgent.profiles[0]
+ const profile=(await h.state()).channelAgent.profiles.find(row=>row.propertyId===p.id&&row.channel==='airbnb')
  const image=(await readFile('tests/fixtures/checklist.png')).toString('base64')
  async function read(records=[sourceInquiry],want='succeeded',observedAt=inquiryClock){
   await h.cmd('channelAgent.read',{id:profile.id,kind:'read-reservations',readUrl:'https://www.airbnb.com/hosting/synthetic-cabin-1/reservations',confirm:'yes'})
   const {job}=await runner({op:'claim'});assert.equal(job.kind,'read-reservations')
-  const result=await runner({op:'complete',id:job.id,lease:job.lease,outcome:'succeeded',result:'read',before:image,after:image,read:{observedAt,records}})
+  await runner({op:'checkpoint',id:job.id,lease:job.lease,before:image})
+  assert.equal((await h.send('/api/cabin/channel-agent/evidence?id='+encodeURIComponent(job.id)+'&side=before',undefined,h.owner)).status,404,'unreconciled read evidence cannot expose an erased source')
+  const result=await runner({op:'complete',id:job.id,lease:job.lease,outcome:'succeeded',result:'read',before:image,after:image,read:{observedAt:observedAt??new Date().toISOString(),records}})
   assert.equal(result.status,want);return result
  }
  async function settings(){const row=(await h.state()).inbox[0];return h.cmd('inbox.team.set',{revision:row?.revision??'',section:'response',normalMinutes:240,urgentMinutes:30,repeatMinutes:30,escalationMemberId:manager.id})}
