@@ -14,14 +14,12 @@ In the Cabin checkout create `.env.cabin` with your own values:
 CLOUDFLARE_ACCOUNT_ID=your-account-id
 CLOUDFLARE_API_TOKEN=your-scoped-deploy-token
 OWNER_EMAIL=you@example.com
-MAIL_PROVIDER=sendgrid
-MAIL_FROM=bookings@example.com
 MAIL_API_KEY=your-mail-provider-api-key
 ```
 
-Use a verified plain email address for `MAIL_FROM`. It is a secret binding, supplied privately rather than committed in `deploy.json`. For `MAIL_PROVIDER=cloudflare`, also add `MAIL_ACCOUNT_ID` with the mail account’s ID. Connect Stripe directly under **Direct bookings → Connect Stripe**: save a test key, complete the $1 test checkout, then save a live key when ready to charge real guests. See [Direct bookings](/docs/direct-bookings). Server configuration is also supported: `STRIPE_TEST_SECRET_KEY` takes an `sk_test_` key from the [Stripe test API keys page](https://dashboard.stripe.com/test/apikeys), and `STRIPE_SECRET_KEY` takes an `sk_live_` key from the live dashboard. Keep both private. Statement payout import currently supports test-mode paid automatic USD payouts only, even when direct bookings use live mode.
+Set `MAIL_PROVIDER` (`sendgrid`, `resend` or `cloudflare`) and `MAIL_FROM` (a verified sender address) in the plain `vars` block of `wrangler.jsonc`. For `MAIL_PROVIDER=cloudflare`, also set the plain `MAIL_ACCOUNT_ID` to the mail account’s ID; managed mail uses the plain `MAIL_RELAY_URL`. These settings are deployed with the Worker; changing them requires another build and deploy. Connect Stripe directly under **Direct bookings → Connect Stripe**: save a test key, complete the $1 test checkout, then save a live key when ready to charge real guests. See [Direct bookings](/docs/direct-bookings). Server configuration is also supported: `STRIPE_TEST_SECRET_KEY` takes an `sk_test_` key from the [Stripe test API keys page](https://dashboard.stripe.com/test/apikeys), and `STRIPE_SECRET_KEY` takes an `sk_live_` key from the live dashboard. Keep both private. Statement payout import currently supports test-mode paid automatic USD payouts only, even when direct bookings use live mode.
 
-Every other setting is optional; `rer deploy` lists the ones you have not set, and Cabin runs without them:
+The remaining secret settings are optional; `rer deploy` lists the ones you have not set, and Cabin runs without them:
 
 | Setting | What it turns on |
 | --- | --- |
@@ -29,7 +27,6 @@ Every other setting is optional; `rer deploy` lists the ones you have not set, a
 | `SEAM_API_KEY` | Smart-lock door codes through your Seam account ([Turnovers](/docs/turnovers)). |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | Texts to guests through your Twilio number ([Guest inbox](/docs/inbox)). |
 | `CABIN_WORKER_NAME` | Only for a Cabin on your own domain: the Worker name (such as `cabin-production`) the Inbox setup card shows, since a custom address does not reveal it. A `workers.dev` address needs nothing. |
-| `MAIL_ACCOUNT_ID` | The Cloudflare account ID, only for `MAIL_PROVIDER=cloudflare`. |
 
 RER generates and privately saves `SESSION_SECRET` and `SETUP_TOKEN`; you do not have to create them. The initial setup token is used to claim the hosted owner and removed after that claim. Keep `.rer/deploy` private and retained for later updates and removal. `.env*` files are gitignored; do not force-add them.
 

@@ -49,14 +49,14 @@ export async function inboxData(db:D1Database,actor:Actor,data:Data,url:URL):Pro
  const selectedBookings=JSON.stringify(keys.filter(([,key])=>selectedKeys.has(key)).map(([id])=>id))
  await records(db,data,['bookings'],inIds('id'),[selectedBookings])
  await records(db,data,['guests','scheduled'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
- await records(db,data,['homeSettings','threadCases'],inIds("json_extract(data,'$.propertyId')"),[homes])
+ await records(db,data,['homeSettings','threadCases','inquiries'],inIds("json_extract(data,'$.propertyId')"),[homes])
  await records(db,data,['inbox'])
  if(!constrained||actor.scope!.actions.some(a=>a==='*'||a==='access:read'))await records(db,data,['codes'],inIds("json_extract(data,'$.bookingId')"),[selectedBookings])
  const make=(key:string):Thread=>{
   const stays=data.bookings.filter(b=>keysByBooking.get(b.id)===key&&(b.kind??'stay')==='stay').sort((a,b)=>a.start.localeCompare(b.start)), named=[...stays].reverse().find(b=>b.guestName), first=stays[0]
   const email=key.startsWith('e:')?key.slice(2):stays.find(b=>b.guestEmail)?.guestEmail??null,phone=key.startsWith('p:')?key.slice(2):stays.find(b=>b.guestPhone)?.guestPhone??null
   const summary=selected.find(r=>r.key===key)
-  return {id:threadId(key),key,name:named?.guestName??(email?email.split('@')[0]:phone??(first?.summary&&!/^(reserved|not available|blocked)/i.test(first.summary)?first.summary:`${({airbnb:'Airbnb',vrbo:'Vrbo','booking.com':'Booking.com',direct:'Direct'} as Record<string,string>)[first?.channel]??''} guest`.trim())),email,phone,stays,messages:[],scheduled:data.scheduled.filter(s=>stays.some(b=>b.id===s.bookingId)),drafts:summary?.drafts??0,lastAt:summary?.lastAt??''}
+  return {id:threadId(key),key,name:data.inquiries.find(q=>q.threadId===threadId(key)&&q.status==='inquiry')?.guestName??named?.guestName??(email?email.split('@')[0]:phone??(first?.summary&&!/^(reserved|not available|blocked)/i.test(first.summary)?first.summary:`${({airbnb:'Airbnb',vrbo:'Vrbo','booking.com':'Booking.com',direct:'Direct'} as Record<string,string>)[first?.channel]??''} guest`.trim())),email,phone,stays,messages:[],scheduled:data.scheduled.filter(s=>stays.some(b=>b.id===s.bookingId)),drafts:summary?.drafts??0,lastAt:summary?.lastAt??''}
  }
  const keysByBooking=new Map(keys), list=selected.map(r=>make(r.key)), open=openKey?(list.find(t=>t.key===openKey)??make(openKey)):undefined
  // A page preview and open transcript use selected booking ids, so the

@@ -43,7 +43,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
  }
  // Read imports reuse Cabin domain transactions. A durable source identity makes
  // replay safe if transport fails between the import and this job receipt.
- let readImported:number|undefined,readError=false
+ let readImported:number|undefined,readError=false,discardReadEvidence=false
  if(p.op==='complete'&&p.outcome==='succeeded'){
   const action=(await rows<Action>(env.DB,ACTION)).find(a=>a.id===p.id),profile=(await rows<Profile>(env.DB,PROFILE)).find(r=>r.id===action?.profileId)
   if(action?.kind.startsWith('read-')){
@@ -51,7 +51,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
    await authorizeEffect(env,action,profile)
    need(p.result==='read','Expected a source read')
    try {const result=await importChannelRead(env,actor,{...action,kind:action.kind as 'read-reservations'|'read-messages'|'read-payouts',readUrl:action.readUrl!,profileGeneration:action.profileGeneration!},profile,p.read);readImported=result.count}
-   catch {readError=true}
+   catch(error) {readError=true;discardReadEvidence=!!(error as {discardChannelEvidence?:boolean})?.discardChannelEvidence}
   }
  }
  return mutate(env.DB,actor,'channelAgent.runner',async c=>{
@@ -74,15 +74,18 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
    const state=profile.stateSealed?await unseal(env.SESSION_SECRET,`channel-profile:${profile.id}`,profile.stateSealed):null
    if(profile.stateSealed&&!state){profile.status='needs_you';profile.challenge='signin';save(c,PROFILE,profile);return {job:null}}
    candidate.status='running';candidate.attempts++;candidate.lease=newId();candidate.leaseUntil=new Date(Date.now()+20*60000).toISOString();save(c,ACTION,candidate)
-   return {job:{id:candidate.id,lease:candidate.lease,kind:candidate.kind,channel:candidate.channel,propertyId:candidate.propertyId,listingUrl:profile.listingUrl,readUrl:candidate.readUrl,profileGeneration:candidate.profileGeneration,start:candidate.start,end:candidate.end,bookingId:candidate.bookingId,storageState:state?JSON.parse(state):null}}
+   return {job:{id:candidate.id,lease:candidate.lease,kind:candidate.kind,channel:candidate.channel,propertyId:candidate.propertyId,accountId:profile.accountId,listingId:profile.listingId,listingUrl:profile.listingUrl,readUrl:candidate.readUrl,profileGeneration:candidate.profileGeneration,start:candidate.start,end:candidate.end,bookingId:candidate.bookingId,storageState:state?JSON.parse(state):null}}
   }
   need(p.op==='complete'||p.op==='checkpoint','Unknown runner operation')
   const a=actions.find(a=>a.id===p.id),profile=profiles.find(r=>r.id===a?.profileId)
   need(a&&profile&&a.status==='running'&&a.lease===p.lease&&a.leaseUntil!>c.now,'Browser action lease expired or already completed',409)
   if(p.op==='checkpoint'){
    need(a.kind!=='connect','Sign-in screenshots are never retained');await authorizeEffect(env,a,profile)
+   // Read images can contain erased people. Retain them only after the completed source payload passes reconciliation.
+   if(a.kind.startsWith('read-'))return {recorded:false,pendingSourceReview:true}
    need(p.before,'Operational screenshot required');a.beforeSealed=await screenshot(env,c,a.id,'before',p.before);save(c,ACTION,a);return {recorded:true}
   }
+  await authorizeEffect(env,a,profile)
   need(['succeeded','needs_you','failed','uncertain'].includes(String(p.outcome)),'Invalid browser outcome')
   const outcome=(readError?'needs_you':p.outcome) as Action['status']
   const isRead=a.kind.startsWith('read-')
@@ -97,7 +100,7 @@ export async function runnerOperation(env:Bindings,request:Request,p:Record<stri
    if(a.kind==='connect'){need(profile.stateSealed,'Sign-in state required');profile.status='connected';delete profile.challenge}
   }else{
    // No challenge/auth images are retained; even the before image may contain a password or token.
-   if((outcome!=='needs_you'||isRead&&readError)&&!p.challenge&&a.kind!=='connect'){a.beforeSealed=await screenshot(env,c,a.id,'before',p.before);a.afterSealed=await screenshot(env,c,a.id,'after',p.after)}
+   if((outcome!=='needs_you'||isRead&&readError)&&!discardReadEvidence&&!p.challenge&&a.kind!=='connect'){a.beforeSealed=await screenshot(env,c,a.id,'before',p.before);a.afterSealed=await screenshot(env,c,a.id,'after',p.after)}
    else {
     for(const side of ['before','after'])c.queries.push({sql:'DELETE FROM cb_records WHERE kind=? AND id=?',params:[EVIDENCE,`channel-image:${a.id}:${side}`]})
     delete a.beforeSealed;delete a.afterSealed

@@ -114,3 +114,41 @@ test('RES-006: issued quotes retain revisions, reserve until expiry and convert 
   assert.doesNotMatch(JSON.stringify((await h.state()).staffQuotes),/alex@stay\.example|Alex Rivera/)
  }finally{await h.close()}
 })
+
+test('source inquiries require exact reviewed identity, deduplicate replay and leave inventory and channel outcomes unchanged',async()=>{
+ const {inquirySource,sourceInquiry,inquiryClock}=await import('./inquiries-support.mjs'),h=await harness({now:inquiryClock})
+ try{
+  const source=await inquirySource(h)
+  await source.read();let s=await h.state(),q=s.inquiries[0]
+  assert.equal(q.status,'needs_review');assert.equal(s.messages.length,0);assert.equal(s.bookings.length,0)
+  await source.review(q,h.owner,409);await source.settings()
+  await source.review(q,source.cleaner.cookie,403);await source.review(q,source.manager.cookie,403)
+  await source.review(q,h.owner,409,'Same guest name is not source identity')
+  await source.read([{...sourceInquiry,threadId:'synthetic-cabin-other-thread'}],'needs_you')
+  await source.read([sourceInquiry,{...sourceInquiry,reservationId:'synthetic-cabin-4',guestName:'Different guest'}],'needs_you')
+  assert.equal((await h.state()).inquiries.length,1)
+  await h.cmd('channelAgent.disconnect',{id:source.profile.id});await source.review(q,h.owner,409)
+  assert.equal((await h.state()).messages.length,0,'revoked channel authority cannot create a native inquiry thread')
+  await source.connect();await source.review(q,h.owner,409)
+  await source.read();q=(await h.state()).inquiries[0]
+  await source.review(q);await source.read();await h.restart();await source.read()
+  s=await h.state();q=s.inquiries[0]
+  assert.equal(s.inquiries.length,1);assert.equal(s.messages.filter(m=>m.direction==='in').length,1)
+  assert.equal(q.status,'inquiry');assert.equal(q.quoteCents,58325);assert.equal(q.guests,3);assert.equal(q.deadline,sourceInquiry.deadline);assert.ok(q.threadId)
+  assert.equal(s.bookings.length,0);assert.equal(s.requests.length,0);assert.equal(s.codes.length,0);assert.equal(s.turnovers.length,0)
+  const outsiderHome=await h.cmd('property.save',{name:'Synthetic other cabin',ownerName:'Synthetic other owner',ownerEmail:h.auth.OWNER_EMAIL,commissionBps:1500})
+  const currentManager=(await h.state()).members.find(m=>m.id===source.manager.id)
+  const scoped=await h.cmd('member.save',{id:currentManager.id,revision:currentManager.revision,name:'Synthetic scoped service',email:source.manager.email,pmsRole:'guest_service',propertyIds:[source.p.id],actions:['inbox:read','reservations:read'],active:true})
+  const scopedCookie=await h.signIn(scoped.email)
+  assert.equal((await h.state(scopedCookie)).inquiries[0].quoteCents,58325,'permitted reservation staff can read the retained USD quote')
+  const latestScope=(await h.state()).members.find(m=>m.id===scoped.id)
+  await h.cmd('member.save',{id:latestScope.id,revision:latestScope.revision,name:latestScope.name,email:latestScope.email,pmsRole:'guest_service',propertyIds:[outsiderHome.id],actions:['inbox:read','reservations:read'],active:true})
+  assert.equal((await h.state(await h.signIn(latestScope.email))).inquiries.length,0,'another home cannot read inquiry identity or price')
+  await source.read([{...sourceInquiry,reservationId:'synthetic-cabin-related-inquiry'}])
+  assert.equal((await h.state()).inquiries.length,2)
+  await h.cmd('channelAgent.disconnect',{id:source.profile.id});await h.cmd('inquiry.erase',{id:q.id,revision:q.revision,confirm:'yes'})
+  await source.connect();await source.read(undefined,'needs_you');await source.read([{...sourceInquiry,status:'confirmed'}],'needs_you');await source.read([{...sourceInquiry,reservationId:'synthetic-cabin-new-inquiry'}],'needs_you')
+  s=await h.state();assert.ok(s.inquiries.every(q=>q.status==='erased'),'erasure covers the entire reviewed source conversation');assert.ok(s.privacy.receipts.some(r=>r.entity==='inquiry'));assert.ok(s.messages.every(m=>m.status==='discarded'));assert.equal((await h.db.prepare("SELECT COUNT(*) n FROM cb_records WHERE kind='channelAgentEvidence'").first()).n,0,'erasure withdraws source screenshots');assert.doesNotMatch(JSON.stringify(s.inquiries),/Synthetic guest|May we stay/)
+  assert.equal((await h.send('/app/reservations',undefined,source.cleaner.cookie)).status,403)
+ }finally{await h.close()}
+})

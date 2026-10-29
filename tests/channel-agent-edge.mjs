@@ -19,7 +19,7 @@ export async function channelEdge(){
    const response=await fetch(origin)
    await route.fulfill({response:undefined,status:200,contentType:'text/html',body:job.kind.startsWith('read-')&&!mode?reads:job.start?(await response.text()).replace(/2026-12-1[012]/g,date=>new Date(Date.parse(job.start+'T00:00:00Z')+(Number(date.slice(-2))-10)*86400000).toISOString().slice(0,10)):await response.text()})
   })
-  await context.addInitScript(edits=>localStorage.setItem('sourceEdits',JSON.stringify(edits)),sourceEdits)
+  await context.addInitScript(edits=>localStorage.setItem('sourceEdits',JSON.stringify(edits)),{listingId:job.listingId,...sourceEdits})
   const remoteKey=job.channel+'|'+job.listingUrl,beforeRemote=remoteNights.get(remoteKey)??'{}'
   await context.addInitScript(({remote,key})=>{if(!sessionStorage.getItem(key)){localStorage.setItem('nights',remote);sessionStorage.setItem(key,'yes')}},{remote:beforeRemote,key:'synthetic-cabin-'+crypto.randomUUID()})
   const page=await context.newPage()
@@ -27,7 +27,7 @@ export async function channelEdge(){
    const listingUrl=job.listingUrl+(mode?'?mode='+mode:'')
    const driver=async ({phase,job:task,observation})=>{
     if(phase==='read'){
-     const labels={listingId:'Listing ID',direction:'Direction',reservationId:'Reservation ID',guestName:'Guest',start:'Arrival',end:'Departure',status:'Status',guestEmail:'Email',messageId:'Message ID',text:'Message',sentAt:'Sent at',transactionId:'Transaction ID',payoutId:'Payout ID',date:'Settlement date',currency:'Currency',gross:'Gross',fee:'Fee',net:'Net',type:'Type'}
+     const labels={listingId:'Listing ID',threadId:'Thread ID',guests:'Guests',quote:'Quote',deadline:'Deadline',message:'Inquiry message',direction:'Direction',reservationId:'Reservation ID',guestName:'Guest',start:'Arrival',end:'Departure',status:'Status',guestEmail:'Email',messageId:'Message ID',text:'Message',sentAt:'Sent at',transactionId:'Transaction ID',payoutId:'Payout ID',date:'Settlement date',currency:'Currency',gross:'Gross',fee:'Fee',net:'Net',type:'Type'}
      const table=observation.tables[0],columns=Object.fromEntries([...observation.required,...observation.optional].filter(k=>table?.headers.includes(labels[k])).map(k=>[k,table.headers.indexOf(labels[k])]))
      if(JSON.stringify(observation).includes('megan@')||JSON.stringify(observation).includes('1000.00'))throw Error('Source values leaked to model')
      return {type:'extract',table:table?.ref,columns}

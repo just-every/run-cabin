@@ -147,7 +147,7 @@ test('runner and evidence doors enforce owner authority, reject stale completion
 })
 
 test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into native stays, one guest thread and matched settlements exactly once',async()=>{
- const h=await harness(),edge=await channelEdge()
+ const h=await harness({assets:true}),edge=await channelEdge(),screens=await channelScreens(h)
  try{
   const {home,runner}=await provision(h,edge)
   const read=async(channel,kind)=>{
@@ -177,7 +177,107 @@ test('SYNC-011 RES-002 MESSAGE-001 FIN-002: browser reads all channels into nati
   await h.restart();assert.equal((await h.state()).payouts.length,3)
   const observations=(await h.db.prepare("SELECT data FROM cb_records WHERE kind='channelAgentReadObservations'").all()).results
   assert.equal(observations.length,18);assert.ok(!JSON.stringify(observations).includes('kitchen available'));assert.ok(!JSON.stringify(observations).includes('megan@'))
- }finally{await edge.close();await h.close()}
+  // Emulate the previous edition's profile metadata; sessions and imported
+  // business history already exist and must keep their original identities.
+  const legacy=(await h.state()).channelAgent.profiles.find(p=>p.channel==='airbnb')
+  const legacyHistory=await h.state()
+  const sourceIds=(await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id)
+  await h.db.batch([
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.channelAccountId','$.channelAccountName') WHERE kind IN ('bookings','messages','payouts') AND (json_extract(data,'$.channel')='airbnb' OR json_extract(data,'$.source')='airbnb')"),
+   h.db.prepare("UPDATE cb_records SET data=json_remove(data,'$.accountId') WHERE kind='channelAgentProfiles' AND id=?").bind(legacy.id),
+   h.db.prepare("DELETE FROM cb_records WHERE kind='channelAgentAccounts' AND id=?").bind(legacy.accountId)
+  ])
+  const initial=(await h.state()).channelAgent,profileA=initial.profiles.find(p=>p.channel==='airbnb'),accountA=profileA.accountId
+  const oldProfileId=profileA.id,oldGeneration=profileA.generation
+  const manager=await h.person('AccountManager','manager')
+  await h.cmd('channelAgent.account.create',{channel:'airbnb',nickname:'Denied'},manager.cookie,403)
+  await h.cmd('channelAgent.account.revoke',{id:accountA,confirm:'yes'},manager.cookie,403)
+  await screens.accountSettings('rename',{id:accountA,nickname:'Mountain hosts'})
+  assert.equal((await h.state()).channelAgent.profiles.find(p=>p.id===legacy.id).generation,legacy.generation)
+  for(const kind of ['reservations','messages','payouts'])await read('airbnb',kind)
+  const upgraded=await h.state(),legacyBooking=upgraded.bookings.find(b=>b.channel==='airbnb')
+  const legacyMessage=upgraded.messages.find(m=>m.direction==='in'&&m.bookingId===legacyBooking.id)
+  const legacyPayout=upgraded.payouts.find(p=>p.bookingId===legacyBooking.id)
+  assert.equal(legacyMessage.channelAccountId,accountA,'replayed legacy message has its owning account')
+  assert.equal(legacyPayout.channelAccountId,accountA,'replayed legacy payout has its owning account')
+  for(const kind of ['bookings','messages','payouts']){
+   const withoutAttribution=rows=>rows.map(({channelAccountId,channelAccountName,...row})=>row)
+   assert.deepEqual(withoutAttribution(upgraded[kind]),withoutAttribution(legacyHistory[kind]),'upgrade preserves existing '+kind+' and their identities')
+  }
+  await screens.businessRecords(legacyBooking,'Mountain hosts','Lake Loft','legacy-')
+  await h.restart()
+  assert.equal((await h.state()).payouts.find(p=>p.id===legacyPayout.id).channelAccountId,accountA,'legacy attribution survives restart')
+  assert.equal((await h.state()).bookings.length,3,'migration and replay retain the three original stays')
+  assert.deepEqual((await h.db.prepare("SELECT id FROM cb_records WHERE kind='channelAgentReadSources' ORDER BY id").all()).results.map(r=>r.id),sourceIds)
+  await screens.accountSettings('create',{channel:'airbnb',nickname:'Coastal hosts'})
+  let accounts=(await h.state()).channelAgent.accounts
+  const accountB=accounts.find(a=>a.nickname==='Coastal hosts').id
+  const extra=await h.cmd('property.save',{name:'Second Loft',ownerName:home.ownerName,ownerEmail:home.ownerEmail,commissionBps:2000})
+  const sibling=await h.cmd('property.save',{name:'Third Loft',ownerName:home.ownerName,ownerEmail:home.ownerEmail,commissionBps:2000})
+  const finishConnect=async()=>{
+   const {job}=await runner({op:'claim'});assert.equal(job.kind,'connect')
+   const result=await edge.run(job,{human:true});assert.equal(result.outcome,'succeeded')
+   await runner({op:'complete',id:job.id,lease:job.lease,...result})
+  }
+  await screens.connect(extra,'airbnb',1440,accountB);await finishConnect()
+  await screens.connect(sibling,'airbnb',1440,accountA);await finishConnect()
+  const mapped=(await h.state()).channelAgent.profiles,profileB=mapped.find(p=>p.propertyId===extra.id),profileSibling=mapped.find(p=>p.propertyId===sibling.id)
+  assert.equal(mapped.find(p=>p.id===oldProfileId).generation,oldGeneration,'account migration retains the existing session identity')
+  await h.cmd('channelAgent.connect',{propertyId:extra.id,channel:'airbnb',accountId:accountB,listingId:profileA.listingId,listingUrl:profileB.listingUrl,confirm:'yes'},h.owner,409)
+  await h.cmd('channelAgent.connect',{propertyId:home.id,channel:'airbnb',accountId:accountB,listingId:profileA.listingId,listingUrl:profileA.listingUrl,confirm:'yes'},h.owner,409)
+  const queueRead=async(profile,kind)=>{
+   await h.cmd('channelAgent.read',{id:profile.id,kind:'read-'+kind,readUrl:'https://www.airbnb.com/hosting/'+profile.listingId+'/'+kind,confirm:'yes'})
+  }
+  const nextRead=async(profile,kind)=>{
+   await queueRead(profile,kind)
+   for(;;){
+    const {job}=await runner({op:'claim'});assert.ok(job)
+    const result=await edge.run(job);assert.equal(result.outcome,'succeeded')
+    const receipt=await runner({op:'complete',id:job.id,lease:job.lease,...result});assert.equal(receipt.status,'succeeded')
+    if(job.kind==='read-'+kind)return {job,result}
+   }
+  }
+  for(const kind of ['reservations','messages','payouts']){await nextRead(profileB,kind);await nextRead(profileB,kind)}
+  let current=await h.state(),airbnb=current.bookings.filter(b=>b.channel==='airbnb')
+  assert.equal(airbnb.length,2);assert.equal(new Set(airbnb.map(b=>b.id)).size,2)
+  assert.ok(airbnb.every(b=>b.channelRef==='STAY-100'))
+  for(const accountId of [accountA,accountB]){
+   const booking=airbnb.find(b=>b.channelAccountId===accountId);assert.ok(booking)
+   assert.equal(current.messages.filter(m=>m.bookingId===booking.id&&m.direction==='in'&&m.channelAccountId===accountId).length,1)
+   const payouts=current.payouts.filter(p=>p.bookingId===booking.id&&p.channelAccountId===accountId)
+   assert.equal(payouts.length,1);assert.equal(payouts[0].match,'matched');assert.equal(payouts[0].netCents,97000)
+   const record=await h.send('/app/calendar?reservation='+booking.id,undefined,h.owner);assert.ok(record.text.includes('Channel account'));assert.ok(record.text.includes(accountId))
+  }
+  const payoutPage=await h.send('/app/statements',undefined,h.owner);assert.ok(payoutPage.text.includes('Coastal hosts'))
+  const inboxPage=await h.send('/app/inbox',undefined,h.owner);assert.ok(inboxPage.text.includes('Coastal hosts'))
+  await screens.capture('account-identities')
+  await screens.businessRecords(airbnb.find(b=>b.channelAccountId===accountB),'Coastal hosts')
+  await queueRead(profileA,'reservations')
+  const pending=(await runner({op:'claim'})).job;assert.equal(pending.kind,'read-reservations')
+  const stale=await edge.run(pending);assert.equal(stale.outcome,'succeeded')
+  await queueRead(profileSibling,'messages')
+  await queueRead(profileA,'payouts')
+  const beforeRevoke=await h.state(),bProfile=beforeRevoke.channelAgent.profiles.find(p=>p.id===profileB.id)
+  await screens.accountSettings('revoke',{id:accountA})
+  await runner({op:'authorize',id:pending.id,lease:pending.lease},409)
+  await runner({op:'complete',id:pending.id,lease:pending.lease,...stale},409)
+  await h.cmd('channelAgent.read',{id:profileA.id,kind:'read-reservations',readUrl:'https://www.airbnb.com/hosting/lake-loft/reservations',confirm:'yes'},h.owner,409)
+  current=await h.state()
+  assert.equal(current.channelAgent.accounts.find(a=>a.id===accountA).status,'revoked')
+  assert.ok(current.channelAgent.profiles.filter(p=>p.accountId===accountA).every(p=>p.status==='disconnected'))
+  assert.ok(current.channelAgent.actions.filter(a=>[profileA.id,profileSibling.id].includes(a.profileId)).every(a=>!['queued','running'].includes(a.status)))
+  assert.deepEqual(current.bookings,beforeRevoke.bookings);assert.deepEqual(current.payouts,beforeRevoke.payouts)
+  assert.equal(current.channelAgent.profiles.find(p=>p.id===profileB.id).generation,bProfile.generation)
+  assert.equal(current.channelAgent.profiles.find(p=>p.id===profileB.id).status,'connected')
+  const sealed=(await h.db.prepare("SELECT data FROM cb_records WHERE kind='channelAgentProfiles'").all()).results.map(r=>JSON.parse(r.data))
+  assert.ok(sealed.filter(p=>p.accountId===accountA).every(p=>!p.stateSealed&&!p.grantedAt))
+  assert.ok(sealed.find(p=>p.id===profileB.id).stateSealed)
+  await nextRead(profileB,'reservations');await nextRead(profileB,'messages');await nextRead(profileB,'payouts')
+  await h.restart()
+  current=await h.state();assert.equal(current.bookings.length,4);assert.equal(current.payouts.length,4)
+  assert.equal(current.channelAgent.profiles.find(p=>p.id===profileB.id).status,'connected')
+  await screens.capture('account-revoked')
+ }finally{await screens.close();await edge.close();await h.close()}
 })
 
 test('SYNC-011 SYNC-007: changed source identity, future payouts, unavailable pages, terms and stale local revisions stop imports with an assigned exception',async()=>{
@@ -237,4 +337,8 @@ test('interrupted browser work before or after channel acceptance expires into a
    await h.cmd('channelAgent.retry',{id:job.id},h.owner,409)
   }finally{await edge.close();await h.close()}
  }
+})
+
+test('source inquiry intake reviews the exact thread and shows unresolved deadline handling in native reservations and inbox',{timeout:120000},async()=>{
+ const {inquiriesBrowserJourney}=await import('./inquiries-browser.mjs');await inquiriesBrowserJourney()
 })

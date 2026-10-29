@@ -1,3 +1,4 @@
+import { pricingSettings,pricingPreview,priceDetails } from '../pricing/ui'
 import { collectionPanel,manualReceiptPanel } from '../direct/collection-ui'
 import { promotionPanel } from '../promotions/ui'
 import { websiteEditor } from '../website/ui'
@@ -70,19 +71,19 @@ function homeSettings(state: any, property: any) {
     + `<div class="pair">${optional('countyTaxLabel', 'County tax label', home.countyTaxLabel)}${percent('countyTaxBps', 'County tax rate', home.countyTaxBps)}</div>`
     + '<h3>Guest agreement and identity</h3>' + area('agreement', 'Agreement guests must sign', home.agreement, 'maxlength="20000"')
     + verificationPolicyFields(state,home)
-  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
+  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}${pricingSettings(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
 }
 
 function quote(stay: any) {
   const q = stay.quote
   return `<details><summary>Quoted total ${h(money(q.totalCents))} · ${h(q.nights)} nights</summary><ul>${[
-    line('Rent', `${q.nights} nights${q.nightlyRates?' at dated rates':' × '+money(q.nightlyCents)} = ${money(q.rentCents)}`),
+    line('Rent', `${q.nights} nights${q.pricing?' at saved rates':q.nightlyRates?' at dated rates':' × '+money(q.nightlyCents)} = ${money(q.rentCents)}`),
     line('Cleaning', money(q.cleaningCents)),
     line('Extra guests', money(q.extraGuestCents)),
     ...q.taxes.map((tax: any) => line(`${tax.label} (${rate(tax.bps)})`, money(tax.amountCents))),
     line('Booking total', money(q.totalCents)),
     line('Separate damage deposit authorization', money(q.depositCents)),
-  ].join('')}</ul></details>`
+  ].join('')}</ul>${q.pricing?priceDetails(q.pricing):''}</details>`
 }
 
 function depositActions(stay: any, managed: boolean) {
@@ -117,7 +118,7 @@ function stayRecord(state: any, stay: any) {
   return `<article class="record"><div class="record-title"><h3>${h(stay.guestName)} · ${h(propertyName(state, stay.propertyId))}</h3>${badge(stay.phase)}</div><p>${h(dateLabel(stay.start))} → ${h(dateLabel(stay.end))} (checkout) · ${h(stay.email)}</p><p class="muted">Created ${h(timeLabel(stay.createdAt,stay.timeZone))}</p>${pending || stay.error ? `<p><strong>Manager review</strong> · ${stay.phase === 'held' ? 'Nights held; payment and confirmation are pending.' : stay.phase === 'paid' ? 'Payment recorded; confirmation checks are pending.' : 'Review the recorded issue below.'}</p>` : ''}${stay.error ? `<p class="link-error" role="alert">${h(stay.error)}</p>` : ''}${quote(stay)}${mailStatus(state,stay)}<p>Payment: ${stay.paymentId ? (stay.paymentMode==='live'?'Paid':'Paid in test mode') : 'no payment recorded'}.</p><p>Identity check: ${stay.requireIdentity?badge(identityLabel(stay.identity?.status)):'Not required'}.</p>${signature ? `<p>Agreement signed by ${h(signature.name)} at ${h(timeLabel(signature.at,stay.timeZone))}. <a href="/api/cabin/direct/stays/${encodeURIComponent(stay.id)}/agreement">View signed agreement</a></p><details><summary>Signed agreement text</summary><pre>${h(signature.text)}</pre></details>` : '<p>Agreement: no signature recorded.</p>'}${!state.managed ? form('direct.refresh', 'direct', hidden('id', stay.id), 'Refresh payment and identity status', 'class="quiet"') : ''}${stay.checkedOutAt?`<p>Checked out ${h(timeLabel(stay.checkedOutAt,stay.timeZone))}</p>`:stay.phase==='confirmed'?checkoutAction(state,stay):''}${depositActions(stay, state.managed)}${settlementPanel(stay,state)}${taxForms(stay)}</article>`
 }
 
-export function direct(state: any) {
+export function direct(state: any,result?:any) {
   if (!manager(state)) return '<h1>Page unavailable</h1><p>Your role cannot access this page.</p>'
   const stays = [...state.direct.stays].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt))
   return heading('Direct bookings', 'Your homes, booked directly', 'Publish booking rules, review guest agreements and payment status, and manage damage deposits and tax filing evidence.')
@@ -127,6 +128,7 @@ export function direct(state: any) {
     + collectionPanel(state)
     + manualReceiptPanel(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
+    + pricingPreview(state,result)
     + agreementPanel(state)
     + verificationQueue(state)
     + panel('Direct stays', stays.map((stay: any) => stayRecord(state, stay)).join('') || empty('Direct booking holds and completed stays will appear here.'))

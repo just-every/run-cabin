@@ -1,3 +1,4 @@
+import { syncInquiryDeadlines, inquiryDeadlinesDue } from './inquiries'
 import { type Context, type Data, newId } from '../../model'
 import { wall, zoneAbbr } from '../../clock'
 import { threads, type Thread } from '../threads'
@@ -26,6 +27,7 @@ export function route(c: Context, row: ThreadCase, team: TeamSettings) {
 /** Called on every commit: opens a case for each unanswered guest message after team settings were first saved, closes answered ones and escalates missed deadlines until a person accepts. */
 export function syncTeam(c: Context) {
  const team = teamSettings(c.data), now = Date.parse(c.now)
+ syncInquiryDeadlines(c)
  if (team.since) for (const t of threads(c.data)) {
   const erased = t.stays.some(b => b.guestErasedAt), last = awaiting(t.messages), waiting = erased || (last && last.createdAt < team.since) ? null : last
   let row = c.data.threadCases.find(r => r.id === t.id)
@@ -57,6 +59,7 @@ export function ensureCase(c: Context, t: Thread) {
 }
 export function notifyMember(c: Context, row: ThreadCase, t: Thread, memberId: string | null, subject: string, intro: string) {
  const to = activeManager(c.data, memberId); if (!to) return
+ if(to.scope&&(!row.propertyId||!to.scope.propertyIds.some(id=>id==='*'||id===row.propertyId)||!to.scope.actions.some(a=>a==='*'||a==='inbox:read')))return
  c.data.notices.push({ id: newId(), revision: newId(), propertyId: row.propertyId ?? '', memberId: to.id, email: to.email, kind: 'inbox', recordId: row.id, priority: row.urgency === 'urgent' ? 'urgent' : undefined, subject, text: `${intro}\n\n${context(c, row, t)}`, status: 'pending', detail: null, createdAt: c.now, sentAt: null })
 }
 /** The escalation manager is notified with the full context. It repeats every repeatMinutes until a person accepts the thread. */
@@ -66,7 +69,7 @@ function escalate(c: Context, row: ThreadCase, t: Thread, team: TeamSettings) {
  row.assigneeId ??= to.id
  notifyMember(c, row, t, to.id, `Guest thread unanswered: ${row.guest}`, `${row.guest} has not had a reply in time (escalation ${row.escalations.length}). Accept the thread in Cabin to stop further escalation.`)
 }
-export function dueCases(data: Data, now: number) { const team = teamSettings(data); return !!team.since && data.threadCases.some(r => r.status === 'open' && r.dueAt && Date.parse(r.dueAt) <= now) }
+export function dueCases(data: Data, now: number) { const team = teamSettings(data); return inquiryDeadlinesDue(data,now) || !!team.since && data.threadCases.some(r => r.status === 'open' && r.dueAt && Date.parse(r.dueAt) <= now) }
 /** A guest's erasure removes their words from retained cases; the case keeps its history without them. */
 export function eraseCases(c: Context, bookingIds: Set<string>) {
  for (const row of c.data.threadCases.filter(r => r.bookingId && bookingIds.has(r.bookingId))) {

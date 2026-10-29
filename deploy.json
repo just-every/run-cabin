@@ -47,16 +47,6 @@
       "optional": true
     },
     {
-      "binding": "MAIL_PROVIDER",
-      "environment": "MAIL_PROVIDER",
-      "verifyStandIn": "sendgrid"
-    },
-    {
-      "binding": "MAIL_FROM",
-      "environment": "MAIL_FROM",
-      "verifyStandIn": "auth@example.test"
-    },
-    {
       "binding": "STRIPE_SECRET_KEY",
       "environment": "STRIPE_SECRET_KEY",
       "optional": true
@@ -84,16 +74,6 @@
     {
       "binding": "CABIN_WORKER_NAME",
       "environment": "CABIN_WORKER_NAME",
-      "optional": true
-    },
-    {
-      "binding": "MAIL_ACCOUNT_ID",
-      "environment": "MAIL_ACCOUNT_ID",
-      "optional": true
-    },
-    {
-      "binding": "MAIL_RELAY_URL",
-      "environment": "MAIL_RELAY_URL",
       "optional": true
     }
   ],

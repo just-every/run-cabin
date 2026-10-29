@@ -1,3 +1,5 @@
+import { accountIdFor,assertAccount } from './accounts'
+import { captureInquiry, guardInquirySource } from '../reservations/inquiries'
 import type { Bindings } from '../../auth.server'
 import { type Actor, type Booking, type Context, need, manager, newId, sha, text } from '../model'
 import { assertContactsAllowed } from '../privacy/contacts'
@@ -16,7 +18,7 @@ import { READ_SOURCE, READ_OBSERVATION, type ReadAction, type ReadPayload, type 
 function save<T extends {id:string}>(c:Context,kind:string,row:T){saveRecord(c,kind,row)}
 const hosts={airbnb:'airbnb.com',vrbo:'vrbo.com','booking.com':'booking.com'}
 const fields={
- 'read-reservations':{required:['listingId','reservationId','guestName','start','end','status'],optional:['guestEmail','guestPhone']},
+ 'read-reservations':{required:['listingId','reservationId','guestName','start','end','status'],optional:['guestEmail','guestPhone','threadId','guests','currency','quote','deadline','message']},
  'read-messages':{required:['listingId','reservationId','messageId','text','sentAt','direction'],optional:[]},
  'read-payouts':{required:['listingId','transactionId','payoutId','reservationId','date','currency','gross','fee','net','type','status'],optional:['guestName']}
 } as const
@@ -41,13 +43,15 @@ function payloadFor(action:ReadAction,value:unknown):ReadPayload{
   const row=value as Record<string,unknown>
   need(Object.keys(row).every(k=>allowed.has(k)&&typeof row[k]==='string'),'Unexpected or non-string source field')
   for(const k of spec.required){const max=k==='text'?8000:500;text(row[k],`source ${k}`,max);need((row[k] as string).length<=max,`Source ${k} is too long`)}
-  for(const k of spec.optional)if(k in row){text(row[k],`source ${k}`,500);need((row[k] as string).length<=500,`Source ${k} is too long`)}
+  for(const k of spec.optional)if(k in row){const max=k==='message'?8000:500;text(row[k],`source ${k}`,max);need((row[k] as string).length<=max,`Source ${k} is too long`)}
   return row as Record<string,string>
  })
  need(JSON.stringify(records).length<=2_000_000,'Source read is too large')
  return {observedAt,records}
 }
 async function current(c:Context,a:ReadAction,p:Profile){
+ const account=await assertAccount(c.db,p,a as import('./types').Action)
+ p.accountNickname=account.nickname
  await sharingAllowed(c.db,'calendars','calendar:read',p.propertyId)
  const fresh=(await rows<Profile>(c.db,PROFILE)).find(r=>r.id===p.id)
  need(fresh&&fresh.generation===p.generation&&fresh.propertyId===p.propertyId&&fresh.channel===p.channel&&fresh.status==='connected','Channel profile changed or paused; owner review required',409)
@@ -57,9 +61,10 @@ async function current(c:Context,a:ReadAction,p:Profile){
 function sourceBooking(c:Context,p:Profile,anchor:ReadSource|undefined):Booking|null{
  if(!anchor?.bookingId)return null
  const b=c.data.bookings.find(r=>r.id===anchor.bookingId)
- need(b&&b.propertyId===p.propertyId&&b.channel===p.channel&&!b.restorePaused,'Source reservation scope changed; owner review required',409)
+ need(b&&b.propertyId===p.propertyId&&b.channel===p.channel&&(!b.channelAccountId||b.channelAccountId===accountIdFor(p))&&!b.restorePaused,'Source reservation scope changed; owner review required',409)
  need(!b.guestErasedAt,'Guest identity was erased; source reads cannot restore it',409)
  need(!anchor.bookingRevision||anchor.bookingRevision===b.revision,'Reservation changed since its source observation; owner review required',409)
+ if(!b.channelAccountId){b.channelAccountId=accountIdFor(p);b.channelAccountName=p.accountNickname}
  return b
 }
 function freshSource(old:ReadSource|undefined,observedAt:string,hash:string){
@@ -67,18 +72,20 @@ function freshSource(old:ReadSource|undefined,observedAt:string,hash:string){
  need(!old||Date.parse(observedAt)!==Date.parse(old.observedAt)||old.fingerprint===hash,'Source changed within the same observation; owner review required',409)
 }
 function anchor(p:Profile,a:ReadAction,id:string,observedAt:string,hash:string):ReadSource{
- return {id,propertyId:p.propertyId,profileId:p.id,generation:p.generation,channel:p.channel,kind:a.kind,observedAt,fingerprint:hash}
+ return {id,accountId:accountIdFor(p),propertyId:p.propertyId,profileId:p.id,generation:p.generation,channel:p.channel,kind:a.kind,observedAt,fingerprint:hash}
 }
 async function observation(c:Context,p:Profile,a:ReadAction,payload:ReadPayload){
  const recordHashes=await Promise.all(payload.records.map(fingerprint))
  const id='channel-read-observation:'+await sha(JSON.stringify([...scope(p),a.id,payload.observedAt,recordHashes]))
  // Digests and scoped entity IDs retain provenance without retaining erased guest words or contacts.
- save(c,READ_OBSERVATION,{id,propertyId:p.propertyId,profileId:p.id,generation:p.generation,channel:p.channel,actionId:a.id,kind:a.kind,readUrl:a.readUrl,observedAt:payload.observedAt,recordCount:payload.records.length,recordHashes,evidenceClass:'host-page-readback'})
+ save(c,READ_OBSERVATION,{id,accountId:accountIdFor(p),propertyId:p.propertyId,profileId:p.id,generation:p.generation,channel:p.channel,actionId:a.id,kind:a.kind,readUrl:a.readUrl,observedAt:payload.observedAt,recordCount:payload.records.length,recordHashes,evidenceClass:'host-page-readback'})
 }
 async function reservations(c:Context,p:Profile,a:ReadAction,payload:ReadPayload){
  const saved=await rows<ReadSource>(c.db,READ_SOURCE),seen=new Set<string>(),ids:string[]=[]
  for(const raw of payload.records){
-  await assertContactsAllowed(c.db,[raw.guestEmail,raw.guestPhone])
+  await guardInquirySource(c,p,raw.reservationId)
+  try{await assertContactsAllowed(c.db,[raw.guestEmail,raw.guestPhone])}catch(error){throw Object.assign(error as Error,{discardChannelEvidence:true})}
+  if(raw.status.toLowerCase()==='inquiry'){const id=await captureInquiry(c,p,a,raw,payload.observedAt);need(!seen.has(id),'Repeated source inquiry ID');seen.add(id);ids.push(id);continue}
   const r:Record<string,string>={...raw,status:raw.status.toLowerCase()};need(r.status==='confirmed'||r.status==='cancelled','Source reservation status must be confirmed or cancelled')
   date(r.start,'Arrival');date(r.end,'Checkout');need(r.start<r.end&&Date.parse(r.end)-Date.parse(r.start)<=365*86400000,'Source stay must hold 1 to 365 nights')
   const ref=await sourceKey(p,'reservation',r.reservationId),id='channel-read-source:'+ref,hash=await fingerprint(r),old=saved.find(s=>s.id===id)
@@ -90,7 +97,7 @@ async function reservations(c:Context,p:Profile,a:ReadAction,payload:ReadPayload
    const uid='channel-source-'+ref
    applyChanges(c,p.propertyId,p.channel,[{kind:'add',uid,after:{uid,start:r.start,end:r.end,summary:r.guestName,guestName:r.guestName,cancelled:false}}])
    b=c.data.bookings.find(b=>b.uid===uid&&b.propertyId===p.propertyId)!
-   b.channelRef=r.reservationId;lifecycle(b).sourceId=r.reservationId
+   b.channelAccountId=accountIdFor(p);b.channelAccountName=p.accountNickname;b.channelRef=r.reservationId;lifecycle(b).sourceId=r.reservationId
    await reservationCommand(c,'booking.details',{id:b.id,revision:b.revision,guestName:r.guestName,guestEmail:r.guestEmail,guestPhone:r.guestPhone})
   }else if(b){
    need(b.status==='confirmed'&&!b.cancelled,'Source reservation has locally ended; owner review required',409)
@@ -116,11 +123,14 @@ async function messages(c:Context,env:Bindings,p:Profile,a:ReadAction,payload:Re
   const reservationId='channel-read-source:'+await sourceKey(p,'reservation',r.reservationId)
   const reservation=saved.find(s=>s.id===reservationId),b=sourceBooking(c,p,reservation)
   need(b,'Import this message’s source reservation first',409)
-  if(old){need(c.data.messages.some(m=>m.id===old.messageId&&m.bookingId===b.id),'Imported message is missing or moved; owner review required',409);save(c,READ_SOURCE,{...old,observedAt:payload.observedAt});ids.push(old.messageId!);continue}
-  const m=await receiveGuestInContext(c,env,{channel:p.channel,bookingId:b.id,propertyId:p.propertyId,ref:b.channelRef,subject:`${p.channel} message`,text:r.text,providerId:'channel-read:'+key,sentAt:r.sentAt},{ai:false,scoped:true})
+  const existing=old?c.data.messages.find(m=>m.id===old.messageId&&m.bookingId===b.id):undefined
+  need(!old||existing,'Imported message is missing or moved; owner review required',409)
+  const m=existing??await receiveGuestInContext(c,env,{channel:p.channel,bookingId:b.id,propertyId:p.propertyId,ref:b.channelRef,subject:`${p.channel} message`,text:r.text,providerId:'channel-read:'+key,sentAt:r.sentAt},{ai:false,scoped:true})
+  need(!m.channelAccountId||m.channelAccountId===accountIdFor(p),'Imported message belongs to another channel account; owner review required',409)
+  m.channelAccountId=accountIdFor(p);m.channelAccountName??=p.accountNickname
   // Drafts from a read always remain host decisions, including later scheduler passes.
-  for(const draft of c.data.messages.filter(d=>d.replyTo===m.id&&d.direction==='out'))if(draft.control){draft.control.automatic=false;draft.control.needsHost=true}
-  save(c,READ_SOURCE,{...anchor(p,a,id,payload.observedAt,hash),bookingId:b.id,messageId:m.id});ids.push(m.id)
+  for(const draft of c.data.messages.filter(d=>d.replyTo===m.id&&d.direction==='out'))if(draft.control){draft.channelAccountId=accountIdFor(p);draft.channelAccountName=p.accountNickname;draft.control.automatic=false;draft.control.needsHost=true}
+  save(c,READ_SOURCE,{...(old??anchor(p,a,id,payload.observedAt,hash)),accountId:accountIdFor(p),observedAt:payload.observedAt,bookingId:b.id,messageId:m.id});ids.push(m.id)
  }
  return ids
 }
@@ -152,7 +162,7 @@ export async function importChannelRead(env:Bindings,actor:Actor,action:ReadActi
  if(action.kind==='read-payouts'){
   const csv=await payoutCsv(profile,payload)
   await mutate(env.DB,actor,'channelAgent.read.check',async c=>{await current(c,action,profile);const saved=await rows<ReadSource>(c.db,READ_SOURCE);for(const r of payload.records){const id='channel-read-source:'+await sourceKey(profile,'transaction',r.transactionId),old=saved.find(s=>s.id===id);freshSource(old,payload.observedAt,await fingerprint(r));need(!old||old.fingerprint===await fingerprint(r),'Source settlement changed; owner review required',409)}})
-  const result=payload.records.length?await financeImport(env,actor,'payout.import',{source:profile.channel,propertyId:profile.propertyId,csv,evidenceReference:`channel-host-profile:${profile.id}:${profile.generation}`}):{imported:[],duplicates:[],matched:0}
+  const result=payload.records.length?await financeImport(env,actor,'payout.import',{source:profile.channel,propertyId:profile.propertyId,csv,evidenceReference:`channel-host-profile:${profile.id}:${profile.generation}`},{accountId:accountIdFor(profile),check:c=>current(c,action,profile)}):{imported:[],duplicates:[],matched:0}
   await mutate(env.DB,actor,'channelAgent.read.observed',async c=>{await current(c,action,profile);const saved=await rows<ReadSource>(c.db,READ_SOURCE);for(const r of payload.records){const id='channel-read-source:'+await sourceKey(profile,'transaction',r.transactionId),hash=await fingerprint(r),old=saved.find(s=>s.id===id);freshSource(old,payload.observedAt,hash);need(!old||old.fingerprint===hash,'Source settlement changed; owner review required',409);save(c,READ_SOURCE,anchor(profile,action,id,payload.observedAt,hash))}await observation(c,profile,action,payload)})
   return {kind:action.kind,count:payload.records.length,result,evidenceClass:'host-page-readback' as const}
  }

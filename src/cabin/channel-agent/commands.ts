@@ -1,3 +1,4 @@
+import { ACCOUNT,accountIdFor,ensureAccounts,assertAccount,revokeAccount,type ChannelAccount } from './accounts'
 import type { Bindings } from '../../auth.server'
 import { need,text,newId,sha,type Actor } from '../model'
 import { held,channel,overlaps } from '../inventory'
@@ -22,6 +23,18 @@ export async function channelAgentCommand(env:Bindings,actor:Actor,name:string,p
  }
  return mutate(env.DB,actor,name,async c=>{
   const profiles=await rows<Profile>(env.DB,PROFILE),actions=await rows<Action>(env.DB,ACTION)
+  const accounts=await ensureAccounts(c,profiles)
+  if(name==='channelAgent.account.create'){
+   const ch=channel(p.channel,false) as Profile['channel'],nickname=text(p.nickname,'account nickname',100)
+   const row:ChannelAccount={id:'channel-account:'+newId(),channel:ch,nickname,generation:newId(),status:'active',createdAt:c.now,updatedAt:c.now}
+   save(c,ACCOUNT,row);return {id:row.id,status:row.status}
+  }
+  if(name==='channelAgent.account.rename'||name==='channelAgent.account.revoke'){
+   const row=accounts.find(a=>a.id===p.id);need(row,'Channel account not found',404)
+   if(name==='channelAgent.account.rename'){row.nickname=text(p.nickname,'account nickname',100);row.updatedAt=c.now;save(c,ACCOUNT,row)}
+   else {need(p.confirm==='yes','Confirm revocation of every listing session for this account',409);revokeAccount(c,row,profiles,actions)}
+   return {id:row.id,status:row.status}
+  }
   if(name==='channelAgent.connect'){
    need(p.confirm==='yes','Review the channel terms risk and explicitly grant the disclosed session and action scope',409)
    const ch=channel(p.channel,false) as Profile['channel'],prop=c.data.properties.find(r=>r.id===p.propertyId);need(prop,'Choose a home')
@@ -29,22 +42,31 @@ export async function channelAgentCommand(env:Bindings,actor:Actor,name:string,p
    // Keep existing profile identities so encrypted sessions and source references remain valid.
    const id=old?.id??`channel-profile:${ch}:${prop.id}`
    need(!actions.some(a=>a.profileId===id&&a.status==='running'),'Finish the current browser action first',409)
+   let account=accounts.find(a=>a.id===(p.accountId|| (old?accountIdFor(old):'')))
+   if(p.accountId)need(account&&account.channel===ch,'Choose an account for this channel',409)
+   if(!account){
+    account={id:old?accountIdFor(old):'channel-account:'+id,channel:ch,nickname:text(p.nickname||prop.name,'account nickname',100),generation:newId(),status:'active',createdAt:c.now,updatedAt:c.now}
+    save(c,ACCOUNT,account);accounts.push(account)
+   }
+   need(account.status==='active','This account is revoked; create a new reviewed connection instead',409)
+   need(!old||accountIdFor(old)===account.id,'A listing account cannot be changed without a reviewed remap; its history is retained',409)
    const url=listingUrl(p.listingUrl,ch),listingId=text(p.listingId,'channel listing ID',160)
    need(/^[A-Za-z0-9_-]+$/.test(listingId),'Use the channel’s stable listing ID')
-   need(!profiles.some(r=>r.id!==id&&r.channel===ch&&r.status!=='disconnected'&&(r.listingId===listingId||r.listingUrl===url)),'This channel listing is already mapped to another home; disconnect it before changing the mapping',409)
+   need(!profiles.some(r=>r.id!==id&&r.channel===ch&&(r.status!=='disconnected'||accountIdFor(r)!==account.id)&&(r.listingId===listingId||r.listingUrl===url)),'This channel listing is already mapped to another home; disconnect it before changing the mapping',409)
    need(!old||old.propertyId===prop.id&&old.listingUrl===url&&(!old.listingId||old.listingId===listingId)||old.status==='disconnected','Disconnect the old listing before changing the mapping',409)
-   const row:Profile={id,generation:old&&old.status!=='disconnected'?old.generation:newId(),channel:ch,propertyId:prop.id,listingId,listingUrl:url,grantedAt:c.now,grantedBy:actor.id,status:'connecting',updatedAt:c.now,...(old?.stateSealed?{stateSealed:old.stateSealed}:{})};save(c,PROFILE,row)
+   const row:Profile={id,accountId:account.id,generation:old&&old.status!=='disconnected'?old.generation:newId(),channel:ch,propertyId:prop.id,listingId,listingUrl:url,grantedAt:c.now,grantedBy:actor.id,status:'connecting',updatedAt:c.now,...(old?.stateSealed?{stateSealed:old.stateSealed}:{})};save(c,PROFILE,row)
    for(const a of actions.filter(a=>a.profileId===id&&a.kind==='connect'&&a.status==='queued')){a.status='cancelled';save(c,ACTION,a)}
-   const job:Action={id:newId(),profileId:id,channel:ch,propertyId:prop.id,kind:'connect',requestedBy:actor.email||actor.id,status:'queued',attempts:0,createdAt:c.now,nextAt:c.now};save(c,ACTION,job)
+   const job:Action={id:newId(),accountId:account.id,accountGeneration:account.generation,profileId:id,channel:ch,propertyId:prop.id,kind:'connect',requestedBy:actor.email||actor.id,status:'queued',attempts:0,createdAt:c.now,nextAt:c.now};save(c,ACTION,job)
    return {id,status:row.status}
   }
   if(name==='channelAgent.read'){
    const profile=profiles.find(r=>r.id===p.id);need(profile?.status==='connected'&&profile.grantedAt&&profile.listingId,'Review the disclosed channel terms and reconnect this profile first',409)
+   const account=await assertAccount(env.DB,profile)
    need(['read-reservations','read-messages','read-payouts'].includes(String(p.kind)),'Choose reservations, messages or settled payouts')
    need(p.confirm==='yes','Confirm this source page belongs to the mapped listing',409)
    const readUrl=listingUrl(p.readUrl,profile.channel)
    need(!actions.some(a=>a.profileId===profile.id&&a.kind===p.kind&&['queued','running'].includes(a.status)),'A read is already pending',409)
-   const row:Action={id:newId(),profileId:profile.id,profileGeneration:profile.generation,channel:profile.channel,propertyId:profile.propertyId,kind:p.kind as Action['kind'],readUrl,requestedBy:actor.email||actor.id,status:'queued',attempts:0,createdAt:c.now,nextAt:c.now};save(c,ACTION,row);return {id:row.id,status:row.status}
+   const row:Action={id:newId(),accountId:account.id,accountGeneration:account.generation,profileId:profile.id,profileGeneration:profile.generation,channel:profile.channel,propertyId:profile.propertyId,kind:p.kind as Action['kind'],readUrl,requestedBy:actor.email||actor.id,status:'queued',attempts:0,createdAt:c.now,nextAt:c.now};save(c,ACTION,row);return {id:row.id,status:row.status}
   }
   if(name==='channelAgent.disconnect'){
    const row=profiles.find(r=>r.id===p.id);need(row,'Profile not found',404)

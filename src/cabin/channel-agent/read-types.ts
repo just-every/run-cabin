@@ -1,7 +1,7 @@
 import type { AgentChannel } from './types'
 export type ReadKind = 'read-reservations' | 'read-messages' | 'read-payouts'
 export interface ReadAction {
- id:string; profileId:string; propertyId:string; channel:AgentChannel; kind:ReadKind;
+ id:string; accountId?:string; accountGeneration?:string; profileId:string; propertyId:string; channel:AgentChannel; kind:ReadKind;
  readUrl:string; profileGeneration:string; createdAt:string;
 }
 export interface ReadPayload { observedAt:string; records:Record<string,string>[] }
@@ -18,7 +18,7 @@ export interface PayoutRead extends Record<string,string> {
 }
 export const READ_SOURCE='channelAgentReadSources', READ_OBSERVATION='channelAgentReadObservations'
 export interface ReadSource {
- id:string; propertyId:string; profileId:string; generation:string; channel:AgentChannel;
+ id:string; accountId?:string; propertyId:string; profileId:string; generation:string; channel:AgentChannel;
  kind:ReadKind; observedAt:string; fingerprint:string; bookingId?:string; bookingRevision?:string;
  messageId?:string; status?:string;
 }

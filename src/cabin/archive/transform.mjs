@@ -70,6 +70,9 @@ export function exportRow(table, row) {
  const kind = row.kind, stripped = scrub(JSON.parse(row.data)), data = ['messages','notices','scheduled','threadCases'].includes(kind) ? redact(stripped) : stripped
  if (['messages','notices'].includes(kind) && typeof data.text === 'string') data.text = text(data.text)
  if(kind==='messages'&&data.control)delete data.control.baseline
+ if(kind==='inquiries')data.restorePaused=true
+ if(kind==='messages'&&data.providerId?.startsWith('channel-read:inquiry:')){data.status='discarded';data.detail=pause}
+ if(kind==='threadCases'&&data.key?.startsWith('r:inquiry-thread:')){data.status='answered';data.waitingSince=null;data.dueAt=null;data.claim=null}
  if(kind==='financialCases')data.restorePaused=true
  if(kind==='distributionPlans')data.restorePaused=true
  if(kind==='guestPortalLinks'){data.token=null;data.status='revoked';data.sessionEpoch='restored'}
@@ -77,6 +80,7 @@ export function exportRow(table, row) {
  if (kind === 'bookings') { data.restorePaused = true; if(data.quoteId){data.status='cancelled';data.cancelled=true} }
  if (kind === 'collectionPlans') { if(!data.restored)data.history=[...(data.history??[]),{at:data.createdAt,detail:pause}]; data.restored=true; data.status='paused'; delete data.setup; delete data.consent }
  if (kind === 'connections') { data.url = ''; data.restorePaused = true; data.status = 'stale'; data.error = 'Reconnect this calendar with a fresh link after reviewing the restore.' }
+ if (kind === 'channelAgentAccounts') { data.status='revoked'; data.generation='restored:'+data.id }
  if (kind === 'channelAgentProfiles') { delete data.stateSealed; delete data.grantedAt; delete data.grantedBy; delete data.challenge; data.status='disconnected' }
  if (kind === 'channelAgentKeys') { delete data.hash; data.expiresAt='1970-01-01T00:00:00.000Z' }
  if (kind === 'channelAgentEvidence') delete data.bodySealed

@@ -10,7 +10,7 @@ const categories: Record<string, string[]> = {
   properties: ['calendar', 'reservations', 'operations', 'finance', 'inbox', 'identity', 'access', 'reports', 'owners'],
   propertyProfiles: ['calendar', 'reservations', 'operations', 'access'],
   bookings: ['calendar', 'reservations', 'operations', 'inbox', 'finance', 'reports'],
-  feeds: ['calendar'], calendarDrafts: ['calendar'], requests: ['reservations'], staffQuotes: ['reservations'],
+  inquiries: ['reservations', 'inbox'], feeds: ['calendar'], calendarDrafts: ['calendar'], requests: ['reservations'], staffQuotes: ['reservations'],
   homeSettings: ['operations', 'access'], turnovers: ['operations'], tasks: ['operations'],
   readinessPlans: ['operations'], readinessRecords: ['operations'], recoveries: ['operations'],
   recoveryPolicies: ['operations'], messages: ['inbox'], threadCases: ['inbox'], scheduled: ['inbox'],
@@ -88,7 +88,7 @@ export function projectState<T>(state: T, actor: Actor): T {
       if (!access && ['code', 'link', 'guide', 'guestText', 'content'].includes(key)) continue
       if ((!guest || service) && pii.has(key)) continue
       if (!identity && ['identity', 'verifications', 'documents', 'decision', 'provider', 'verificationPolicy'].includes(key)) continue
-      if (!finance && (money.has(key) || /(?:Cents|Bps)$/.test(key))) continue
+      if (!finance && (money.has(key) || /(?:Cents|Bps)$/.test(key)) && !(key==='quoteCents'&&typeof value.threadRef==='string'&&typeof value.deadline==='string')) continue
       if (!finance && !owner && /^(?:ownerName|ownerEmail|owners|commissionBps)$/.test(key)) continue
       if (!guest && key === 'summary') { out[key] = 'Reserved'; continue }
       const itemClean = clean(item, ids)

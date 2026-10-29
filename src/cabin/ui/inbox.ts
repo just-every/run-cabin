@@ -1,3 +1,4 @@
+import { inquiriesPanel } from '../reservations/inquiries-ui'
 import { lifecyclePreference } from '../inbox/lifecycle-ui'
 import { h, heading, form, hidden, empty, propertyName, select, area } from './shared'
 import { chip, atHome } from './ops'
@@ -18,14 +19,14 @@ import { teamChips, teamPanel, teamSettingsCard } from '../inbox/team/ui'
 const CHANNEL: Record<string, string> = { email: 'Email', sms: 'Text', airbnb: 'Airbnb', vrbo: 'Vrbo', 'booking.com': 'Booking.com' }
 const at = (s: any, propertyId: string | null, iso?: string | null) => atHome(s, propertyId ?? s.properties[0]?.id ?? '', iso)
 const page = (t: Thread | undefined) => t ? `inbox?thread=${t.id}` : 'inbox'
-const stayLine = (s: any, b: any) => `<span class="stay-chip ${b.status === 'confirmed' ? '' : 'gone'}"><span class="ch ch-${b.channel === 'booking.com' ? 'booking' : h(b.channel)}">${h(channelName(b.channel))}</span> ${h(propertyName(s, b.propertyId))} · ${h(span(b))}${b.status === 'confirmed' ? '' : ' · cancelled'}</span>`
+const stayLine = (s: any, b: any) => `<span class="stay-chip ${b.status === 'confirmed' ? '' : 'gone'}"><span class="ch ch-${b.channel === 'booking.com' ? 'booking' : h(b.channel)}">${h(channelName(b.channel))}</span> ${h(propertyName(s, b.propertyId))}${b.channelAccountId?' · '+h(b.channelAccountName??b.channelAccountId):''} · ${h(span(b))}${b.status === 'confirmed' ? '' : ' · cancelled'}</span>`
 function row(s: any, t: Thread, current: boolean, p:InboxPage) {
   const last = [...t.messages].reverse().find(m => m.status !== 'draft' && m.status !== 'drafting'), stay = t.stays[t.stays.length - 1]
   return `<a class="thread-row${current ? ' current' : ''}" href="${h(inboxLink(p,{thread:t.id,messages:null}))}"${current ? ' aria-current="true"' : ''}><span class="who"><strong>${h(t.name)}</strong>${t.drafts ? `<span class="draft-dot">Draft waiting</span>` : ''}</span>${teamChips(s, t)}<span class="muted">${stay ? `${h(propertyName(s, stay.propertyId))} · ${h(span(stay))}` : h(t.email ?? t.phone ?? 'No stay matched yet')}</span>${last ? `<span class="excerpt">${last.direction === 'in' ? '' : last.status === 'sent' ? 'You: ' : 'Not sent: '}${h(last.text.replace(/\s+/g, ' ').slice(0, 90))}</span>` : ''}</a>`
 }
 function status(s: any, m: any, t: Thread) {
   const when = at(s, m.propertyId, m.sentAt ?? m.createdAt)
-  if (m.direction === 'in') return `<p class="meta">${h(CHANNEL[m.channel])} · ${h(when)}</p>`
+  if (m.direction === 'in') return `<p class="meta">${h(CHANNEL[m.channel])}${m.channelAccountId?' · '+h(m.channelAccountName??m.channelAccountId):''} · ${h(when)}</p>`
   const sched = m.scheduledId ? s.scheduled.find((r: any) => r.id === m.scheduledId) : null, late = sched ? lateMinutes(sched) : null
   const who = m.control?.automatic ? 'Automatic reply · property authority' : m.source === 'scheduled' ? (sched ? `Scheduled · ${RULE_NAMES[sched.rule as keyof typeof RULE_NAMES]}` : 'Direct booking · sent automatically') : m.approvalId ? `${m.source === 'ai' ? 'AI draft' : 'Drafted reply'}, sent by you` : 'You'
   const state = m.status === 'sent' ? `Sent ${when}${sched ? (late !== null && late <= 5 ? ' · on time' : ` · ${late} min late`) : ''}` : m.status === 'suppressed' ? 'Not sent: development mode sends no email' : m.status === 'unavailable' ? `Not sent: ${(m.detail ?? '').split(/(?<=\.) /)[0]}` : m.status === 'failed' ? `Could not send: ${m.detail ?? ''}` : 'Sending…'
@@ -61,7 +62,7 @@ function conversation(s: any, t: Thread, p:InboxPage) {
   const lastIn = p.latestIncoming
   const compose = browserRead(s,lastIn)?channelReply(lastIn):form('message.compose', page(t), hidden('thread', t.id) + `${lastIn && lastIn.channel !== 'email' ? '' : `<label>Subject<input name="subject" maxlength="200" value="${h(lastIn?.subject ? (/^re:/i.test(lastIn.subject) ? lastIn.subject : `Re: ${lastIn.subject}`) : '')}" placeholder="About your stay"></label>`}<label>Write to ${h(t.name)}<textarea name="text" rows="4" maxlength="4000" required></textarea></label>`, 'Send')
   return `<p class="back"><a href="${h(inboxLink(p,{thread:null,messages:null}))}">← All guests</a></p><div class="thread-head"><h2>${h(t.name)}</h2><p class="muted">${h([t.email, t.phone].filter(Boolean).join(' · ') || 'No email or phone yet')}</p><p class="stays">${t.stays.map(b => stayLine(s, b)).join('') || '<span class="muted">Not matched to a stay: the sender’s address is on no stay yet.</span>'}</p></div>
-  ${contact(s, t)}${pagination(p,true)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${teamPanel(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
+  ${inquiriesPanel(s,t.id)}${contact(s, t)}${pagination(p,true)}<div class="messages">${bubbles || empty('No messages yet. Scheduled messages and guest replies appear here.')}</div>${drafts.map(m => draft(s, t, m)).join('')}${reach || t.stays.length ? `<details class="compose"><summary>Write a message yourself</summary>${compose}</details>` : ''}${earlyArrival(s, t)}${teamPanel(s, t)}${schedule(s, t)}${t.stays.map(b=>lifecyclePreference(s,b.id)).join('')}`
 }
 export function inbox(s: any, thread?: string | null) {
   const p:InboxPage = s.inboxPage ?? localInboxPage(s,thread), open=p.open
