@@ -28,8 +28,8 @@ person's grant. Business owner maps to owner,
 Business team admin to policy editor, and member to no policy role; a local
 promotion does not create a Business role.
 
-The runtime is copied from Base `114ef7a61f080da053af783c5fbe06f625d692cc`,
-with the released `@runeditrun/rer` 0.2.88 CLI. The production door and descriptor
+The runtime is copied from Base `2135c394939f4a737adabdc8003b0e667b31ac5a`,
+with the released `@runeditrun/rer` 0.2.91 CLI. The production door and descriptor
 declare only tools, policy, pause, audit and idempotency. Events, resources,
 prompts and subscriptions are undeclared: their lists are empty or absent and
 calls return `capability_not_declared`. Unknown tool names return
@@ -59,12 +59,12 @@ Business bindings, policy, agent admission and replay state; pending approvals
 expire and saved Undo payloads are removed. Restoring an archive requires fresh
 Business pairing and policy before any new agent action.
 
-The 29 October 2026 disposable production check used the normal CLI command
+The 30 October 2026 disposable production check used the normal CLI command
 `SEED_VERIFY_SHARD=runtime node node_modules/@runeditrun/rer/global/rer.mjs verify`.
-It reported `Agent door conformance: 861/861 points passed.` and
+It reported `Agent door conformance: 883/883 points passed.` and
 `verify: complete (exit 0)`. All ten specialist steps passed in autonomous and
 held phases, with standard and sensitive class coverage, input injection, blocked
 classes, unanswered and paused policy, revision conflict, replay, consent
 revocation and audit agreement. The runtime shard's emitted-Worker HTTP check
 and its existing cleaner, quote and booking-site browser journeys also passed.
-This proves this declared subset; it does not promote the wider rental clauses.
+Unknown-subject and changed-email sponsor probes passed. Inactive and allow-list-excluded sponsor fixtures remain undeclared and received no passing points. This proves the declared subset; it does not promote the wider rental clauses.
