@@ -3,8 +3,8 @@ import {readFileSync,writeFileSync} from 'node:fs'
 import {parseContract} from './seed-contract.mjs'
 
 const [mode,flag,list]=process.argv.slice(2)
-if(!['write','check'].includes(mode)||flag!=='--clauses'||!list||process.argv.length!==5)throw Error('Usage: node src/base/contract-docs.mjs write|check --clauses FIN-008')
-const ids=list.split(','),source=readFileSync('CONTRACT.md','utf8'),rows=source.split('\n').filter(l=>/^\| `[^`]+` \|/.test(l)).map(l=>l.split('|').slice(1,-1).map(c=>c.trim()))
+if(!['write','check'].includes(mode)||(flag!==undefined&&(flag!=='--clauses'||!list||process.argv.length!==5)))throw Error('Usage: node src/base/contract-docs.mjs write|check --clauses FIN-008')
+const ids=list?list.split(','):Array.from({length:13},(_,i)=>`BASE-AGENT-${String(i+1).padStart(3,'0')}`),source=readFileSync('CONTRACT.md','utf8'),rows=source.split('\n').filter(l=>/^\| `[^`]+` \|/.test(l)).map(l=>l.split('|').slice(1,-1).map(c=>c.trim()))
 const count=selected=>{const own=rows.filter(r=>selected.includes(r[2]));return [own.filter(r=>r[3]==='done').length,own.filter(r=>r[3]==='partial').length,own.filter(r=>r[3]==='missing').length,own.length]}
 const all=count(['published','target','push-further'])
 let contract=source.replace(/^\| (Published|Target and push further|All) \|[^\n]+$/gm,(_,label)=>`| ${label} | ${count(label==='Published'?['published']:label==='All'?['published','target','push-further']:['target','push-further']).join(' | ')} |`)
@@ -14,15 +14,16 @@ let acceptance=readFileSync('ACCEPTANCE.md','utf8'),claims=readFileSync('docs/CL
 for(const id of ids){
  const clause=parsed.clauses.find(c=>c.id===id),row=rows.find(r=>r[0]==='`'+id+'`')
  if(!clause||!row)throw Error('Unknown clause: '+id)
- const evidence=clause.text.split('**Acceptance evidence:**')[1]?.trim()
+ const evidence=(clause.text.split('**Acceptance evidence:**')[1]??clause.text.split('**Acceptance.**')[1])?.trim().replace(/\n/g,' ')
  if(!evidence)throw Error('Selected clause needs its original acceptance evidence: '+id)
  const lines=acceptance.split('\n'),start=lines.findIndex(l=>l.startsWith('- **'+id+' — '))
- if(start<0)throw Error('Missing legacy acceptance entry: '+id)
+ if(start<0&&!id.startsWith('BASE-AGENT-'))throw Error('Missing legacy acceptance entry: '+id)
  let end=start+1
  while(end<lines.length&&!/^(?:- \*\*|## )/.test(lines[end]))end++
  const suffix=clause.status==='done'?'Assessment: ':'Remaining: '
  const block=`- **${id} — ${clause.title} · ${clause.status}.** ${evidence}\n  Current evidence: ${row[4]||'none'}. ${suffix}${row[5]}\n`
- lines.splice(start,end-start,block);acceptance=lines.join('\n')
+ if(start<0)acceptance=acceptance.trimEnd()+'\n\n'+block
+ else{lines.splice(start,end-start,block);acceptance=lines.join('\n')}
  const begin=`<!-- contract-status:${id}:start -->`,finish=`<!-- contract-status:${id}:end -->`
  const view=`${begin}\n${id} · ${clause.title} · ${clause.status}.\n\nEvidence: ${row[4]||'none'}.\n\n${suffix}${row[5]}\n${finish}`
  const at=claims.indexOf(begin),last=claims.indexOf(finish)

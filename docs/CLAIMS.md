@@ -131,3 +131,107 @@ Evidence: `src/cabin/inventory.ts`; `src/cabin/ui/requests.ts`; `tests/cabin.tes
 
 Remaining: Native source-linked inquiries retain dates, guests, USD quote and the original source deadline without allocating inventory. Exact source-thread review is owner-only under the standing conservative scope default; scoped delegation remains open. Approaching and locally elapsed deadlines reopen accountable MESSAGE-002 follow-up, with the channel outcome unresolved. Synthetic source-edge, restart, replay, erasure and native browser journeys do not prove authenticated channel receipt. Remaining: actual authenticated inquiry receipt; channel-acknowledged pre-approval, withdrawal, special-offer sending and re-sending, request acceptance and decline, provider-confirmed expiry, alteration acceptance and decline with downstream changes, saved automatic-preapproval criteria, automatic and manual overlap-decline journeys, and repeated Vrbo and Booking.com request acceptance. Whole-clause dependency: owner-authorized Airbnb, Vrbo and Booking.com test listings and sessions for every required channel acknowledgment. No new live channel action authority is introduced.
 <!-- contract-status:SYNC-008:end -->
+
+<!-- contract-status:BASE-AGENT-001:start -->
+BASE-AGENT-001 · One MCP door per seed · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Undeclared resources and prompts families; CORE transport proof is separate from full optional-family adoption.
+<!-- contract-status:BASE-AGENT-001:end -->
+
+<!-- contract-status:BASE-AGENT-002:start -->
+BASE-AGENT-002 · The seed's jobs are tools, through the UI's own actions · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Only native CONTROL-002 draft verbs and visible record reads are adopted; broader rental agent work remains outside this door.
+<!-- contract-status:BASE-AGENT-002:end -->
+
+<!-- contract-status:BASE-AGENT-003:start -->
+BASE-AGENT-003 · Records are resources · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Undeclared resources family: typed refusal; record reads remain scoped native tools.
+<!-- contract-status:BASE-AGENT-003:end -->
+
+<!-- contract-status:BASE-AGENT-004:start -->
+BASE-AGENT-004 · Business identity and short-lived, audience-bound tokens · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Single owner journey; multi-sponsor lifecycle and Business issuance/delivery remain unproved.
+<!-- contract-status:BASE-AGENT-004:end -->
+
+<!-- contract-status:BASE-AGENT-005:start -->
+BASE-AGENT-005 · An agent acts as a person in a role, never more · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: No access/security tool is registered; native owner administration and multi-sponsor grant changes are unproved.
+<!-- contract-status:BASE-AGENT-005:end -->
+
+<!-- contract-status:BASE-AGENT-006:start -->
+BASE-AGENT-006 · Every action declares its risk class · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Only standard draft and standard/sensitive read classes; no provider spend or broader rental action classes are claimed.
+<!-- contract-status:BASE-AGENT-006:end -->
+
+<!-- contract-status:BASE-AGENT-007:start -->
+BASE-AGENT-007 · The company's policy decides, at one chokepoint · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: CORE signed policy and named sponsor approvals only; independent reviewer and timed/dual-host lifecycle remain unproved.
+<!-- contract-status:BASE-AGENT-007:end -->
+
+<!-- contract-status:BASE-AGENT-008:start -->
+BASE-AGENT-008 · Truthful attribution · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Draft attribution only; provider content, queued lifecycle and native reviewer Undo are not exposed.
+<!-- contract-status:BASE-AGENT-008:end -->
+
+<!-- contract-status:BASE-AGENT-009:start -->
+BASE-AGENT-009 · Every agent action is audited with its class and decision · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: CORE audit only; provider and queued lifecycle audit remain unproved.
+<!-- contract-status:BASE-AGENT-009:end -->
+
+<!-- contract-status:BASE-AGENT-010:start -->
+BASE-AGENT-010 · Agents can follow changes · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Undeclared events and subscriptions families: typed refusal, no public retained-event or streaming claim.
+<!-- contract-status:BASE-AGENT-010:end -->
+
+<!-- contract-status:BASE-AGENT-011:start -->
+BASE-AGENT-011 · Limits are policy, and Pause stops everything · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: CORE Pause only; spend, byte budgets, mail edges, timed lifecycle and resource refresh are unproved.
+<!-- contract-status:BASE-AGENT-011:end -->
+
+<!-- contract-status:BASE-AGENT-012:start -->
+BASE-AGENT-012 · Writes are idempotent and conflict-safe · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: Synchronous draft replay only; queued lifecycle and uncertain provider outcomes are not exposed.
+<!-- contract-status:BASE-AGENT-012:end -->
+
+<!-- contract-status:BASE-AGENT-013:start -->
+BASE-AGENT-013 · Manifest, docs and the conformance journey · partial.
+
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 861/861 points passed.” (29 October 2026, CORE subset).
+
+Remaining: CORE journey only; undeclared events, resources, prompts and subscriptions and unscoped multi-sponsor, mail, refresh, timed, dual-host, queued and owner-native administration families remain partial.
+<!-- contract-status:BASE-AGENT-013:end -->

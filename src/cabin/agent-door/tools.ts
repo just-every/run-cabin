@@ -14,8 +14,7 @@ const clauses = ['CONTROL-002', 'AUTH-002', 'AUDIT-001']
 
 async function draftActor(env: Bindings, ctx: ToolContext) {
   const actor = await nativeActor(env, ctx.person)
-  // The pinned Base event reader short-circuits resource visibility for a prior sponsor.
-  // Keep writes with the installation owner until it exposes a current-grant event hook.
+  // The native draft-only bearer boundary is owned by the installation owner.
   if (actor.role !== 'owner') throw new ToolRefusal('owner_required')
   if (!ctx.agent.id.startsWith('cabin-key:')) return actor
   const keyId = ctx.agent.id.slice('cabin-key:'.length)

@@ -89,31 +89,9 @@
         "CONTROL-001",
         "FIN-004"
       ]
-    },
-    {
-      "name": "cabin.events.list",
-      "scope": "events:read",
-      "readOnly": true,
-      "classes": [
-        "standard"
-      ],
-      "clauses": [
-        "BASE-AGENT-010"
-      ]
     }
   ],
-  "resources": [
-    "cabin://homes/{id}",
-    "cabin://people/{id}",
-    "cabin://stays/{id}",
-    "cabin://guests/{id}",
-    "cabin://tasks/{id}",
-    "cabin://readiness/{id}",
-    "cabin://statements/{id}",
-    "cabin://cases/{id}",
-    "cabin://calendars/{id}",
-    "cabin://turnovers/{id}"
-  ],
+  "resources": [],
   "notTools": [
     {
       "clauses": [
@@ -343,21 +321,13 @@
           }
         }
       ]
-    },
-    {
-      "id": "events",
-      "tool": "cabin.events.list",
-      "args": {
-        "limit": 200
-      },
-      "expect": [
-        {
-          "class": "standard",
-          "facts": {
-            "measure": 1
-          }
-        }
-      ]
     }
+  ],
+  "capabilities": [
+    "tools",
+    "policy",
+    "pause",
+    "audit",
+    "idempotency"
   ]
 }

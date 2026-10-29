@@ -28,17 +28,24 @@ person's grant. Business owner maps to owner,
 Business team admin to policy editor, and member to no policy role; a local
 promotion does not create a Business role.
 
-Broader action tools and rental change subscriptions await two Base interfaces.
-At runtime pin `d555e789cffb744a9f83d76ebe42a2e3bdd7a055`, the native tool context
-does not expose the validated consent ID, so a native queued send cannot retain
-and recheck that consent before delivery. Event visibility also accepts the
-historical sponsor before re-reading the resource's current property grant.
-Cabin therefore registers no provider action and restricts draft mutations to
-the installation owner, whose native portfolio authority cannot be narrowed by a
-property grant. Their events contain only the new draft reference; scoped staff
-read those references through their current native visibility. Draft writes by
-scoped staff await the event visibility hook. These limits do not restrict the existing person
-workflows or complete the full rental Agent surface contract.
+The runtime is copied from Base `114ef7a61f080da053af783c5fbe06f625d692cc`,
+with the released `@runeditrun/rer` 0.2.88 CLI. The production door and descriptor
+declare only tools, policy, pause, audit and idempotency. Events, resources,
+prompts and subscriptions are undeclared: their lists are empty or absent and
+calls return `capability_not_declared`. Unknown tool names return
+`tool_not_found`. The record collections above are read through scoped tools;
+there are no public MCP resource links or specialist prompts in this subset.
+
+The copied runtime now exposes consent on tool context and checks current native
+resource visibility for events. Those former Base gaps are closed. This adoption
+retains Cabin's existing owner-only draft mutation boundary. Native commands
+explicitly admit agents for only the three preparations; broad company policy
+does not authorize a signature, inspection, provider send, payout or native role
+change. Broader tools need their own native authority, durable consent and
+provider receipts before they can be declared. No queued provider action,
+mail edge, multi-sponsor, timed or dual-host journey, resource refresh or native
+owner administration is claimed. BASE-AGENT clauses remain partial and name
+these gaps; the pinned ct Agent surface is still a wider target.
 
 `agent-surface.json` declares the bounded registry and its normal `rer verify`
 journey. Its initializer claims the disposable installation owner through the
@@ -51,3 +58,13 @@ Backups retain door audit, events and historical decisions. They omit signed
 Business bindings, policy, agent admission and replay state; pending approvals
 expire and saved Undo payloads are removed. Restoring an archive requires fresh
 Business pairing and policy before any new agent action.
+
+The 29 October 2026 disposable production check used the normal CLI command
+`SEED_VERIFY_SHARD=runtime node node_modules/@runeditrun/rer/global/rer.mjs verify`.
+It reported `Agent door conformance: 861/861 points passed.` and
+`verify: complete (exit 0)`. All ten specialist steps passed in autonomous and
+held phases, with standard and sensitive class coverage, input injection, blocked
+classes, unanswered and paused policy, revision conflict, replay, consent
+revocation and audit agreement. The runtime shard's emitted-Worker HTTP check
+and its existing cleaner, quote and booking-site browser journeys also passed.
+This proves this declared subset; it does not promote the wider rental clauses.
