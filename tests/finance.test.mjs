@@ -93,7 +93,8 @@ test('REPORT-001: filtered mixed-channel reports reconcile occupancy, bases, exc
  const earned=state.ledger.journals.find(j=>j.sourceType==='earn'&&j.bookingId===b.second.id);await h.cmd('ledger.reverse',{id:earned.id,effectiveDate:'2026-10-31'});const reversed=await b.report();assert.equal(reversed.totals.grossCents,r.totals.grossCents-40000)
  await h.restart();assert.equal((await b.report()).totals.grossCents,reversed.totals.grossCents)
  await h.cmd('member.save',{id:manager.id,revision:manager.revision,name:manager.name,email:manager.email,role:'manager',active:false});assert.ok([401,403].includes((await h.send('/api/cabin/reports.csv?'+reportMonth,undefined,manager.cookie)).status))
-}))
+ // Keep the dated report's native message deadlines ahead of fixture creation.
+},{now:'2026-10-01T00:00:00Z'}))
 
 
 const sharingMail={fail:false,attempts:[],interrupt:false,accepted:[]}

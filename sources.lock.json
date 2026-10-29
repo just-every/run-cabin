@@ -5420,7 +5420,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "ff79da63f9eb948510ee2d436f6cb32c59209b5f5b1a8254e04d88dc8ea7d48d",
+      "sha256": "beb8fe42d2e407be0da0ef74096cddb21c20a0e137ff8f13eacd461111171071",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {
