@@ -5592,7 +5592,7 @@
       "executable": false
     },
     "tests/launch.test.mjs": {
-      "sha256": "a8d3a5595ce8baaa6f9a87abbae543856914581be757b31849d907759dd25d0e",
+      "sha256": "6fca164ccadd4c52f43b97338c5f32c41142c399a7c17cc5a1a7869ab8f11763",
       "executable": false
     },
     "tests/ledger.test.mjs": {
