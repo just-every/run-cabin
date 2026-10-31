@@ -6,7 +6,8 @@ import {harness} from './harness.mjs'
 
 // OPS-004: reports, spend authority, inventory, inspected evidence, owner cost and recurrence.
 test('OPS-004: a guest appliance report becomes accepted, approved, inspected work with one owner expense and next visit',async()=>{
- const h=await harness()
+ // Keep the fixed November stay current regardless of the host date or DST.
+ const h=await harness({now:'2026-10-31T12:00:00Z'})
  try{
   const vendor=await h.person('Dale'),inspector=await h.person('Ana'),manager=await h.person('Morgan','manager'),other=await h.person('Luis')
   const home=await h.cmd('property.save',{name:'Lake Loft',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:2000})

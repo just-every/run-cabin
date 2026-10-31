@@ -6,7 +6,8 @@ import {harness} from './harness.mjs'
 
 // PROPERTY-001: property content and immutable effective management terms through product doors.
 test('PROPERTY-001: two units retain their content and original stay allocations after an agreement amendment',async()=>{
- const h=await harness()
+ // Keep the fixed stays current and December quotes in the future across DST.
+ const h=await harness({now:'2026-10-31T12:00:00Z'})
  try{
   const photo=(await readFile('tests/fixtures/checklist.png')).toString('base64')
   const p=await h.cmd('property.save',{name:'Lake Loft · North',ownerName:'Karen Ortiz',ownerEmail:'karen@stay.example',commissionBps:2000})

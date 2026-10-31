@@ -5332,7 +5332,7 @@
       "executable": false
     },
     "tests/audit.test.mjs": {
-      "sha256": "f874f74e43c3f6a64458b4460b1254f1081eb44b58279e847a3717687fd71f15",
+      "sha256": "1d24068c14921f25df56d1c8fc9fa924dd2e54441192a23e88c5f4533a38e10b",
       "executable": false
     },
     "tests/banking-archive.mjs": {
@@ -5656,7 +5656,7 @@
       "executable": false
     },
     "tests/property-register.test.mjs": {
-      "sha256": "d7e2d84709b070a42353696bba857beef8940cd0779d383a34cb548b32ddc2b4",
+      "sha256": "170f7597c0641a05676b4501062fb917079c751d31dc758f76f9363f065d7610",
       "executable": false
     },
     "tests/qbo-archive.mjs": {
@@ -5788,7 +5788,7 @@
       "executable": false
     },
     "tests/work-orders.test.mjs": {
-      "sha256": "4d47a01d0a22935c43d75032216195dedb13478cdf95e720fb8642b4f2ba6488",
+      "sha256": "678c4499c519cd11bbb52a50910e5f0dc969ca7996f8431e4f3daf3ffbd13992",
       "executable": false
     },
     "tests/worker.ts": {

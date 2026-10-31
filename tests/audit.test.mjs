@@ -3,6 +3,7 @@ import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
 
+// Keep the fixed November stay current regardless of the host date or DST.
 test('AUDIT-001: a stay has portable attributable history past the view window and erasure preserves anonymized actions',()=>run(async h=>{
  const home=await h.cmd('property.save',{name:'Cedar Creek Lodge',ownerName:'Morgan Lee',ownerEmail:'morgan@stay.example',commissionBps:2000})
  const cleaner=await h.person('Taylor')
@@ -41,4 +42,4 @@ test('AUDIT-001: a stay has portable attributable history past the view window a
  assert.equal((await h.send('/app/activity',undefined,h.owner)).status,200)
  const native=(await h.accessState(cleaner.cookie)).actor,changed=await h.send('/auth/operator/role',{operatorId:native.id,role:'admin'},h.owner);assert.equal(changed.status,200)
  const authorization=await get('/api/cabin/activity?action=authority.role.result');assert.ok(authorization.events.some(e=>e.entityId===native.id&&e.facts.role==='admin'&&e.sourceRevision))
-}))
+},{now:'2026-10-31T12:00:00Z'}))
