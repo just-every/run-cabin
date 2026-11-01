@@ -142,8 +142,8 @@ prose and regenerate the selected acceptance entries, contract progress notes
 and summary counts with:
 
 ```sh
-node src/base/contract-docs.mjs write --clauses FIN-008
-node src/base/contract-docs.mjs check --clauses FIN-008
+node src/base/contract-docs.mjs write --clauses FIN-008,SYNC-010,PRICE-002
+node src/base/contract-docs.mjs check --clauses FIN-008,SYNC-010,PRICE-002
 ```
 
 Pass the touched clause IDs as a comma-separated list. This command does not
