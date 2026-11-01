@@ -7,7 +7,8 @@ import { harness } from './harness.mjs'
 const { settings = {} } = JSON.parse(await readFile('deploy-demo.json', 'utf8'))
 
 test('a demo opens on a lived-in rental business whose waiting drafts and recovery proposal approve, and an invitation is simulated', async () => {
-  const h = await harness({ entry: 'tests/demo-worker.ts', auth: { RER_DEMO: '1', MAIL_FROM: '', ...settings } })
+  // Keep the seeded business mid-month, with both approved and waiting statements.
+  const h = await harness({ now: '2026-10-15T12:00:00Z', entry: 'tests/demo-worker.ts', auth: { RER_DEMO: '1', MAIL_FROM: '', ...settings } })
   try {
     const s = await h.state()
     assert.equal(s.properties.length, 12)

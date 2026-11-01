@@ -15,11 +15,11 @@ export async function guestCollection(h,b){
  const s=await h.accessState(),link=s.guestPortalLinks.find(p=>p.bookingId===b.id),cookie=await h.verifyGuest(link.token)
  return {path:'/stay/'+link.token+'/payments',cookie}
 }
-export async function collectionProviderJourney({screens}={}){
+export async function collectionProviderJourney({screens,now}={}){
  // Match the repository's existing archive edge: a synthetic fixture becomes protocol-valid only inside this network-edge test.
  const edgeCredential=['sk','test','synthetic-cabin-1'.replaceAll('-','')].join('_')
  const sessions=new Map(),payments=new Map(),writes=[],attempts=new Map();let fault='lost',sequence=0
- const h=await harness({assets:true,auth:{STRIPE_TEST_SECRET_KEY:edgeCredential},outbound:async request=>{
+ const h=await harness({now,assets:true,auth:{STRIPE_TEST_SECRET_KEY:edgeCredential},outbound:async request=>{
   const url=new URL(request.url);assert.equal(url.origin,'https://api.stripe.com')
   const f=new URLSearchParams(request.method==='POST'?await request.text():url.search),path=url.pathname
   if(path==='/v1/checkout/sessions'&&request.method==='POST'){

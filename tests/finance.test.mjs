@@ -167,6 +167,7 @@ test('REPORT-002: approved owner and team schedules freeze scoped artifacts, ref
  assert.equal((await sharing()).reportSchedules.filter(s=>s.propertyIds.includes(b.p.id)).length,0)
 },{auth:{CABIN_TEST_MAIL_EDGE:'true'},outbound:async request=>{assert.equal(new URL(request.url).origin,'https://mail.cabin.test');const message=await request.json();sharingMail.attempts.push(message);if(sharingMail.interrupt){if(sharingMail.interrupt==='after')sharingMail.accepted.push(message.deliveryId);return new Response('Interrupted submission',{status:503})}return sharingMail.fail?new Response('Synthetic refusal',{status:503}):Response.json({status:'accepted',provider:'test',providerMessageId:'synthetic-cabin-mail-'+sharingMail.attempts.length})}}))
 
+// Approval postings must stay in the same October window as the question fixtures.
 test('portfolio questions reconcile a falling owner net to current and comparison report sources without changing the books',()=>run(async h=>{
  const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h),input={question:'Why did this property’s owner net fall?',filters:b.filters},before=await h.state()
  const answer=await h.send('/api/cabin/questions',input,b.manager.cookie);assert.equal(answer.status,200,answer.text);const a=answer.value
@@ -180,7 +181,7 @@ test('portfolio questions reconcile a falling owner net to current and compariso
  const after=await h.state();for(const key of ['bookings','tasks','messages','payouts'])assert.deepEqual(after[key],before[key]);assert.deepEqual(after.ledger.journals,before.ledger.journals)
  const cash=await h.send('/api/cabin/questions',{...input,filters:{...b.filters,basis:'cash'}},h.owner);assert.equal(cash.status,200);assert.equal(cash.value.reports[0].totals.netCents,(await b.report(new URLSearchParams({...b.filters,basis:'cash'}).toString())).totals.netCents)
  const empty=await h.send('/api/cabin/questions',{question:'Why did net change?',filters:{...b.filters,from:'2025-10-01',until:'2025-11-01'}},h.owner);assert.equal(empty.status,200);assert.match(empty.value.warnings.join(' '),/no posted journals/)
-}))
+},{now:'2026-10-15T12:00:00Z'}))
 
 test('portfolio arrival and conversation questions retain explicit stale uncertainty and treat guest instructions only as cited data',()=>run(async h=>{
  const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h)

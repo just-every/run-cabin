@@ -8,6 +8,9 @@ async function home(h,name,email){const p=await h.cmd('property.save',{name,owne
 async function terms(h,p,allocation,effectiveFrom='2026-01-01'){return h.cmd('property.terms',{propertyId:p.id,propertyRevision:p.revision,effectiveFrom,ownerName:p.ownerName,ownerEmail:p.ownerEmail,commissionBps:2000,terms:'Signed management agreement',allocation})}
 async function stay(h,p,uid,start,end){const d=await h.cmd('calendar.prepare',{propertyId:p.id,channel:'airbnb',calendar:calendar(uid,start,end)});await h.cmd('calendar.approve',{id:d.id,revision:d.revision});return (await h.state()).bookings.find(b=>b.uid===uid)}
 
+// Allocation approval journals and scheduled delivery share the October report clock.
+const allocationNow='2026-10-15T12:00:00Z'
+
 test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, tax, reserves and multiple owners across amendments',()=>run(async h=>{
  const p=await home(h,'Lake Loft','karen@stay.example'),t=await terms(h,p,model(owners)),b=await stay(h,p,'HM-1','20261001','20261005')
  await h.cmd('payout.import',{propertyId:p.id,source:'airbnb',csv:'Date,Type,Confirmation code,Start date,Nights,Currency,Gross earnings,Host service fee,Amount,Payout ID\n10/06/2026,Reservation,HM-1,10/01/2026,4,USD,1200.00,30.00,1170.00,SETTLEMENT-1\n'})
@@ -38,8 +41,8 @@ test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, 
  const coowner=await h.cmd('member.save',{name:'Morgan Lee',email:owners[1].email,pmsRole:'rental_owner',propertyIds:[p.id],actions:['owners:read'],active:true})
  await h.cmd('member.invite',{id:coowner.id});const coownerSession=await h.signIn(owners[1].email)
  const native=await h.send('/app',undefined,coownerSession);assert.equal(native.status,200,native.text);assert.ok(!native.text.includes('Karen Lee'))
- const definition=await h.cmd('report.save',{name:'Co-owner monthly interest',filters:{from:'2026-10-01',until:'2026-11-01',property:p.id}}),schedule=await h.cmd('report.schedule',{savedReportId:definition.id,savedReportRevision:definition.revision,recipientKind:'owner',recipientEmail:owners[1].email,period:'saved-window',cadence:'once',format:'json',nextRunAt:new Date(Date.now()+86400000).toISOString(),consent:true})
- const due=new Date(Date.now()-60000).toISOString();await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(due,due,schedule.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
+ const definition=await h.cmd('report.save',{name:'Co-owner monthly interest',filters:{from:'2026-10-01',until:'2026-11-01',property:p.id}}),schedule=await h.cmd('report.schedule',{savedReportId:definition.id,savedReportRevision:definition.revision,recipientKind:'owner',recipientEmail:owners[1].email,period:'saved-window',cadence:'once',format:'json',nextRunAt:new Date(Date.parse(allocationNow)+86400000).toISOString(),consent:true})
+ const due=new Date(Date.parse(allocationNow)-60000).toISOString();await h.db.prepare("UPDATE cb_report_schedules SET next_run_at=?,data=json_set(data,'$.nextRunAt',?) WHERE id=?").bind(due,due,schedule.id).run();await (await h.mf.getWorker()).scheduled({cron:'*/5 * * * *'})
  const sharing=(await h.send('/api/cabin/report-sharing.json',undefined,h.owner)).value,run=sharing.reportRuns.find(r=>r.scheduleId===schedule.id);assert.equal(run.status,'sent')
  await h.send('/owners/signin',{email:owners[1].email});const mail=JSON.parse((await h.db.prepare("SELECT message FROM rer_mail_development_outbox WHERE instr(message,'Sign in to your Cabin owner portal')>0 ORDER BY sequence DESC LIMIT 1").first()).message),token=new URL(mail.text.match(/http:\/\/[^\s]+\/owners\/confirm\?token=[^\s]+/)[0]).searchParams.get('token'),session=(await h.send('/owners/confirm',{token})).cookie
  const file=await h.send('/owners/reports/'+run.id,undefined,session);assert.equal(file.status,200,file.text);const own=JSON.parse(file.text)
@@ -56,7 +59,7 @@ test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, 
  const cleaner=await h.person('Luis');const restricted=await h.state(cleaner.cookie);assert.equal(restricted.financialAllocations.length,0);assert.equal(restricted.sharedCosts.length,0)
  await h.cmd('allocation.prepare',input,cleaner.cookie,403)
  for(const path of ['/app/people','/app/statements'])assert.equal((await h.send(path,undefined,h.owner)).status,200)
-}))
+},{now:allocationNow}))
 
 test('FIN-003: shared invoice approval binds accountant-reviewed agreements and allocates each cent with immutable evidence',()=>run(async h=>{
  const p=await home(h,'Lake Loft','karen@stay.example'),q=await home(h,'Pine Ridge','sam@stay.example')

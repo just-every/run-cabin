@@ -2,6 +2,7 @@ import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
 
+// Source corrections and tax payment journals belong to the October review fixture.
 test('monthly lodging tax keeps separate levies, source-recorded channel collection, exempt/refunded tax, exact reviews and external evidence',()=>run(async h=>{
  const home=await h.cmd('property.save',{name:'Maine tax cabin',ownerName:'Tax Owner',ownerEmail:'tax-owner@stay.example',commissionBps:2000})
  const other=await h.cmd('property.save',{name:'Mountain tax cabin',ownerName:'Other Owner',ownerEmail:'other-tax@stay.example',commissionBps:2000})
@@ -71,7 +72,7 @@ test('monthly lodging tax keeps separate levies, source-recorded channel collect
  assert.equal((await h.send('/app/taxes',undefined,h.owner)).status,200)
  assert.equal((await h.send(`/api/cabin/taxes/${report.id}.json`)).status,401)
  assert.ok((await h.state()).taxes.workItems.some(i=>i.includes(unsupported.name)))
-}))
+},{now:'2026-10-15T12:00:00Z'}))
 
 // One money journey covers period selection, overlapping approval, corrections and immutable ledger evidence.
 test('quarterly jurisdiction reviews conserve monthly levies across boundaries, overlap, late refunds and restart',()=>run(async h=>{

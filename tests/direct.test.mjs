@@ -379,8 +379,11 @@ test('scheduled collections require current reservation terms, guest consent and
 })
 
 
-test('scheduled collection reconciles provider interruptions, failed follow-up, revised mandates and revoked authority without duplicate charges',{timeout:120000},async()=>{
- const {collectionProviderJourney}=await import('./collection-support.mjs');await collectionProviderJourney()
+test('scheduled collection reconciles provider interruptions, failed follow-up, revised mandates and revoked authority without duplicate charges',{timeout:120000},async t=>{
+ // Pin Node fixture dates and the Worker scheduler together, including restarts.
+ const now='2026-10-15T12:00:00Z'
+ t.mock.timers.enable({apis:['Date'],now:new Date(now)})
+ const {collectionProviderJourney}=await import('./collection-support.mjs');await collectionProviderJourney({now})
 })
 
 

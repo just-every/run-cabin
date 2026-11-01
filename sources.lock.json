@@ -5320,7 +5320,7 @@
       "executable": false
     },
     "tests/allocations.test.mjs": {
-      "sha256": "32f673da5339c4bf303147f87775a48e78384d33e74e078cc50fefab4f655bc0",
+      "sha256": "cf12929959df7d6a9461939ca170b5c4f10a1e681d5d156aa444b87612c06c54",
       "executable": false
     },
     "tests/archive-records.mjs": {
@@ -5388,7 +5388,7 @@
       "executable": false
     },
     "tests/collection-support.mjs": {
-      "sha256": "223fbd7c5a824c667aef4e755073a4bc7610c607b909b7eeea8a19c3f74fa439",
+      "sha256": "a012319f3c4f61e7b182b39693bbaed92ca57c72ed22a3f0bf14a1707e76173c",
       "executable": false
     },
     "tests/data-custody.test.mjs": {
@@ -5404,7 +5404,7 @@
       "executable": false
     },
     "tests/demo.test.mjs": {
-      "sha256": "c71c42e57abb15b8679eac1502c807809c5bb2c3cd3e2fe8f943f1a5ca46341c",
+      "sha256": "a9eac343fa5409053f05addb19303a59215cf8021fce5f2104ab90758bef90ef",
       "executable": false
     },
     "tests/direct-rules-browser.mjs": {
@@ -5412,7 +5412,7 @@
       "executable": false
     },
     "tests/direct.test.mjs": {
-      "sha256": "963d6ef3afac8c72ab3019fc2e97aa1783e4c52949a3eb76eea6dfe3c0333d2d",
+      "sha256": "badfd1cbd5520ecdf90eba8efa69b18ebdde89e713d81832671595bc365817a1",
       "executable": false
     },
     "tests/dispatch.test.mjs": {
@@ -5420,7 +5420,7 @@
       "executable": false
     },
     "tests/finance.test.mjs": {
-      "sha256": "beb8fe42d2e407be0da0ef74096cddb21c20a0e137ff8f13eacd461111171071",
+      "sha256": "2ee0b311146dd22e6b0701d0415e652c1529b350284fb904af06a011a9c4f337",
       "executable": false
     },
     "tests/financial-exceptions-archive.mjs": {
@@ -5692,7 +5692,7 @@
       "executable": false
     },
     "tests/readiness-browser.test.mjs": {
-      "sha256": "abac3b095f77be272f93840188365fb8889d9419bc4a7ec6a7894d958f71476e",
+      "sha256": "6000878fd9fb27e801d60e3f16c94234dd1bc3355eb4c9cf83d2f67a93fae0e2",
       "executable": false
     },
     "tests/readiness-helpers.mjs": {
@@ -5772,7 +5772,7 @@
       "executable": false
     },
     "tests/taxes.test.mjs": {
-      "sha256": "cca0256ae16b97004731c5bfb8035bae5472a941dc7c0ac511f926cbf63a634b",
+      "sha256": "e2bf506901926c800c739edc4e4e56bcc5d56a1d9e6320b9374d4f14625ad62b",
       "executable": false
     },
     "tests/turnovers.test.mjs": {

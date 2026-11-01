@@ -166,7 +166,8 @@ test('native calendar and inbox preserve a keyboard-submitted failed reply and c
 })
 
 test('portfolio questions on desktop and phone reconcile sources, show uncertainty and approve a named investigation by keyboard',{timeout:180000},async()=>{
- const h=await harness({assets:true,outbound:()=>new Response('Synthetic provider unavailable',{status:503})});let browser
+ // Keep approval postings inside the October report fixture window.
+ const h=await harness({now:'2026-10-15T12:00:00Z',assets:true,outbound:()=>new Response('Synthetic provider unavailable',{status:503})});let browser
  try{
   const {questionBooks}=await import('./reports-support.mjs'),b=await questionBooks(h)
   await h.cmd('channel.connect',{propertyId:b.p.id,channel:'airbnb',url:'https://synthetic-cabin.example/feed.ics',intervalMinutes:15});const link=(await h.access()).connections.find(c=>c.propertyId===b.p.id);await h.cmd('channel.sync',{id:link.id})
