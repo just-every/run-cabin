@@ -19,6 +19,7 @@ export function cabinPeople(env: Bindings): PeopleAdapter {
     return { ...person, role: actor.role }
   }
   return {
+    businessStopped: operators.businessStopped,
     person: async id => admitted(await operators.person(id)),
     async sponsor(claims) {
       const settings = await env.DB.prepare('SELECT owner_id,stopped FROM bs_settings WHERE singleton=1').first<{ owner_id: string | null; stopped: number }>()

@@ -13,6 +13,7 @@ import { docsHead, docsPages } from './docs/pages'
 import { Landing } from './landing/Landing'
 import { STAGE_SCRIPT } from './landing/stages/StageRail'
 import run from './run.json'
+import { runPricing } from '../base/run-pricing'
 
 // Code cards get their Copy button only when script runs; without it the command is still there to select.
 const COPY = "document.querySelectorAll('.docs-copy').forEach(b=>{b.hidden=false;b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.closest('.docs-code').querySelector('code').textContent);b.textContent='Copied';setTimeout(()=>{b.textContent='Copy'},1600)}catch{}})})"
@@ -22,7 +23,7 @@ const siteIdentity: EditionIdentity = { ...identity, theme: '/site/theme.css', b
 const SHARE_IMAGE = `${identity.runSite}/site/share.jpg`
 
 export function sitePages({ styles, contract }: SiteContext): SiteBuild {
-  const data: RunData = run
+  const data: RunData = { ...run, pricing: runPricing }
   const document = (title: string, description: string, body: ReactElement, script = '') => '<!doctype html>' + renderToStaticMarkup(
     <html lang="en">
       <head>

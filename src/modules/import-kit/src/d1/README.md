@@ -13,7 +13,7 @@ use Undo from the same history when needed. Base's reference accepts people JSON
 here, not installation `.rer` archives. Editions adopt this same door
 with their own supported readers and native adapters.
 
-For seed integration, follow [the door adoption guide](../door/ADOPTING.md)
+For seed integration, follow [the door adoption guide](https://github.com/runeditrun/base/blob/main/modules/import-kit/src/door/ADOPTING.md)
 first. The D1 primitives below back that shared pipeline; do not mount separate
 job creation/apply routes beside it. Keep native readers and target adapters.
 
@@ -29,6 +29,10 @@ provenance and inert-effect policy through an asynchronous native SQL port.
 When copying Base source directly, copy the shared [D1 transport](../../../d1-transport/index.mjs) and its
 [types](../../../d1-transport/index.d.mts), preserving their sibling location
 beside the import-kit directory.
+Reading codec-dependent stored plans without the matching codec ID refuses with
+`IMPORT_PLAN_CODEC_REQUIRED`; encoding a codec whose round trip changes the plan
+fingerprint refuses with `IMPORT_PLAN_CODEC_MISMATCH`.
+
 The D1 entry uses this shared transport automatically. It accounts for actual
 UTF-8 bytes and workerd's whole-call two-byte strings, escapes sparse wide text
 for SQLite to decode, and keeps each mutation in its original transaction.
@@ -44,7 +48,9 @@ and D1 engine for the same jobs: each engine owns its checkpoint protocol.
 For reviewed reversal-policy conversion, also apply the additive
 `d1ReversalPolicyConversionSchema` after these existing schemas in a new
 product-owned numbered migration. `initializeD1ImportStorage` installs it
-automatically. Do not rewrite an applied migration.
+automatically. Do not rewrite an applied migration. Partial preserved-undo schema
+evolution refuses with `IMPORT_SCHEMA_EVOLUTION_INCOMPLETE`; complete the additive
+evolution before continuing.
 
 Apply stream-origin backfill and legacy receipt conversion in one transaction.
 Origins record actual page, parent and job bindings and remain immutable until
@@ -64,10 +70,10 @@ evaluates the expression at both ends of every atomic mutation batch. A false
 predicate raises `IMPORT_ATOMIC_GUARD` and rolls back every native and kit write.
 Read operations also require current authority. Jobs remain bound to their actor.
 The plan and its fingerprint carry that `principalId`, so a job can never be rebound
-to another one, and an archive carries the jobs but not the operators who created
-them: after an export, reset, import and setup the owner is a new operator row. A
-product that wants restored jobs to stay usable passes a principal that survives a
-restore, such as the operator's role (`'role:' + role`), and lets `predicate` check
+to another one. Identity retention depends on the seed's archive policy: a
+restored job remains bound to its recorded principal, so verify whether that
+principal survives the selected policy. A product that wants restored jobs to
+stay usable passes a principal that survives a restore, such as the operator's role (`'role:' + role`), and lets `predicate` check
 that the acting operator is still active in that role. A product that passes the
 operator's row id keeps its jobs bound to that operator for good.
 
@@ -84,7 +90,10 @@ SELECT-only batches at the smaller of the caller limit and 2 MiB. Each batch
 checks the same monotonic custody revisions, including tombstone changes;
 the original plan revision is captured before decoding. This requires the
 additive custody-state schema. Ordinary reads without a transport policy retain
-their existing atomic admission. `readD1PersistedImport` keeps one complete
+their existing atomic admission, except preserved undo-report reads whose kit-only
+preconditions exceed 2 MiB: those use the bounded SELECT checks and final revision
+fence described under "Adopting preserved-conflict undo" below.
+`readD1PersistedImport` keeps one complete
 atomic native snapshot capped at 2 MiB even when its caller omits a limit. It
 reads each destination job's `ik_d1_custody_states` revision (the same additive
 schema) before any custody and fences those revisions instead of resending
@@ -271,13 +280,32 @@ all layers. An import still applying or reversing cannot be superseded
 The bounds below follow [D1 limits](https://developers.cloudflare.com/d1/platform/limits/).
 Bulk text insertion uses the supported [D1 JSON SQL functions](https://developers.cloudflare.com/d1/sql-api/query-json/).
 
-The port counts SQL executions over the entire public invocation (including
-nested resume reads and every atomic batch statement), caps them at 1,000 and
+The port assumes Workers Paid: one Worker invocation allows 1,000 D1 queries;
+Workers Free allows only 50 and is not supported by this budget. Each direct
+read and each `batch()` call counts as one query, independent of batch members.
+Statement length, bound-parameter and value guards still check every member.
+Planning and creation preflight share the production batch-cost function; a
+plan exceeding the fresh creation query ceiling is refused during planning
+with `IMPORT_PLAN_TOO_LARGE`, naming the 1,000-query paid-plan limit.
+`preflightD1ImportJob().totalExecutions` measures those D1 queries;
+`totalStatements` and `mutationStatements` retain the individual statement
+counts, and `mutationExecutions` counts mutation batch calls.
+The door shares one budget across all its kit calls in one HTTP request; later
+apply, resume and undo requests are distinct Worker invocations. Erasure retains
+its existing 1,000-statement work ceiling, counting every batch member as well
+as reads. An explicit `maxStatements` may tighten that separate ceiling.
+
+The port counts queries over the entire public invocation (including
+nested resume reads and atomic batches), caps them at 1,000 and
 returns durable partial progress as the budget approaches exhaustion. Explicit
 `IMPORT_D1_REQUEST_LIMIT`, `IMPORT_D1_STATEMENT_LIMIT` and
 `IMPORT_D1_VALUE_LIMIT` failures publish no portion of the rejected batch.
-Create, apply and reversal reserve both return reads before publication, including
-the read of a chunked plan. Each successful batch retains its checked job state;
+Create, apply and reversal reserve their return reads before publication,
+including chunked-plan readback. A shared calculation sizes plan pages from the
+maximum JSON-encoded stored chunk row bytes, measured before reading, with space
+reserved under the transport ceiling for row metadata and two-byte strings.
+Today's small chunks use up to 64 rows per page; larger legacy chunks use
+smaller pages. Neither the stored plan format nor the canonical byte cap changes. Each successful batch retains its checked job state;
 if a later batch's preflight or exact SQL count exhausts the same request budget,
 the invocation returns that durable partial progress. Other adapter, integrity
 and authority failures still reject. A first batch that cannot fit rejects before
@@ -853,6 +881,18 @@ provenance IDs, owner IDs and reversal flags, including SQL storage types. Exact
 report bytes, positions and a scoped row count remain fenced in the same batch;
 the report hash is not a substitute for those comparisons. Resuming undo and
 reading terminal pages therefore do not add one SQL predicate per prior effect.
+
+Exact row snapshots may use chunk-local lexical templates to share repeated
+JSON structure and evidence. SQLite reconstructs the original text slices;
+comparison still covers every original byte, field, position and scoped count.
+Without an explicit transport policy, preserved undo checks kit-only
+preconditions larger than 2 MiB in bounded SELECT batches under monotonic
+custody revisions, then fences those same revisions before any mutation.
+Report reads use the same kit-only checks and final revision fence.
+The existing custody-state schema is required for that large-snapshot path.
+Native observations, indivisible reversal groups, report postconditions and
+all native, attribution, disposition and progress writes remain together in
+one atomic batch. No native mutation is split across RPCs.
 For large native sets, a snapshot can supply `nativeRows`, the complete
 destination set returned by `targets.list`. Kit requires `targets.matchesMany`,
 rejects duplicate or differently bound rows, and compares each observation's
@@ -932,9 +972,9 @@ the new conversion and preview operations refuse with the `schema` reason until
 their additive migration is installed. Updating kit source does not silently
 adopt conversion or require an edit to an existing seed migration.
 
-Current rer 0.2.77 lacks this API. A seed adopts a reviewed vendored Base revision
-containing the capability, or a future rer release that supplies it, and proves
-its migration, current authority, conversion and later reversal through its own
+Historically, rer 0.2.77 lacked this API. A seed adopts a reviewed vendored Base
+revision containing the capability, or a pinned rer release that supplies it,
+and proves its migration, current authority, conversion and later reversal through its own
 public door. Base's tests do not prove that adoption. Until then, existing strict
 jobs retain their policy and the seed's compensation-unavailable refusal remains
 in force. Adoption, seed release and deployment are separate from this Base
