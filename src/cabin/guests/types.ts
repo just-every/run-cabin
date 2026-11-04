@@ -6,7 +6,7 @@ export interface GuestIdentity {
 export interface GuestFact {
  id:string; kind:'preference'|'service'|'note'; value:string; propertyIds:string[]; source:string; at:string; by:string;
 }
-export interface GuestConsent { id:string; purpose:'preferences'|'offers'; allowed:boolean; propertyId:string; source:string; at:string; by:string }
+export interface GuestConsent { id:string; purpose:'preferences'|'offers'|'marketing'; identityId?:string; inactive?:boolean; allowed:boolean; propertyId:string; source:string; at:string; by:string }
 export interface GuestProfile {
  id:string; revision:string; bookingId:string; createdAt:string; identities:GuestIdentity[]; facts:GuestFact[]; consents:GuestConsent[];
  mergedInto?:string; erasedAt?:string;
@@ -21,4 +21,8 @@ export interface GuestOffer {
  recoveryId?:string;
  status:'issued'|'redeemed'|'revoked'; redeemedBookingId?:string; redeemedAt?:string; consentBaseline:string; homeRevision:string;
 }
-export interface GuestData { guests:GuestProfile[]; guestMerges:GuestMerge[]; guestPolicies:GuestPolicy[]; guestOffers:GuestOffer[] }
+export interface GuestSegment {
+ id:string; revision:string; propertyId:string; label:string; preparedAt:string; authority?:import('../model').Actor;
+ baseline?:string; status:'prepared'|'inactive'; members:{guestId:string; profileIds:string[]; identityId:string; bookingId:string}[]; excluded:number;
+}
+export interface GuestData { guestSegments:GuestSegment[]; guests:GuestProfile[]; guestMerges:GuestMerge[]; guestPolicies:GuestPolicy[]; guestOffers:GuestOffer[] }

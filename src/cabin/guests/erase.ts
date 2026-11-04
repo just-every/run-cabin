@@ -10,5 +10,6 @@ export function eraseProfiles(c:Context,ids:Set<string>) {
  }
  for(const g of c.data.guests)if(ids.has(g.id)){g.identities=[];g.facts=[];g.consents=[];g.erasedAt=c.now;g.revision=newId();delete g.mergedInto}
  for(const m of c.data.guestMerges)if(ids.has(m.fromId)||ids.has(m.intoId)){m.reason='Guest identity erased';m.revision=newId()}
+ for(const segment of c.data.guestSegments)if(segment.members.some(m=>m.profileIds.some(id=>ids.has(id)))){segment.members=[];segment.baseline='';segment.status='inactive';segment.revision=newId()}
  for(const o of c.data.guestOffers)if(ids.has(o.guestId)||o.profileIds.some(id=>ids.has(id))){o.status='revoked';o.email='';o.guestName='Erased guest';o.tokenHash='';o.revision=newId()}
 }

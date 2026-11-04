@@ -1,4 +1,5 @@
 import { h, heading, form, hidden, empty } from '../ui/shared'
+import { marketingPanel } from './ui-marketing'
 import { profilePanel } from './ui-profile'
 import type { GuestProfile } from './types'
 export function guests(s:any,result?:any) {
@@ -9,5 +10,5 @@ export function guests(s:any,result?:any) {
  const issued=result?.url&&typeof result.url==='string'&&/^\/book\/[a-z0-9-]+\?offer=[a-f0-9-]{72}$/.test(result.url)?`<section class="notice"><h2>Private returning-guest offer</h2><p>This link is shown once. Share it only with the verified guest. Expires ${h(result.expiresAt)}.</p><a href="${h(result.url)}">${h(s.origin+result.url)}</a></section>`:''
  const offers=s.guestOffers.filter((o:any)=>o.status==='issued').map((o:any)=>`<li>Offer ${h(o.id)} · ${h(s.properties.find((p:any)=>p.id===o.propertyId)?.name)} · expires ${h(o.expiresAt)}${form('guest.offer.revoke','guests',hidden('id',o.id)+hidden('revision',o.revision),'Revoke unused offer')}</li>`).join('')
  const roots=s.guests.filter((g:GuestProfile)=>!g.erasedAt&&!g.mergedInto)
- return heading('Guests','Know the guest who returns','Review reservation identities before joining histories. Keep each fact’s source, guest consent and home policy with it.')+index+issued+`<details><summary>Home policies for preferences and returning rates</summary>${policies}</details>`+(offers?`<details><summary>Unused returning-guest offers</summary><ul>${offers}</ul></details>`:'')+(roots.map((g:GuestProfile)=>profilePanel(s,g)).join('')||empty('Guest profiles appear with saved reservations. Each reservation starts with a separate identity origin.'))
+ return heading('Guests','Know the guest who returns','Review reservation identities before joining histories. Keep each fact’s source, guest consent and home policy with it.')+index+issued+marketingPanel(s)+`<details><summary>Home policies for preferences and returning rates</summary>${policies}</details>`+(offers?`<details><summary>Unused returning-guest offers</summary><ul>${offers}</ul></details>`:'')+(roots.map((g:GuestProfile)=>profilePanel(s,g)).join('')||empty('Guest profiles appear with saved reservations. Each reservation starts with a separate identity origin.'))
 }

@@ -12,7 +12,7 @@ export function guestGroup(data:Pick<GuestSource,'guests'>,id:string) {
 }
 export function guestBookings(data:GuestSource,id:string) {const ids=new Set(guestGroup(data,id).map(g=>g.bookingId));return data.bookings.filter(b=>ids.has(b.id))}
 /** An explicit opt-out anywhere in the reviewed group wins; no consent is inferred from a booking. */
-export function consent(data:Pick<GuestSource,'guests'>,id:string,propertyId:string,purpose:'preferences'|'offers') {
+export function consent(data:Pick<GuestSource,'guests'>,id:string,propertyId:string,purpose:'preferences'|'offers'|'marketing') {
  const decisions=guestGroup(data,id).map(g=>[...g.consents].reverse().find(c=>c.propertyId===propertyId&&c.purpose===purpose)).filter(Boolean)
  return decisions.length>0&&decisions.every(c=>c!.allowed)
 }

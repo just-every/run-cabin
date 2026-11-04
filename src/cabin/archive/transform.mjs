@@ -94,6 +94,8 @@ export function exportRow(table, row) {
  if (kind === 'promotionOffers') { data.restorePaused=true; data.tokenHash=null; delete data.tokenSealed; delete data.checkoutUrl }
  if (kind === 'promotionPolicies') data.enabled=false
  if (kind === 'staffQuotes') { if(data.status==='issued')data.status='expired'; data.tokenHash=null; delete data.tokenSealed }
+ if(kind==='guestSegments'){data.status='inactive';data.members=[];data.baseline=''}
+ if(kind==='guests')for(const consent of data.consents??[])if(consent.purpose==='marketing')consent.inactive=true
  if (kind === 'guestOffers') { data.status = 'revoked'; data.tokenHash = 'restored:'+data.id }
  if (kind === 'recoveries') { data.restorePaused = true; data.offerUrl = undefined; data.proposal = undefined }
  if (kind === 'scheduled' && typeof data.content === 'string') data.content = text(data.content)

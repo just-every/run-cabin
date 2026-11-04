@@ -79,8 +79,11 @@ export async function populateArchive(h,p,cleaner) {
  const sealed=JSON.parse((await h.db.prepare('SELECT data FROM cb_direct_provider').first()).data).test.keySealed
  const journals=(await h.db.prepare('SELECT data FROM cb_ledger_journals ORDER BY id').all()).results.map(r=>r.data)
  const signed=(await h.db.prepare('SELECT data FROM cb_direct_stays').first()).data
+ const marketing=await import('./marketing-support.mjs'),marketingGuest=await marketing.marketingOrigin(h,p.id,'archive')
+ await marketing.verifyMarketing(h,marketingGuest.id);await marketing.marketingConsent(h,marketingGuest.id)
+ const marketingSegment=await marketing.prepareMarketing(h,p.id,'Archive marketing preview')
  const channelAgent=await populateChannelArchive(h,p)
- return {qbo,financialCase,bank,collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
+ return {marketingSegment,marketingGuest,qbo,financialCase,bank,collectionId:collection.id,importedId:imported.id,bookingId:booking.bookingId,statementId:statement.id,netCents:statement.netCents,portal:{token:portal.token,cookie:guestCookie,file:guide.files[0],guideBytes},privateLinks:[...codes,portal.token,...authSecrets,...channelAgent.privateValues],sealed,journals,signature:JSON.parse(signed).signature,bookingUrl:checkout.value.bookingUrl,channelAgent}
 }
 export async function checkRestored(h,owner,proof) {
  await checkExceptionArchive(h,owner,proof.financialCase)
@@ -92,6 +95,10 @@ export async function checkRestored(h,owner,proof) {
  const guideFile=await h.db.prepare('SELECT hex(bytes) AS bytes,sha256 FROM cb_guest_guide_files WHERE id=?').bind(proof.portal.file.id).first();assert.equal(Buffer.from(guideFile.bytes,'hex').toString(),proof.portal.guideBytes);assert.equal(guideFile.sha256,proof.portal.file.sha256)
  const collection=JSON.parse((await h.db.prepare('SELECT data FROM cb_records WHERE id=?').bind(proof.collectionId).first()).data);assert.equal(collection.restored,true);assert.equal(collection.status,'paused');assert.equal(collection.customerId,undefined);assert.equal(collection.paymentMethod,undefined);assert.equal(collection.setup,undefined)
  let s=await h.accessState(owner)
+ const segment=s.guestSegments.find(row=>row.id===proof.marketingSegment.id);assert.equal(segment.status,'inactive');assert.deepEqual(segment.members,[])
+ await h.cmd('guest.marketing.review',{id:segment.id,revision:segment.revision},owner,409)
+ const restoredOrigin=s.guests.find(g=>g.id===proof.marketingGuest.id);assert.ok(restoredOrigin.consents.filter(c=>c.purpose==='marketing').every(c=>c.inactive))
+ await h.cmd('guest.marketing.prepare',{propertyId:segment.propertyId,label:'Refused restored consent'},owner,409)
  assert.ok(s.codes.every(c=>!c.lock.job),'Restored access cannot retain a live provider claim or its PIN and request identity')
  const imported=await h.db.prepare('SELECT plan,fingerprint FROM cb_provider_moveins WHERE id=?').bind(proof.importedId).first();assert.equal(JSON.parse(imported.plan).homes[0].links.length,0);await h.cmd('import.provider.apply',{id:proof.importedId,fingerprint:imported.fingerprint},owner,409)
  assert.equal(s.restore.reviewed,0)

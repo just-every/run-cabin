@@ -109,3 +109,8 @@ test('an unused offer stops working after consent withdrawal, identity separatio
   assert.ok(guestFor(await h.state(),other.bookingId).identities.length,'an unmerged contact sharing a phone retains its separate identity')
  }finally{await h.close()}
 })
+
+test('GUEST-003: native marketing preparation requires separate consent, verified home contact and live authority, and suppresses merged opt-outs and stale previews',async()=>{
+ const h=await harness({now:'2026-11-04T12:00:00Z'})
+ try{await (await import('./marketing-support.mjs')).marketingJourney(h)}finally{await h.close()}
+})

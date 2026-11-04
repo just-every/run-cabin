@@ -3,6 +3,7 @@ import type { GuestData, GuestProfile } from './types'
 import { guestRoot, guestBookings } from './resolve'
 import { issueOffer } from './offers'
 import { syncGuests } from './sync'
+import { marketingCommand, recordMarketingConsent } from './marketing'
 const yes=(value:unknown)=>value===true||value==='yes'||value==='on'
 function profile(c:Context,input:Record<string,unknown>) {
  const p=(c.data as typeof c.data&GuestData).guests.find(g=>g.id===text(input.id,'guest ID')&&!g.erasedAt);need(p,'Guest not found',404);exact(p,input.revision);c.entityId=p.id;return p
@@ -12,6 +13,7 @@ export async function guestCommand(c:Context,name:string,input:Record<string,unk
  if(!name.startsWith('guest.'))return undefined
  manager(c.actor);syncGuests(c)
  const data=c.data as typeof c.data&GuestData
+ if(name.startsWith('guest.marketing.'))return marketingCommand(c,name,input)
  if(name==='guest.sync')return {profiles:data.guests.length}
  if(name==='guest.policy'){
   const home=property(c,input.propertyId),old=data.guestPolicies.find(p=>p.propertyId===home.id);if(old)exact(old,input.revision)
@@ -44,7 +46,7 @@ export async function guestCommand(c:Context,name:string,input:Record<string,unk
   p.facts.push({id:newId(),kind:kind as 'preference'|'service'|'note',value:text(input.value,'guest fact',2000),propertyIds:[propertyId],source:source(input),at:c.now,by:c.actor.id});p.revision=newId();return {id:p.id}
  }
  if(name==='guest.consent'){
-  const purpose=text(input.purpose,'consent purpose');need(purpose==='preferences'||purpose==='offers','Choose preferences or returning offers')
+  const purpose=text(input.purpose,'consent purpose');if(purpose==='marketing')return recordMarketingConsent(c,p,input);need(purpose==='preferences'||purpose==='offers','Choose preferences or returning offers')
   need(input.allowed==='yes'||input.allowed==='no','Record explicit opt-in or opt-out')
   p.consents.push({id:newId(),purpose,allowed:input.allowed==='yes',propertyId:property(c,input.propertyId).id,source:source(input),at:c.now,by:c.actor.id});p.revision=newId();return {id:p.id}
  }

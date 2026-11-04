@@ -105,6 +105,7 @@ export function projectState<T>(state: T, actor: Actor): T {
     if (['guests', 'guestPolicies', 'guestOffers', 'staffQuotes'].includes(key)) visible &&= guest
     result[key] = select(source[key], visible)
   }
+  if ('guestSegments' in source) result.guestSegments = actor.role==='owner' ? source.guestSegments : []
   if ('members' in source) result.members = rows(source.members).filter(row => row.id === actor.memberId || has('operations','inbox','reports') && row.active && row.scope?.propertyIds.some((id:string)=>id==='*'||permitted.has('*')||permitted.has(id))).map(row => row.id===actor.memberId?structuredClone(row):{id:row.id,name:row.name,role:row.role,active:row.active})
   if ('cleanerProfiles' in source) result.cleanerProfiles = rows(source.cleanerProfiles).filter(row => row.id === actor.memberId).map(row => clean(row))
   for (const key of ['events', 'approvals', 'inbox', 'connections', 'exports', 'guestMerges', 'agentKeys', 'importJobs']) if (key in source) result[key] = []
