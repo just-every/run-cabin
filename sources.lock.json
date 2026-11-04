@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "a82035a7347cdb95e58be0e61a7117e197c733abd52d03d378d2fb359d29a368",
+      "sha256": "c7eedfd22a2371af6a01985bfdd29e6d4ebf6fab0a70f08c48a2a1b17c56f80c",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "16a7609acc01f375cfbcb52ae5e63a305593c566f7401b136567d1f5c46c1da9",
+      "sha256": "a5f84e72677e062aa4cd59f25889f8449eef39147dfac9baa9e63d9638122fa3",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -6123,6 +6123,10 @@
       "sha256": "42f2ff608f6d60934eac217522b852a4545918c194d5abb4751ca4805f69b802",
       "executable": false
     },
+    "tests/agent-sponsor-admission.test.mjs": {
+      "sha256": "cd3940bf51c2fbcfea9de61af0a6804ab3d2affc6a9bf02ef0beec91c80039dc",
+      "executable": false
+    },
     "tests/allocations.test.mjs": {
       "sha256": "cf12929959df7d6a9461939ca170b5c4f10a1e681d5d156aa444b87612c06c54",
       "executable": false
@@ -6356,7 +6360,7 @@
       "executable": false
     },
     "tests/harness.mjs": {
-      "sha256": "e0ca41f0a7d1a7d175f0ec2c6bacc2bd4c828c4cc2afde96d0e99f6b261edf72",
+      "sha256": "139b344d29adcebd23b26e58850768840f32776f42de0e64dc5810212eea8d99",
       "executable": false
     },
     "tests/home-calendar.mjs": {
@@ -6604,7 +6608,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "25f073132190b5b28113fed1e7f21bdd75513b3cd5993509fc2880df7b48ff74",
+      "sha256": "a1f10272e8b47a4aadf583c3da66ef6b6ea17ae2b618d06a630e3e6900d858a9",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
