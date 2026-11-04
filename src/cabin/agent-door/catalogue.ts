@@ -2,6 +2,8 @@ import surface from '../../../agent-surface.json'
 import type { AgentDoorOptions } from '../../modules/agent-door/index.ts'
 import { capabilitySet, offers } from '../../modules/agent-door/capabilities.mjs'
 import { describeTool, registry } from '../../modules/agent-door/registry.ts'
+import { eventsTool } from '../../modules/agent-door/events.ts'
+import type { Runtime } from '../../modules/agent-door/types.ts'
 
 const same = (left: readonly string[], right: readonly string[]) => JSON.stringify([...left].sort()) === JSON.stringify([...right].sort())
 const journeyPath = 'src/modules/agent-door/conformance/journey.mjs'
@@ -27,7 +29,9 @@ const errors = [
 /** Project definitions only. Never call a classifier, a resource reader or a tool. */
 export function agentCatalogue(options: AgentDoorOptions, descriptor = surface) {
   const capabilities = capabilitySet(options.capabilities)
-  const tools = registry(options).filter(tool => tool.exposure !== 'invoke')
+  // The built-in polling tool is registered by the door itself when events are declared.
+  const tools = [...registry(options).filter(tool => tool.exposure !== 'invoke'),
+    ...offers(options.capabilities, 'events') ? [eventsTool({ options } as unknown as Runtime)] : []].sort((a, b) => a.name.localeCompare(b.name))
   if (!same(tools.map(tool => tool.name), descriptor.tools.map(tool => tool.name)) ||
     !same(capabilities.declared, descriptor.capabilities) || options.specialist !== descriptor.specialist) throw new Error('Agent catalogue descriptor drift')
   const templates = offers(options.capabilities, 'resources') ? [...options.resources ?? []].sort((a, b) => a.uriTemplate.localeCompare(b.uriTemplate)) : []
@@ -48,7 +52,7 @@ export function agentCatalogue(options: AgentDoorOptions, descriptor = surface) 
   return { specialist: options.specialist, capabilities, tools: catalogue,
     resources: templates.map(({ uriTemplate, name, description, mimeType, scope, classes }) => ({ uriTemplate, name, description, mimeType, scope, classes })),
     prompts: offers(options.capabilities, 'prompts') ? (options.prompts ?? []).map(({ name, title, description }) => ({ name, title, description })) : [],
-    eventTypes: [] as string[], limits: { ...options.limits }, errors,
+    eventTypes: offers(options.capabilities, 'events') ? ['calendars.prepared', 'turnovers.prepared', 'statements.prepared'] : [], limits: { ...options.limits }, errors,
     notTools: (options.notTools ?? []).map(({ clauses, reason }) => ({ clauses, reason })),
   }
 }
