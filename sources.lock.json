@@ -108,7 +108,7 @@
       "executable": false
     },
     "agent-surface.json": {
-      "sha256": "a91bd4187051e56f83faf5c9fe81dfb6ea88bc1fe061a7244e5e82227154567e",
+      "sha256": "10f54f183a5c5cba4cbfe1005edf0d711d97ac60fb43c58baf72dffc9ebb5180",
       "executable": false
     },
     "AGENTS.md": {
@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "a82035a7347cdb95e58be0e61a7117e197c733abd52d03d378d2fb359d29a368",
+      "sha256": "bdd978a72f9c0c2fddcbb8c7636d9c6a81d407afc5901c10d0854b739bf15bdb",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "16a7609acc01f375cfbcb52ae5e63a305593c566f7401b136567d1f5c46c1da9",
+      "sha256": "1e780b0980e8ef4ac1911e1bc8a527496eac42dd0a1fe1603debf5d141167cf3",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -1984,11 +1984,15 @@
       "executable": false
     },
     "src/cabin/agent-door/index.ts": {
-      "sha256": "0bb212a1d00d3dba341de235800b3deabe7a62a2332a0dc0d01f332f2b8c3996",
+      "sha256": "56ce8b8f1e605dd34b89592fe15d9362faf888e8cc9c346fdde197e4dd2bbf55",
       "executable": false
     },
     "src/cabin/agent-door/people.ts": {
       "sha256": "bc6d5752c25cbd09ee6c39da7cc32d13828462f1e553b0404a5583c54e30863e",
+      "executable": false
+    },
+    "src/cabin/agent-door/prompts.ts": {
+      "sha256": "f4e08de97a8add730ad17f0501e4a9491bbb942ff75ce5fb419a560b3880a116",
       "executable": false
     },
     "src/cabin/agent-door/records.ts": {
@@ -6119,6 +6123,10 @@
       "sha256": "4edcf174d221e06e1be4915c8cb0af2a15cf97df9cc982266b77a9cfeecdae2a",
       "executable": false
     },
+    "tests/agent-prompts.test.mjs": {
+      "sha256": "63f15b1b5fb69cd44b281a659db37e0e4419b13e2899ddc1dd0bb494734296da",
+      "executable": false
+    },
     "tests/agent-resources.test.mjs": {
       "sha256": "42f2ff608f6d60934eac217522b852a4545918c194d5abb4751ca4805f69b802",
       "executable": false
@@ -6604,7 +6612,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "25f073132190b5b28113fed1e7f21bdd75513b3cd5993509fc2880df7b48ff74",
+      "sha256": "32c6481b695c2ab57d72ef4d8153fffc1b8921500efd8c3b1b0bca4a6700b93b",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
