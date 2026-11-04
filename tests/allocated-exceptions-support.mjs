@@ -39,7 +39,6 @@ export async function allocatedExceptionJourney({act,screens}={}){
   const pdf=async()=>{const response=await h.mf.dispatchFetch(h.origin+'/api/cabin/statements/'+originalStatement.id+'.pdf',{headers:{cookie:h.owner}});assert.equal(response.status,200);return Buffer.from(await response.arrayBuffer())}
   const frozenPdf=await pdf()
   assert.equal(originalStatement.netCents,77941)
-  await h.cmd('ledger.close',{month:'2026-10'})
   const staff=await h.person('AllocatedStaff','manager')
   await h.restart({now:allocatedCorrectionDate+'T12:00:00Z'})
   h.owner=await h.signIn(h.auth.OWNER_EMAIL);staff.cookie=await h.signIn(staff.email)
@@ -48,6 +47,14 @@ export async function allocatedExceptionJourney({act,screens}={}){
   await h.cmd('financeCase.propose',await f.input({csv:csv('synthetic-cabin-103','601.01','15.01','586.00')}),h.owner,409)
   await h.cmd('financeCase.propose',await f.input({csv:csv('synthetic-cabin-104','600.00','31.00','569.00'),payoutId:(await state()).payouts.find(p=>p.id!==payout.id).id}),h.owner,409)
   await unchanged()
+  for(const effectiveDate of ['2026-09-01','2026-10-16']){
+   const earlier=await propose({effectiveDate})
+   await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:earlier.id,confirm:'yes',reason:'Frozen statements require a later correction period'},h.owner,409)
+   await decide('financeCase.reject',earlier,'Preserve the frozen statement period and prepare a later adjustment')
+   await unchanged()
+  }
+  console.log('PROBE AGENT-002 frozen periods: command door -> earlier and frozen-month approvals refused with 409 while both periods remained open; no journals changed')
+  await h.cmd('ledger.close',{month:'2026-10'})
   let proposal=await propose({effectiveDate:'2026-10-06'})
   assert.equal(proposal.journalGroup.length,5,'Two payout journals and the entire three-journal allocation are bound')
   await h.cmd('financeCase.approve',{id:row.id,revision:row.revision,proposalId:proposal.id,confirm:'yes',reason:'Closed period must refuse the entire group'},h.owner,409)
