@@ -151,9 +151,9 @@ Remaining: Only native CONTROL-002 draft verbs and visible record reads are adop
 <!-- contract-status:BASE-AGENT-003:start -->
 BASE-AGENT-003 · Records are resources · partial.
 
-Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset).
+Evidence: `tests/agent-resources.test.mjs` — “Record resources match native role fields, fence policy and scope, and read back all three draft links” (points 1–4 and 6); “Archive resource history requires fresh Business and native admission, and never replays a saved read approval”; `agent-surface.json` — three draft resource fixtures in normal rer verify..
 
-Remaining: Undeclared resources family: typed refusal; record reads remain scoped native tools.
+Remaining: Point 5 remains unproved: the pinned Base door has no grant byte-budget interface or file-byte accounting; JSON resources do not enforce byte budgets. Native resource inventory, role visibility, uniform missing-record refusal, draft readback and untrusted markers are implemented. Installation-owner-only three-draft mutations and existing provider, owner, account and device holds remain.
 <!-- contract-status:BASE-AGENT-003:end -->
 
 <!-- contract-status:BASE-AGENT-004:start -->
