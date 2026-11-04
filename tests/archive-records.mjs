@@ -3,7 +3,7 @@ const locks=seamEdge()
 import {qboEdge} from './qbo-edge.mjs'
 import {populateQboArchive,checkQboArchive} from './qbo-archive.mjs'
 const qbo=qboEdge()
-import { populateExceptionArchive,checkExceptionArchive } from './financial-exceptions-archive.mjs'
+import { populateExceptionArchive,checkExceptionArchive,reviewExceptionArchive } from './financial-exceptions-archive.mjs'
 import { populateBankArchive,checkBankArchive } from './banking-archive.mjs'
 import { collectionBooking,createCollection } from './collection-support.mjs'
 import { homeDay } from './home-calendar.mjs'
@@ -147,4 +147,5 @@ export async function checkRestored(h,owner,proof) {
  assert.equal(new TextDecoder().decode(bytes.slice(0,5)),'%PDF-')
  const {PDFDocument}=await import('pdf-lib');assert.ok((await PDFDocument.load(bytes)).getPageCount()>0)
  assert.equal((await h.send(`/api/cabin/statements/${proof.statementId}.pdf`,undefined,'')).status,401)
+ await reviewExceptionArchive(h,owner,proof.financialCase)
 }

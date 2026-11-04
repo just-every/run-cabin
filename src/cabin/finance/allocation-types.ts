@@ -9,6 +9,7 @@ export interface AllocationPart {
  managementFeeCents:number; taxCents:number; expenseCents:number; reserveCents:number; payableCents:number
 }
 export interface FinancialAllocation {
+ correctionOf?:string;
  id:string; revision:string; propertyId:string; bookingId:string; period:string; agreementId:string;
  terms:import('../properties/terms').ManagementTerms; kind:'revenue'|'cost'|'ownerUse'; sourceIds:string[];
  baseline:string; description:string; evidence:string; totalCents:number; rentCents:number; passThroughCents:number;

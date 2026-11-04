@@ -11,14 +11,17 @@ const money=(v:unknown,label:string)=>integer(Number(v??0),label,0,100_000_000)
 function sources(c:Context,b:Booking){return c.data.payouts.filter(p=>p.bookingId===b.id&&p.match==='matched')}
 async function baseline(c:Context,b:Booking){return sha(JSON.stringify({booking:b,payouts:sources(c,b)}))}
 /** The original settlement credits its frozen primary owner. Reclassify only, never invent cash. */
-async function postRevenue(c:Context,row:FinancialAllocation){
- const net=row.parts.reduce((n,p)=>n+p.grossCents-p.channelFeeCents,0),effectiveDate=day(c.now.slice(0,10))
- if(net)await post(c,{sourceKey:'allocation:'+row.id+':source',propertyId:row.propertyId,bookingId:row.bookingId,effectiveDate,sourceType:'agreement-allocation',sourceId:row.id,sourceRevision:row.revision,ownerKey:await sha(row.terms.ownerEmail.toLowerCase()),lines:[debit('ownerLiability',net),credit('allocationClearing',net-row.taxCents),...(row.taxReceivableCents?[credit('receivable',row.taxReceivableCents)]:[]),...(row.taxCents-(row.taxReceivableCents??0)?[credit('taxes',row.taxCents-(row.taxReceivableCents??0))]:[])]})
+export async function revenuePostings(row:FinancialAllocation,effectiveDate:string){
+ const postings:Parameters<typeof post>[1][]=[]
+ const net=row.parts.reduce((n,p)=>n+p.grossCents-p.channelFeeCents,0)
+ if(net)postings.push({sourceKey:'allocation:'+row.id+':source',propertyId:row.propertyId,bookingId:row.bookingId,effectiveDate,sourceType:'agreement-allocation',sourceId:row.id,sourceRevision:row.revision,ownerKey:await sha(row.terms.ownerEmail.toLowerCase()),lines:[debit('ownerLiability',net),credit('allocationClearing',net-row.taxCents),...(row.taxReceivableCents?[credit('receivable',row.taxReceivableCents)]:[]),...(row.taxCents-(row.taxReceivableCents??0)?[credit('taxes',row.taxCents-(row.taxReceivableCents??0))]:[])]})
  for(const [i,p] of row.parts.entries()){
   const lines=[debit('allocationClearing',p.grossCents-p.channelFeeCents-p.taxCents),...(p.payableCents?[p.payableCents>0?credit('ownerLiability',p.payableCents):debit('ownerLiability',-p.payableCents)]:[]),...(p.managementFeeCents?[credit('managerRevenue',p.managementFeeCents)]:[]),...(p.reserveCents?[credit('ownerReserves',p.reserveCents)]:[])]
-  if(lines.some(l=>l.debitCents||l.creditCents))await post(c,{sourceKey:`allocation:${row.id}:${i}`,propertyId:row.propertyId,bookingId:row.bookingId,effectiveDate,sourceType:'agreement-allocation',sourceId:row.id,sourceRevision:row.revision,ownerKey:await sha(p.ownerEmail),lines})
+  if(lines.some(l=>l.debitCents||l.creditCents))postings.push({sourceKey:`allocation:${row.id}:${i}`,propertyId:row.propertyId,bookingId:row.bookingId,effectiveDate,sourceType:'agreement-allocation',sourceId:row.id,sourceRevision:row.revision,ownerKey:await sha(p.ownerEmail),lines})
  }
+ return postings
 }
+async function postRevenue(c:Context,row:FinancialAllocation){for(const input of await revenuePostings(row,day(c.now.slice(0,10))))await post(c,input)}
 export async function allocationCommand(c:Context,name:string,p:Record<string,unknown>){
  if(name.startsWith('cost.'))return costCommand(c,name,p)
  if(!name.startsWith('allocation.'))return undefined
