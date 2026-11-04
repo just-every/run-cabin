@@ -4,6 +4,7 @@ import { runtimeBindings, type Bindings } from '../../auth.server'
 import { principal } from '../credentials'
 import { cabinPeople, cabinTeam } from './people'
 import { cabinResources } from './records'
+import { cabinPrompts } from './prompts'
 import { cabinTools } from './tools'
 import { agentDocs } from './docs'
 import { agentCatalogue, catalogueInstructions } from './catalogue'
@@ -30,8 +31,8 @@ export function cabinAgentOptions(original: Bindings): AgentDoorOptions {
   const env = runtimeBindings(original)
   return { seed: 'cabin', name: 'Cabin', specialist: 'rental operations coordinator',
     db: env.DB, origin: env.AUTH_ORIGIN, trust: trust(env), people: cabinPeople(env),
-    capabilities: ['tools', 'resources', 'policy', 'pause', 'audit', 'idempotency'],
-    tools: cabinTools(env), resources: cabinResources(env), notTools, limits,
+    capabilities: ['tools', 'resources', 'prompts', 'policy', 'pause', 'audit', 'idempotency'],
+    tools: cabinTools(env), resources: cabinResources(env), prompts: cabinPrompts, notTools, limits,
     // Existing local keys retain only the three draft verbs; they cannot gain resource scopes.
     async localCredentials(request) {
       if (!request.headers.get('authorization')?.startsWith('Bearer cabin_')) return null

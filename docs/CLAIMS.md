@@ -133,11 +133,11 @@ Remaining: Native source-linked inquiries retain dates, guests, USD quote and th
 <!-- contract-status:SYNC-008:end -->
 
 <!-- contract-status:BASE-AGENT-001:start -->
-BASE-AGENT-001 · One MCP door per seed · partial.
+BASE-AGENT-001 · One MCP door per seed · done.
 
-Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset).
+Evidence: `tests/agent-prompts.test.mjs` — “Specialist prompts and MCP transport agree under both policies without changing native state” (points 1–6, shared discovery conformance and all static prompts through modern and legacy MCP); `tests/agent-resources.test.mjs` — “Record resources match native role fields, fence policy and scope, and read back all three draft links” (declared resource family)..
 
-Remaining: Undeclared resources and prompts families; CORE transport proof is separate from full optional-family adoption.
+Assessment: 
 <!-- contract-status:BASE-AGENT-001:end -->
 
 <!-- contract-status:BASE-AGENT-002:start -->

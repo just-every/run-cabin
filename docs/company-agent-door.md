@@ -30,8 +30,8 @@ promotion does not create a Business role.
 
 The runtime is copied from Base `2135c394939f4a737adabdc8003b0e667b31ac5a`,
 with the released `@runeditrun/rer` 0.2.91 CLI. The production door and descriptor
-declare tools, resources, policy, pause, audit and idempotency. Events,
-prompts and subscriptions remain undeclared: their lists are empty or absent
+declare tools, resources, prompts, policy, pause, audit and idempotency. Events
+and subscriptions remain undeclared: their lists are empty or absent
 and calls return `capability_not_declared`. Unknown tool names return
 `tool_not_found`. The ten record collections above each have a JSON URI template declared in
 `agent-surface.json`. Both resource reads and the existing read tools require
@@ -39,7 +39,15 @@ and calls return `capability_not_declared`. Unknown tool names return
 preparations return a `resource_link` to the saved record. Reads reapply native
 visibility and omit active capabilities, including for the installation owner.
 Customer and imported text has `com.runeditrun/untrusted: true` on its content.
-There are no specialist prompts in this subset.
+Four static specialist prompts describe visible-record inspection and the existing
+calendar, turnover and statement draft preparations. Retrieval returns guidance,
+never record content or an executed preparation. The prompts accept no declared
+arguments and do not interpolate caller text. They name only registered tools,
+retain the installation-owner-only draft boundary and direct human decisions to
+the native flow. Discovery and initialization advertise the same prompt family;
+listings are deterministic with private cache scope and a zero TTL. Modern and
+legacy clients retrieve the same guidance. Unset policy and Pause hide listings;
+blocked standard policy refuses retrieval, and revoked admission refuses both.
 
 The copied runtime now exposes consent on tool context and checks current native
 resource visibility for events. Those former Base gaps are closed. This adoption
@@ -51,8 +59,9 @@ provider receipts before they can be declared. No queued provider action,
 mail edge, timed or dual-host journey, resource refresh or native owner
 administration is claimed. Grant byte budgets and file-byte accounting remain
 unavailable in the pinned Base door; resources expose JSON records only. This
-is the remaining BASE-AGENT-003 acceptance gap, not a byte-budget guarantee. BASE-AGENT clauses remain partial and name
-these gaps; the pinned ct Agent surface is still a wider target.
+is the remaining BASE-AGENT-003 acceptance gap, not a byte-budget guarantee.
+BASE-AGENT-001 covers the transport and declared families; the other Agent surface
+clauses retain their own gaps and the pinned ct Agent surface is still a wider target.
 
 `agent-surface.json` declares the bounded registry and its normal `rer verify`
 journey. Its initializer claims the disposable installation owner through the
@@ -118,3 +127,14 @@ owner access. Bound non-owners still cannot prepare the three owner-only drafts.
 This does not prove successful multi-sponsor lifecycle completion, actual
 Business token issuance or delivery, full consent propagation or unpairing
 across multiple sponsors.
+
+`tests/agent-prompts.test.mjs` exercises the six BASE-AGENT-001 transport outcomes
+and specialist retrieval through the public MCP door under autonomous and held
+policies. Its shared discovery conformance checks versions, initialization,
+deterministic tool listings, Origin and method-header refusal, body limits and
+descriptor agreement. It retrieves every prompt through both supported client
+revisions, refuses unknown names and current policy or revoked admission, and
+compares nonempty native state before and after. It also checks that events and
+subscriptions remain undeclared. The journey runs in push Verify alongside the
+existing resource journeys; no hosted deployment or broader rental tool proof is
+implied by this transport adoption.

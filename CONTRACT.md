@@ -912,13 +912,15 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 
 `done` means the narrowly stated clause has implementation and an exercising test. `partial` means cited foundations exist but the full target behavior/evidence does not; `missing` means no implementing product flow was found. Source/test citations describe the current tree, not proof of live providers. All external integrations and agent outcomes need their stated acceptance journey. An unused shared module is not a product capability.
 
+Judged from the code and tests at commit `e75ff32ce3ee7057c560b4838771d56e7c870534` (4 November 2026).
+
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 13 | 0 | 0 | 13 |
-| Target and push further | 47 | 40 | 18 | 105 |
-| All | 60 | 40 | 18 | 118 |
+| Target and push further | 48 | 39 | 18 | 105 |
+| All | 61 | 39 | 18 | 118 |
 
-**118 clauses: 60 done, 40 partial, 18 missing.**
+**118 clauses: 61 done, 39 partial, 18 missing.**
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -1027,7 +1029,7 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 | `BOUNDARY-001` | A separate complete vacation-rental product with named partners | target | missing |  | No implementing flow in the audited tree. |
 | `OPEN-001` | Free and open source under the MIT license | target | done | `LICENSE`; `package.json`; `src/cabin/people.ts`; `src/cabin/connections/store.ts`; `src/cabin/connections/ui.ts`; `src/cabin/connections/security-ui.ts`; `docs/free-source.md` | Public MIT source installs and creates its local owner without an author account or key. An anonymous public clone was used with 40 homes, 25 active invited staff and all 20 linked product areas without an author payment/upgrade gate; browser requests stayed on localhost. Desktop/phone provider cost and source-term disclosure preceded a scoped owner authorization. Providers collect their own fees; Cabin collects none. This free-access clause does not complete other unfinished PMS target clauses. |
 | `SITE-002` | Hosted vacation-rental demo | target | partial | `src/demo.ts`; `src/cabin/demo/`; `src/modules/demo/`; `deploy-demo.json`; `.github/workflows/run-demo.yml`; `src/site/shell/links.ts`; `tests/demo.test.mjs` | Fictional rental data, demo effect suppression, a hosted-demo workflow and a direct homepage demo URL exist. Public host availability, scheduled sandbox expiry with storage/log/backup erasure and the full isolated visitor journey are not established by the seed tests. |
-| `BASE-AGENT-001` | One MCP door per seed | target | partial | `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset) | Undeclared resources and prompts families; CORE transport proof is separate from full optional-family adoption. |
+| `BASE-AGENT-001` | One MCP door per seed | target | done | `tests/agent-prompts.test.mjs` — “Specialist prompts and MCP transport agree under both policies without changing native state” (points 1–6, shared discovery conformance and all static prompts through modern and legacy MCP); `tests/agent-resources.test.mjs` — “Record resources match native role fields, fence policy and scope, and read back all three draft links” (declared resource family). | |
 | `BASE-AGENT-002` | The seed's jobs are tools, through the UI's own actions | target | partial | `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset) | Only native CONTROL-002 draft verbs and visible record reads are adopted; broader rental agent work remains outside this door. |
 | `BASE-AGENT-003` | Records are resources | target | partial | `tests/agent-resources.test.mjs` — “Record resources match native role fields, fence policy and scope, and read back all three draft links” (points 1–4 and 6); “Archive resource history requires fresh Business and native admission, and never replays a saved read approval”; `agent-surface.json` — three draft resource fixtures in normal rer verify. | Point 5 remains unproved: the pinned Base door has no grant byte-budget interface or file-byte accounting; JSON resources do not enforce byte budgets. Native resource inventory, role visibility, uniform missing-record refusal, draft readback and untrusted markers are implemented. Installation-owner-only three-draft mutations and existing provider, owner, account and device holds remain. |
 | `BASE-AGENT-004` | Business identity and short-lived, audience-bound tokens | target | partial | `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset); `tests/agent-sponsor-admission.test.mjs` — “Native sponsor offboarding and configured admission exclusions fence fresh Business agents across restart” | Negative admission now covers inactive and allow-list-excluded native sponsors. Successful multi-sponsor lifecycle, actual Business issuance and delivery, full consent propagation, unpairing across multiple sponsors and the broader token lifecycle remain unproved. |
@@ -1043,10 +1045,4 @@ The channel module has isolated encrypted browser sessions, bounded closure/reop
 
 ### Bounded shared agent door integration
 
-The shared Base door currently exposes visible record reads and the three existing
-CONTROL-002 draft preparations. The declared CORE families are tools, policy,
-pause, audit and idempotency. Events, resources, prompts and subscriptions are
-undeclared and return typed refusals. See `docs/company-agent-door.md` and
-`agent-surface.json` for its exact supported registry and public-door journey.
-This bounded integration does not complete the broader rental Agent surface,
-change any clause judgment or authorize queued provider work.
+The shared Base door currently exposes visible record reads, record resources, four static specialist prompts and the three existing CONTROL-002 draft preparations. The declared CORE families are tools, policy, pause, audit and idempotency, and the declared optional families are resources and prompts. Events and subscriptions are undeclared and return typed refusals. See `docs/company-agent-door.md` and `agent-surface.json` for its exact supported registry and public-door journey. Apart from the BASE-AGENT-001 transport judgment, this bounded integration does not complete the broader rental Agent surface, change any other clause judgment or authorize queued provider work.
