@@ -5,13 +5,14 @@ export interface NativeNight {
 }
 export interface NativeOverride {
  revision:string; date:string; action:'override'|'clear'; amountCents:number; reason:string;
- at:string; actorId:string; homeRevision:string; limitsRevision:string; before:NativeNight; underlying:NativeNight
+ at:string; timeZone:string; actorId:string; homeRevision:string; limitsRevision:string; before:NativeNight; underlying:NativeNight
 }
 export interface NativePlanner {
+ restorePaused?:boolean;
  revision:string; savedAt:string; floorCents:number; ceilingCents:number; history:NativeOverride[]
 }
 export interface NativePlan {
- source:'host-saved-rates'; homeRevision:string; limitsRevision:string; floorCents:number; ceilingCents:number; nights:NativeNight[]
+ source:'host-saved-rates'; timeZone:string; homeRevision:string; limitsRevision:string; floorCents:number; ceilingCents:number; nights:NativeNight[]
 }
 export interface ChannelAdjustment {
  kind:'percent'|'fixed'; value:number; includeCleaning:boolean; includeExtraGuests:boolean; commissionBps:number

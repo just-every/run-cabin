@@ -80,7 +80,7 @@ async function nativePlannerBrowser(h,page,screenshots){
  await expect(preview).toContainText('$210.00 (Dated rule) → $240.00 (Manual override)');await expect(preview).toContainText('Channel adjustments and discounts apply afterward')
  assert.equal((await home()).nativePlanner.history.length,0,'preview has not applied the new rate')
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'native planner fits the desktop')
- await screenshots('native-preview',planner)
+ await screenshots('native-preview',preview)
  const stale=await preview.locator('form').getAttribute('action'),body=await preview.locator('form').evaluate(f=>Object.fromEntries(new FormData(f)))
  await preview.getByRole('button',{name:'Apply exact nightly change',exact:true}).click()
  assert.equal((await home()).nativePlanner.history.length,1)

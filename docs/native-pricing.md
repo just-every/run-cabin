@@ -30,8 +30,9 @@ preparer's current authority and the unchanged home and time zone, within 15
 minutes. A stale, expired or replayed preview changes nothing. Restoring the saved
 rule uses the same preview and apply flow. History retains every applied revision,
 reason, prior source and underlying rule, including superseded overrides.
-Unapplied previews are not persisted or exported; restored homes require a fresh
-preview.
+Unapplied previews are not persisted or exported. Restored planning stays paused
+until an authorized host reviews and saves its native limits; changes then require
+a fresh preview.
 
 
 Each night uses the saved native rate, then the channel adjustment, then the
@@ -56,7 +57,8 @@ reconciliation remain outside this estimate. Direct has zero channel commission.
 
 Public quotes, staff quote versions and signed direct stays retain the exact
 calculation: native rate, source revision, manual override revision and dated-rate
-ID per night, native limits and their revision, selected channel adjustment,
+ID per night, the property time zone, native limits and their revision, selected
+channel adjustment,
 included fee choices, weekly and monthly percentages, chosen discount, floor,
 requested and final amounts, home revision and pricing-policy revision.
 A booking-settings edit retains these settings. A pricing edit invalidates

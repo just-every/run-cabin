@@ -29,6 +29,7 @@ export async function plannerCommand(env:Bindings,actor:Actor,name:string,input:
    validateNativeRates(home);home.revision=revision;saveHome(c,home);return home
   }
   need(home.nativePlanner,'Save native base-rate limits before preparing a change',409)
+  need(!home.nativePlanner.restorePaused,'Review and save native limits after restore, then prepare a fresh preview.',409)
   if(name==='direct.native.preview'){
    const date=day(input.date),action=input.action
    need(date>=today,'Choose a current or future property-local night')
@@ -50,7 +51,7 @@ export async function plannerCommand(env:Bindings,actor:Actor,name:string,input:
   need(Date.parse(p.expiresAt)>Date.parse(c.now)&&p.date>=today,'This preview expired. Preview again.',409)
   nativeAmount(home,p.amountCents)
   const revision=crypto.randomUUID()
-  home.nativePlanner.history.push({revision,date:p.date,action:p.action,amountCents:p.amountCents,reason:p.reason,at:c.now,actorId:actor.id,homeRevision:p.homeRevision,limitsRevision:p.limitsRevision,before:p.before,underlying:p.underlying})
+  home.nativePlanner.history.push({revision,date:p.date,action:p.action,amountCents:p.amountCents,reason:p.reason,at:c.now,timeZone,actorId:actor.id,homeRevision:p.homeRevision,limitsRevision:p.limitsRevision,before:p.before,underlying:p.underlying})
   home.revision=revision;saveHome(c,home);return {nativeApplied:true,propertyId,start:p.date,end:addDays(p.date,7),home}
  })
 }

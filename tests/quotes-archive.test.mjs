@@ -85,5 +85,12 @@ test('native planner archive retains signed base-rate provenance and history wit
   assert.equal((await h.send('/book/stay/'+accepted.value.token)).status,404)
   await h.cmd('direct.native.apply',{propertyId:home.propertyId,revision:home.revision,previewToken:pending.token},cookie,409)
   assert.deepEqual((await h.state(cookie)).direct.homes[0],home,'restored preparation changes nothing')
+  assert.equal(home.nativePlanner.restorePaused,true)
+  await h.cmd('direct.native.preview',{propertyId:home.propertyId,revision:home.revision,date:pending.date,action:'clear',reason:'Restored preparation'},cookie,409)
+  const reviewed=await h.cmd('direct.native.limits',{propertyId:home.propertyId,revision:home.revision,nativeFloorDollars:'100',nativeCeilingDollars:'250'},cookie)
+  const fresh=await h.cmd('direct.native.preview',{propertyId:home.propertyId,revision:reviewed.revision,date:pending.date,action:'clear',reason:'Reviewed restored rate'},cookie)
+  await h.cmd('direct.native.apply',{propertyId:home.propertyId,revision:reviewed.revision,previewToken:pending.token},cookie,409)
+  await h.cmd('direct.native.apply',{propertyId:home.propertyId,revision:reviewed.revision,previewToken:fresh.token},cookie)
+  const final=await h.state(cookie);assert.equal(final.direct.homes[0].nativePlanner.history.length,history.length+1);assert.deepEqual(final.direct.stays[0].quote,signed);assert.deepEqual(final.staffQuotes[0].versions[0],staff)
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
 })

@@ -25,9 +25,9 @@ export function nativeRange(home:DirectHome,start:string,end:string){
  need(Number.isInteger(count)&&count>0&&count<=62,'Choose a range of 1 to 62 property-local nights; the end date is excluded')
  return Array.from({length:count},(_,i)=>nativeNight(home,addDays(start,i)))
 }
-export function nativePlan(home:DirectHome,nights:NativeNight[]):NativePlan|undefined {
+export function nativePlan(home:DirectHome,nights:NativeNight[],timeZone:string):NativePlan|undefined {
  const p=home.nativePlanner
- return p?{source:'host-saved-rates',homeRevision:home.revision,limitsRevision:p.revision,floorCents:p.floorCents,ceilingCents:p.ceilingCents,nights:structuredClone(nights)}:undefined
+ return p?{source:'host-saved-rates',timeZone,homeRevision:home.revision,limitsRevision:p.revision,floorCents:p.floorCents,ceilingCents:p.ceilingCents,nights:structuredClone(nights)}:undefined
 }
 export const unchangedAdjustment = ():ChannelAdjustment=>({kind:'percent',value:0,includeCleaning:false,includeExtraGuests:false,commissionBps:0})
 const rounded=(amount:number,bps:number)=>Math.floor((amount*bps+5000)/10000)
