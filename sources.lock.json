@@ -2548,7 +2548,7 @@
       "executable": false
     },
     "src/cabin/guests/marketing.ts": {
-      "sha256": "8abb5a9e408fd5ac298ef486d13662507dd8b0fe081c043dc7ffdc0eebfffd29",
+      "sha256": "3fac1da0a45f16f6ce19d666e6b61bacc8c38310f502499e3c061cfa9b2a8c41",
       "executable": false
     },
     "src/cabin/guests/offers.ts": {
@@ -6420,7 +6420,7 @@
       "executable": false
     },
     "tests/marketing-segments-browser.mjs": {
-      "sha256": "95c947ca3206def0bf4eaea28397df3930ef8d6626167083454ceb18410d47f5",
+      "sha256": "2bdb53ff8dfe7e259193b7deedcef8e7b7d8dfd1809a89e5e2a1e130a0a5b9ad",
       "executable": false
     },
     "tests/marketing-support.mjs": {

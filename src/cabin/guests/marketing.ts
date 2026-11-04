@@ -54,8 +54,13 @@ async function inventory(db:D1Database,data:Data,propertyId:string,now:string) {
 }
 async function baseline(data:Data,propertyId:string) {
  const roots=data.guests.filter(g=>guestGroup(data,g.id).some(origin=>data.bookings.some(b=>b.id===origin.bookingId&&b.propertyId===propertyId)))
+ // Bind stored revisions and eligibility facts, not calculated read projections.
+ const bookings=data.bookings.filter(b=>roots.some(g=>g.bookingId===b.id)).map(b=>({
+  id:b.id,revision:b.revision,propertyId:b.propertyId,kind:b.kind,start:b.start,end:b.end,
+  departureTime:b.departureTime,status:b.status,guestEmail:b.guestEmail,guestErasedAt:b.guestErasedAt,restorePaused:b.restorePaused,
+ }))
  // Hash the reviewed facts, including every merged origin. Keep contacts out of the retained preview.
- return sha(JSON.stringify({home:data.properties.find(p=>p.id===propertyId),guests:roots,bookings:data.bookings.filter(b=>roots.some(g=>g.bookingId===b.id)),grants:data.members.map(m=>[m.id,m.revision,m.active,m.scope]),settings:data.homeSettings.filter(s=>s.propertyId===propertyId).map(s=>[s.revision,s.timeZone])}))
+ return sha(JSON.stringify({home:data.properties.find(p=>p.id===propertyId),guests:roots,bookings,grants:data.members.map(m=>[m.id,m.revision,m.active,m.scope]),settings:data.homeSettings.filter(s=>s.propertyId===propertyId).map(s=>[s.revision,s.timeZone])}))
 }
 async function valid(db:D1Database,data:Data,segment:GuestSegment) {
  if(segment.status!=='prepared'||segment.baseline!==await baseline(data,segment.propertyId))return false

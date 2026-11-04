@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {mkdir} from 'node:fs/promises'
 import {chromium,expect} from '@playwright/test'
 import {harness} from './harness.mjs'
-import {marketingOrigin,marketingContact} from './marketing-support.mjs'
+import {marketingContact} from './marketing-support.mjs'
 
 const directory=process.env.CABIN_MARKETING_SHOTS??'./test-results/marketing-segments'
 await mkdir(directory,{recursive:true})
@@ -10,7 +10,8 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CA
 const h=await harness({assets:true,now:'2026-11-04T12:00:00Z'})
 try{
  const home=await h.cmd('property.save',{name:'Synthetic repeat-stay home',ownerName:'Synthetic host',ownerEmail:marketingContact('host'),commissionBps:1500})
- const origin=await marketingOrigin(h,home.id)
+ const stay=await h.cmd('reservation.create',{propertyId:home.id,method:'phone',channel:'direct',sourceId:'synthetic-cabin-1',start:'2026-09-01',end:'2026-09-04',guestName:'Synthetic returning guest',guestEmail:marketingContact(1),rentCents:78000,feesCents:15000,taxCents:7440,policyName:'Saved phone reservation policy',retainedBps:5000,noShowBps:10000})
+ const origin=(await h.state()).guests.find(g=>g.bookingId===stay.id)
  const context=await browser.newContext({viewport:{width:1440,height:1000}})
  try{
   const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}])
@@ -48,6 +49,7 @@ try{
   await prepare.getByLabel('Segment home').selectOption(home.id);await prepare.getByLabel('Segment name').fill('Returning in winter')
   await prepare.getByRole('button',{name:'Prepare local segment'}).click()
   const segment=page.locator('.marketing-segment')
+  const prepared=(await h.state()).guestSegments[0];assert.equal(prepared.status,'prepared');assert.equal(prepared.members[0]?.email,marketingContact(1))
   await expect(segment).toContainText('1 eligible guest');await expect(segment).toContainText(marketingContact(1));await expect(segment).toContainText('Local preview only')
   await segment.getByRole('button',{name:'Recheck local preparation'}).click();await expect(segment).toContainText('prepared')
   await proof('local-preview',segment)
