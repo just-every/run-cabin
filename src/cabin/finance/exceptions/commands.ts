@@ -64,12 +64,13 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
     if(proposal.journalGroup){
      const ids:string[]=[]
      for(const item of proposal.journalGroup){
+      if(!item.originalJournalId)continue
       const original=evidence.journals.find(j=>j.id===item.originalJournalId)
       need(original&&!evidence.journals.some(j=>j.reversalOf===original.id),'An affected source journal was already reversed or is missing',409)
       const reversal=await post(c,{...original,sourceKey:'reversal:'+original.id,sourceType:'correction',sourceId:original.id,sourceRevision:original.id,effectiveDate:proposal.effectiveDate,reversalOf:original.id,lines:original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))})
       ids.push(reversal.id)
      }
-     for(const item of proposal.journalGroup)ids.push((await post(c,item.replacement)).id)
+     for(const item of proposal.journalGroup)if(item.replacement)ids.push((await post(c,item.replacement)).id)
      const allocation=structuredClone(proposal.allocation!)
      allocation.status='approved';allocation.approval={id:newId(),kind:'financial-allocation',recordId:allocation.id,revision:allocation.revision,actorId:c.actor.id,at:c.now}
      c.data.financialAllocations.push(allocation);c.data.approvals.push(allocation.approval)

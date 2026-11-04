@@ -2444,11 +2444,11 @@
       "executable": false
     },
     "src/cabin/finance/exceptions/allocated.ts": {
-      "sha256": "3e4548f148df56cb0e7d1e808dc2e3b715573570e7ae3c32ff5d3ae60cc61f78",
+      "sha256": "10ce3337a423df70214cdc907965cf09302ffa8414fd6d46f7aefbb12b7cc672",
       "executable": false
     },
     "src/cabin/finance/exceptions/commands.ts": {
-      "sha256": "3794bac0db6647289946eb4e4cba0a927db9a11c0c614f4db07ea39765af4103",
+      "sha256": "407c4cd0872ec5bfa714a6532b019ae509098f4b2cad7291b701e0cfae5ab5d5",
       "executable": false
     },
     "src/cabin/finance/exceptions/evidence.ts": {
@@ -2464,11 +2464,11 @@
       "executable": false
     },
     "src/cabin/finance/exceptions/types.ts": {
-      "sha256": "6ce99f0f73a774f168830ea812bf34a31e899fa6777f67825bc36423c42b235b",
+      "sha256": "70dc2a6aa5a1338101aedde79493d595fc1720bb11a2b686379678ab0d044f50",
       "executable": false
     },
     "src/cabin/finance/exceptions/ui.ts": {
-      "sha256": "5be0645ce2bf6ce3c79d0c25c861b897566cd268901cce7d654bcd533169518e",
+      "sha256": "51c901e0768e45e3412c15792ab34d8cbf25f86386035c051d8e915518b09bc0",
       "executable": false
     },
     "src/cabin/finance/import.ts": {
@@ -6124,11 +6124,11 @@
       "executable": false
     },
     "tests/allocated-exceptions-support.mjs": {
-      "sha256": "0f95e3a96355186e6039c2db2fe879a5dedb7715d83c54408840f4bb2ba0592a",
+      "sha256": "531cfb0b850237709f38e82b879bc6d41d2a6390c14541dc45ea1839a914a308",
       "executable": false
     },
     "tests/allocations.test.mjs": {
-      "sha256": "86174cca174866d2054801f2bd722b56340a17740aa3ac1cf3c50ba2cec3deec",
+      "sha256": "6405a35b7f6afa091813fa471e669a09bd49e56ddbbc9a6f657543d593299f18",
       "executable": false
     },
     "tests/archive-records.mjs": {
@@ -6236,7 +6236,7 @@
       "executable": false
     },
     "tests/financial-exceptions-browser.mjs": {
-      "sha256": "58061399410f7a765147ae62165d725922a29fd0237d5553862e88ee10e8b21b",
+      "sha256": "60c22b040d3f694437018561ed0ee4ba5c3713f4d4591ca23a23ae1efa215aea",
       "executable": false
     },
     "tests/financial-exceptions-support.mjs": {

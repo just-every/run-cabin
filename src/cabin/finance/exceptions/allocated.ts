@@ -34,6 +34,14 @@ export async function allocatedFeePlan(c:Context,e:Evidence,payout:Evidence['pay
   const amounts=p.id===payout.id?source:p,{grossCents:g,feeCents:f,netCents:n}=amounts
   return {originalJournalId:j.id,replacement:{sourceKey:`financial-correction:${id}:${i}`,propertyId:j.propertyId,bookingId:j.bookingId,ownerKey:j.ownerKey,legalEntity:j.legalEntity,sourceType:'settlement-correction',sourceId:id,sourceRevision:sourceDigest,effectiveDate,correctionOf:j.id,settlement:{grossCents:g,feeCents:f,netCents:n},lines:[debit('cash',n),credit('ownerLiability',g),...(f?[debit('ownerLiability',f)]:[])]}}
  })
- for(const [i,input] of replacements.entries())journalGroup.push({originalJournalId:actual.find(j=>j.sourceKey===expected[i].sourceKey)!.id,replacement:{...input,legalEntity:entity,correctionOf:actual.find(j=>j.sourceKey===expected[i].sourceKey)!.id}})
+ // Rounding can remove or introduce an owner posting. Bind by frozen part identity,
+ // and retain every original reversal even when its replacement is zero.
+ const remaining=new Map(replacements.map(input=>[input.sourceKey.slice(('allocation:'+allocation.id+':').length),input]))
+ for(const originalJournal of actual){
+  const key=originalJournal.sourceKey.slice(('allocation:'+original.id+':').length),input=remaining.get(key)
+  journalGroup.push({originalJournalId:originalJournal.id,...(input?{replacement:{...input,legalEntity:entity,correctionOf:originalJournal.id}}:{})})
+  remaining.delete(key)
+ }
+ for(const input of remaining.values())journalGroup.push({replacement:{...input,legalEntity:entity}})
  return {allocation,journalGroup}
 }

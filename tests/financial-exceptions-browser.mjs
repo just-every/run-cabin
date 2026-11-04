@@ -3,7 +3,7 @@ import { chromium,expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import { allocatedExceptionJourney } from './allocated-exceptions-support.mjs'
+import { allocatedExceptionJourney,allocatedRoundingJourney } from './allocated-exceptions-support.mjs'
 import { exceptionJourney } from './financial-exceptions-support.mjs'
 const directory=process.env.CABIN_EXCEPTION_SHOTS??'./test-results/financial-exceptions';await mkdir(directory,{recursive:true})
 const browser=await chromium.launch({headless:true,executablePath:process.env.CABIN_CHROMIUM_EXECUTABLE_PATH,args:['--use-mock-keychain','--password-store=basic','--no-sandbox']})
@@ -84,7 +84,7 @@ try{
   await page.goto(origin+'/app/ledger')
  }
  try{
-  await allocatedExceptionJourney({act:async(h,name,input)=>{
+  const nativeAction=async(h,name,input)=>{
    await visit(h)
    let form=page.locator(`form[action*="name=${name}"]`).filter({has:page.locator(`input[name="id"][value="${input.id}"]`)})
    if(input.proposalId)form=form.filter({has:page.locator(`input[name="proposalId"][value="${input.proposalId}"]`)})
@@ -102,7 +102,8 @@ try{
    await expect(page.locator('[role="status"]')).toContainText('Financial case updated')
    await expect(page.locator('[role="alert"]')).toHaveCount(0)
    return (await h.state()).financialExceptions.find(r=>r.id===input.id)
-  },screens:async(h,stage,f)=>{
+  }
+  await allocatedExceptionJourney({act:nativeAction,screens:async(h,stage,f)=>{
    await visit(h)
    const section=page.locator('section.panel').filter({has:page.getByRole('heading',{name:'Financial exception cases',exact:true})})
    const group=section.locator('details').filter({has:page.locator('summary').getByText('Exact allocation correction',{exact:true})})
@@ -113,6 +114,20 @@ try{
    assert.deepEqual(axe.violations.filter(v=>v.impact==='serious'||v.impact==='critical').map(v=>v.id),[])
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
    for(const control of await page.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Every icon-only control requires a tooltip')
+   for(const width of [1440,390]){
+    await page.setViewportSize({width,height:1000});await page.evaluate(()=>scrollTo(0,0))
+    await page.screenshot({path:join(directory,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
+   }
+   await page.setViewportSize({width:1440,height:1000})
+  }})
+  await allocatedRoundingJourney({act:nativeAction,screens:async(h,stage)=>{
+   await visit(h)
+   const section=page.locator('section.panel').filter({has:page.getByRole('heading',{name:'Financial exception cases',exact:true})})
+   const group=section.locator('details').filter({has:page.locator('summary').getByText('Exact allocation correction',{exact:true})}).last()
+   await group.locator(':scope > summary').click()
+   await expect(group).toContainText('Corrected amount is zero; no replacement posting.')
+   await expect(group).toContainText('Synthetic owner 10')
+   if(stage==='rounding-corrected')await expect(section.locator('dd').first()).toHaveText('$90.00')
    for(const width of [1440,390]){
     await page.setViewportSize({width,height:1000});await page.evaluate(()=>scrollTo(0,0))
     await page.screenshot({path:join(directory,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
