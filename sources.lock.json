@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "9ffcf79b4003e6e5f7063ef85cad283f5824c6789d78f58ddcd56153524fc570",
+      "sha256": "bc17d2c0f02f620d93afbd10dd9a744e70296de4a9da0bd2441827ddee0c1bc0",
       "executable": false
     },
     "DEMO.md": {
@@ -193,6 +193,10 @@
     },
     "docs/company-agent-door.md": {
       "sha256": "51bf37d3729bb64dbbf8d75309f53f50698791cc200c93e906c3eb051c9f4e63",
+      "executable": false
+    },
+    "docs/contract/AGENT-007-rubric.md": {
+      "sha256": "44cc6ce14c9fa7f3aace749d3d9a6955b23a1868550b840d149ab56d61e5fe60",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -1021,6 +1025,10 @@
     },
     "rer-setup.json": {
       "sha256": "afe42986588ab0132fb63c1f2947b77da91a9fad6d8aec841f868ad8e61ec642",
+      "executable": false
+    },
+    "RULINGS.md": {
+      "sha256": "8e1fc7a7ce583646d956fdc809e7c447acf372dbc1116c367dde3f684a886f81",
       "executable": false
     },
     "RUN-LOCALLY.md": {
@@ -1860,7 +1868,7 @@
       "executable": false
     },
     "src/base/contract-docs.mjs": {
-      "sha256": "5b39b5f4f0e7e351b0df5e1c105725cf238e284adce962e2c98d8280c5764be1",
+      "sha256": "d5bd6d5fda727abefa12b587594f3f64c63e049d550785b74cc9cfc16200e5d9",
       "executable": false
     },
     "src/base/contract-filter.ts": {
