@@ -1,10 +1,13 @@
-import { createAgentDoor, type Trust } from '../../modules/agent-door/index.ts'
+import { createAgentDoor, type Trust, type AgentDoorOptions } from '../../modules/agent-door/index.ts'
 import { createBusinessSettings } from '../../modules/business-settings/index.ts'
 import { runtimeBindings, type Bindings } from '../../auth.server'
 import { principal } from '../credentials'
 import { cabinPeople, cabinTeam } from './people'
 import { cabinResources } from './records'
 import { cabinTools } from './tools'
+import { agentDocs } from './docs'
+
+const limits = { requestsPerMinute: 600, maxBodyBytes: 1048576 }
 
 const notTools = [
   { clauses: ['MIGRATE-001', 'MIGRATE-002', 'MIGRATE-003', 'MIGRATE-004', 'MIGRATE-005', 'MIGRATE-006', 'MIGRATE-007'], reason: 'import-door' as const },
@@ -22,12 +25,12 @@ function trust(env: Bindings): Trust | null {
   return { issuer, installationId, appOrigin: env.AUTH_ORIGIN, publicKeys: JSON.parse(publicKeys) }
 }
 
-export function cabinAgentDoor(original: Bindings) {
+export function cabinAgentOptions(original: Bindings): AgentDoorOptions {
   const env = runtimeBindings(original)
-  return createAgentDoor({ seed: 'cabin', name: 'Cabin', specialist: 'rental operations coordinator',
+  return { seed: 'cabin', name: 'Cabin', specialist: 'rental operations coordinator',
     db: env.DB, origin: env.AUTH_ORIGIN, trust: trust(env), people: cabinPeople(env),
     capabilities: ['tools', 'resources', 'policy', 'pause', 'audit', 'idempotency'],
-    tools: cabinTools(env), resources: cabinResources(env), notTools,
+    tools: cabinTools(env), resources: cabinResources(env), notTools, limits,
     // Existing local keys retain only the three draft verbs; they cannot gain resource scopes.
     async localCredentials(request) {
       if (!request.headers.get('authorization')?.startsWith('Bearer cabin_')) return null
@@ -38,12 +41,17 @@ export function cabinAgentDoor(original: Bindings) {
       } catch { return null }
     },
 
-  })
+  }
+}
+
+export function cabinAgentDoor(env: Bindings) {
+  return createAgentDoor(cabinAgentOptions(env))
 }
 
 /** Unconfigured installations still serve their native health and installation pages. */
 export async function cabinAgentResponse(request: Request, env: Bindings): Promise<Response | null> {
   const path = new URL(request.url).pathname
+  if (path === '/docs/agents') return agentDocs(request, cabinAgentOptions(env))
   if (!['/mcp', '/agents', '/api/rer/agent-policy', '/api/rer/agent-decisions', '/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'].includes(path)
     && !path.startsWith('/agents/api/') && !/^\/agents\/approvals\/[^/]+$/.test(path)) return null
   return cabinAgentDoor(env).handle(request)

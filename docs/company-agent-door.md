@@ -84,3 +84,21 @@ Revoking consent after classification expires the pending read; native offboardi
 ends the next read without affecting the owner. The public CLI archive journey
 retains native history, expires saved read approvals and requires fresh Business
 pairing and policy. Neither restoration nor an old local key restores admission.
+
+The public `/docs/agents` page projects the same runtime registry used by MCP,
+including its enriched schemas, scopes and classes. Class witnesses come from
+`agent-surface.json` journey steps and the shared class assertions in
+`src/modules/agent-door/conformance/journey.mjs`. Registry names, scope, class,
+contract and witness drift are refused instead of publishing a second tool list.
+The page includes declared resource templates, configured request capacity,
+stable error responses and explicit capability omissions. It never invokes a
+classifier, tool or resource reader and includes no fixture arguments or private
+records. It requires no sign-in and creates no admission or action authority.
+
+`tests/agent-docs.test.mjs` compares the public page with authenticated listings,
+executes its class witnesses under autonomous and held policies, and checks
+metadata drift, escaping and private-data omission. `tests/agent-docs-browser.mjs`
+checks keyboard navigation and schema disclosure at desktop width and records
+the same document at desktop and phone widths. Both run in push Verify.
+Acceptance points 3–5 across the wider rental surface remain incomplete; this
+page does not expand the three existing owner-only draft preparations.
