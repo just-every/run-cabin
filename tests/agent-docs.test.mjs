@@ -46,6 +46,12 @@ test('Public agent documentation matches MCP and computed class journeys without
           for (const step of steps) assert.ok(documented.html.includes(`BASE-AGENT-006.2.{phase}.${step.id}`))
         }
       }
+      const initialized = await c.mcp('initialize', { protocolVersion: '2026-07-28', capabilities: {}, clientInfo: { name: 'synthetic-cabin-1', version: '1' } })
+      assert.equal(initialized.status, 200)
+      assert.equal(initialized.result.instructions, discover.result.instructions)
+      assert.ok(discover.result.instructions.includes('/docs/agents'))
+      for (const tool of docs.tools) assert.ok(discover.result.instructions.includes(`${tool.name} (${tool.scope}; ${tool.classes.join(', ')})`))
+      for (const value of privateValues) assert.ok(!discover.result.instructions.includes(value))
       const metadata = discover.result._meta
       for (const [key, value] of Object.entries(metadata['com.runeditrun/limits'])) assert.ok(response.text.includes(`data-limit="${key}">${value}</dd>`))
       for (const value of metadata['com.runeditrun/capabilities'].refused) assert.ok(response.text.includes(value))

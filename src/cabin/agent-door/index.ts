@@ -6,6 +6,7 @@ import { cabinPeople, cabinTeam } from './people'
 import { cabinResources } from './records'
 import { cabinTools } from './tools'
 import { agentDocs } from './docs'
+import { agentCatalogue, catalogueInstructions } from './catalogue'
 
 const limits = { requestsPerMinute: 600, maxBodyBytes: 1048576 }
 
@@ -45,7 +46,16 @@ export function cabinAgentOptions(original: Bindings): AgentDoorOptions {
 }
 
 export function cabinAgentDoor(env: Bindings) {
-  return createAgentDoor(cabinAgentOptions(env))
+  const options = cabinAgentOptions(env), door = createAgentDoor(options)
+  return { ...door, async handle(request: Request) {
+    const response = await door.handle(request)
+    if (new URL(request.url).pathname !== '/mcp' || !response?.ok || !response.headers.get('content-type')?.includes('application/json')) return response
+    // Discovery and initialize share the public registry projection, never fixture arguments.
+    const body = await response.clone().json() as { result?: { instructions?: string } }
+    if (typeof body.result?.instructions !== 'string') return response
+    body.result.instructions += ' ' + catalogueInstructions(agentCatalogue(options))
+    return Response.json(body, { status: response.status, headers: response.headers })
+  } }
 }
 
 /** Unconfigured installations still serve their native health and installation pages. */

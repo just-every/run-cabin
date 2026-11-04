@@ -53,3 +53,8 @@ export function agentCatalogue(options: AgentDoorOptions, descriptor = surface) 
   }
 }
 export type AgentCatalogue = ReturnType<typeof agentCatalogue>
+
+/** A stranger can locate the documentation using authenticated discovery alone. */
+export function catalogueInstructions(catalogue: AgentCatalogue) {
+  return `Documentation: /docs/agents. Registered jobs: ${catalogue.tools.map(tool => `${tool.name} (${tool.scope}; ${tool.classes.join(', ')})`).join('; ')}. Only the installation owner can prepare drafts; no provider actions are exposed.`
+}

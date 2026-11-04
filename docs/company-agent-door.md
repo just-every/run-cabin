@@ -86,7 +86,8 @@ retains native history, expires saved read approvals and requires fresh Business
 pairing and policy. Neither restoration nor an old local key restores admission.
 
 The public `/docs/agents` page projects the same runtime registry used by MCP,
-including its enriched schemas, scopes and classes. Class witnesses come from
+including its enriched schemas, scopes and classes. MCP discovery and initialize
+instructions name these registered jobs and point to the public documentation. Class witnesses come from
 `agent-surface.json` journey steps and the shared class assertions in
 `src/modules/agent-door/conformance/journey.mjs`. Registry names, scope, class,
 contract and witness drift are refused instead of publishing a second tool list.
