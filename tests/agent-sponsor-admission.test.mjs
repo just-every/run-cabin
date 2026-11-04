@@ -105,6 +105,18 @@ test('Native sponsor offboarding and configured admission exclusions fence fresh
       await refuses(people[0])
       await refuses(people[1])
     }
+    // Remove the configuration fence so it cannot mask a lost native offboarding fence.
+    await h.restart({ auth: { AUTH_ALLOW_LIST: [owner.email, ...people.map(person => person.email)].join(',') } })
+    const restoredAdmission = await h.state()
+    assert.equal(restoredAdmission.members.find(row => row.id === inactive.id).active, false)
+    assert.equal(restoredAdmission.members.find(row => row.id === excluded.id).active, true)
+    assert.equal((await h.send('/api/cabin/state', undefined, inactive.cookie)).status, 403)
+    for (const policy of [autonomousPolicy, heldPolicy]) {
+      await c.adopt(policy())
+      await refuses(people[0])
+      await readVisible(protocol(people[1]), excluded.cookie)
+    }
+    t.diagnostic('PROBE BASE-AGENT-004 independent fences: restart with both sponsor addresses admitted by configuration -> inactive sponsor still returns typed 401 for fresh signed read and draft calls and native 403, while the active sponsor resumes native and MCP reads under both policies; owner access and native business records remain intact')
     assert.ok(c.points.every(point => point.ok), JSON.stringify(c.points.filter(point => !point.ok)))
   } finally { await h.close() }
 })

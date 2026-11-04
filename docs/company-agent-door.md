@@ -96,6 +96,10 @@ refusal uses a fresh agent with an otherwise valid verifier-signed token,
 returns a typed 401, withholds results and leaves native business state unchanged.
 Both complete policies and another cold start preserve the refusals and admitted
 owner access. Bound non-owners still cannot prepare the three owner-only drafts.
+A further restart admits both sponsor addresses in configuration: the inactive
+sponsor remains refused while the still-active sponsor resumes native and MCP
+reads under both policies. This separates durable native offboarding from the
+configured admission fence.
 This does not prove successful multi-sponsor lifecycle completion, actual
 Business token issuance or delivery, full consent propagation or unpairing
 across multiple sponsors.

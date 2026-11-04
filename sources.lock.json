@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c7eedfd22a2371af6a01985bfdd29e6d4ebf6fab0a70f08c48a2a1b17c56f80c",
+      "sha256": "ca502f398c021fdd040838c0263c19793eccba1892930327a670bf806d66d373",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "a5f84e72677e062aa4cd59f25889f8449eef39147dfac9baa9e63d9638122fa3",
+      "sha256": "6570835c0bdd90128a6031fa6c829638129ef5ead5e6467760374fc659ae4384",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -6124,7 +6124,7 @@
       "executable": false
     },
     "tests/agent-sponsor-admission.test.mjs": {
-      "sha256": "cd3940bf51c2fbcfea9de61af0a6804ab3d2affc6a9bf02ef0beec91c80039dc",
+      "sha256": "ef4a91ba9a4ba5b4df21cba537be9b5dc6352d568518857946e40e6638dfca4c",
       "executable": false
     },
     "tests/allocations.test.mjs": {
