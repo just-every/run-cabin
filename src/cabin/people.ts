@@ -23,7 +23,7 @@ export async function peopleCommand(c:Context,name:string,p:Record<string,unknow
   need(!await c.db.prepare("SELECT 1 FROM cb_erasure_fences WHERE entity='member' AND id_hash=?").bind(await sha(email)).first(),'This identity was erased',409)
   need(!c.data.members.some(m=>m.id!==old?.id&&m.email.toLowerCase()===email),'Email already has a grant',409)
   const grant=memberGrant(c,p,old),row={id:old?.id??newId(),name:text(p.name,'member name',160),email,...grant,active:p.active,revision:(old?.revision??0)+1}
-  c.queries.push(query('INSERT INTO cb_members(id,name,email,role,active,version) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,role=excluded.role,active=excluded.active,version=excluded.version',row.id,row.name,row.email,row.role,row.active?1:0,row.revision));saveMemberGrant(c,row);c.entityId=row.id;return row
+  c.queries.push(query('INSERT INTO cb_members(id,name,email,role,active,version) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,email=excluded.email,role=excluded.role,active=excluded.active,version=excluded.version',row.id,row.name,row.email,row.role,row.active?1:0,row.revision));if(old&&old.email.toLowerCase()!==email)c.queries.push(query("INSERT OR IGNORE INTO cb_member_operators(operator_id,member_id) SELECT id,? FROM oa_operators WHERE email=? COLLATE NOCASE AND role='member'",old.id,old.email));saveMemberGrant(c,row);c.entityId=row.id;return row
  }
  return undefined
 }

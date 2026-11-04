@@ -8,11 +8,18 @@ import { completion } from './records'
 import { scrub, type ErasureScope } from './scope'
 import { fenceContacts } from './contacts'
 import { eraseSources } from './sources'
+/** Every sign-in identity the grant has used: the current address, the agent binding and addresses it held before. */
+async function memberOperators(c:Context,member:{id:string;email:string}){
+ return (await c.db.prepare(`SELECT id,role FROM oa_operators WHERE email=?1 COLLATE NOCASE
+  UNION SELECT o.id,o.role FROM cb_agent_people p JOIN oa_operators o ON o.id=p.operator_id WHERE p.member_id=?2
+  UNION SELECT o.id,o.role FROM cb_member_operators l JOIN oa_operators o ON o.id=l.operator_id WHERE l.member_id=?2
+   AND NOT EXISTS(SELECT 1 FROM cb_members m WHERE m.id<>?2 AND m.email=o.email COLLATE NOCASE)`).bind(member.email,member.id).all<{id:string;role:string}>()).results
+}
 export async function eraseMember(c:Context,s:ErasureScope,p:Record<string,unknown>,fence:import('../model').Query[]){
  await eraseReportSharing(c,s)
  owner(c.actor);const member=c.data.members.find(m=>m.id===s.id)!,retained=await retainedRecords(c,s,p)
- const operator=await c.db.prepare('SELECT id,role FROM oa_operators WHERE email=? COLLATE NOCASE').bind(member.email).first<{id:string;role:string}>()
- need(!operator||operator.id!==c.actor.id&&operator.role!=='owner','The installation owner identity cannot be erased through a team grant',409)
+ const operators=await memberOperators(c,member)
+ for(const operator of operators)need(operator.id!==c.actor.id&&operator.role!=='owner','The installation owner identity cannot be erased through a team grant',409)
  await fenceSending(c,s);await fenceContacts(c,s);await eraseAttachments(c,s);await eraseSources(c,s);scrubOperational(c,s)
  for(const t of c.data.turnovers){if(t.cleanerId===s.id){t.cleanerId=null;t.notified=null;if(t.status==='approved')t.status='unassigned';t.revision=newId()}if(t.dispatch)t.dispatch.offers=t.dispatch.offers.filter(o=>o.memberId!==s.id)}
  for(const t of c.data.tasks){if(t.assigneeId===s.id){t.assigneeId=null;t.notified=null;t.revision=newId()}if(t.work?.inspectorId===s.id){t.work.inspectorId=null as any;t.revision=newId()}}
@@ -25,10 +32,10 @@ export async function eraseMember(c:Context,s:ErasureScope,p:Record<string,unkno
   const clean=scrub(home,s.values);if(policy?.reviewerId===s.id){clean.verificationPolicy.reviewerId=c.actor.id;clean.verificationPolicy.reviewerEmail=c.actor.email}
   c.queries.push(query('UPDATE cb_direct_homes SET data=? WHERE property_id=?',JSON.stringify(clean),row.property_id))
  }
- for(const subject of [s.id,...(operator?[operator.id]:[])])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
- if(operator){
-  const id=operator.id
-  c.queries.push(retirePreparationEvents(id),query('DELETE FROM cb_agent_people WHERE operator_id=?',id))
+ for(const subject of [s.id,...operators.map(o=>o.id)])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
+ c.queries.push(query('DELETE FROM cb_agent_people WHERE member_id=?',s.id),query('DELETE FROM cb_member_operators WHERE member_id=?',s.id))
+ for(const {id} of operators){
+  c.queries.push(retirePreparationEvents(id))
   c.queries.push(query("UPDATE oa_operators SET status='inactive',email=?,display_name='Erased operator',version=version+1 WHERE id=?",'erased-'+newId()+'@invalid.example',id),query('UPDATE oa_sessions SET revoked_at=? WHERE operator_id=?',Date.parse(c.now),id),query('UPDATE oa_tokens SET revoked_at=?,return_to=\'/\' WHERE operator_id=? OR issuer_id=?',Date.parse(c.now),id,id),query('UPDATE oa_credentials SET revoked_at=? WHERE operator_id=?',Date.parse(c.now),id),query('DELETE FROM oa_external_identities WHERE operator_id=?',id),query('DELETE FROM oa_step_up_challenges WHERE operator_id=?',id),query('DELETE FROM oa_owner_signins WHERE operator_id=?',id),query('DELETE FROM oa_provider_sessions WHERE session_id IN (SELECT id FROM oa_sessions WHERE operator_id=?)',id),query('DELETE FROM oa_provider_session_pins WHERE session_id IN (SELECT id FROM oa_sessions WHERE operator_id=?)',id),query("UPDATE oa_auth_audit SET value='' WHERE actor_id=? OR instr(value,?)>0",id,id))
  }
  for(const value of s.values)c.queries.push(query('DELETE FROM oa_oidc_transactions WHERE instr(lower(payload),lower(?))>0',value),query("UPDATE oa_auth_audit SET value='' WHERE instr(lower(value),lower(?))>0",value))

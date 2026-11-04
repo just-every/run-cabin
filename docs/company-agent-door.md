@@ -122,7 +122,9 @@ native role, action and property visibility at delivery. Events about missing
 or restricted records are omitted. Current consent, agent revocation and native
 offboarding stop the next polling call; local draft keys gain no event access.
 Erasing a native preparer retires their preparation events in the erasure
-transaction, so the retained feed cannot restore their name after restart.
+transaction, so the retained feed cannot restore their name after restart. The
+erasure covers each sign-in identity the grant has used, including one held
+before an address change.
 The existing internal record adapters enforce this even independently of public
 resource-template adoption.
 

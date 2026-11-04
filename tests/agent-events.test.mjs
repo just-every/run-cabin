@@ -131,6 +131,8 @@ test('Delivery rechecks current property and record scopes and stops revoked con
       const authoredUri = recordUri('calendars', authored.id)
       const authoredEvent = preparations(await eventList(c)).find(event => event.uri === authoredUri)
       assert.equal(authoredEvent.actor.person.name, manager.name)
+      const authorId = authoredEvent.actor.person.id
+      manager = await h.cmd('member.save', { ...manager, email: address('synthetic-cabin-moved') })
       manager = await h.cmd('member.save', { ...manager, active: false })
       assert.equal((await client.tool('cabin.events.list', { after: cursor })).status, 401)
       const input = { entity: 'member', id: manager.id, revision: manager.revision }
@@ -141,6 +143,7 @@ test('Delivery rechecks current property and record scopes and stops revoked con
       assert.deepEqual(preparations(retained), stable)
       assert.ok(!JSON.stringify(retained).includes(manager.name))
       assert.ok(!JSON.stringify(retained).includes(authoredUri))
+      assert.ok(!JSON.stringify(retained).includes(authorId))
       await h.restart()
       assert.deepEqual(preparations(await eventList(c, { after: cursor })), stable)
       assert.equal((await client.tool('cabin.events.list')).status, 401)
