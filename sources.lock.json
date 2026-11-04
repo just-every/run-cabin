@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "686417b1e2ed94d11fe842c2876d723ceb670a70014bdde195ac03faa3d0a954",
+      "sha256": "9f1879ddf77926000d08d1fc9c33bfe0e64bc9611f0f434f6b8b444ba1978b34",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "51bf37d3729bb64dbbf8d75309f53f50698791cc200c93e906c3eb051c9f4e63",
+      "sha256": "786e285381cb171b15294cf071657b13bb3c6a9e504e62c677d128a4d9b3ee4e",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -6143,8 +6143,16 @@
       "sha256": "42f2ff608f6d60934eac217522b852a4545918c194d5abb4751ca4805f69b802",
       "executable": false
     },
+    "tests/agent-role-lifecycle.mjs": {
+      "sha256": "7a9041e34bf83deb23b37f4b9db3ce8c9f864581dc1ad5de124b90ee10aaf23f",
+      "executable": false
+    },
     "tests/agent-role-parity.test.mjs": {
-      "sha256": "92bf4bf3365b71e884fe3413bfb1c5d38b152f8db2f6062966968e72dd725fa7",
+      "sha256": "525f1e26260629230935033ba69da8fdd4371c9bc62e6daa47d93302c653f9bf",
+      "executable": false
+    },
+    "tests/agent-role-support.mjs": {
+      "sha256": "e1269afabc419da2044d622fc7909a58419bf2ca902a0a80870a882eef9f8e90",
       "executable": false
     },
     "tests/allocations.test.mjs": {

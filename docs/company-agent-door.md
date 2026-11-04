@@ -48,8 +48,7 @@ explicitly admit agents for only the three preparations; broad company policy
 does not authorize a signature, inspection, provider send, payout or native role
 change. Broader tools need their own native authority, durable consent and
 provider receipts before they can be declared. No queued provider action,
-mail edge, timed or dual-host journey, resource refresh or native owner
-administration is claimed. Grant byte budgets and file-byte accounting remain
+mail edge, timed or dual-host journey, resource refresh or native grant administration through MCP is claimed. Grant byte budgets and file-byte accounting remain
 unavailable in the pinned Base door; resources expose JSON records only. This
 is the remaining BASE-AGENT-003 acceptance gap, not a byte-budget guarantee. BASE-AGENT clauses remain partial and name
 these gaps; the pinned ct Agent surface is still a wider target.
@@ -103,3 +102,19 @@ checks keyboard navigation and schema disclosure at desktop width and records
 the same document at desktop and phone widths. Both run in push Verify.
 Acceptance points 3–5 across the wider rental surface remain incomplete; this
 page does not expand the three existing owner-only draft preparations.
+
+The public-door role journey in `tests/agent-role-parity.test.mjs` covers both
+record tools for eight invited and confirmed PMS roles. An owner narrows native
+properties and actions, downgrades a sponsor, suspends and reactivates that same
+member, and removes then restores signed-roster admission. Old and fresh bearers
+lose withdrawn reads immediately; restart and retained approvals do not restore
+them. Reactivation retains the narrowed native projection. Roster removal alone
+withdraws Business agent admission while leaving the native session usable;
+restoring the same roster identity can admit an otherwise valid old token again,
+under the current native grant. A stale signed roster cannot replace a newer one.
+Native owner revocation permanently fences one agent across restart and sponsor
+re-admission while another agent of that sponsor, a peer sponsor and the owner
+retain their current access. Bearers and non-owners cannot use that native owner
+administration door. These journeys run under autonomous and held policies.
+They do not prove an independently narrower agent resource grant, grant budgets,
+self-grant administration or actual Business token issuance and delivery.

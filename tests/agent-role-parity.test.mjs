@@ -1,82 +1,14 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { randomUUID, webcrypto } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
 import { harness } from './harness.mjs'
 import { accessToken, autonomousPolicy, heldPolicy, signJws } from '../src/modules/agent-door/conformance/crypto.mjs'
 import { createProtocol, errorCode } from '../src/modules/agent-door/conformance/protocol.mjs'
 
+import { address, surface, collections, roles, complete, saveGrant, parity, hidden } from './agent-role-support.mjs'
+import { sponsorLifecycle } from './agent-role-lifecycle.mjs'
+
 const now = '2026-11-04T12:00:00Z'
-const address = name => [name, 'stay.example'].join('@')
-const surface = JSON.parse(await readFile('agent-surface.json', 'utf8'))
-const collections = { homes: 'properties', people: 'members', stays: 'bookings', guests: 'guests', tasks: 'tasks', readiness: 'readinessRecords', statements: 'statements', cases: 'recoveries', calendars: 'calendarDrafts', turnovers: 'turnovers' }
-const roles = {
-  manager: ['calendar:read', 'reservations:read', 'inbox:read', 'operations:read', 'finance:read', 'reports:read', 'owners:read', 'access:read', 'identity:read'],
-  reservation: ['calendar:read', 'reservations:read'],
-  guest_service: ['calendar:read', 'reservations:read', 'inbox:read', 'operations:read', 'access:read'],
-  accountant: ['finance:read', 'reports:read'],
-  inspector: ['operations:read', 'access:read'],
-  cleaner: ['operations:read', 'access:read'],
-  maintenance: ['operations:read', 'access:read'],
-  rental_owner: ['owners:read'],
-}
-
-async function complete(client, name, args, options = {}) {
-  let answer = await client.tool(name, args, options)
-  assert.equal(answer.status, 200, JSON.stringify(answer.body))
-  if (answer.result?.resultType === 'input_required') {
-    assert.equal(answer.result.structuredContent, undefined, 'held reads expose no records before consent')
-    assert.ok((await client.decideApproval(answer)).ok)
-    answer = await client.tool(name, args, { ...options, requestState: answer.result.requestState })
-  }
-  assert.equal(errorCode(answer), null, JSON.stringify(answer.body))
-  assert.equal(answer.result.isError, false)
-  assert.equal(answer.result._meta['com.runeditrun/untrusted'], true)
-  return answer
-}
-
-async function saveGrant(h, person, propertyIds, actions, pmsRole = person.pmsRole) {
-  const current = (await h.state()).members.find(row => row.id === person.id)
-  const fields = new URLSearchParams({ ...(current ? { id: current.id, revision: current.revision } : {}),
-    name: person.name, email: person.email, pmsRole, active: 'true' })
-  for (const id of propertyIds) fields.append('propertyIds', id)
-  for (const action of actions) fields.append('actions', action)
-  const response = await h.mf.dispatchFetch(h.origin + '/app/action?name=member.save&returnTo=/app/people', {
-    method: 'POST', headers: { origin: h.origin, cookie: h.owner, 'content-type': 'application/x-www-form-urlencoded' }, body: fields.toString(),
-  })
-  assert.equal(response.status, 200, await response.text())
-  const saved = (await h.state()).members.find(row => row.email === person.email)
-  assert.equal(saved.scope.pmsRole, pmsRole)
-  assert.deepEqual(saved.scope.propertyIds, propertyIds)
-  assert.deepEqual(saved.scope.actions, actions)
-  return { ...person, ...saved }
-}
-
-async function parity(h, client, cookie, token) {
-  const native = await h.state(cookie), actual = {}
-  for (const [kind, collection] of Object.entries(collections)) {
-    const listed = await complete(client, 'cabin.records.list', { kind }, { token })
-    assert.deepEqual(listed.result.structuredContent.records, native[collection], `${client.person.sub}: ${kind} list equals native HTTP`)
-    actual[kind] = listed.result.structuredContent.records
-    for (const row of native[collection]) {
-      const read = await complete(client, 'cabin.records.read', { kind, id: row.id }, { token })
-      assert.deepEqual(read.result.structuredContent.record, row, `${client.person.sub}: ${kind} read equals native HTTP`)
-    }
-  }
-  return actual
-}
-
-async function hidden(client, kind, id, token) {
-  const denied = await client.tool('cabin.records.read', { kind, id }, { token })
-  const missing = await client.tool('cabin.records.read', { kind, id: 'synthetic-cabin-missing' }, { token })
-  assert.equal(denied.status, 200)
-  assert.equal(errorCode(denied), 'record_not_found')
-  assert.equal(errorCode(missing), errorCode(denied))
-  assert.deepEqual(denied.result.content, missing.result.content)
-  assert.equal(denied.result.structuredContent, undefined)
-  return denied
-}
-
 test('Active PMS sponsors keep native record parity after property, action and role changes', { timeout: 300000 }, async t => {
   const keys = await webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify'])
   const signer = { privateKey: keys.privateKey, kid: 'synthetic-cabin-1', issuer: 'https://synthetic-business.example', installationId: 'synthetic-cabin-1' }
@@ -132,12 +64,18 @@ test('Active PMS sponsors keep native record parity after property, action and r
     await h.cmd('recovery.open', { turnoverId: turnover.id, trigger: 'cleaner_cancelled', reason: 'Synthetic transport failure' })
     const capability = await h.cmd('export.publish', { propertyId: home.id })
     const iat = Date.parse(now) / 1000
-    const settings = await signJws(keys.privateKey, signer.kid, 'rer-business-settings+jwt', {
-      v: 1, iss: signer.issuer, aud: h.origin, sub: signer.installationId, business, email: owner.person.email, owner_id: owner.person.sub,
-      jti: randomUUID(), iat, exp: iat + 300, rev: 1, values: { display_name: 'Synthetic rental company' }, logo: null,
-      team: people.map(person => ({ id: person.sub, email: person.email, name: person.name, role: 'member', invite: 0 })),
-    })
-    assert.equal((await h.send('/api/rer/business-settings', { settings })).status, 200)
+    let settingsRevision = 0
+    const roster = people.map(person => ({ id: person.sub, email: person.email, name: person.name, role: 'member', invite: 0 }))
+    async function pair(team = roster) {
+      const settings = await signJws(keys.privateKey, signer.kid, 'rer-business-settings+jwt', {
+        v: 1, iss: signer.issuer, aud: h.origin, sub: signer.installationId, business, email: owner.person.email, owner_id: owner.person.sub,
+        jti: randomUUID(), iat, exp: iat + 300, rev: ++settingsRevision, values: { display_name: 'Synthetic rental company' }, logo: null, team,
+      })
+      const response = await h.send('/api/rer/business-settings', { settings })
+      assert.equal(response.status, 200, response.text)
+      return settings
+    }
+    await pair()
     const populated = await h.state()
     for (const collection of Object.values(collections)) assert.ok(populated[collection].length, `${collection} has real public-door fixtures`)
     const businessBefore = await h.state()
@@ -195,12 +133,20 @@ test('Active PMS sponsors keep native record parity after property, action and r
       assert.ok(!Object.hasOwn(narrowed.homes[0], 'ownerEmail'))
       const statement = populated.statements.find(row => row.propertyId === home.id)
       await hidden(client, 'statements', statement.id, token)
+      const rolePending = held ? await client.tool('cabin.records.read', { kind: 'stays', id: stays[0].id }, { token }) : null
+      if (held) assert.equal(rolePending.result.resultType, 'input_required')
       await saveGrant(h, manager, [home.id], ['operations:read'], 'cleaner')
       const downgraded = await parity(h, client, manager.cookie, token)
       assert.ok(downgraded.tasks.some(row => row.assigneeId === manager.id))
       assert.equal(downgraded.stays.length, 0)
       assert.ok(!JSON.stringify(downgraded).includes('Synthetic private guest'))
       await hidden(client, 'stays', stays[0].id, token)
+      if (held) {
+        assert.ok((await client.decideApproval(rolePending)).ok)
+        const replay = await client.tool('cabin.records.read', { kind: 'stays', id: stays[0].id }, { token, requestState: rolePending.result.requestState })
+        assert.equal(errorCode(replay), 'record_not_found')
+        assert.equal(replay.result.structuredContent, undefined, 'a saved approval cannot restore data after sponsor downgrade')
+      }
       const fresh = protocol(manager.client.person, `synthetic-cabin-fresh-${owner.revision}`)
       assert.deepEqual(await parity(h, fresh, manager.cookie, await accessToken(fresh)), downgraded, 'fresh admission retains the narrowed role')
       await h.restart()
@@ -210,6 +156,7 @@ test('Active PMS sponsors keep native record parity after property, action and r
       assert.equal(ownerAfter.homes.length, 3)
       assert.equal(ownerAfter.stays.find(row => row.id === stays[0].id).guestName, 'Synthetic private guest 0')
       assert.equal(ownerAfter.statements.length, 3)
+      await sponsorLifecycle({ h, owner, manager, peer: cleaner, home, token, peerToken: tokens.get(cleaner.id), protocol, pair, roster, downgraded, held, t })
       t.diagnostic(`PROBE BASE-AGENT-005 3: ${document.rules[0].do} policy, native owner narrows property then actions then role -> next old-bearer call withdraws data, fresh admission and restart retain narrowed projection, owner access survives`)
     }
     const after = await h.state()
