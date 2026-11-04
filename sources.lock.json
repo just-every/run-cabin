@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "37aa23ff4e760ed36aa2706562dffd4c44eaaecbd0f96119150faa3c57ea4885",
+      "sha256": "dd792f45656be94e380a1f5bfb7a9aa49756402df81369af125daabd91ff2650",
       "executable": false
     },
     "agent-surface.json": {
@@ -180,7 +180,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "a7737985ca5d6bf5f0dbc4caf8cf8c0672b77cc73593dadeda576937941aff75",
+      "sha256": "3eb7eaccd13fb32e4f2bb486eb5900a43b5bdfc04d48f758166da2e411dd69d5",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
