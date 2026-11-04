@@ -131,9 +131,19 @@ policies, and checks current authority on already open streams. Other native
 record families remain outside this bounded event inventory. Signed Base
 integration webhooks with identical IDs and failed-webhook replay need a Base
 integrations adapter, which this checkout does not mount. The copied Base
-approval, review and policy event producers do not yet all carry the required
-class and decision fields. Those Base interfaces and the authorized receiver
-remain dependencies for whole-clause completion. Existing shared decision events do not establish
-those broader guarantees. API-001 retains its Base publication-scanner and
+policy event producer still omits class and decision and identifies Business
+without an authenticated person. Cabin's existing event callback fills the
+already determined disposition on new `approval.pending` and `review.flagged`
+events: `approval` and `review`, respectively. It preserves their Base-computed
+classes, stable IDs, actor, time and existing visibility checks, copies no
+private decision evidence, and never rewrites a tombstone or an existing
+decision. `approval.decided` already carries its disposition and final state.
+
+The retained polling journey performs native approval and rejection plus review
+flagging, checks exact class and disposition metadata and refusal for an
+unrelated person, then replays the same IDs after restart and agent revocation.
+Older retained pending and flagged events are not backfilled. These historical
+rows, complete policy event metadata, the Base integrations interface and an
+authorized receiver remain dependencies for whole-clause completion. API-001 retains its Base publication-scanner and
 authorized Zapier receiver dependencies. No provider action or new mutation
 authority is introduced.

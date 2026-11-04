@@ -70,6 +70,90 @@ export async function nativePreparation(h, operation) {
   return added[0]
 }
 
+/** Follow real pending, decided and flagged actions through their person and MCP doors. */
+export async function decisionEvents(setup, f, document, t) {
+  const { h, c, owner, protocol } = setup
+  const agent = protocol(owner, 'synthetic-cabin-decision-agent')
+  const subject = 'synthetic-cabin-decision-observer-' + document.rules[0].do
+  const manager = await h.cmd('member.save', { name: 'Synthetic decision observer', email: address(subject),
+    pmsRole: 'manager', propertyIds: [f.other.id], actions: ['calendar:read'], active: true })
+  await h.cmd('member.invite', { id: manager.id })
+  const cookie = await h.signIn(manager.email)
+  await setup.pair([{ id: subject, email: manager.email, name: manager.name, role: 'admin', invite: 0 }])
+  const outsider = protocol({ sub: subject, email: manager.email, cookie }, subject + '-agent')
+  const policy = disposition => ({ ...document, rules: [{ id: 'prepared-action', class: 'standard', agent: agent.agentId,
+    do: disposition, ...(disposition === 'approval' ? { approver: ['sponsor'], wait: 'PT1H' } : {}) }, ...document.rules], reviewers: ['sponsor'] })
+  await c.adopt(policy('approval'))
+  const cursor = (await eventList(c)).cursor, expected = []
+  for (const action of ['approve', 'reject']) {
+    const args = { ...draftOperations(f)[0].input, idempotency_key: randomUUID() }
+    const before = (await h.state()).calendarDrafts.length
+    const pending = await agent.tool('cabin.calendar.prepare', args)
+    assert.equal(pending.result.resultType, 'input_required')
+    const handle = pending.result._meta['com.runeditrun/approval']
+    const uri = h.origin + '/agents/approvals/' + handle.id
+    const event = (await eventList(c, { after: cursor })).events.find(event => event.uri === uri)
+    assert.equal(event.type, 'approval.pending')
+    assert.equal(event.decision, 'approval')
+    assert.deepEqual(event.classes, [{ class: 'standard', facts: { measure: 1 } }])
+    assert.equal(event.actor.agent.id, agent.agentId)
+    assert.equal(event.actor.for.id, (await h.state()).actor.id)
+    assert.equal((await h.state()).calendarDrafts.length, before, 'pending approval has no native effect')
+    const hidden = await eventList(outsider, { after: cursor })
+    assert.ok(!JSON.stringify(hidden).includes(handle.id))
+    const summary = (await c.personJson('/agents/api/approvals/' + handle.id)).approval
+    const denied = await h.send('/agents/api/approvals/' + handle.id + '/approve', { revision: summary.revision, summary_sha256: summary.summary_sha256 }, cookie)
+    assert.equal(denied.status, 403)
+    assert.equal((await h.state()).calendarDrafts.length, before)
+    assert.ok(!(await eventList(c, { after: cursor })).events.some(event => event.uri === uri && event.type === 'approval.decided'))
+    const decided = await agent.decideApproval(pending, action)
+    assert.equal(decided.status, 200)
+    const pair = (await eventList(c, { after: event.id })).events.filter(event => event.uri === uri)
+    assert.equal(pair.length, 1)
+    assert.equal(pair[0].type, 'approval.decided')
+    assert.equal(pair[0].decision, 'approval')
+    assert.equal(pair[0].state, action === 'approve' ? 'executed' : 'rejected')
+    assert.deepEqual(pair[0].classes, event.classes)
+    assert.equal(pair[0].actor.person.id, (await h.state()).actor.id)
+    assert.equal((await h.state()).calendarDrafts.length, before + (action === 'approve' ? 1 : 0))
+    const replay = await agent.tool('cabin.calendar.prepare', args)
+    assert.equal(action === 'approve' ? replay.result.isError : errorCode(replay), action === 'approve' ? false : 'approval_rejected')
+    assert.deepEqual((await eventList(c, { after: event.id })).events.filter(event => event.uri === uri), pair)
+    expected.push(event, ...pair)
+  }
+  await c.adopt(policy('review'))
+  const reviewed = await agent.tool('cabin.calendar.prepare', { ...draftOperations(f)[0].input, idempotency_key: randomUUID() })
+  assert.equal(reviewed.result.isError, false)
+  const reviews = (await c.personJson('/agents/api/reviews')).reviews
+  const review = reviews.find(row => row.decision_id === reviewed.decision.id)
+  assert.ok(review)
+  const path = '/agents/api/reviews/' + review.id + '/flag'
+  assert.equal((await h.send(path, {}, cookie)).status, 403)
+  assert.ok(!(await eventList(c, { after: cursor })).events.some(event => event.type === 'review.flagged'))
+  assert.equal((await h.send(path, {}, h.owner)).status, 200)
+  const flagged = (await eventList(c, { after: cursor })).events.find(event => event.type === 'review.flagged')
+  assert.ok(flagged)
+  assert.equal(flagged.decision, 'review')
+  assert.deepEqual(flagged.classes, [{ class: 'standard', facts: { measure: 1 } }])
+  assert.equal(flagged.actor.person.id, (await h.state()).actor.id)
+  assert.ok(!JSON.stringify(await eventList(outsider, { after: cursor })).includes(review.id))
+  expected.push(flagged)
+  const ids = new Set(expected.map(event => event.id))
+  const replay = (await eventList(c, { after: cursor })).events.filter(event => ids.has(event.id))
+  assert.deepEqual(replay, expected)
+  assert.ok(!JSON.stringify(replay).includes('Private synthetic'))
+  assert.ok(!JSON.stringify(replay).includes(address('synthetic-cabin-host')))
+  for (const event of replay) assert.deepEqual(Object.keys(event).sort(),
+    ['actor', 'at', 'classes', 'decision', 'decision_id', 'id', 'type', 'uri', ...(event.type === 'approval.decided' ? ['state'] : [])].sort())
+  await h.restart()
+  assert.deepEqual((await eventList(c, { after: cursor })).events.filter(event => ids.has(event.id)), replay)
+  await c.adopt(policy('review'), { revoked: { agents: [agent.agentId], consents: [] } })
+  assert.equal((await agent.tool('cabin.events.list')).status, 401)
+  assert.deepEqual((await eventList(c, { after: cursor })).events.filter(event => ids.has(event.id)), replay)
+  const adopted = (await eventList(c)).events.findLast(event => event.type === 'policy.adopted')
+  t.diagnostic(`PROBE BASE-AGENT-010 6 ${document.rules[0].do}: MCP prepare, native approve or reject and review flag -> exact classes and dispositions, unauthorized person refused without effects, ordered durable replay and revoked agent refused; policy.adopted fields=${Object.keys(adopted).sort().join(',')}`)
+}
+
 /** Consume the public live transport without waiting for the whole SSE response. */
 export async function listen(h, client, uris, options = {}) {
   const { accessToken } = await import('../src/modules/agent-door/conformance/crypto.mjs')

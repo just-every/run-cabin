@@ -3,10 +3,10 @@ import test from 'node:test'
 import { randomUUID } from 'node:crypto'
 import { accessToken, autonomousPolicy, heldPolicy } from '../src/modules/agent-door/conformance/crypto.mjs'
 import { errorCode } from '../src/modules/agent-door/conformance/protocol.mjs'
-import { address, draftOperations, eventFixtures, eventHarness, eventList, listen, nativePreparation, preparations, recordUri } from './agent-events-support.mjs'
+import { address, decisionEvents, draftOperations, eventFixtures, eventHarness, eventList, listen, nativePreparation, preparations, recordUri } from './agent-events-support.mjs'
 
 test('Retained polling replays native and agent draft preparations in order across restart without duplicate retries', { timeout: 120000 }, async t => {
-  const { h, c, pair } = await eventHarness()
+  const setup = await eventHarness(), { h, c, pair } = setup
   try {
     const f = await eventFixtures(h)
     await pair()
@@ -100,6 +100,7 @@ test('Retained polling replays native and agent draft preparations in order acro
     assert.equal(localEvent.actor.kind, 'agent')
     assert.deepEqual(localEvent.actor.agent, { id: `cabin-key:${legacy.id}`, name: 'Synthetic legacy coordinator' })
     assert.equal(localEvent.actor.label, 'Synthetic legacy coordinator for Jordan Venue')
+    for (const document of [autonomousPolicy(), heldPolicy()]) await decisionEvents(setup, f, document, t)
   } finally { await h.close() }
 })
 
