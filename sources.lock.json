@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "9ffcf79b4003e6e5f7063ef85cad283f5824c6789d78f58ddcd56153524fc570",
+      "sha256": "686417b1e2ed94d11fe842c2876d723ceb670a70014bdde195ac03faa3d0a954",
       "executable": false
     },
     "DEMO.md": {
@@ -6143,6 +6143,10 @@
       "sha256": "42f2ff608f6d60934eac217522b852a4545918c194d5abb4751ca4805f69b802",
       "executable": false
     },
+    "tests/agent-role-parity.test.mjs": {
+      "sha256": "92bf4bf3365b71e884fe3413bfb1c5d38b152f8db2f6062966968e72dd725fa7",
+      "executable": false
+    },
     "tests/allocations.test.mjs": {
       "sha256": "cf12929959df7d6a9461939ca170b5c4f10a1e681d5d156aa444b87612c06c54",
       "executable": false
@@ -6624,7 +6628,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "45585a405d8a9e1730cf76467bcfdb98d844d086477b24ea972afdddab1fc960",
+      "sha256": "9a75387f4362ca6aa328e503653ae6cb5deb363cf24940e5f6d16983585a8ee8",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {
