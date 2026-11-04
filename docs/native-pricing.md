@@ -7,9 +7,32 @@ extra-guest fees independently. Fixed adjustments exclude fees; selecting fees
 with a fixed adjustment is refused before anything is saved. Changes require the
 current home revision and an active human manager or owner.
 
-The source is the home's explicitly saved native nightly and dated rates.
-These settings do not connect a PRICE-001 provider. The channel preview is a local
-calculation, with no OTA publication, acknowledgment or settlement claim.
+The source is the home's explicitly saved native nightly and dated rates,
+with any reviewed one-night override. These settings do not connect a pricing
+provider. The channel preview is a local calculation, with no OTA publication,
+acknowledgment or settlement claim.
+
+In a home's **Native rate settings**, save a positive USD base floor and a
+ceiling at least as high. Every saved default rate, dated rule and active manual
+override must fit those limits. Invalid settings and rates are refused without
+saving. These limits protect the native base before PRICE-002 adjustments;
+the final nightly calculation floor above still protects discounted prices.
+A channel markup can exceed the native base ceiling because that ceiling governs
+the base, not the adjusted guest price.
+
+The **Native nightly planner** shows one to 62 nights in the property's time
+zone. Its first night is included and its end is excluded. Each night names its
+default, dated or manual source and source revision. A manual override replaces
+exactly one night's base, leaving surrounding seasonal and weekday rules intact.
+To change a night, choose **Change one night**, enter the rate and reason, and
+preview it. **Apply exact nightly change** applies only that preview, for its
+preparer's current authority and the unchanged home and time zone, within 15
+minutes. A stale, expired or replayed preview changes nothing. Restoring the saved
+rule uses the same preview and apply flow. History retains every applied revision,
+reason, prior source and underlying rule, including superseded overrides.
+Unapplied previews are not persisted or exported; restored homes require a fresh
+preview.
+
 
 Each night uses the saved native rate, then the channel adjustment, then the
 length discount. Seven through 27 nights use weekly savings; 28 nights and above
@@ -32,12 +55,14 @@ excluded. Processor fees, provider-specific commission bases and actual payout
 reconciliation remain outside this estimate. Direct has zero channel commission.
 
 Public quotes, staff quote versions and signed direct stays retain the exact
-calculation: native rate and dated-rate ID per night, selected channel adjustment,
+calculation: native rate, source revision, manual override revision and dated-rate
+ID per night, native limits and their revision, selected channel adjustment,
 included fee choices, weekly and monthly percentages, chosen discount, floor,
 requested and final amounts, home revision and pricing-policy revision.
 A booking-settings edit retains these settings. A pricing edit invalidates
 unsigned checkout and staff quote acceptance; it never reprices a signed stay.
-Restart retains both signed calculations and earlier staff quote versions.
+Restart and archive restore retain both signed calculations and earlier staff
+quote versions. Restored booking links and payment effects remain inactive.
 
 Airbnb, Vrbo and Booking.com rate publication, accepted readback, discount plans,
 unsupported provider combinations, externally booked reservation provenance and

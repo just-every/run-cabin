@@ -1,4 +1,4 @@
-import { calculatePricing } from '../pricing/calculate'
+import { calculatePricing,nativeNight,nativeAmount,nativePlan } from '../pricing/calculate'
 import type { PricingChannel } from '../pricing/types'
 import { capacityBookings, type Capacity } from '../capacity'
 import { policy as cancellationPolicy } from '../reservations/finance'
@@ -23,12 +23,13 @@ export function quote(home:DirectHome,bookings:Booking[],input:Record<string,unk
  const held=capacityBookings({...capacity,bookings},home.propertyId);need(!held.some(b=>overlaps(b,{start,end})),'These nights are no longer available. Choose other dates.',409)
  if(home.preparationNights)need(!held.some(b=>overlaps({start:addDays(b.start.slice(0,10),-home.preparationNights!),end:addDays(b.end.slice(0,10),home.preparationNights!)},{start,end})),`Leave ${home.preparationNights} preparation nights before and after an existing stay.`,409)
  if(home.minGapNights)for(const b of held){const before=(Date.parse(start)-Date.parse(b.end.slice(0,10)))/86_400_000,after=(Date.parse(b.start.slice(0,10))-Date.parse(end))/86_400_000;need(!(before>0&&before<home.minGapNights)&&!(after>0&&after<home.minGapNights),`These dates leave a gap shorter than ${home.minGapNights} nights. Choose dates next to an existing stay or leave a longer gap.`)}
- const nightlyRates=Array.from({length:nights},(_,i)=>{const date=addDays(start,i),weekday=new Date(date+'T00:00:00Z').getUTCDay(),rate=home.rates?.find(r=>r.start<=date&&date<r.end&&(r.weekday===null||r.weekday===weekday));return {date,amountCents:rate?.nightlyCents??home.nightlyCents}})
+ const nativeNights=Array.from({length:nights},(_,i)=>nativeNight(home,addDays(start,i)))
+ const nightlyRates=nativeNights.map(n=>({date:n.date,amountCents:nativeAmount(home,n.amountCents)})),plan=nativePlan(home,nativeNights)
  const rawExtraGuestCents=Math.max(0,guests-home.includedGuests)*home.extraGuestCents*nights
  const pricing=home.pricing?calculatePricing(home,nightlyRates,rawExtraGuestCents,channel,offer?1000:0):undefined
  const baseRentCents=pricing?.rentBeforeReturningCents??nightlyRates.reduce((sum,r)=>sum+r.amountCents,0),discountCents=pricing?.returningDiscountCents??(offer?Math.floor((baseRentCents*1000+5000)/10000):0),rentCents=pricing?.rentCents??baseRentCents-discountCents,extraGuestCents=pricing?.extraGuestCents??rawExtraGuestCents,cleaningCents=pricing?.cleaningCents??home.cleaningCents,base=rentCents+extraGuestCents+cleaningCents
  const taxes:Quote['taxes']=[];for(const [label,bps,jurisdiction]of [[home.taxLabel,home.taxBps,'state'],[home.countyTaxLabel,home.countyTaxBps,'county']] as const)if(bps)taxes.push({label,bps,jurisdiction,amountCents:Math.floor((base*bps+5000)/10000)})
  const totalCents=base+taxes.reduce((s,t)=>s+t.amountCents,0);need(Number.isSafeInteger(totalCents)&&totalCents<=99_999_999,'This quote exceeds the payment limit')
  const inventoryRevision=capacity.propertyProfiles?.find(p=>p.propertyId===home.propertyId)?.revision
- return {...(pricing?{pricing}:{}),...(home.rates?.length?{nightlyRates}:{}),...(inventoryRevision?{inventoryRevision}:{}),cancellationPolicy:structuredClone(home.cancellationPolicy),start,end,guests,nights,nightlyCents:home.nightlyCents,rentCents,...(offer?{baseRentCents,discountCents,returningGuest:{offerId:offer.id,guestId:offer.guestId,name:offer.guestName,discountBps:1000}}:{}),cleaningCents,extraGuestCents,taxes,totalCents,depositCents:home.depositCents}
+ return {...(plan?{nativePlan:plan}:{}),...(pricing?{pricing}:{}),...(home.rates?.length||plan?{nightlyRates}:{}),...(inventoryRevision?{inventoryRevision}:{}),cancellationPolicy:structuredClone(home.cancellationPolicy),start,end,guests,nights,nightlyCents:home.nightlyCents,rentCents,...(offer?{baseRentCents,discountCents,returningGuest:{offerId:offer.id,guestId:offer.guestId,name:offer.guestName,discountBps:1000}}:{}),cleaningCents,extraGuestCents,taxes,totalCents,depositCents:home.depositCents}
 }

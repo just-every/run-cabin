@@ -48,3 +48,42 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   await assert.rejects(exec(process.execPath,[cli,'import','--input',archive,'--journal',journal,'--yes'],{cwd:erased,env,maxBuffer:2e6}),error=>error.code===4,'a later inquiry erasure journal refuses an older unredacted archive')
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
 })
+
+test('native planner archive retains signed base-rate provenance and history without reviving a prepared change',{timeout:240000},async()=>{
+ const temporary=await mkdtemp(join(tmpdir(),'cabin-native-archive-')),source=join(temporary,'source'),restored=join(temporary,'restored'),archive=join(temporary,'native.rer');let h
+ try{
+  for(const root of [source,restored]){
+   await mkdir(root)
+   for(const name of ['package.json','pnpm-lock.yaml','OPERATIONS.json','RUN-LOCALLY.md','ACCEPTANCE.md','SEED-COMMAND-CONTRACT.md','OPERATIONS.md','.node-version','wrangler.jsonc','deploy.json','rer-setup.json','scripts','src','migrations'])await cp(name,join(root,name),{recursive:true})
+   await symlink(resolve('node_modules'),join(root,'node_modules'),'dir')
+  }
+  const env={...process.env,CI:'true',WRANGLER_SEND_METRICS:'false'};delete env.RER_LOCAL_OPERATION;delete env.RER_LOCAL_STATE_PATH
+  await exec(process.execPath,[resolve('node_modules/wrangler/bin/wrangler.js'),'d1','migrations','apply','foundation','--local'],{cwd:source,env,maxBuffer:2e6})
+  h=await quoteHarness({root:source})
+  const native=async(name,input={})=>{const home=(await h.state()).direct.homes[0];return h.cmd('direct.native.'+name,{propertyId:home.propertyId,revision:home.revision,...input})}
+  await native('limits',{nativeFloorDollars:'100',nativeCeilingDollars:'250'})
+  const proposal=await native('preview',{date:h.input.start,action:'override',nativeDollars:'200',reason:'Synthetic saved base rate'})
+  await native('apply',{previewToken:proposal.token})
+  const quote=await h.cmd('quote.issue',h.input),path=await h.link(quote),current=(await h.state()).direct.homes[0]
+  assert.equal(quote.versions[0].price.totalCents,63800)
+  const accepted=await h.accept(quote,path,{homeRevision:current.revision});assert.equal(accepted.status,200,accepted.text)
+  h.pay();const paid=await h.send('/book/stay/'+accepted.value.token+'/refresh',{});assert.equal(paid.status,200,paid.text);assert.equal(paid.value.stay.phase,'confirmed')
+  const signed=structuredClone((await h.state()).direct.stays[0].quote),staff=structuredClone((await h.state()).staffQuotes[0].versions[0])
+  assert.deepEqual(signed.nativePlan,staff.price.nativePlan)
+  const edit=await native('preview',{date:h.input.start,action:'override',nativeDollars:'240',reason:'Synthetic later rate revision'});await native('apply',{previewToken:edit.token})
+  const pending=await native('preview',{date:h.input.start,action:'clear',reason:'Unapplied synthetic proposal'})
+  const history=structuredClone((await h.state()).direct.homes[0].nativePlanner.history),identity={auth:h.auth,owner:h.owner}
+  await h.restart();assert.deepEqual((await h.state()).direct.stays[0].quote,signed);assert.deepEqual((await h.state()).staffQuotes[0].versions[0],staff)
+  await h.close();h=null
+  const cli=resolve('node_modules/@runeditrun/rer/global/rer.mjs')
+  await exec(process.execPath,[cli,'export','--output',archive],{cwd:source,env,maxBuffer:2e6})
+  const bytes=await readFile(archive,'utf8');assert.ok(!bytes.includes(pending.token),'unapplied previews are not stored or exported')
+  await exec(process.execPath,[cli,'import','--input',archive,'--yes'],{cwd:restored,env,maxBuffer:2e6})
+  h=await harness({root:restored,...identity,outbound:()=>assert.fail('Restored native prices perform no provider operation')})
+  const cookie=await h.signIn(h.auth.OWNER_EMAIL),state=await h.state(cookie),home=state.direct.homes[0]
+  assert.deepEqual(state.direct.stays[0].quote,signed);assert.deepEqual(state.staffQuotes[0].versions[0],staff);assert.deepEqual(home.nativePlanner.history,history);assert.equal(home.enabled,false)
+  assert.equal((await h.send('/book/stay/'+accepted.value.token)).status,404)
+  await h.cmd('direct.native.apply',{propertyId:home.propertyId,revision:home.revision,previewToken:pending.token},cookie,409)
+  assert.deepEqual((await h.state(cookie)).direct.homes[0],home,'restored preparation changes nothing')
+ }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
+})

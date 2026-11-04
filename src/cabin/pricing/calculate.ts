@@ -1,7 +1,34 @@
 import { integer,need } from '../model'
 import { decimalUnits } from '../direct/presentation'
 import type { DirectHome } from '../direct/types'
-import { pricingChannels,type PricingChannel,type PricingPolicy,type PriceSnapshot,type ChannelAdjustment } from './types'
+import { pricingChannels,type PricingChannel,type PricingPolicy,type PriceSnapshot,type ChannelAdjustment,type NativeNight,type NativePlan } from './types'
+import { addDays } from '../inventory'
+/** A manual night takes precedence without replacing its surrounding dated rule. */
+export function nativeNight(home:DirectHome,date:string,manual=true):NativeNight {
+ const weekday=new Date(date+'T00:00:00Z').getUTCDay(),rule=home.rates?.find(r=>r.start<=date&&date<r.end&&(r.weekday===null||r.weekday===weekday))
+ const override=manual?[...home.nativePlanner?.history??[]].reverse().find(r=>r.date===date):undefined
+ return override?.action==='override'?{date,amountCents:override.amountCents,source:'manual',rateId:rule?.id??null,revision:override.revision}:{date,amountCents:rule?.nightlyCents??home.nightlyCents,source:rule?'dated':'default',rateId:rule?.id??null,revision:home.revision}
+}
+export function nativeAmount(home:DirectHome,amount:number){
+ const p=home.nativePlanner
+ need(!p||amount>=p.floorCents&&amount<=p.ceilingCents,'Native base rate must be within the saved floor and ceiling')
+ return amount
+}
+export function validateNativeRates(home:DirectHome){
+ nativeAmount(home,home.nightlyCents)
+ for(const r of home.rates??[])nativeAmount(home,r.nightlyCents)
+ const seen=new Set<string>()
+ for(const r of [...home.nativePlanner?.history??[]].reverse())if(!seen.has(r.date)){seen.add(r.date);if(r.action==='override')nativeAmount(home,r.amountCents)}
+}
+export function nativeRange(home:DirectHome,start:string,end:string){
+ const count=(Date.parse(end)-Date.parse(start))/86_400_000
+ need(Number.isInteger(count)&&count>0&&count<=62,'Choose a range of 1 to 62 property-local nights; the end date is excluded')
+ return Array.from({length:count},(_,i)=>nativeNight(home,addDays(start,i)))
+}
+export function nativePlan(home:DirectHome,nights:NativeNight[]):NativePlan|undefined {
+ const p=home.nativePlanner
+ return p?{source:'host-saved-rates',homeRevision:home.revision,limitsRevision:p.revision,floorCents:p.floorCents,ceilingCents:p.ceilingCents,nights:structuredClone(nights)}:undefined
+}
 export const unchangedAdjustment = ():ChannelAdjustment=>({kind:'percent',value:0,includeCleaning:false,includeExtraGuests:false,commissionBps:0})
 const rounded=(amount:number,bps:number)=>Math.floor((amount*bps+5000)/10000)
 export function pricingChannel(value:unknown):PricingChannel {
@@ -30,8 +57,8 @@ export function calculatePricing(home:DirectHome,rates:{date:string;amountCents:
   const adjusted=a.kind==='percent'?rounded(r.amountCents,10000+a.value):r.amountCents+a.value
   const afterLength=adjusted-rounded(Math.max(0,adjusted),discountBps),beforeReturning=Math.max(p.floorCents,afterLength)
   const requestedCents=afterLength-rounded(Math.max(0,afterLength),returningBps),amountCents=Math.max(p.floorCents,requestedCents)
-  const weekday=new Date(r.date+'T00:00:00Z').getUTCDay(),rule=home.rates?.find(v=>v.start<=r.date&&r.date<v.end&&(v.weekday===null||v.weekday===weekday))
-  return {date:r.date,rateId:rule?.id??null,baseCents:r.amountCents,adjustmentCents:adjusted-r.amountCents,lengthDiscountCents:Math.max(0,adjusted-beforeReturning),returningDiscountCents:beforeReturning-amountCents,requestedCents,amountCents,floorCents:p.floorCents,floorApplied:requestedCents<p.floorCents}
+  const native=nativeNight(home,r.date)
+  return {...(home.nativePlanner?{native}:{}),date:r.date,rateId:native.rateId,baseCents:r.amountCents,adjustmentCents:adjusted-r.amountCents,lengthDiscountCents:Math.max(0,adjusted-beforeReturning),returningDiscountCents:beforeReturning-amountCents,requestedCents,amountCents,floorCents:p.floorCents,floorApplied:requestedCents<p.floorCents}
  })
  const cleaningCents=a.kind==='percent'&&a.includeCleaning?rounded(home.cleaningCents,10000+a.value):home.cleaningCents
  const adjustedExtra=a.kind==='percent'&&a.includeExtraGuests?rounded(extraGuestCents,10000+a.value):extraGuestCents

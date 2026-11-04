@@ -12,7 +12,7 @@ export async function pricingBrowserJourney(){
  try{
   await pricingHome(h)
   const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:h.origin}]);const page=await context.newPage();page.setDefaultTimeout(10000)
-  const screenshots=async name=>{for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.screenshot({path:join(directory,name+'-'+width+'.png'),fullPage:true})}await page.setViewportSize({width:1440,height:1000})}
+  const screenshots=async(name,target)=>{for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await (target??page).screenshot({path:join(directory,name+'-'+width+'.png'),...(target?{}:{fullPage:true})})}await page.setViewportSize({width:1440,height:1000})}
   const settings=async()=>{await page.getByText('Pricing settings',{exact:true}).click()}
   const limits=async floor=>{
    await settings();const form=page.locator('form').filter({has:page.getByRole('button',{name:'Save floor and discounts',exact:true})})
@@ -51,5 +51,42 @@ export async function pricingBrowserJourney(){
   await publicQuote('2030-04-08');await expect(page.getByText('Weekly saving (10%)',{exact:true})).toBeVisible();await expect(page.getByText('$1,209.08',{exact:true})).toBeVisible();await screenshots('weekly-direct')
   await publicQuote('2030-04-29');await expect(page.getByText('Monthly saving (20%)',{exact:true})).toBeVisible();await expect(page.getByText('$4,275.01',{exact:true})).toBeVisible();await expect(page.getByRole('status')).toContainText('Floor conflict');await page.getByText('Saved price calculation',{exact:true}).click();await expect(page.getByText(/requested \$144.01, floor enforced/).first()).toBeVisible()
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await screenshots('monthly-floor-direct')
+  await nativePlannerBrowser(h,page,screenshots)
  }finally{await context.close();await browser.close();await h.close()}
+}
+
+
+async function nativePlannerBrowser(h,page,screenshots){
+ const home=() => h.state().then(s=>s.direct.homes[0])
+ let cfg=await home()
+ await h.cmd('direct.rate.save',{propertyId:cfg.propertyId,revision:cfg.revision,start:'2030-02-01',end:'2030-02-03',weekday:'all',nightlyCents:21000})
+ await page.goto(h.origin+'/app/direct');await page.getByText('Native rate settings',{exact:true}).click()
+ const limits=page.locator('form').filter({has:page.getByRole('button',{name:'Save native limits',exact:true})})
+ await limits.getByLabel('Native base floor (USD)').fill('100.00');await limits.getByLabel('Native base ceiling (USD)').fill('250.00');await screenshots('native-limits',limits)
+ await limits.getByRole('button',{name:'Save native limits',exact:true}).click();await expect(page.getByRole('alert')).toHaveCount(0)
+ const planner=page.getByRole('article',{name:'Native planner for Synthetic Cabin',exact:true})
+ const range=planner.locator('form').filter({has:page.getByRole('button',{name:'View nightly range',exact:true})})
+ await range.getByLabel('Planner first night').fill('2030-01-31');await range.getByLabel('Planner end (excluded)').fill('2030-02-04');await range.getByRole('button',{name:'View nightly range',exact:true}).click()
+ await expect(planner.getByRole('list',{name:'Native nightly rates'}).getByRole('listitem')).toHaveCount(4)
+ await expect(planner).toContainText('2030-02-01 · $210.00 · Dated rule');await expect(planner).toContainText('2030-02-03 · $180.01 · Default rate')
+ await planner.getByText('Change one night',{exact:true}).click()
+ const override=planner.locator('form').filter({has:page.getByRole('button',{name:'Preview nightly change',exact:true})})
+ const prepare=async amount=>{
+  await override.getByLabel('Override night').fill('2030-02-01');await override.getByLabel('Manual base rate (USD)').fill(amount);await override.getByLabel('Rate change reason').fill('Synthetic peak-night correction');await override.getByRole('button',{name:'Preview nightly change',exact:true}).click()
+ }
+ await prepare('99.99');await expect(page.getByRole('alert')).toContainText('within the saved floor and ceiling')
+ await planner.getByText('Change one night',{exact:true}).click();await prepare('240.00')
+ const preview=page.getByRole('article',{name:'Native rate change preview',exact:true})
+ await expect(preview).toContainText('$210.00 (Dated rule) → $240.00 (Manual override)');await expect(preview).toContainText('Channel adjustments and discounts apply afterward')
+ assert.equal((await home()).nativePlanner.history.length,0,'preview has not applied the new rate')
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'native planner fits the desktop')
+ await screenshots('native-preview',planner)
+ const stale=await preview.locator('form').getAttribute('action'),body=await preview.locator('form').evaluate(f=>Object.fromEntries(new FormData(f)))
+ await preview.getByRole('button',{name:'Apply exact nightly change',exact:true}).click()
+ assert.equal((await home()).nativePlanner.history.length,1)
+ await page.getByText('Native rate history (1)',{exact:true}).click();await expect(planner).toContainText('Synthetic peak-night correction');await screenshots('native-applied-history',planner)
+ await page.goto(h.origin+'/app/direct');await page.evaluate(async({path,fields})=>{const response=await fetch(path,{method:'POST',body:new URLSearchParams(fields)});document.open();document.write(await response.text());document.close()},{path:stale,fields:body})
+ await expect(page.getByRole('alert')).toContainText('changed');assert.equal((await home()).nativePlanner.history.length,1);await screenshots('native-stale-refusal',page.locator('main'))
+ await page.goto(h.origin+'/book/synthetic-cabin');await page.getByLabel('Arrival',{exact:true}).fill('2030-02-01');await page.getByLabel('Checkout',{exact:true}).fill('2030-02-04');await page.getByLabel('Guests',{exact:true}).fill('2');await page.getByRole('button',{name:/Check price and availability/}).click()
+ await page.getByText('Native base-rate source',{exact:true}).click();await expect(page.getByText(/2030-02-01 · Manual override · \$240.00/)).toBeVisible();await expect(page.getByText(/2030-02-02 · Dated rule · \$210.00/)).toBeVisible();await expect(page.getByText('$705.02',{exact:true})).toBeVisible();await screenshots('native-public-quote',page.locator('main'))
 }

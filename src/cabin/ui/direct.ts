@@ -1,4 +1,4 @@
-import { pricingSettings,pricingPreview,priceDetails } from '../pricing/ui'
+import { pricingSettings,pricingPreview,priceDetails,nativeSettings,nativePlanner,nativeDetails } from '../pricing/ui'
 import { collectionPanel,manualReceiptPanel } from '../direct/collection-ui'
 import { promotionPanel } from '../promotions/ui'
 import { websiteEditor } from '../website/ui'
@@ -71,7 +71,7 @@ function homeSettings(state: any, property: any) {
     + `<div class="pair">${optional('countyTaxLabel', 'County tax label', home.countyTaxLabel)}${percent('countyTaxBps', 'County tax rate', home.countyTaxBps)}</div>`
     + '<h3>Guest agreement and identity</h3>' + area('agreement', 'Agreement guests must sign', home.agreement, 'maxlength="20000"')
     + verificationPolicyFields(state,home)
-  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}${pricingSettings(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
+  return `<article class="record"><div class="record-title"><h3>${h(property.name)}</h3>${badge(saved?.enabled ? 'Published' : 'Unpublished')}</div>${publicUrl ? `<p>Public booking URL: <a href="${h(publicUrl)}">${h(publicUrl)}</a>${saved.enabled ? '' : ' · currently unpublished'}</p>` : '<p class="muted">Save an address to create this home’s public booking URL.</p>'}${saved ? `<p class="home-line">${h(money(saved.nightlyCents).replace(/\.00$/, ''))} a night · ${h(saved.minNights)}-night minimum · up to ${h(saved.maxGuests)} guests${saved.depositCents ? ` · ${h(money(saved.depositCents))} deposit` : ''}</p>${savedRules(saved)}${datedRates(saved)}${nativeSettings(saved)}${pricingSettings(saved)}` : ''}<details><summary>${saved ? 'Edit booking settings' : 'Set up direct bookings'}</summary>${form('direct.configure', 'direct', fields, 'Save booking settings')}</details></article>`
 }
 
 function quote(stay: any) {
@@ -83,7 +83,7 @@ function quote(stay: any) {
     ...q.taxes.map((tax: any) => line(`${tax.label} (${rate(tax.bps)})`, money(tax.amountCents))),
     line('Booking total', money(q.totalCents)),
     line('Separate damage deposit authorization', money(q.depositCents)),
-  ].join('')}</ul>${q.pricing?priceDetails(q.pricing):''}</details>`
+  ].join('')}</ul>${q.pricing?priceDetails(q.pricing):''}${q.nativePlan?nativeDetails(q.nativePlan):''}</details>`
 }
 
 function depositActions(stay: any, managed: boolean) {
@@ -129,6 +129,7 @@ export function direct(state: any,result?:any) {
     + manualReceiptPanel(state)
     + panel('Home booking settings', state.properties.map((property: any) => homeSettings(state, property)).join('') || empty('Add a property in Properties & people before setting up direct bookings.'))
     + pricingPreview(state,result)
+    + nativePlanner(state,result)
     + agreementPanel(state)
     + verificationQueue(state)
     + panel('Direct stays', stays.map((stay: any) => stayRecord(state, stay)).join('') || empty('Direct booking holds and completed stays will appear here.'))

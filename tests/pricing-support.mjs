@@ -99,3 +99,63 @@ export async function pricingJourney(){
   const retained=await h.send('/book/stay/'+accepted.value.token);assert.equal(retained.status,200);assert.match(retained.text,/Floor conflict/);assert.match(retained.text,/1,125\.01/)
  }finally{await h.close()}
 }
+
+export async function nativePlannerJourney(){
+ let creates=0,charged=0
+ const h=await harness({now:'2030-01-01T02:00:00Z',auth:{STRIPE_TEST_SECRET_KEY:['sk','test','syntheticcabin2'].join('_')},outbound:async request=>{
+  const url=new URL(request.url);assert.equal(url.hostname,'api.stripe.com');assert.equal(url.pathname,'/v1/checkout/sessions');assert.equal(request.method,'POST')
+  const f=new URLSearchParams(await request.text());creates++;charged=[...f].filter(([k])=>/line_items\[\d+\]\[price_data\]\[unit_amount\]/.test(k)).reduce((n,[,v])=>n+Number(v),0)
+  return Response.json({id:'synthetic-cabin-2',url:'https://checkout.stripe.com/synthetic-cabin-2'})
+ }})
+ try{
+  const p=await pricingHome(h),propertyId=p.property.id
+  const native=async(name,input={},status=200,cookie=h.owner)=>{await p.refresh();return h.cmd('direct.native.'+name,{propertyId,revision:p.home.revision,...input},cookie,status)}
+  const range=async(start='2030-01-31',end='2030-02-04')=>native('range',{start,end})
+  const limits={nativeFloorDollars:'100',nativeCeilingDollars:'250'}
+  await native('limits',limits)
+  await h.cmd('direct.rate.save',{propertyId,revision:(await p.refresh()).revision,start:'2030-02-01',end:'2030-02-03',weekday:'all',nightlyCents:21000})
+  await h.cmd('direct.rate.save',{propertyId,revision:(await p.refresh()).revision,start:'2030-03-01',end:'2030-03-08',weekday:'5',nightlyCents:22000})
+  let r=await range();assert.equal(r.timeZone,'America/New_York');assert.equal(r.today,'2029-12-31');assert.deepEqual(r.nights.map(n=>[n.date,n.amountCents,n.source]),[['2030-01-31',18001,'default'],['2030-02-01',21000,'dated'],['2030-02-02',21000,'dated'],['2030-02-03',18001,'default']])
+  assert.deepEqual((await range('2030-03-01','2030-03-09')).nights.map(n=>n.amountCents),[22000,18001,18001,18001,18001,18001,18001,18001])
+  assert.equal((await range('2030-01-01','2030-03-04')).nights.length,62)
+  const before=structuredClone(await p.refresh())
+  for(const data of [{nativeFloorDollars:'0',nativeCeilingDollars:'250'},{nativeFloorDollars:'251',nativeCeilingDollars:'250'},{nativeFloorDollars:'100',nativeCeilingDollars:'170'},{nativeFloorDollars:'100.001',nativeCeilingDollars:'250'}])await native('limits',data,400)
+  for(const [start,end]of [['2030-02-01','2030-02-01'],['2030-02-04','2030-02-01'],['2030-02-30','2030-03-03'],['2030-01-01','2030-03-05']])await native('range',{start,end},400)
+  const change={date:'2030-02-01',action:'override',nativeDollars:'100',reason:'Synthetic one-night host decision'}
+  for(const nativeDollars of ['99.99','250.01'])await native('preview',{...change,nativeDollars},400)
+  await h.cmd('direct.rate.save',{propertyId,revision:p.home.revision,start:'2030-05-01',end:'2030-05-02',weekday:'all',nightlyCents:25001},h.owner,400)
+  await h.cmd('direct.configure',{...p.input,revision:p.home.revision,nightlyCents:9999},h.owner,400)
+  assert.deepEqual(await p.refresh(),before);assert.equal(creates,0)
+  await native('apply',{previewToken:'synthetic-cabin-no-preview'},409)
+  const cleaner=await h.person('SyntheticPlannerCleaner'),manager=await h.person('SyntheticPlannerManager','manager')
+  await native('range',{start:'2030-02-01',end:'2030-02-02'},403,cleaner.cookie)
+  const preview=await native('preview',change);assert.deepEqual(await p.refresh(),before,'preview changes no saved rates')
+  await native('apply',{previewToken:preview.token},403,manager.cookie)
+  await native('apply',{previewToken:preview.token,date:'2030-02-02',nativeDollars:'1'})
+  r=await range();assert.deepEqual(r.nights.map(n=>n.amountCents),[18001,10000,21000,18001]);assert.equal(r.nights[1].source,'manual');assert.equal(r.nights[1].rateId,preview.before.rateId)
+  const afterApply=structuredClone(await p.refresh());await native('apply',{previewToken:preview.token},409);assert.deepEqual(await p.refresh(),afterApply,'replay changes nothing')
+  const history=p.home.nativePlanner.history;assert.equal(history.length,1);assert.equal(history[0].before.amountCents,21000);assert.equal(history[0].underlying.rateId,preview.before.rateId);assert.equal(history[0].homeRevision,preview.homeRevision)
+  const upper=await native('preview',{...change,nativeDollars:'250'});await native('apply',{previewToken:upper.token});assert.equal((await range()).nights[1].amountCents,25000)
+  const clear=await native('preview',{date:change.date,action:'clear',reason:'Restore surrounding saved rule'});await native('apply',{previewToken:clear.token});assert.deepEqual((await range()).nights.map(n=>n.amountCents),[18001,21000,21000,18001]);assert.equal(p.home.nativePlanner.history.length,3)
+  const stale=await native('preview',change);await native('limits',limits);const retained=structuredClone(await p.refresh());await native('apply',{previewToken:stale.token},409);assert.deepEqual(await p.refresh(),retained)
+  const revoked=await native('preview',change,200,manager.cookie);await h.cmd('member.save',{...manager,active:false});await native('apply',{previewToken:revoked.token},403,manager.cookie)
+  await p.limits('150','0','0');await p.channel('booking-com','percent','15');await p.channel('vrbo','fixed','20',{adjustmentDirection:'markdown'})
+  const floor=await native('preview',change);await native('apply',{previewToken:floor.token})
+  const q=await h.send('/book/synthetic-cabin/quote',{start:'2030-02-01',end:'2030-02-04',guests:2});assert.equal(q.status,200,q.text);assert.equal(q.value.quote.rentCents,54001);assert.equal(q.value.quote.totalCents,61502)
+  assert.deepEqual(q.value.quote.nativePlan.nights.map(n=>n.amountCents),[10000,21000,18001]);assert.equal(q.value.quote.pricing.nights[0].floorCents,15000);assert.equal(q.value.quote.nativePlan.floorCents,10000)
+  await p.refresh();const booking=(await p.preview('booking-com','2030-02-01','2030-02-03',2)).quote;assert.deepEqual(booking.pricing.nights.map(n=>n.baseCents),[10000,21000]);assert.deepEqual(booking.pricing.nights.map(n=>n.amountCents),[15000,24150])
+  const unsigned=await h.cmd('quote.issue',{propertyId,guestName:'Synthetic guest',email:['synthetic-cabin-6','example.invalid'].join('@'),start:'2030-02-01',end:'2030-02-04',guests:2,expiresAt:'2030-01-02T17:00:00Z',hold:'no'})
+  assert.deepEqual(unsigned.versions[0].price.nativePlan,q.value.quote.nativePlan);assert.deepEqual(unsigned.versions[0].price.pricing,q.value.quote.pricing)
+  const signed={start:'2030-02-10',end:'2030-02-12',guests:2,homeRevision:(await p.refresh()).revision,guestName:'Synthetic guest',email:['synthetic-cabin-7','example.invalid'].join('@'),signature:'Synthetic guest',consent:'yes'}
+  const accepted=await h.send('/book/synthetic-cabin/checkout',signed);assert.equal(accepted.status,200,accepted.text);assert.equal(creates,1);assert.equal(charged,43503)
+  const snapshot=structuredClone((await h.state()).direct.stays[0].quote)
+  const edit=await native('preview',{...change,date:'2030-02-10',nativeDollars:'240'});await native('apply',{previewToken:edit.token})
+  const checkout=await h.send('/book/synthetic-cabin/checkout',{...signed,start:'2030-02-15',end:'2030-02-17'});assert.equal(checkout.status,409);assert.match(checkout.value.error,/terms changed/);assert.equal(creates,1)
+  const link=await h.send('/api/cabin/quotes/'+unsigned.id+'/link',undefined,h.owner);assert.equal(link.status,303)
+  const staleQuote=await h.send(link.headers.get('location'));assert.equal(staleQuote.status,409);assert.match(staleQuote.text,/terms changed/)
+  const savedHome=structuredClone(await p.refresh());await h.restart();assert.deepEqual(await p.refresh(),savedHome);assert.deepEqual((await h.state()).direct.stays[0].quote,snapshot);assert.deepEqual((await h.state()).staffQuotes[0].versions[0],unsigned.versions[0])
+  const saved=await h.send('/book/stay/'+accepted.value.token);assert.equal(saved.status,200);assert.match(saved.text,/Native base-rate source/);assert.match(saved.text,/435\.03/)
+  const expired=await native('preview',{...change,date:'2030-02-20'}),unchanged=structuredClone(await p.refresh())
+  await h.restart({now:'2030-01-01T02:16:00Z'});await native('apply',{previewToken:expired.token},409);assert.deepEqual(await p.refresh(),unchanged);assert.equal(creates,1)
+ }finally{await h.close()}
+}

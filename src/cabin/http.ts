@@ -270,7 +270,8 @@ export async function cabinResponse(request:Request,original:Bindings):Promise<R
   }else if(path==='/api/cabin/command'||path==='/api/cabin/agent/command'){
    const body=await inputBody(request);need(typeof body.name==='string'&&body.input&&typeof body.input==='object'&&!Array.isArray(body.input),'Provide a command name and input object')
    const result=await execute(request,env,who,body.name,body.input as Record<string,unknown>)
-   return json({result:['agent.create','export.publish','promotion.create','channelAgent.runner.create'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
+   // A nightly preview is actor-bound preparation, returned only by this explicit door.
+   return json({result:['agent.create','export.publish','promotion.create','channelAgent.runner.create','direct.native.preview'].includes(body.name)?result:ordinaryOutput(result,accessSecrets(await load(env.DB)))})
   }
   return json({error:'Not found'},404)
  }catch(error){

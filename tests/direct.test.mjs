@@ -414,3 +414,7 @@ test('scoped financial roles can use their own payment doors and cannot read or 
 test('native saved channel pricing, direct length discounts and nightly floors preserve exact signed calculations',{timeout:120000},async()=>{
  const {pricingJourney}=await import('./pricing-support.mjs');await pricingJourney()
 })
+
+test('host-saved nightly planner previews exact overrides, preserves surrounding rules and freezes signed prices',{timeout:120000},async()=>{
+ const {nativePlannerJourney}=await import('./pricing-support.mjs');await nativePlannerJourney()
+})

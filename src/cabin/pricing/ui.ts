@@ -1,11 +1,37 @@
 import { h,form,field,hidden,money } from '../ui/shared'
-import { pricingChannels,type PriceSnapshot } from './types'
-import { unchangedAdjustment } from './calculate'
+import { pricingChannels,type PriceSnapshot,type NativePlan,type NativeNight } from './types'
+import { unchangedAdjustment,nativeRange } from './calculate'
 import type { DirectHome } from '../direct/types'
+import { homeSettings } from '../homes'
+import { localDay } from '../clock'
+import { addDays } from '../inventory'
 export const channelNames={direct:'Direct',airbnb:'Airbnb',vrbo:'Vrbo','booking-com':'Booking.com'}
 const amount=(name:string,label:string,value:number,max?:number)=>field(name,label,'number',(value/100).toFixed(2),`min="0" step="0.01"${max===undefined?'':` max="${max}"`}`)
 const choose=(name:string,label:string,value:string,options:[string,string][])=>`<label>${h(label)}<select name="${h(name)}">${options.map(([id,text])=>`<option value="${h(id)}"${id===value?' selected':''}>${h(text)}</option>`).join('')}</select></label>`
 const check=(name:string,label:string,value:boolean)=>`<label class="check"><input type="checkbox" name="${h(name)}" value="true"${value?' checked':''}>${h(label)}</label>`
+const sourceName=(night:NativeNight)=>night.source==='manual'?'Manual override':night.source==='dated'?'Dated rule':'Default rate'
+export function nativeSettings(home:DirectHome){
+ const p=home.nativePlanner,ref=hidden('propertyId',home.propertyId)+hidden('revision',home.revision)
+ return `<details><summary>Native rate settings</summary><p>Limits protect the host-saved base rate before channel adjustments and discounts. Every saved default, dated rate and active override must fit. Existing signed prices stay unchanged.</p>${form('direct.native.limits','direct',ref+`<div class="pair">${amount('nativeFloorDollars','Native base floor (USD)',p?.floorCents??1)}${amount('nativeCeilingDollars','Native base ceiling (USD)',p?.ceilingCents??home.nightlyCents)}</div>`,'Save native limits')}</details>`
+}
+export function nativeDetails(p:NativePlan){
+ return `<details><summary>Native base-rate source</summary><p>Host-saved rates · base floor ${money(p.floorCents)} · base ceiling ${money(p.ceilingCents)}. Channel adjustments and discounts follow these base rates.</p><ul>${p.nights.map(n=>`<li>${h(n.date)} · ${h(sourceName(n))} · ${money(n.amountCents)} · source revision ${h(n.revision)}${n.rateId?' · dated rule '+h(n.rateId):''}</li>`).join('')}</ul><p>Limits revision ${h(p.limitsRevision)}.</p></details>`
+}
+export function nativePlanner(state:any,result?:any){
+ const homes=state.direct.homes as DirectHome[]
+ if(!homes.length)return ''
+ return `<section class="panel"><h2>Native nightly planner</h2><p>Host-saved base rates only. No pricing provider is connected and no prices are sent to an OTA. Dates are local to each property; the range end is excluded.</p>${homes.map(home=>{
+  const timeZone=homeSettings(state,home.propertyId).timeZone,today=localDay(Date.now(),timeZone),selected=result?.propertyId===home.propertyId
+  const start=selected&&(result.nativeRange||result.nativeApplied)?result.start:selected&&result.nativePreview?result.date:today,end=selected&&(result.nativeRange||result.nativeApplied)?result.end:addDays(start,14)
+  const nights=nativeRange(home,start,end),p=home.nativePlanner,ref=hidden('propertyId',home.propertyId)+hidden('revision',home.revision)
+  const range=form('direct.native.range','direct',ref+`<div class="pair">${field('start','Planner first night','date',start)}${field('end','Planner end (excluded)','date',end)}</div>`,'View nightly range')
+  const rows=`<ul aria-label="Native nightly rates">${nights.map(n=>`<li>${h(n.date)} · ${money(n.amountCents)} · ${h(sourceName(n))}</li>`).join('')}</ul><details><summary>Rate provenance</summary><ul>${nights.map(n=>`<li>${h(n.date)} · source revision ${h(n.revision)}${n.rateId?' · dated rule '+h(n.rateId):''}</li>`).join('')}</ul></details>`
+  const change=p?`<details><summary>Change one night</summary>${form('direct.native.preview','direct',ref+field('date','Override night','date',start,`min="${h(today)}"`)+choose('action','Nightly action','override',[['override','Set manual override'],['clear','Restore saved dated or default rate']])+amount('nativeDollars','Manual base rate (USD)',nights[0].amountCents)+field('reason','Rate change reason','text','','maxlength="500"'),'Preview nightly change')}</details>`:'<p>Save native limits in this home’s Native rate settings before changing a night.</p>'
+  const preview=selected&&result.nativePreview?`<article class="record" aria-label="Native rate change preview"><h4>Review one-night change</h4><p>${h(result.date)} · ${money(result.before.amountCents)} (${h(sourceName(result.before))}) → ${money(result.amountCents)} (${result.action==='clear'?h(sourceName(result.underlying)):'Manual override'}).</p><p>Reason: ${h(result.reason)}. All surrounding dated rules stay in place. Base floor ${money(p!.floorCents)} · ceiling ${money(p!.ceilingCents)}. Channel adjustments and discounts apply afterward.</p><p>Preview expires ${h(result.expiresAt)}. A saved change requires a new preview.</p>${form('direct.native.apply','direct',ref+hidden('previewToken',result.token),'Apply exact nightly change')}</article>`:''
+  const history=p?.history.length?`<details><summary>Native rate history (${p.history.length})</summary><ul>${[...p.history].reverse().map(r=>`<li>${h(r.date)} · ${r.action==='clear'?'Restored saved rule':'Manual override'} · ${money(r.before.amountCents)} → ${money(r.amountCents)} · ${h(r.reason)} · ${h(r.at)} · revision ${h(r.revision)} · prior source ${h(sourceName(r.before))} ${h(r.before.revision)} · underlying ${h(sourceName(r.underlying))} ${money(r.underlying.amountCents)}.</li>`).join('')}</ul></details>`:''
+  return `<article class="record" aria-label="Native planner for ${h(state.properties.find((v:any)=>v.id===home.propertyId)?.name??home.slug)}"><h3>${h(state.properties.find((v:any)=>v.id===home.propertyId)?.name??home.slug)}</h3><p>${h(timeZone)} · today ${h(today)}${p?' · native base floor '+money(p.floorCents)+' · ceiling '+money(p.ceilingCents):''}.</p>${range}${rows}${change}${preview}${history}</article>`
+ }).join('')}</section>`
+}
 export function pricingSettings(home:DirectHome){
  const p=home.pricing,ref=hidden('propertyId',home.propertyId)+hidden('revision',home.revision)
  const limits=form('direct.pricing.save','direct',ref+`<div class="pair">${amount('floorDollars','Nightly floor (USD)',p?.floorCents??0)}${amount('weeklyPercent','Weekly discount (%)',p?.weeklyBps??0,100)}</div>`+amount('monthlyPercent','Monthly discount (%)',p?.monthlyBps??0,100),'Save floor and discounts')
@@ -13,7 +39,7 @@ export function pricingSettings(home:DirectHome){
   const a=p.channels[channel]??unchangedAdjustment()
   return `<details><summary>${channelNames[channel]} pricing settings</summary>${form('direct.pricing.save','direct',ref+hidden('channel',channel)+choose('adjustmentKind','Adjustment type',a.kind,[['percent','Percentage'],['fixed','Fixed USD per night']])+choose('adjustmentDirection','Adjustment direction',a.value<0?'markdown':'markup',[['markup','Markup'],['markdown','Markdown']])+amount('adjustmentValue','Adjustment amount',Math.abs(a.value))+check('includeCleaning','Adjust cleaning fee',a.includeCleaning)+check('includeExtraGuests','Adjust extra-guest fees',a.includeExtraGuests)+amount('channelCommissionPercent','Expected channel commission (%)',a.commissionBps,100),'Save '+channelNames[channel]+' adjustment')}</details>`
  }).join(''):'<p>Save a floor and discounts to configure channel adjustments.</p>'
- return `<details><summary>Pricing settings</summary><p>Native saved nightly rates are the calculation source. Monthly savings replace weekly savings at 28 nights; weekly savings start at 7 nights. Discounts apply to rent only. Each night is rounded to cents, then protected by the saved floor. Existing signed stays keep their calculation.</p>${limits}<p>Percentage adjustments can include selected fees. Fixed adjustments change each night and exclude fees. Direct has no channel commission; processor fees are separate.</p>${adjustments}<p>OTA publication and accepted rate readback are unavailable for Airbnb, Vrbo and Booking.com. These calculations do not send prices or discount plans.</p></details>`
+ return `<details><summary>Pricing settings</summary><p>Native saved nightly rates are the calculation source. Monthly savings replace weekly savings at 28 nights; weekly savings start at 7 nights. Discounts apply to rent only. Each night is rounded to cents, then protected by the saved floor. This final calculation floor is separate from native base-rate limits. Existing signed stays keep their calculation.</p>${limits}<p>Percentage adjustments can include selected fees. Fixed adjustments change each night and exclude fees. Direct has no channel commission; processor fees are separate.</p>${adjustments}<p>OTA publication and accepted rate readback are unavailable for Airbnb, Vrbo and Booking.com. These calculations do not send prices or discount plans.</p></details>`
 }
 export function priceDetails(p:PriceSnapshot,provenance=true){
  const a=p.adjustment,label=a.kind==='percent'?`${(a.value/100).toFixed(2)}%`:`${money(a.value)} per night`
