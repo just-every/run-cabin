@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "426102ab90566f6dfee6ecb6fbdf13e300430316f6fb35853242f705a77e6bed",
+      "sha256": "43df1f50aefe453a00111ee37088109f217b2ef6ef5939f1c095ce3e695fb290",
       "executable": false
     },
     "DEMO.md": {
@@ -212,7 +212,7 @@
       "executable": false
     },
     "docs/financial-exceptions.md": {
-      "sha256": "275b4db032eea657c582070b1166dfe03666ecd8b2051c228a6528b8a96ecee8",
+      "sha256": "dbdadc330267b16d2528dfb1693f2b45437cb74b9cd68b6abe5636887dabae97",
       "executable": false
     },
     "docs/free-source.md": {
@@ -2448,7 +2448,7 @@
       "executable": false
     },
     "src/cabin/finance/exceptions/commands.ts": {
-      "sha256": "3794bac0db6647289946eb4e4cba0a927db9a11c0c614f4db07ea39765af4103",
+      "sha256": "3f612d1f9cfaf6a487537d4c42c57aa75afaaf9bb3d930f91d18fdaeb00e79b4",
       "executable": false
     },
     "src/cabin/finance/exceptions/evidence.ts": {
@@ -6124,7 +6124,7 @@
       "executable": false
     },
     "tests/allocated-exceptions-support.mjs": {
-      "sha256": "0f95e3a96355186e6039c2db2fe879a5dedb7715d83c54408840f4bb2ba0592a",
+      "sha256": "ee3deaa4e73e875c07acdc2e4f575063ee463fbd88142b34f8306ffa11d36fa4",
       "executable": false
     },
     "tests/allocations.test.mjs": {

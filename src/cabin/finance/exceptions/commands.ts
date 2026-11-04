@@ -62,6 +62,7 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
     owner(c.actor);need(p.confirm==='yes','Explicit approval of this exact correction is required')
     need(proposal.baseline===evidence.digest,'Reservation, settlement, bank, agreement or statement evidence changed. Reject and propose again.',409)
     if(proposal.journalGroup){
+     need(evidence.statements.every(s=>proposal.effectiveDate.slice(0,7)>s.month),'Use a correction period after every affected frozen statement; original statement periods cannot be rewritten.',409)
      const ids:string[]=[]
      for(const item of proposal.journalGroup){
       const original=evidence.journals.find(j=>j.id===item.originalJournalId)
