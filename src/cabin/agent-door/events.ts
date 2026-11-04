@@ -32,3 +32,13 @@ export function preparationEvents(c: Context, command: string): Query[] {
     id, uri, event, ...attribution, c.actor.keyId ?? null, c.actor.id)
   })
 }
+
+/** Erased native preparers must not reappear through retained event metadata. */
+export function retirePreparationEvents(operatorId: string): Query {
+  const types = Object.values(preparations).map(preparation => `${preparation.kind}.prepared`)
+  return query(`UPDATE agent_door_events SET uri='',event=json_object(
+    'id',id,'at',json_extract(event,'$.at'),'tombstone',json_object('reason','native_person_erased'))
+    WHERE json_extract(event,'$.type') IN (${types.map(() => '?').join(',')})
+      AND (json_extract(event,'$.actor.person.id')=? OR json_extract(event,'$.actor.for.id')=?)`,
+  ...types, operatorId, operatorId)
+}

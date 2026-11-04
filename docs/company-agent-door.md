@@ -121,6 +121,8 @@ Record events additionally require `records:read` and the sponsor's current
 native role, action and property visibility at delivery. Events about missing
 or restricted records are omitted. Current consent, agent revocation and native
 offboarding stop the next polling call; local draft keys gain no event access.
+Erasing a native preparer retires their preparation events in the erasure
+transaction, so the retained feed cannot restore their name after restart.
 The existing internal record adapters enforce this even independently of public
 resource-template adoption.
 

@@ -126,10 +126,27 @@ test('Delivery rechecks current property and record scopes and stops revoked con
         assert.ok(preparations(await eventList(c, { after: cursor })).length)
       }
       await c.adopt(document)
+      manager = await h.cmd('member.save', { ...manager, propertyIds: [f.home.id], actions: ['calendar:read', 'calendar.prepare'], active: true })
+      const authored = await h.cmd('calendar.prepare', draftOperations(f)[0].input, cookie)
+      const authoredUri = recordUri('calendars', authored.id)
+      const authoredEvent = preparations(await eventList(c)).find(event => event.uri === authoredUri)
+      assert.equal(authoredEvent.actor.person.name, manager.name)
       manager = await h.cmd('member.save', { ...manager, active: false })
       assert.equal((await client.tool('cabin.events.list', { after: cursor })).status, 401)
+      const input = { entity: 'member', id: manager.id, revision: manager.revision }
+      const review = await h.cmd('privacy.review', input)
+      const erased = await h.cmd('privacy.erase', { ...input, reviewId: review.reviewId })
+      assert.ok(erased.receiptId)
+      const retained = await eventList(c, { after: cursor })
+      assert.deepEqual(preparations(retained), stable)
+      assert.ok(!JSON.stringify(retained).includes(manager.name))
+      assert.ok(!JSON.stringify(retained).includes(authoredUri))
+      await h.restart()
       assert.deepEqual(preparations(await eventList(c, { after: cursor })), stable)
+      assert.equal((await client.tool('cabin.events.list')).status, 401)
+      await h.cmd('member.save', { name: manager.name, email: manager.email, role: 'manager', active: true }, h.owner, 409)
       t.diagnostic(`PROBE BASE-AGENT-010 revocation ${document.rules[0].do}: nonempty scoped polling -> current action and property removal hide retained events, restart preserves the fence, consent and agent revocation and native offboarding return 401; owner remains admitted`)
+      t.diagnostic(`PROBE BASE-AGENT-010 erasure ${document.rules[0].do}: reviewed native preparer erasure -> historical event retired, erased identity cannot be readmitted or poll after restart`)
     } finally { await h.close() }
   }
 })
