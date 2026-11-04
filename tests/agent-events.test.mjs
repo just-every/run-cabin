@@ -209,6 +209,18 @@ test('Subscribed native record changes notify within ten seconds and current aut
       assert.equal(notification.params.uri, uri)
       assert.deepEqual(Object.keys(notification.params).sort(), ['_meta', 'uri'])
       assert.ok(!JSON.stringify(scoped.messages).includes('Private synthetic'))
+      // Keep an already open stream while withdrawing just its calendar action.
+      const nextDraft = await nativePreparation(h, calendar), nextUri = recordUri('calendars', nextDraft.id)
+      const actionOwner = await listen(h, c, [nextUri]); streams.push(actionOwner)
+      const actionScoped = await listen(h, client, [nextUri]); streams.push(actionScoped)
+      assert.deepEqual(actionScoped.ack.params.notifications.resourceSubscriptions, [nextUri])
+      manager = await h.cmd('member.save', { ...manager, pmsRole: 'manager', propertyIds: [f.home.id], actions: ['operations:read', 'finance:read'], active: true })
+      await h.cmd('calendar.approve', { id: nextDraft.id, revision: nextDraft.revision })
+      await actionOwner.wait(message => message.method === ['notifications', 'resources', 'updated'].join('/') && message.params.uri === nextUri)
+      await new Promise(resolve => setTimeout(resolve, 1300))
+      assert.ok(!actionScoped.messages.some(message => message.method === ['notifications', 'resources', 'updated'].join('/')), 'withdrawn calendar action fences an already accepted subscription')
+      assert.ok(!(await eventList(client, { after: before })).events.some(event => event.uri === nextUri || event.uri === uri))
+      manager = await h.cmd('member.save', { ...manager, pmsRole: 'manager', propertyIds: [f.home.id], actions: ['calendar:read', 'operations:read', 'finance:read'], active: true })
       const ownerChanges = () => owner.messages.filter(message => message.method === ['notifications', 'resources', 'updated'].join('/')).length
       const mark = ownerChanges()
       const delivered = scoped.messages.length

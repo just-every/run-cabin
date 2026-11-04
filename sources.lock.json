@@ -6128,7 +6128,7 @@
       "executable": false
     },
     "tests/agent-events.test.mjs": {
-      "sha256": "0b4fe562378b9070a6f594acc82b9dae15ba92f72397f7fb3754e29aab792dfc",
+      "sha256": "49b841e2034aac8ac88a64eebfa319bff530495c8befaebdaa10b293d4340121",
       "executable": false
     },
     "tests/agent-resources.test.mjs": {
