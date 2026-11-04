@@ -132,18 +132,22 @@ record families remain outside this bounded event inventory. Signed Base
 integration webhooks with identical IDs and failed-webhook replay need a Base
 integrations adapter, which this checkout does not mount. The copied Base
 policy event producer still omits class and decision and identifies Business
-without an authenticated person. Cabin's existing event callback fills the
-already determined disposition on new `approval.pending` and `review.flagged`
-events: `approval` and `review`, respectively. It preserves their Base-computed
-classes, stable IDs, actor, time and existing visibility checks, copies no
-private decision evidence, and never rewrites a tombstone or an existing
-decision. `approval.decided` already carries its disposition and final state.
+without an authenticated person. Cabin's additive migration fills the already
+determined disposition on retained `approval.pending` and `review.flagged`
+events: `approval` and `review`, respectively. Its insert trigger supplies the
+same metadata atomically for subsequent events and archive imports. It preserves
+Base-computed classes, stable IDs, actor, time and existing visibility checks,
+copies no private decision evidence, and never rewrites a tombstone or an
+existing decision. `approval.decided` already carries its disposition and final
+state.
 
-The retained polling journey performs native approval and rejection plus review
-flagging, checks exact class and disposition metadata and refusal for an
-unrelated person, then replays the same IDs after restart and agent revocation.
-Older retained pending and flagged events are not backfilled. These historical
-rows, complete policy event metadata, the Base integrations interface and an
-authorized receiver remain dependencies for whole-clause completion. API-001 retains its Base publication-scanner and
+The retained polling journey starts with the previous migration, performs real
+review flagging and preparation, applies the additive migration, and verifies
+that historical rows gain only the missing disposition. It then performs native
+approval and rejection plus review flagging, checks exact class and disposition
+metadata and refusal for an unrelated person, and replays the same IDs after
+restart and agent revocation. Complete policy event metadata, the Base
+integrations interface and an authorized receiver remain dependencies for
+whole-clause completion. API-001 retains its Base publication-scanner and
 authorized Zapier receiver dependencies. No provider action or new mutation
 authority is introduced.

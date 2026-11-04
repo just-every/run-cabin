@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { randomUUID, webcrypto } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
+import { unstable_splitSqlQuery } from 'wrangler'
 import { harness } from './harness.mjs'
 import { signJws } from '../src/modules/agent-door/conformance/crypto.mjs'
 import { createProtocol, errorCode } from '../src/modules/agent-door/conformance/protocol.mjs'
@@ -71,7 +72,7 @@ export async function nativePreparation(h, operation) {
 }
 
 /** Follow real pending, decided and flagged actions through their person and MCP doors. */
-export async function decisionEvents(setup, f, document, t) {
+export async function decisionEvents(setup, f, document, t, upgrade = false) {
   const { h, c, owner, protocol } = setup
   const agent = protocol(owner, 'synthetic-cabin-decision-agent')
   const subject = 'synthetic-cabin-decision-observer-' + document.rules[0].do
@@ -83,6 +84,16 @@ export async function decisionEvents(setup, f, document, t) {
   const outsider = protocol({ sub: subject, email: manager.email, cookie }, subject + '-agent')
   const policy = disposition => ({ ...document, rules: [{ id: 'prepared-action', class: 'standard', agent: agent.agentId,
     do: disposition, ...(disposition === 'approval' ? { approver: ['sponsor'], wait: 'PT1H' } : {}) }, ...document.rules], reviewers: ['sponsor'] })
+  let legacyFlag
+  if (upgrade) {
+    await c.adopt(policy('review'))
+    const prepared = await agent.tool('cabin.calendar.prepare', { ...draftOperations(f)[0].input, idempotency_key: randomUUID() })
+    const review = (await c.personJson('/agents/api/reviews')).reviews.find(row => row.decision_id === prepared.decision.id)
+    assert.equal((await h.send('/agents/api/reviews/' + review.id + '/flag', {}, h.owner)).status, 200)
+    legacyFlag = (await eventList(c)).events.find(event => event.uri.endsWith('/' + review.id))
+    assert.equal(legacyFlag.type, 'review.flagged')
+    assert.equal(legacyFlag.decision, undefined, 'the old Base producer supplies no disposition')
+  }
   await c.adopt(policy('approval'))
   const cursor = (await eventList(c)).cursor, expected = []
   for (const action of ['approve', 'reject']) {
@@ -92,7 +103,16 @@ export async function decisionEvents(setup, f, document, t) {
     assert.equal(pending.result.resultType, 'input_required')
     const handle = pending.result._meta['com.runeditrun/approval']
     const uri = h.origin + '/agents/approvals/' + handle.id
-    const event = (await eventList(c, { after: cursor })).events.find(event => event.uri === uri)
+    let event = (await eventList(c, { after: cursor })).events.find(event => event.uri === uri)
+    if (upgrade && action === 'approve') {
+      assert.equal(event.decision, undefined, 'the pre-upgrade pending event lacks its disposition')
+      const original = structuredClone(event)
+      const sql = await readFile('migrations/core/0070_cabin_event_decisions.sql', 'utf8')
+      await h.db.batch(unstable_splitSqlQuery(sql).map(statement => h.db.prepare(statement)))
+      event = (await eventList(c, { after: cursor })).events.find(event => event.uri === uri)
+      assert.deepEqual(event, { ...original, decision: 'approval' })
+      assert.deepEqual((await eventList(c)).events.find(event => event.id === legacyFlag.id), { ...legacyFlag, decision: 'review' })
+    }
     assert.equal(event.type, 'approval.pending')
     assert.equal(event.decision, 'approval')
     assert.deepEqual(event.classes, [{ class: 'standard', facts: { measure: 1 } }])

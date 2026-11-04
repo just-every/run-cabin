@@ -1,14 +1,4 @@
 import { newId, query, type Context, type Query } from '../model'
-import type { AgentEvent } from '../../modules/agent-door/index.ts'
-
-/** Supply the disposition already determined by Base, without copying private decision evidence. */
-export async function decisionEvent(db: D1Database, event: AgentEvent) {
-  const decision = event.type === 'approval.pending' ? 'approval' : event.type === 'review.flagged' ? 'review' : null
-  if (decision === null) return
-  await db.prepare(`UPDATE agent_door_events SET event=json_set(event,'$.decision',?)
-    WHERE id=? AND json_type(event,'$.decision') IS NULL AND json_type(event,'$.tombstone') IS NULL`)
-    .bind(decision, event.id).run()
-}
 
 // Keep this inventory independent of public resource capability adoption.
 const records = {

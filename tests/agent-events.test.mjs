@@ -6,7 +6,7 @@ import { errorCode } from '../src/modules/agent-door/conformance/protocol.mjs'
 import { address, decisionEvents, draftOperations, eventFixtures, eventHarness, eventList, listen, nativePreparation, preparations, recordUri } from './agent-events-support.mjs'
 
 test('Retained polling replays native and agent draft preparations in order across restart without duplicate retries', { timeout: 120000 }, async t => {
-  const setup = await eventHarness(), { h, c, pair } = setup
+  const setup = await eventHarness({ migrationThrough: '0069_agent_door_refresh.sql' }), { h, c, pair } = setup
   try {
     const f = await eventFixtures(h)
     await pair()
@@ -100,7 +100,7 @@ test('Retained polling replays native and agent draft preparations in order acro
     assert.equal(localEvent.actor.kind, 'agent')
     assert.deepEqual(localEvent.actor.agent, { id: `cabin-key:${legacy.id}`, name: 'Synthetic legacy coordinator' })
     assert.equal(localEvent.actor.label, 'Synthetic legacy coordinator for Jordan Venue')
-    for (const document of [autonomousPolicy(), heldPolicy()]) await decisionEvents(setup, f, document, t)
+    for (const [index, document] of [autonomousPolicy(), heldPolicy()].entries()) await decisionEvents(setup, f, document, t, index === 0)
   } finally { await h.close() }
 })
 

@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "2c087f2847c25be779ceedaef5f6e1709637cb92435f2986440b7ff5eac48e5b",
+      "sha256": "0e5e0d3a156a40f5f2359fe2a33c96f13611dc32cd7e39b3858d31f78575c54f",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "4cebd34b09f76f86056729d5fb944b8ec447dbc3decb04ea7800a064c54daf08",
+      "sha256": "ccf0e16851d9016c401eb02147fcec73a383fd1c1f2917bd49049d3199c02cc1",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -613,6 +613,10 @@
     },
     "migrations/core/0069_agent_door_refresh.sql": {
       "sha256": "6307cc50d86eb8017d461ba912b1c924ca10753ffc1e21a974013e364c4be45b",
+      "executable": false
+    },
+    "migrations/core/0070_cabin_event_decisions.sql": {
+      "sha256": "c15f5a34e303af0057b21533434e1ae1a4b2ec9048c950cc47172d26cb84715a",
       "executable": false
     },
     "ONBOARDING.md": {
@@ -1984,11 +1988,11 @@
       "executable": false
     },
     "src/cabin/agent-door/events.ts": {
-      "sha256": "a60fe0529ca4798201938212791bf2b0e42d5a5d20ef3ba96488f88dea1ffd66",
+      "sha256": "4ad3cfd536e7a8e8432fa515360be2b492a51cb6fc98bb69ed1f397643aa5017",
       "executable": false
     },
     "src/cabin/agent-door/index.ts": {
-      "sha256": "49b2309ef2566d8efcd85c1c396923fa08ff49e01586488dcfa7fe22fa259a3c",
+      "sha256": "1d2cbb75ee7ac71982f2879b7af649f8e2d4f306b66f580aad5bc8d673db558c",
       "executable": false
     },
     "src/cabin/agent-door/people.ts": {
@@ -6124,11 +6128,11 @@
       "executable": false
     },
     "tests/agent-events-support.mjs": {
-      "sha256": "61e9b9f8259e1c6d34ddb7aa2b401827696a104de3c7e9c366117ac8a452be01",
+      "sha256": "cecf4eedc1fe57f592121d4e29df4a794a38ad5811feae509fa7dbefabbea980",
       "executable": false
     },
     "tests/agent-events.test.mjs": {
-      "sha256": "10e6b6cedad3fc8c421066bf1bbd67e618be81db67fba9a3e35b8013e7de442a",
+      "sha256": "65537b974754589b5eade092548e5a7519f09c16ca476c423ab1b8903a77be95",
       "executable": false
     },
     "tests/agent-resources.test.mjs": {
@@ -6368,7 +6372,7 @@
       "executable": false
     },
     "tests/harness.mjs": {
-      "sha256": "e0ca41f0a7d1a7d175f0ec2c6bacc2bd4c828c4cc2afde96d0e99f6b261edf72",
+      "sha256": "3b592fc097116bd8705025b44ba39a9b7f3f923e30db84de09a249f895b0c513",
       "executable": false
     },
     "tests/home-calendar.mjs": {
