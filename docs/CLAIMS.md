@@ -159,9 +159,9 @@ Remaining: Point 5 remains unproved: the pinned Base door has no grant byte-budg
 <!-- contract-status:BASE-AGENT-004:start -->
 BASE-AGENT-004 · Business identity and short-lived, audience-bound tokens · partial.
 
-Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset).
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset); `tests/agent-sponsor-admission.test.mjs` — “Native sponsor offboarding and configured admission exclusions fence fresh Business agents across restart”.
 
-Remaining: Single owner journey; multi-sponsor lifecycle and Business issuance/delivery remain unproved.
+Remaining: Negative admission now covers inactive and allow-list-excluded native sponsors. Successful multi-sponsor lifecycle, actual Business issuance and delivery, full consent propagation, unpairing across multiple sponsors and the broader token lifecycle remain unproved.
 <!-- contract-status:BASE-AGENT-004:end -->
 
 <!-- contract-status:BASE-AGENT-005:start -->
