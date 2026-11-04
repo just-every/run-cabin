@@ -101,5 +101,20 @@ executes its class witnesses under autonomous and held policies, and checks
 metadata drift, escaping and private-data omission. `tests/agent-docs-browser.mjs`
 checks keyboard navigation and schema disclosure at desktop width and records
 the same document at desktop and phone widths. Both run in push Verify.
-Acceptance points 3–5 across the wider rental surface remain incomplete; this
-page does not expand the three existing owner-only draft preparations.
+
+Its discovered-specialist journey starts at MCP initialization, follows the
+documentation address and selects jobs by their published schemas. It lists
+nonempty native records and prepares each of the three drafts under both complete
+policies. Native state proves that only drafts were created. Narrow scopes,
+another installation's audience and a currently admitted scoped cleaner cannot
+gain the owner's mutation authority from discovery. Each preparation also checks
+idempotent replay, conflicting arguments, stale revisions and confirmation flags.
+An explicit approval variant withholds each mutation until the signed-in sponsor
+decides; an agent bearer cannot take that person step. Blocked and unanswered
+policy variants leave native state unchanged. This extends proof of acceptance
+points 3–5 only for the declared read and draft subset. It neither exposes another
+tool nor completes conformance across the wider rental surface.
+
+The development server includes the public agent declaration in its exact file
+allow list so the catalogue can load during normal setup and development. The
+rest of the checkout retains its existing file boundary.
