@@ -24,13 +24,18 @@ export async function docsHarness() {
     const turnover = await h.cmd('turnover.prepare', { bookingId: booking.id, cleanerId: cleaner.id, checklist: ['Synthetic inspection'] })
     await h.cmd('turnover.approve', { id: turnover.id, revision: turnover.revision })
     const local = await h.cmd('agent.create', { label: 'Synthetic private draft key' })
-    const iat = Math.floor(Date.now() / 1000)
-    const settings = await signJws(signer.privateKey, signer.kid, 'rer-business-settings+jwt', { v: 1, iss: signer.issuer, aud: h.origin, sub: signer.installationId,
-      business, email: person.email, owner_id: person.sub, jti: randomUUID(), iat, exp: iat + 300, rev: 1,
-      values: { display_name: 'Synthetic private business' }, logo: null, team: [] })
-    const paired = await h.send('/api/rer/business-settings', { settings })
-    assert.equal(paired.status, 200, paired.text)
-    return { h, c, privateValues: [home.id, home.name, home.ownerName, home.ownerEmail, cleaner.id, cleaner.name, cleaner.email,
+    let revision = 0
+    const pair = async (team = []) => {
+      const iat = Math.floor(Date.now() / 1000)
+      const settings = await signJws(signer.privateKey, signer.kid, 'rer-business-settings+jwt', { v: 1, iss: signer.issuer, aud: h.origin, sub: signer.installationId,
+        business, email: person.email, owner_id: person.sub, jti: randomUUID(), iat, exp: iat + 300, rev: ++revision,
+        values: { display_name: 'Synthetic private business' }, logo: null, team })
+      const paired = await h.send('/api/rer/business-settings', { settings })
+      assert.equal(paired.status, 200, paired.text)
+      return settings
+    }
+    const settings = await pair()
+    return { h, c, pair, home, cleaner, privateValues: [home.id, home.name, home.ownerName, home.ownerEmail, cleaner.id, cleaner.name, cleaner.email,
       booking.id, 'Private synthetic stay', 'Synthetic private business', local.token, h.auth.SESSION_SECRET, h.auth.SETUP_TOKEN, person.cookie, settings] }
   } catch (error) { await h.close(); throw error }
 }
