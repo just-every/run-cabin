@@ -3,9 +3,10 @@ import { chromium,expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { allocatedExceptionJourney } from './allocated-exceptions-support.mjs'
 import { exceptionJourney } from './financial-exceptions-support.mjs'
 const directory=process.env.CABIN_EXCEPTION_SHOTS??'./test-results/financial-exceptions';await mkdir(directory,{recursive:true})
-const browser=await chromium.launch({headless:true,args:['--use-mock-keychain','--password-store=basic']})
+const browser=await chromium.launch({headless:true,executablePath:process.env.CABIN_CHROMIUM_EXECUTABLE_PATH,args:['--use-mock-keychain','--password-store=basic','--no-sandbox']})
 try{
  for(const legacy of [false,true])for(const width of [1440,390]){
   const shots=join(directory,legacy?'legacy-imported':'native-ledger');await mkdir(shots,{recursive:true})
@@ -75,5 +76,49 @@ try{
    }})
   }finally{await context.close()}
  }
+ const context=await browser.newContext({viewport:{width:1440,height:1000}})
+ let page,origin
+ const visit=async h=>{
+  if(origin!==h.origin){origin=h.origin;const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:origin}]);page=await context.newPage()}
+  const [name,value]=h.owner.split('=');await context.addCookies([{name,value,url:origin}])
+  await page.goto(origin+'/app/ledger')
+ }
+ try{
+  await allocatedExceptionJourney({act:async(h,name,input)=>{
+   await visit(h)
+   let form=page.locator(`form[action*="name=${name}"]`).filter({has:page.locator(`input[name="id"][value="${input.id}"]`)})
+   if(input.proposalId)form=form.filter({has:page.locator(`input[name="proposalId"][value="${input.proposalId}"]`)})
+   await expect(form).toHaveCount(1)
+   const details=form.locator('xpath=ancestor::details[1]')
+   if(await details.count()&&await details.getAttribute('open')===null)await details.locator(':scope > summary').click()
+   for(const [key,value] of Object.entries(input)){
+    const control=form.locator(`[name="${key}"]`)
+    if(!await control.count()||await control.getAttribute('type')==='hidden')continue
+    if(await control.getAttribute('type')==='checkbox')await control.check()
+    else if(await control.evaluate(el=>el.tagName)==='SELECT')await control.selectOption(String(value))
+    else await control.fill(String(value))
+   }
+   await form.getByRole('button').focus();await form.getByRole('button').press('Enter')
+   await expect(page.locator('[role="status"]')).toContainText('Financial case updated')
+   await expect(page.locator('[role="alert"]')).toHaveCount(0)
+   return (await h.state()).financialExceptions.find(r=>r.id===input.id)
+  },screens:async(h,stage,f)=>{
+   await visit(h)
+   const section=page.locator('section.panel').filter({has:page.getByRole('heading',{name:'Financial exception cases',exact:true})})
+   const group=section.locator('details').filter({has:page.locator('summary').getByText('Exact allocation correction',{exact:true})})
+   await group.last().locator(':scope > summary').click()
+   await expect(group.last()).toContainText('Cedar Owner');await expect(group.last()).toContainText('Pine Owner')
+   await expect(group.last()).toContainText('$461.16');await expect(group.last()).toContainText('$307.44')
+   const axe=await new AxeBuilder({page}).include('main').withTags(['wcag2a','wcag2aa','wcag21aa']).analyze()
+   assert.deepEqual(axe.violations.filter(v=>v.impact==='serious'||v.impact==='critical').map(v=>v.id),[])
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))
+   for(const control of await page.locator('button,a').all())if(await control.isVisible())assert.ok((await control.innerText()).trim()||await control.getAttribute('data-tooltip'),'Every icon-only control requires a tooltip')
+   for(const width of [1440,390]){
+    await page.setViewportSize({width,height:1000});await page.evaluate(()=>scrollTo(0,0))
+    await page.screenshot({path:join(directory,`${stage}-${width}.png`),fullPage:true,clip:await section.boundingBox()})
+   }
+   await page.setViewportSize({width:1440,height:1000})
+  }})
+ }finally{await context.close()}
 }finally{await browser.close()}
 console.log('Financial exception source pursuit, exact rejection and approval, open distribution boundary, keyboard, tooltip audit and accessibility PASS at 1440/390')
