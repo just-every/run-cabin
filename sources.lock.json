@@ -104,7 +104,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "388e405803505d2ead41672c94485a237e0b2ea267ebb0c04adf7acb0e562b00",
+      "sha256": "ac6a3182bf64bcac8d31e7d792bec345018c33783ec0433b68bf26291c3416fa",
       "executable": false
     },
     "agent-surface.json": {
@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "75c86f71cfcddf7460610167ca8490f12efa26a82e016dba03c5c51d2a98f4d0",
+      "sha256": "5f8882c7d968b1d0630662998e869d50805a9e7c53382eb91a81cbaa9de5e95b",
       "executable": false
     },
     "DEMO.md": {
@@ -180,7 +180,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "b23a5e35613444f8db96457a71c15791b09a40071e2a87f65556475de8cd0b29",
+      "sha256": "b90724127c45fda77bc8367f65d604425241cf0a70a5f0ac52beb2c76db1be00",
       "executable": false
     },
     "docs/cleaner-mobile.md": {
@@ -193,6 +193,10 @@
     },
     "docs/company-agent-door.md": {
       "sha256": "21f55fb712df43bf3a9fb110e547070473aa2b567f2535b0fb4939d5a544e4c3",
+      "executable": false
+    },
+    "docs/contract/AGENT-007-rubric.md": {
+      "sha256": "44cc6ce14c9fa7f3aace749d3d9a6955b23a1868550b840d149ab56d61e5fe60",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -1021,6 +1025,10 @@
     },
     "rer-setup.json": {
       "sha256": "afe42986588ab0132fb63c1f2947b77da91a9fad6d8aec841f868ad8e61ec642",
+      "executable": false
+    },
+    "RULINGS.md": {
+      "sha256": "8e1fc7a7ce583646d956fdc809e7c447acf372dbc1116c367dde3f684a886f81",
       "executable": false
     },
     "RUN-LOCALLY.md": {
@@ -1860,7 +1868,7 @@
       "executable": false
     },
     "src/base/contract-docs.mjs": {
-      "sha256": "5b39b5f4f0e7e351b0df5e1c105725cf238e284adce962e2c98d8280c5764be1",
+      "sha256": "d5bd6d5fda727abefa12b587594f3f64c63e049d550785b74cc9cfc16200e5d9",
       "executable": false
     },
     "src/base/contract-filter.ts": {

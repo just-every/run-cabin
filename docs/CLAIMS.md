@@ -235,3 +235,11 @@ Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-doo
 
 Remaining: Registry-generated documentation and class witnesses cover acceptance points 1–2 for the declared subset. Full conformance acceptance points 3–5 across the wider rental surface remain unproved. Undeclared events, prompts and subscriptions; unscoped multi-sponsor, mail, refresh, timed, dual-host, queued and owner-native administration families remain partial. Resource byte-budget and file-byte proof remain held on Base under BASE-AGENT-003.
 <!-- contract-status:BASE-AGENT-013:end -->
+
+<!-- contract-status:AGENT-007:start -->
+AGENT-007 · Privacy-safe retained native event attribution · missing.
+
+Evidence: none.
+
+Remaining: Privacy-safe retained native event attribution after member email edits and completed reviewed erasure, including replay, refresh and restart under both policies, is unbuilt and unproved.
+<!-- contract-status:AGENT-007:end -->

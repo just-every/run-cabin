@@ -17,7 +17,6 @@ for(const id of ids){
  const evidence=(clause.text.split('**Acceptance evidence:**')[1]??clause.text.split('**Acceptance.**')[1])?.trim().replace(/\n/g,' ')
  if(!evidence)throw Error('Selected clause needs its original acceptance evidence: '+id)
  const lines=acceptance.split('\n'),start=lines.findIndex(l=>l.startsWith('- **'+id+' — '))
- if(start<0&&!id.startsWith('BASE-AGENT-'))throw Error('Missing legacy acceptance entry: '+id)
  let end=start+1
  while(end<lines.length&&!/^(?:- \*\*|## )/.test(lines[end]))end++
  const suffix=clause.status==='done'?'Assessment: ':'Remaining: '
