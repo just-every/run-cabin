@@ -74,7 +74,7 @@ held phases, with standard and sensitive class coverage, input injection, blocke
 classes, unanswered and paused policy, revision conflict, replay, consent
 revocation and audit agreement. The runtime shard's emitted-Worker HTTP check
 and its existing cleaner, quote and booking-site browser journeys also passed.
-Unknown-subject and changed-email sponsor probes passed. Inactive and allow-list-excluded sponsor fixtures remain undeclared and received no passing points. This proves the declared subset; it does not promote the wider rental clauses.
+Unknown-subject and changed-email sponsor probes passed. That CORE run did not declare inactive or allow-list-excluded sponsor fixtures. This proves the declared subset; it does not promote the wider rental clauses.
 
 The public-door resource journeys in `tests/agent-resources.test.mjs` compare
 nonempty owner and scoped cleaner reads with the native HTTP state, test identical
@@ -103,3 +103,18 @@ checks keyboard navigation and schema disclosure at desktop width and records
 the same document at desktop and phone widths. Both run in push Verify.
 Acceptance points 3–5 across the wider rental surface remain incomplete; this
 page does not expand the three existing owner-only draft preparations.
+
+The push journey in `tests/agent-sponsor-admission.test.mjs`, “Native sponsor
+offboarding and configured admission exclusions fence fresh Business agents
+across restart”, separately covers both negative admission states. It invites
+and confirms two native team identities, binds them through signed Business
+settings and first proves admitted record reads. Native deactivation fences one;
+restarting the same disposable installation with an owner-only configured
+allow-list fences the other while leaving its native grant active. Every
+refusal uses a fresh agent with an otherwise valid verifier-signed token,
+returns a typed 401, withholds results and leaves native business state unchanged.
+Both complete policies and another cold start preserve the refusals and admitted
+owner access. Bound non-owners still cannot prepare the three owner-only drafts.
+This does not prove successful multi-sponsor lifecycle completion, actual
+Business token issuance or delivery, full consent propagation or unpairing
+across multiple sponsors.
