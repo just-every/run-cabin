@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "150e2f72c3b89155278c573843c6ab642498891ab8c10825aed316e7df51b99d",
+      "sha256": "a1bdfdf03978517401c4ab241aaa217337527e357a61b023172128a7471d39c2",
       "executable": false
     },
     "DEMO.md": {
@@ -2548,7 +2548,7 @@
       "executable": false
     },
     "src/cabin/guests/marketing.ts": {
-      "sha256": "ab1cf6218c72c21af9ba7187c9f77b03fb5722368b47bf9191d5bc33b01eadf1",
+      "sha256": "8057dd51fc721ad5bf915530649536b8488e6856ba9d60b09bd33c6ebbf3fe06",
       "executable": false
     },
     "src/cabin/guests/offers.ts": {
@@ -6419,8 +6419,12 @@
       "sha256": "394333109a0f2d54b153559c3d93fe4685ccd7ca75f8b4af04703cd5ce4ba11d",
       "executable": false
     },
+    "tests/marketing-segments-browser.mjs": {
+      "sha256": "95c947ca3206def0bf4eaea28397df3930ef8d6626167083454ceb18410d47f5",
+      "executable": false
+    },
     "tests/marketing-support.mjs": {
-      "sha256": "220f4d015f88be1108344cdd928713f3abe18bee0b53c71d634021a1ca65c144",
+      "sha256": "04a2f0760fb11184cb7d8583ef65c1948df9e2beea0e628e3ec9d3ef518cf148",
       "executable": false
     },
     "tests/message-interruption-support.mjs": {
@@ -6612,7 +6616,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "fc8e2dc405327c04cc53e6189035b35b554ee84cddb6e428d0f4efa80d698c41",
+      "sha256": "4f55773177a477bfb9467aaad2dc25d478c8eb1fef36b16e5f4dc351351d0875",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {

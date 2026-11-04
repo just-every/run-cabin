@@ -17,6 +17,8 @@ export async function marketingJourney(h) {
  const home=await h.cmd('property.save',{name:'Synthetic marketing home',ownerName:'Synthetic host',ownerEmail:marketingContact('host'),commissionBps:1500})
  const other=await h.cmd('property.save',{name:'Synthetic other home',ownerName:'Synthetic host',ownerEmail:marketingContact('other'),commissionBps:1500})
  const a=await marketingOrigin(h,home.id),b=await marketingOrigin(h,home.id,2,{channel:'vrbo',start:'2026-09-10',end:'2026-09-13'})
+ const departing=await marketingOrigin(h,home.id,4,{start:'2026-11-01',end:'2026-11-04'})
+ await verifyMarketing(h,departing.id);await marketingConsent(h,departing.id)
  const rejected=()=>h.cmd('guest.marketing.prepare',{propertyId:home.id,label:'Refused'},h.owner,409)
  const before=(await h.state()).guestSegments.length
  await rejected()
@@ -29,7 +31,7 @@ export async function marketingJourney(h) {
  await marketingConsent(h,a.id)
  const first=await prepareMarketing(h,home.id)
  let segment=(await h.state()).guestSegments.find(s=>s.id===first.id)
- assert.equal(segment.status,'prepared');assert.equal(segment.members.length,1);assert.equal(segment.members[0].email,marketingContact(1));assert.equal(segment.excluded,1)
+ assert.equal(segment.status,'prepared');assert.equal(segment.members.length,1);assert.equal(segment.members[0].email,marketingContact(1));assert.equal(segment.excluded,2,'A stay before its property-local checkout remains excluded')
  const review=s=>h.cmd('guest.marketing.review',{id:s.id,revision:s.revision})
  assert.equal((await review(first)).externalEffects,0)
  await h.cmd('guest.marketing.prepare',{propertyId:other.id,label:'Wrong home'},h.owner,409)

@@ -52,7 +52,8 @@
       "hosted": false,
       "commands": [
         "node --test --test-concurrency=1 tests/channel-agent.test.mjs",
-        "node tests/tax-periods-browser.mjs"
+        "node tests/tax-periods-browser.mjs",
+        "node tests/marketing-segments-browser.mjs"
       ]
     },
     {

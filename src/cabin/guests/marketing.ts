@@ -2,7 +2,7 @@ import { type Actor, type Context, type Data, need, owner, property, text, exact
 import { assertLive } from '../storage'
 import { permitsProperty } from '../permissions/policy'
 import { guestGroup, consent } from './resolve'
-import { localDay } from '../clock'
+import { completedStay } from './offers'
 import type { GuestProfile, GuestSegment } from './types'
 
 /** Marketing preparation remains installation-owner-only and has no outbound effect. */
@@ -36,8 +36,7 @@ function inventory(data:Data,propertyId:string,now:string) {
    const booking=data.bookings.find(b=>b.id===g.bookingId)!
    const decision=[...g.consents].reverse().find(c=>c.purpose==='marketing'&&c.propertyId===propertyId)
    const contact=g.identities.find(i=>i.id===decision?.identityId&&i.kind==='email'&&i.verified&&i.value.toLowerCase()===booking.guestEmail?.trim().toLowerCase())
-   const today=localDay(Date.parse(now),data.homeSettings.find(s=>s.propertyId===propertyId)?.timeZone??'America/New_York')
-   return decision?.allowed&&!decision.inactive&&contact&&!booking.guestErasedAt&&!booking.restorePaused&&booking.status==='confirmed'&&booking.end<=today ? [{guestId:root.id,profileIds:group.map(g=>g.id).sort(),identityId:contact.id,bookingId:booking.id}] : []
+   return decision?.allowed&&!decision.inactive&&contact&&!booking.guestErasedAt&&!booking.restorePaused&&completedStay(data,booking.id,Date.parse(now)) ? [{guestId:root.id,profileIds:group.map(g=>g.id).sort(),identityId:contact.id,bookingId:booking.id}] : []
   }):[]
   if(eligible.length)members.push(eligible[0]);else excluded++
  }
