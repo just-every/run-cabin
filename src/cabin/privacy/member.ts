@@ -1,5 +1,5 @@
 import { eraseReportSharing } from '../reports/sharing/custody'
-import { retirePreparationEvents } from '../agent-door/events'
+import { retireRecordEvents } from '../agent-door/events'
 import { owner, need, newId, query, sha, type Context } from '../model'
 import { commit } from '../storage'
 import { eraseAttachments, fenceSending, scrubOperational } from './attachments'
@@ -28,7 +28,7 @@ export async function eraseMember(c:Context,s:ErasureScope,p:Record<string,unkno
  for(const subject of [s.id,...(operator?[operator.id]:[])])c.queries.push(query('INSERT OR IGNORE INTO cb_audit_redactions(subject_id,anonymous_id,at,actor_id) VALUES(?,?,?,?)',subject,'erased:'+newId(),c.now,c.actor.id))
  if(operator){
   const id=operator.id
-  c.queries.push(retirePreparationEvents(id),query('DELETE FROM cb_agent_people WHERE operator_id=?',id))
+  c.queries.push(retireRecordEvents(id),query('DELETE FROM cb_agent_people WHERE operator_id=?',id))
   c.queries.push(query("UPDATE oa_operators SET status='inactive',email=?,display_name='Erased operator',version=version+1 WHERE id=?",'erased-'+newId()+'@invalid.example',id),query('UPDATE oa_sessions SET revoked_at=? WHERE operator_id=?',Date.parse(c.now),id),query('UPDATE oa_tokens SET revoked_at=?,return_to=\'/\' WHERE operator_id=? OR issuer_id=?',Date.parse(c.now),id,id),query('UPDATE oa_credentials SET revoked_at=? WHERE operator_id=?',Date.parse(c.now),id),query('DELETE FROM oa_external_identities WHERE operator_id=?',id),query('DELETE FROM oa_step_up_challenges WHERE operator_id=?',id),query('DELETE FROM oa_owner_signins WHERE operator_id=?',id),query('DELETE FROM oa_provider_sessions WHERE session_id IN (SELECT id FROM oa_sessions WHERE operator_id=?)',id),query('DELETE FROM oa_provider_session_pins WHERE session_id IN (SELECT id FROM oa_sessions WHERE operator_id=?)',id),query("UPDATE oa_auth_audit SET value='' WHERE actor_id=? OR instr(value,?)>0",id,id))
  }
  for(const value of s.values)c.queries.push(query('DELETE FROM oa_oidc_transactions WHERE instr(lower(payload),lower(?))>0',value),query("UPDATE oa_auth_audit SET value='' WHERE instr(lower(value),lower(?))>0",value))

@@ -30,8 +30,8 @@ promotion does not create a Business role.
 
 The runtime is copied from Base `2135c394939f4a737adabdc8003b0e667b31ac5a`,
 with the released `@runeditrun/rer` 0.2.91 CLI. The production door and descriptor
-declare tools, resources, events, policy, pause, audit and idempotency.
-Prompts and subscriptions remain undeclared: their lists are empty or absent
+declare tools, resources, events, subscriptions, policy, pause, audit and idempotency.
+Prompts remain undeclared: their lists are empty or absent
 and calls return `capability_not_declared`. Unknown tool names return
 `tool_not_found`. The ten record collections above each have a JSON URI template declared in
 `agent-surface.json`. Both resource reads and the existing read tools require
@@ -92,9 +92,13 @@ an explicit `events:read` scope. Its optional `after` cursor is an event ID;
 including after restart. An unknown cursor returns an empty page. A consumer
 must deduplicate by event ID; polling does not promise exactly-once delivery.
 
-The native transaction retains `calendars.prepared`, `turnovers.prepared` and
-`statements.prepared` for the three existing preparations, including native
-forms and legacy draft keys. MCP idempotent retries reuse the recorded outcome
+The guarded native transaction retains changes for the ten existing record
+collections: homes, people, stays, guests, tasks, readiness, statements, recovery
+cases, calendars and turnovers. Types use the collection name followed by
+`.created`, `.updated` or `.removed`. The three existing preparations retain
+`calendars.prepared`, `turnovers.prepared` and `statements.prepared`, including
+native forms and legacy draft keys. Missing records, including removed records,
+are withheld at delivery; retained metadata does not grant access to a tombstone. MCP idempotent retries reuse the recorded outcome
 without another preparation event. Each event contains only its stable ID,
 type, typed record URI, person or agent-for-person attribution and time. It
 contains no calendar text, checklist, statement lines, guest data or capabilities.
@@ -102,7 +106,7 @@ Record events additionally require `records:read` and the sponsor's current
 native role, action and property visibility at delivery. Events about missing
 or restricted records are omitted. Current consent, agent revocation and native
 offboarding stop the next polling call; local draft keys gain no event access.
-Erasing a native preparer retires their preparation events in the erasure
+Erasing a native actor retires their record events in the erasure
 transaction, so the retained feed cannot restore their name after restart.
 The existing internal record adapters enforce this even independently of public
 resource-template adoption.
@@ -111,10 +115,25 @@ resource-template adoption.
 under autonomous and held policies, ordered pagination and identical restart
 replay, person and agent attribution, retry and conflicting-key refusal, scope
 requirements, changed property and action grants, consent and agent revocation,
-and native offboarding. Complete record-change coverage, subscriptions and the
-10-second notification journey, signed Base integration webhooks with identical
-IDs and failed-webhook replay, and complete approval, review and policy event
-acceptance remain unproved. Existing shared decision events do not establish
+and native offboarding. A live subscription is opened with the modern MCP
+`subscriptions` method `listen`, requesting `notifications.resourceSubscriptions`
+as an array of visible record URIs. The response is a private SSE stream: an
+acknowledgment lists accepted URIs, then resource updates carry only a URI and
+subscription identity. Both `events:read` and `records:read` are required for
+record notifications. The copied runtime rechecks current native visibility,
+consent and agent admission on each delivery, closes revoked admissions and
+limits streams to two minutes. Reconnect and poll retained IDs to recover after
+a disconnect; notifications can repeat and contain no private record body.
+
+The same public-door journey changes a subscribed calendar through its native
+approval form, receives the notification within ten seconds under both complete
+policies, and checks current authority on already open streams. Other native
+record families remain outside this bounded event inventory. Signed Base
+integration webhooks with identical IDs and failed-webhook replay need a Base
+integrations adapter, which this checkout does not mount. The copied Base
+approval, review and policy event producers do not yet all carry the required
+class and decision fields. Those Base interfaces and the authorized receiver
+remain dependencies for whole-clause completion. Existing shared decision events do not establish
 those broader guarantees. API-001 retains its Base publication-scanner and
 authorized Zapier receiver dependencies. No provider action or new mutation
 authority is introduced.

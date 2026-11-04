@@ -69,3 +69,52 @@ export async function nativePreparation(h, operation) {
   assert.equal(added.length, 1)
   return added[0]
 }
+
+/** Consume the public live transport without waiting for the whole SSE response. */
+export async function listen(h, client, uris, options = {}) {
+  const { accessToken } = await import('../src/modules/agent-door/conformance/crypto.mjs')
+  const { VERSION } = await import('../src/modules/agent-door/conformance/protocol.mjs')
+  const abort = new AbortController(), method = ['subscriptions', 'listen'].join('/')
+  const response = await client.request('/mcp', { method: 'POST', signal: abort.signal, headers: {
+    Origin: h.origin, Authorization: `Bearer ${options.token ?? await accessToken(client)}`,
+    'Content-Type': 'application/json', 'MCP-Protocol-Version': VERSION, 'Mcp-Method': method,
+  }, body: JSON.stringify({ jsonrpc: '2.0', id: randomUUID(), method, params: {
+    notifications: { resourceSubscriptions: uris }, _meta: { 'io.modelcontextprotocol/protocolVersion': VERSION },
+  } }) })
+  assert.equal(response.status, 200)
+  assert.match(response.headers.get('content-type'), /text\/event-stream/)
+  const reader = response.body.getReader(), decoder = new TextDecoder(), messages = []
+  let buffer = '', done = false, error
+  const pump = (async () => {
+    try {
+      for (;;) {
+        const chunk = await reader.read()
+        if (chunk.done) break
+        buffer += decoder.decode(chunk.value, { stream: true })
+        let boundary
+        while ((boundary = buffer.indexOf('\n\n')) >= 0) {
+          const block = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2)
+          const data = block.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5).trim()).join('\n')
+          if (data) messages.push(JSON.parse(data))
+        }
+      }
+    } catch (cause) { if (!abort.signal.aborted) error = cause }
+    finally { done = true }
+  })()
+  const wait = async (predicate, timeout = 10000) => {
+    const deadline = Date.now() + timeout
+    while (Date.now() < deadline) {
+      if (error) throw error
+      const match = messages.find(predicate)
+      if (match) return match
+      if (done) throw new Error('Subscription completed before the expected notification')
+      await new Promise(resolve => setTimeout(resolve, 20))
+    }
+    throw new Error('Subscription notification was not delivered within 10 seconds')
+  }
+  const close = async () => { abort.abort(); await reader.cancel().catch(() => {}); await pump }
+  try {
+    const ack = await wait(message => message.method === ['notifications', 'subscriptions', 'acknowledged'].join('/'))
+    return { messages, ack, wait, close }
+  } catch (cause) { await close(); throw cause }
+}

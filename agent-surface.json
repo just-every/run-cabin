@@ -406,6 +406,7 @@
     "tools",
     "resources",
     "events",
+    "subscriptions",
     "policy",
     "pause",
     "audit",

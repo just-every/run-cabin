@@ -3,13 +3,32 @@ import test from 'node:test'
 import { randomUUID } from 'node:crypto'
 import { accessToken, autonomousPolicy, heldPolicy } from '../src/modules/agent-door/conformance/crypto.mjs'
 import { errorCode } from '../src/modules/agent-door/conformance/protocol.mjs'
-import { address, draftOperations, eventFixtures, eventHarness, eventList, nativePreparation, preparations, recordUri } from './agent-events-support.mjs'
+import { address, draftOperations, eventFixtures, eventHarness, eventList, listen, nativePreparation, preparations, recordUri } from './agent-events-support.mjs'
 
 test('Retained polling replays native and agent draft preparations in order across restart without duplicate retries', { timeout: 120000 }, async t => {
   const { h, c, pair } = await eventHarness()
   try {
     const f = await eventFixtures(h)
     await pair()
+    await c.adopt(autonomousPolicy())
+    await h.cmd('task.raise', { propertyId: f.home.id, title: 'Synthetic event follow-up', note: 'Private synthetic maintenance note' })
+    const turnover = await h.cmd('turnover.prepare', draftOperations(f)[1].input)
+    await h.cmd('recovery.open', { bookingId: f.booking.id, turnoverId: turnover.id, trigger: 'guest_problem', reason: 'Private synthetic service report' })
+    await h.cmd('reservation.request', { propertyId: f.other.id, channel: 'direct', guestName: 'Private synthetic guest', guestEmail: address('synthetic-cabin-guest'), start: '2030-06-01', end: '2030-06-04' })
+    const page = await h.send('/app/readiness?from=2030-05-20', undefined, h.owner)
+    const form = page.text.match(/<form[^>]*action="[^"]*name=readiness.chase[^"]*"[^>]*>([\s\S]*?)<\/form>/)
+    assert.ok(form, 'the native readiness board offers a follow-up form')
+    const decode = value => value.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+    const input = Object.fromEntries([...form[1].matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/g)].map(match => [match[1], decode(match[2])]))
+    await h.cmd('readiness.chase', { ...input, note: 'Synthetic readiness follow-up' })
+    await h.cmd('statement.prepare', draftOperations(f)[2].input)
+    const state = await h.state(), retained = (await eventList(c)).events
+    for (const [kind, collection] of Object.entries({ homes: 'properties', people: 'members', stays: 'bookings', guests: 'guests', tasks: 'tasks', readiness: 'readinessRecords', statements: 'statements', cases: 'recoveries', calendars: 'calendarDrafts', turnovers: 'turnovers' })) {
+      assert.ok(state[collection].length, `${kind} has a real native fixture`)
+      for (const row of state[collection]) assert.ok(retained.some(event => event.uri === recordUri(kind, row.id)), `${kind} changes have retained metadata`)
+    }
+    assert.ok(!JSON.stringify(retained).includes('Private synthetic'))
+    t.diagnostic('PROBE BASE-AGENT-010 records: ten nonempty native record collections -> typed retained change metadata without record content')
     for (const document of [autonomousPolicy(), heldPolicy()]) {
       await c.adopt(document)
       const listed = await c.mcp(['tools', 'list'].join('/'))
@@ -148,5 +167,81 @@ test('Delivery rechecks current property and record scopes and stops revoked con
       t.diagnostic(`PROBE BASE-AGENT-010 revocation ${document.rules[0].do}: nonempty scoped polling -> current action and property removal hide retained events, restart preserves the fence, consent and agent revocation and native offboarding return 401; owner remains admitted`)
       t.diagnostic(`PROBE BASE-AGENT-010 erasure ${document.rules[0].do}: reviewed native preparer erasure -> historical event retired, erased identity cannot be readmitted or poll after restart`)
     } finally { await h.close() }
+  }
+})
+
+test('Subscribed native record changes notify within ten seconds and current authority fences each delivery', { timeout: 120000 }, async t => {
+  for (const document of [autonomousPolicy(), heldPolicy()]) {
+    const { h, c, pair, protocol } = await eventHarness()
+    const streams = []
+    try {
+      const f = await eventFixtures(h)
+      let manager = await h.cmd('member.save', { name: 'Synthetic subscription manager', email: address('synthetic-cabin-listener'), pmsRole: 'manager', propertyIds: [f.home.id], actions: ['calendar:read', 'operations:read', 'finance:read'], active: true })
+      await h.cmd('member.invite', { id: manager.id })
+      const cookie = await h.signIn(manager.email)
+      await pair([{ id: 'synthetic-cabin-listener', email: manager.email, name: manager.name, role: 'admin', invite: 0 }])
+      await c.adopt(document)
+      const client = protocol({ sub: 'synthetic-cabin-listener', email: manager.email, cookie }, 'synthetic-cabin-listener-agent')
+      const calendar = draftOperations(f)[0]
+      const draft = await nativePreparation(h, calendar), uri = recordUri('calendars', draft.id)
+      const homeUri = recordUri('homes', f.home.id), missing = recordUri('calendars', 'synthetic-cabin-missing')
+      const hidden = await h.cmd('calendar.prepare', { ...calendar.input, propertyId: f.other.id })
+      const hiddenUri = recordUri('calendars', hidden.id)
+      const owner = await listen(h, c, [uri, homeUri]); streams.push(owner)
+      let scoped = await listen(h, client, [uri, homeUri, hiddenUri, missing]); streams.push(scoped)
+      assert.deepEqual(scoped.ack.params.notifications.resourceSubscriptions, [uri, homeUri])
+      const noEvents = await listen(h, c, [uri], { token: await accessToken(c, { scope: 'records:read' }) }); streams.push(noEvents)
+      const noRecords = await listen(h, c, [uri], { token: await accessToken(c, { scope: 'events:read' }) }); streams.push(noRecords)
+      assert.ok(!noRecords.ack.params.notifications.resourceSubscriptions)
+      const before = (await eventList(c)).cursor, started = Date.now()
+      // The real native form changes a record that both admitted agents subscribed to.
+      const body = new URLSearchParams({ id: draft.id, revision: draft.revision })
+      const approved = await h.mf.dispatchFetch(`${h.origin}/app/action?name=calendar.approve&returnTo=%2Fapp%2Fchannels`, {
+        method: 'POST', headers: { origin: h.origin, cookie: h.owner, 'content-type': 'application/x-www-form-urlencoded' }, body,
+      })
+      assert.equal(approved.status, 200)
+      assert.ok(!(await approved.text()).includes('role="alert"'))
+      const changed = (await eventList(c, { after: before })).events.find(event => event.uri === uri)
+      assert.equal(changed.type, 'calendars.updated')
+      const notification = await scoped.wait(message => message.method === ['notifications', 'resources', 'updated'].join('/'))
+      const elapsed = Date.now() - started
+      assert.ok(elapsed < 10000, `native change delivered after ${elapsed} ms`)
+      assert.equal(notification.params.uri, uri)
+      assert.deepEqual(Object.keys(notification.params).sort(), ['_meta', 'uri'])
+      assert.ok(!JSON.stringify(scoped.messages).includes('Private synthetic'))
+      const ownerChanges = () => owner.messages.filter(message => message.method === ['notifications', 'resources', 'updated'].join('/')).length
+      const mark = ownerChanges()
+      const delivered = scoped.messages.length
+      manager = await h.cmd('member.save', { ...manager, propertyIds: [f.home.id], pmsRole: 'manager', actions: ['calendar:read', 'operations:read', 'finance:read'], propertyIds: [f.other.id], active: true })
+      // A subsequent owner-visible update is a barrier after the scoped grant was removed.
+      await h.cmd('property.save', { ...f.home, name: 'Synthetic changed home' })
+      await owner.wait(message => message.method === ['notifications', 'resources', 'updated'].join('/') && message.params.uri === homeUri)
+      await new Promise(resolve => setTimeout(resolve, 1300))
+      assert.ok(ownerChanges() > mark)
+      assert.equal(scoped.messages.length, delivered, 'existing subscription delivers nothing after property removal')
+      assert.deepEqual(noEvents.messages.filter(message => message.method === ['notifications', 'resources', 'updated'].join('/')), [])
+      assert.deepEqual(noRecords.messages.filter(message => message.method === ['notifications', 'resources', 'updated'].join('/')), [])
+      const polled = await eventList(client, { after: before })
+      assert.ok(!polled.events.some(event => event.uri === uri || event.uri === homeUri))
+      await scoped.close()
+      manager = await h.cmd('member.save', { ...manager, propertyIds: [f.home.id], pmsRole: 'manager', actions: ['calendar:read', 'operations:read', 'finance:read'], propertyIds: [f.home.id], active: true })
+      for (const revoked of [{ agents: [], consents: [client.consent] }, { agents: [client.agentId], consents: [] }]) {
+        await c.adopt(document)
+        scoped = await listen(h, client, [uri]); streams.push(scoped)
+        await c.adopt(document, { revoked })
+        const complete = await scoped.wait(message => message.result?.resultType === 'complete')
+        assert.ok(complete.id)
+        assert.ok(!scoped.messages.some(message => message.method === ['notifications', 'resources', 'updated'].join('/')))
+        assert.equal((await client.tool('cabin.events.list')).status, 401)
+        assert.ok((await eventList(c)).events.length)
+        await scoped.close()
+      }
+      await c.adopt(document)
+      scoped = await listen(h, client, [uri]); streams.push(scoped)
+      manager = await h.cmd('member.save', { ...manager, propertyIds: [f.home.id], pmsRole: 'manager', actions: ['calendar:read', 'operations:read', 'finance:read'], active: false })
+      await scoped.wait(message => message.result?.resultType === 'complete')
+      assert.ok(!scoped.messages.some(message => message.method === ['notifications', 'resources', 'updated'].join('/')))
+      t.diagnostic(`PROBE BASE-AGENT-010 subscription ${document.rules[0].do}: native calendar approval -> notification in ${elapsed} ms; current property, event and record scopes, consent, agent revocation and offboarding fence polling and existing streams`)
+    } finally { for (const stream of streams) await stream.close(); await h.close() }
   }
 })

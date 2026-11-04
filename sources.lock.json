@@ -108,7 +108,7 @@
       "executable": false
     },
     "agent-surface.json": {
-      "sha256": "4ca0489f9e8def3931c10275386cd11de059e506c4df743573bdc44bc2aa239a",
+      "sha256": "36405acfa62e1fdb265c7695988803763d0b62eefafd365591078ef9b77d33ef",
       "executable": false
     },
     "AGENTS.md": {
@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "e8083bfd496b362f7ab367804f3270205635d53d2ab3a8385f0cc888c5761775",
+      "sha256": "73986ca4c2a48879311f4b45dc2e6bd8da0e01af505927577086f54ff8dc9ffe",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "64ff7bd7e542a174226cb187dc31af564b7ceae62c7ba2bed779b6cb7479360a",
+      "sha256": "ff0506dc298536d744fb5c34b0376c4ae4811db6f0ae80d7da6a7f69e03f3667",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -1984,11 +1984,11 @@
       "executable": false
     },
     "src/cabin/agent-door/events.ts": {
-      "sha256": "ddc7cb38746bb5ce97feb0f5bbc8a7efe6827848b2c9155df8d97925b45e0582",
+      "sha256": "4ad3cfd536e7a8e8432fa515360be2b492a51cb6fc98bb69ed1f397643aa5017",
       "executable": false
     },
     "src/cabin/agent-door/index.ts": {
-      "sha256": "8080c8cb6aa4b1d7a7105c265e75fb29e7d8a67e4488dc7fdea1ae1145415696",
+      "sha256": "1d2cbb75ee7ac71982f2879b7af649f8e2d4f306b66f580aad5bc8d673db558c",
       "executable": false
     },
     "src/cabin/agent-door/people.ts": {
@@ -3080,7 +3080,7 @@
       "executable": false
     },
     "src/cabin/privacy/member.ts": {
-      "sha256": "18a935f10c34ed4b1683882e4422df6e1491c930a92cda6f7e41444fd45f4661",
+      "sha256": "f9303e366a4358794dacb39ae51ac5ad595c81e3042705ddd813584c067716a4",
       "executable": false
     },
     "src/cabin/privacy/records.ts": {
@@ -3372,7 +3372,7 @@
       "executable": false
     },
     "src/cabin/storage.ts": {
-      "sha256": "97a9439fc618f09d6c94d27418534ea5414c57943bf56d62b7f2e8896327e960",
+      "sha256": "811f373e08bcb90d9f3a8a7b42fb0bdb875cbd108b2bb51d73b5a4637f2802b1",
       "executable": false
     },
     "src/cabin/taxes/calculate.ts": {
@@ -6124,11 +6124,11 @@
       "executable": false
     },
     "tests/agent-events-support.mjs": {
-      "sha256": "6f26ba391ac2d298a596692ab975ff99a2c897aeab79728dc5030ea85c9ccc9d",
+      "sha256": "6ccdaeb3cb82ff4c7c60e3704c22ea2d83f9f17bd06ce85f78a2e67941c904f5",
       "executable": false
     },
     "tests/agent-events.test.mjs": {
-      "sha256": "3247e46e26739a7d2bc638653c18fef90d2dc14993b0e140c80f0ba03d38e0b3",
+      "sha256": "0b4fe562378b9070a6f594acc82b9dae15ba92f72397f7fb3754e29aab792dfc",
       "executable": false
     },
     "tests/agent-resources.test.mjs": {
