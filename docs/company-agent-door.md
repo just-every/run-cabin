@@ -30,8 +30,8 @@ promotion does not create a Business role.
 
 The runtime is copied from Base `2135c394939f4a737adabdc8003b0e667b31ac5a`,
 with the released `@runeditrun/rer` 0.2.91 CLI. The production door and descriptor
-declare tools, resources, policy, pause, audit and idempotency. Events,
-prompts and subscriptions remain undeclared: their lists are empty or absent
+declare tools, resources, events, policy, pause, audit and idempotency.
+Prompts and subscriptions remain undeclared: their lists are empty or absent
 and calls return `capability_not_declared`. Unknown tool names return
 `tool_not_found`. The ten record collections above each have a JSON URI template declared in
 `agent-surface.json`. Both resource reads and the existing read tools require
@@ -103,3 +103,35 @@ checks keyboard navigation and schema disclosure at desktop width and records
 the same document at desktop and phone widths. Both run in push Verify.
 Acceptance points 3–5 across the wider rental surface remain incomplete; this
 page does not expand the three existing owner-only draft preparations.
+
+Retained preparation polling uses the built-in `cabin.events.list` tool, requiring
+an explicit `events:read` scope. Its optional `after` cursor is an event ID;
+`limit` defaults to 100 and accepts 1 through 200. Results contain `events` and
+`cursor`. Replaying a cursor returns the same retained IDs in commit order,
+including after restart. An unknown cursor returns an empty page. A consumer
+must deduplicate by event ID; polling does not promise exactly-once delivery.
+
+The native transaction retains `calendars.prepared`, `turnovers.prepared` and
+`statements.prepared` for the three existing preparations, including native
+forms and legacy draft keys. MCP idempotent retries reuse the recorded outcome
+without another preparation event. Each event contains only its stable ID,
+type, typed record URI, person or agent-for-person attribution and time. It
+contains no calendar text, checklist, statement lines, guest data or capabilities.
+Record events additionally require `records:read` and the sponsor's current
+native role, action and property visibility at delivery. Events about missing
+or restricted records are omitted. Current consent, agent revocation and native
+offboarding stop the next polling call; local draft keys gain no event access.
+The existing internal record adapters enforce this even independently of public
+resource-template adoption.
+
+`tests/agent-events.test.mjs` exercises populated native forms and MCP polling
+under autonomous and held policies, ordered pagination and identical restart
+replay, person and agent attribution, retry and conflicting-key refusal, scope
+requirements, changed property and action grants, consent and agent revocation,
+and native offboarding. Complete record-change coverage, subscriptions and the
+10-second notification journey, signed Base integration webhooks with identical
+IDs and failed-webhook replay, and complete approval, review and policy event
+acceptance remain unproved. Existing shared decision events do not establish
+those broader guarantees. API-001 retains its Base publication-scanner and
+authorized Zapier receiver dependencies. No provider action or new mutation
+authority is introduced.

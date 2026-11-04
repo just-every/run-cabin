@@ -28,7 +28,8 @@
       "commands": [
         "node scripts/cabin-domain-tests.mjs guests",
         "node --test --test-concurrency=1 tests/agent-resources.test.mjs",
-        "node --test --test-concurrency=1 tests/agent-docs.test.mjs"
+        "node --test --test-concurrency=1 tests/agent-docs.test.mjs",
+        "node --test --test-concurrency=1 tests/agent-events.test.mjs"
       ]
     },
     {

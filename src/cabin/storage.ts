@@ -21,6 +21,7 @@ import { syncLedger } from './ledger/automatic'
 import { dispatch } from './dispatch'
 import { synchronizeMessages } from './inbox/schedule'
 import { syncTeam } from './inbox/team/cases'
+import { preparationEvents } from './agent-door/events'
 /** The scheduled iCal sync acts as Cabin itself; principal() never issues this role. */
 export const SYSTEM: Actor = { id: 'cabin:ical-sync', email: '', role: 'system', isAgent: false, operatorVersion: 0 }
 export function authority(a: Actor): Query {
@@ -55,7 +56,7 @@ export function transaction(c: Context, name: string, audit = true): Query[] {
  }
  const existing = new Set(c.before.approvals.map(a => a.id))
  for (const a of c.data.approvals) if (!existing.has(a.id)) q.push(query('INSERT INTO cb_approvals(id,kind,record_id,revision,actor_id,at) VALUES(?,?,?,?,?,?)', a.id,a.kind,a.recordId,a.revision,a.actorId,a.at))
- q.push(...c.queries, ...changes(c,name,audit),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
+ q.push(...c.queries, ...changes(c,name,audit), ...preparationEvents(c,name),query('UPDATE cb_meta SET version=version+1 WHERE id=1'),guard(a.sql,...a.params),query('DELETE FROM cb_guard'))
  return q
 }
 /** Every commit first brings turnovers, door codes, notices and scheduled guest messages in line with the stays (dispatch.ts, inbox/schedule.ts). */

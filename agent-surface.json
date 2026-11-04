@@ -89,6 +89,17 @@
         "CONTROL-001",
         "FIN-004"
       ]
+    },
+    {
+      "name": "cabin.events.list",
+      "scope": "events:read",
+      "readOnly": true,
+      "classes": [
+        "standard"
+      ],
+      "clauses": [
+        "BASE-AGENT-010"
+      ]
     }
   ],
   "resources": [
@@ -374,11 +385,27 @@
           "status": "draft"
         }
       }
+    },
+    {
+      "id": "events",
+      "tool": "cabin.events.list",
+      "args": {
+        "limit": 200
+      },
+      "expect": [
+        {
+          "class": "standard",
+          "facts": {
+            "measure": 1
+          }
+        }
+      ]
     }
   ],
   "capabilities": [
     "tools",
     "resources",
+    "events",
     "policy",
     "pause",
     "audit",

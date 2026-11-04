@@ -30,7 +30,7 @@ export function cabinAgentOptions(original: Bindings): AgentDoorOptions {
   const env = runtimeBindings(original)
   return { seed: 'cabin', name: 'Cabin', specialist: 'rental operations coordinator',
     db: env.DB, origin: env.AUTH_ORIGIN, trust: trust(env), people: cabinPeople(env),
-    capabilities: ['tools', 'resources', 'policy', 'pause', 'audit', 'idempotency'],
+    capabilities: ['tools', 'resources', 'events', 'policy', 'pause', 'audit', 'idempotency'],
     tools: cabinTools(env), resources: cabinResources(env), notTools, limits,
     // Existing local keys retain only the three draft verbs; they cannot gain resource scopes.
     async localCredentials(request) {
