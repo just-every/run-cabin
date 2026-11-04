@@ -1,31 +1,36 @@
 import { type Actor, type Context, type Data, need, owner, property, text, exact, newId, sha } from '../model'
 import { assertLive } from '../storage'
+import { assertContactsAllowed } from '../privacy/contacts'
 import { permitsProperty } from '../permissions/policy'
 import { guestGroup, consent } from './resolve'
 import { completedStay } from './offers'
 import type { GuestProfile, GuestSegment } from './types'
 
+const emailContact=(value:string)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
 /** Marketing preparation remains installation-owner-only and has no outbound effect. */
 function authority(actor:Actor,propertyId:string) {
  owner(actor);need(!actor.isAgent&&permitsProperty(actor,propertyId),'Marketing preparation is outside your property authority',403)
 }
-export function recordMarketingConsent(c:Context,profile:GuestProfile,input:Record<string,unknown>) {
+export async function recordMarketingConsent(c:Context,profile:GuestProfile,input:Record<string,unknown>) {
  const home=property(c,input.propertyId);authority(c.actor,home.id)
  const booking=c.data.bookings.find(b=>b.id===profile.bookingId)
  need(booking&&booking.propertyId===home.id&&!booking.guestErasedAt,'Choose the identity origin belonging to this home',409)
  need(input.allowed==='yes'||input.allowed==='no','Record explicit marketing opt-in or opt-out')
  let identityId:string|undefined
  if(input.allowed==='yes'){
-  const identity=profile.identities.find(i=>i.id===input.identityId&&i.kind==='email'&&i.verified&&i.value.toLowerCase()===booking.guestEmail?.trim().toLowerCase())
+  if(booking.restorePaused){const restore=await c.db.prepare('SELECT reviewed FROM cb_restore_review WHERE id=1').first<{reviewed:number}>();need(restore?.reviewed,'Review the restored installation before recording fresh marketing consent',409)}
+  const identity=profile.identities.find(i=>i.id===input.identityId&&i.kind==='email'&&i.verified&&emailContact(i.value)&&i.value.toLowerCase()===booking.guestEmail?.trim().toLowerCase())
   need(identity,'Verify the current reservation email before recording marketing opt-in',409)
   need(input.confirm==='yes','Confirm the guest separately requested repeat-stay marketing')
+  await assertContactsAllowed(c.db,[identity.value])
   identityId=identity.id
  }
  profile.consents.push({id:newId(),purpose:'marketing',identityId,allowed:input.allowed==='yes',propertyId:home.id,source:text(input.source,'separate marketing consent evidence',400),at:c.now,by:c.actor.id})
  profile.revision=newId();return {id:profile.id}
 }
 
-function inventory(data:Data,propertyId:string,now:string) {
+async function inventory(db:D1Database,data:Data,propertyId:string,now:string) {
  const members:GuestSegment['members']=[]
  let excluded=0
  const roots=data.guests.filter(g=>!g.erasedAt&&!g.mergedInto)
@@ -35,10 +40,15 @@ function inventory(data:Data,propertyId:string,now:string) {
   const eligible=consent(data,root.id,propertyId,'marketing')?origins.flatMap(g=>{
    const booking=data.bookings.find(b=>b.id===g.bookingId)!
    const decision=[...g.consents].reverse().find(c=>c.purpose==='marketing'&&c.propertyId===propertyId)
-   const contact=g.identities.find(i=>i.id===decision?.identityId&&i.kind==='email'&&i.verified&&i.value.toLowerCase()===booking.guestEmail?.trim().toLowerCase())
-   return decision?.allowed&&!decision.inactive&&contact&&!booking.guestErasedAt&&!booking.restorePaused&&completedStay(data,booking.id,Date.parse(now)) ? [{guestId:root.id,profileIds:group.map(g=>g.id).sort(),identityId:contact.id,bookingId:booking.id}] : []
+   const contact=g.identities.find(i=>i.id===decision?.identityId&&i.kind==='email'&&i.verified&&emailContact(i.value)&&i.value.toLowerCase()===booking.guestEmail?.trim().toLowerCase())
+   return decision?.allowed&&!decision.inactive&&contact&&!booking.guestErasedAt&&completedStay(data,booking.id,Date.parse(now)) ? [{guestId:root.id,profileIds:group.map(g=>g.id).sort(),identityId:contact.id,bookingId:booking.id}] : []
   }):[]
-  if(eligible.length)members.push(eligible[0]);else excluded++
+  let selected:GuestSegment['members'][number]|undefined
+  for(const candidate of eligible){
+   const origin=data.guests.find(g=>g.bookingId===candidate.bookingId)!,contact=origin.identities.find(i=>i.id===candidate.identityId)!
+   try{await assertContactsAllowed(db,[contact.value]);selected=candidate;break}catch(error){if((error as {status?:number}).status!==409)throw error}
+  }
+  if(selected)members.push(selected);else excluded++
  }
  return {members,excluded}
 }
@@ -50,12 +60,12 @@ async function baseline(data:Data,propertyId:string) {
 async function valid(db:D1Database,data:Data,segment:GuestSegment) {
  if(segment.status!=='prepared'||segment.baseline!==await baseline(data,segment.propertyId))return false
  if(!segment.authority)return false
- try{authority(segment.authority,segment.propertyId);await assertLive(db,segment.authority);return true}catch{return false}
+ try{authority(segment.authority,segment.propertyId);await assertLive(db,segment.authority);await assertContactsAllowed(db,segment.members.map(m=>data.guests.find(g=>g.bookingId===m.bookingId)?.identities.find(i=>i.id===m.identityId)?.value));return true}catch{return false}
 }
 export async function marketingCommand(c:Context,name:string,input:Record<string,unknown>) {
  if(name==='guest.marketing.prepare'){
   const home=property(c,input.propertyId);authority(c.actor,home.id)
-  const selected=inventory(c.data,home.id,c.now)
+  const selected=await inventory(c.db,c.data,home.id,c.now)
   need(selected.members.length,'No eligible guests: require a completed stay, verified current email and separate marketing opt-in; merged opt-outs suppress inclusion',409)
   const segment:GuestSegment={id:newId(),revision:newId(),propertyId:home.id,label:text(input.label,'segment label',100),preparedAt:c.now,authority:structuredClone(c.actor),baseline:await baseline(c.data,home.id),status:'prepared',...selected}
   c.data.guestSegments.push(segment);c.entityId=segment.id

@@ -2548,7 +2548,7 @@
       "executable": false
     },
     "src/cabin/guests/marketing.ts": {
-      "sha256": "8057dd51fc721ad5bf915530649536b8488e6856ba9d60b09bd33c6ebbf3fe06",
+      "sha256": "8abb5a9e408fd5ac298ef486d13662507dd8b0fe081c043dc7ffdc0eebfffd29",
       "executable": false
     },
     "src/cabin/guests/offers.ts": {
@@ -6132,7 +6132,7 @@
       "executable": false
     },
     "tests/archive-records.mjs": {
-      "sha256": "61ebfb08a6727d5e34c9078f4d46090f0de21f0068badc34a176efcacfb20c7c",
+      "sha256": "c7cea9d78d4498cabf16eed0122cd11b8518fdd8bb70827aaff95a8b92e7fe21",
       "executable": false
     },
     "tests/archive.test.mjs": {
@@ -6464,7 +6464,7 @@
       "executable": false
     },
     "tests/privacy.test.mjs": {
-      "sha256": "8af0b10e479281424c214bac0decc74a62b0309015f65947927cf002f41dcd9e",
+      "sha256": "15b879bfa769ce5f2027a9224bffe4c0dcb28a074c97750df16e5dff9c9741d8",
       "executable": false
     },
     "tests/promotions.test.mjs": {
