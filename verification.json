@@ -28,7 +28,8 @@
       "commands": [
         "node scripts/cabin-domain-tests.mjs guests",
         "node --test --test-concurrency=1 tests/agent-resources.test.mjs",
-        "node --test --test-concurrency=1 tests/agent-events.test.mjs"
+        "node --test --test-concurrency=1 tests/agent-events.test.mjs",
+        "node --test --test-concurrency=1 tests/agent-docs.test.mjs"
       ]
     },
     {
@@ -54,7 +55,8 @@
       "hosted": false,
       "commands": [
         "node --test --test-concurrency=1 tests/channel-agent.test.mjs",
-        "node tests/tax-periods-browser.mjs"
+        "node tests/tax-periods-browser.mjs",
+        "node tests/agent-docs-browser.mjs"
       ]
     },
     {

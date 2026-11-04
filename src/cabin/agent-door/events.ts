@@ -7,6 +7,11 @@ const records = {
   calendars: 'calendarDrafts', turnovers: 'turnovers',
 } as const
 const preparations = { 'calendar.prepare': 'calendars', 'turnover.prepare': 'turnovers', 'statement.prepare': 'statements' }
+export const retainedEventTypes = [
+  ...Object.keys(records).flatMap(kind => ['created', 'updated', 'removed'].map(change => `${kind}.${change}`)),
+  ...Object.values(preparations).map(kind => `${kind}.prepared`),
+  'approval.pending', 'approval.decided', 'review.flagged', 'policy.adopted',
+].sort()
 
 /** Retain metadata in the guarded native transaction; delivery reapplies native visibility. */
 export function recordEvents(c: Context, command: string): Query[] {

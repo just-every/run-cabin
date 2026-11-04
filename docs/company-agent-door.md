@@ -151,3 +151,21 @@ integrations interface and an authorized receiver remain dependencies for
 whole-clause completion. API-001 retains its Base publication-scanner and
 authorized Zapier receiver dependencies. No provider action or new mutation
 authority is introduced.
+The public `/docs/agents` page projects the same runtime registry used by MCP,
+including its enriched schemas, scopes and classes. MCP discovery and initialize
+instructions name these registered jobs and point to the public documentation. Class witnesses come from
+`agent-surface.json` journey steps and the shared class assertions in
+`src/modules/agent-door/conformance/journey.mjs`. Registry names, scope, class,
+contract and witness drift are refused instead of publishing a second tool list.
+The page includes declared resource templates, configured request capacity,
+stable error responses and explicit capability omissions. It never invokes a
+classifier, tool or resource reader and includes no fixture arguments or private
+records. It requires no sign-in and creates no admission or action authority.
+
+`tests/agent-docs.test.mjs` compares the public page with authenticated listings,
+executes its class witnesses under autonomous and held policies, and checks
+metadata drift, escaping and private-data omission. `tests/agent-docs-browser.mjs`
+checks keyboard navigation and schema disclosure at desktop width and records
+the same document at desktop and phone widths. Both run in push Verify.
+Acceptance points 3–5 across the wider rental surface remain incomplete; this
+page does not expand the three existing owner-only draft preparations.

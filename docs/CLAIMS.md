@@ -231,7 +231,7 @@ Remaining: Synchronous draft replay only; queued lifecycle and uncertain provide
 <!-- contract-status:BASE-AGENT-013:start -->
 BASE-AGENT-013 · Manifest, docs and the conformance journey · partial.
 
-Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; normal rer verify — “Agent door conformance: 883/883 points passed.” (30 October 2026, CORE subset).
+Evidence: `agent-surface.json`; `src/cabin/agent-door/`; `docs/company-agent-door.md`; `tests/agent-docs.test.mjs` — Public agent documentation matches MCP and computed class journeys without disclosing native data; `tests/agent-docs-browser.mjs` — public keyboard and responsive documentation journey; normal rer verify — CORE subset.
 
-Remaining: CORE journey only; undeclared events, resources, prompts and subscriptions and unscoped multi-sponsor, mail, refresh, timed, dual-host, queued and owner-native administration families remain partial.
+Remaining: Registry-generated documentation and class witnesses cover acceptance points 1–2 for the declared subset. Full conformance acceptance points 3–5 across the wider rental surface remain unproved. Undeclared events, prompts and subscriptions; unscoped multi-sponsor, mail, refresh, timed, dual-host, queued and owner-native administration families remain partial. Resource byte-budget and file-byte proof remain held on Base under BASE-AGENT-003.
 <!-- contract-status:BASE-AGENT-013:end -->
