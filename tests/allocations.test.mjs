@@ -1,6 +1,7 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
 import {run} from './harness.mjs'
+import {allocatedExceptionJourney,allocatedRoundingJourney} from './allocated-exceptions-support.mjs'
 const model=(owners,extra={})=>({commissionBase:'netRent',fixedFeeCents:1000,reserveBps:1000,ownerUseCleaningCents:8000,passThrough:'owner',taxExpense:'owner',owners,mapping:{owner:'Owner payable',manager:'Management revenue',reserve:'Owner reserves',tax:'Lodging tax payable',vendor:'Vendor payable',reviewedBy:'Pat Accountant'},...extra})
 const owners=[{name:'Karen Lee',email:'karen@stay.example',bps:6000},{name:'Morgan Lee',email:'morgan@stay.example',bps:4000}]
 const calendar=(uid,start,end)=>`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:${uid}\r\nDTSTART;VALUE=DATE:${start}\r\nDTEND;VALUE=DATE:${end}\r\nSUMMARY:Reserved\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`
@@ -59,6 +60,8 @@ test('FIN-003: frozen revenue allocations explain commission bases, fixed fees, 
  const cleaner=await h.person('Luis');const restricted=await h.state(cleaner.cookie);assert.equal(restricted.financialAllocations.length,0);assert.equal(restricted.sharedCosts.length,0)
  await h.cmd('allocation.prepare',input,cleaner.cookie,403)
  for(const path of ['/app/people','/app/statements'])assert.equal((await h.send(path,undefined,h.owner)).status,200)
+ await allocatedExceptionJourney()
+ await allocatedRoundingJourney()
 },{now:allocationNow}))
 
 test('FIN-003: shared invoice approval binds accountant-reviewed agreements and allocates each cent with immutable evidence',()=>run(async h=>{

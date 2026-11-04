@@ -5,6 +5,7 @@ import { post } from '../../ledger/store'
 import { debit,credit } from '../../ledger/types'
 import { financialCases,saveCase } from './store'
 import { caseEvidence } from './evidence'
+import { allocatedFeePlan } from './allocated'
 import type { FinancialCase } from './types'
 export async function financialCaseCommand(c:Context,name:string,p:Record<string,unknown>){
  if(!name.startsWith('financeCase.'))return undefined
@@ -44,14 +45,15 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
    const payout=evidence.payouts.find(v=>v.id===p.payoutId);need(payout,'Matched settlement source not found',404)
    const original=evidence.journals.find(j=>j.sourceKey==='payout:'+payout.id)
    need(original&&original.lines.every(l=>['cash','ownerLiability','channelFees'].includes(l.account))&&!evidence.journals.some(j=>j.reversalOf===original.id),'This source needs accountant review: no unreversed native payout journal exists',409)
-   need(!evidence.agreement?.allocation&&!c.data.financialAllocations.some(a=>a.bookingId===row.bookingId),'Allocated receipts need their FIN-003 correction workflow; do not replace an allocated posting',409)
    const proof=text(p.evidence,'retained provider record reference',500),csv=text(p.csv,'corrected provider CSV',2_000_000),lines=parsePayoutCsv(payout.source,csv,proof)
    need(lines.length===1,'Propose exactly one identified settlement correction')
    const source=lines[0]
    need(source.externalId===payout.externalId&&source.reference===payout.reference&&source.payoutId===payout.payoutId,'The corrected provider row must identify the same transaction, reservation and payout',409)
    need(source.grossCents!==payout.grossCents||source.feeCents!==payout.feeCents||source.netCents!==payout.netCents,'The provider evidence has no changed amount',409)
    need(p.baseline===evidence.digest,'Source evidence changed. Review it before proposing.',409)
-   row.proposals.push({id:newId(),status:'proposed',payoutId:payout.id,originalJournalId:original.id,source,csv,evidence:proof,sourceDigest:await sha(csv.replace(/\r\n?/g,'\n')),baseline:evidence.digest,effectiveDate:text(p.effectiveDate,'open correction date',10),why:text(p.why,'source-grounded explanation',1000),proposedBy:c.actor.id,at:c.now});row.status='proposed'
+   const id=newId(),effectiveDate=text(p.effectiveDate,'open correction date',10),sourceDigest=await sha(csv.replace(/\r\n?/g,'\n'))
+   const allocated=await allocatedFeePlan(c,evidence,payout,source,id,sourceDigest,effectiveDate)
+   row.proposals.push({...allocated,id,status:'proposed',payoutId:payout.id,originalJournalId:original.id,source,csv,evidence:proof,sourceDigest,baseline:evidence.digest,effectiveDate,why:text(p.why,'source-grounded explanation',1000),proposedBy:c.actor.id,at:c.now});row.status='proposed'
   }else if(name==='financeCase.reject'||name==='financeCase.approve'){
    const proposal=row.proposals.find(v=>v.id===p.proposalId&&v.status==='proposed');need(proposal,'Pending correction not found',409)
    if(name==='financeCase.approve'){
@@ -59,12 +61,29 @@ export async function financialCaseCommand(c:Context,name:string,p:Record<string
     // Conservative default: installation owner approves this exact local posting only.
     owner(c.actor);need(p.confirm==='yes','Explicit approval of this exact correction is required')
     need(proposal.baseline===evidence.digest,'Reservation, settlement, bank, agreement or statement evidence changed. Reject and propose again.',409)
+    if(proposal.journalGroup){
+     const ids:string[]=[]
+     for(const item of proposal.journalGroup){
+      if(!item.originalJournalId)continue
+      const original=evidence.journals.find(j=>j.id===item.originalJournalId)
+      need(original&&!evidence.journals.some(j=>j.reversalOf===original.id),'An affected source journal was already reversed or is missing',409)
+      const reversal=await post(c,{...original,sourceKey:'reversal:'+original.id,sourceType:'correction',sourceId:original.id,sourceRevision:original.id,effectiveDate:proposal.effectiveDate,reversalOf:original.id,lines:original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))})
+      ids.push(reversal.id)
+     }
+     for(const item of proposal.journalGroup)if(item.replacement)ids.push((await post(c,item.replacement)).id)
+     const allocation=structuredClone(proposal.allocation!)
+     allocation.status='approved';allocation.approval={id:newId(),kind:'financial-allocation',recordId:allocation.id,revision:allocation.revision,actorId:c.actor.id,at:c.now}
+     c.data.financialAllocations.push(allocation);c.data.approvals.push(allocation.approval)
+     proposal.journalIds=ids
+    }else{
     const original=evidence.journals.find(j=>j.id===proposal.originalJournalId)!;need(!evidence.journals.some(j=>j.reversalOf===original.id),'The source journal was already reversed',409)
     const reversed=await post(c,{...original,sourceKey:'reversal:'+original.id,sourceType:'correction',sourceId:original.id,sourceRevision:original.id,effectiveDate:proposal.effectiveDate,reversalOf:original.id,lines:original.lines.map(l=>({...l,debitCents:l.creditCents,creditCents:l.debitCents}))})
     const {grossCents:g,feeCents:f,netCents:n}=proposal.source
     const signed=(account:'cash'|'ownerLiability',amount:number,dr:boolean)=>amount===0?[]:[(amount>0===dr?debit:credit)(account,Math.abs(amount))]
     const corrected=await post(c,{sourceKey:'financial-correction:'+proposal.id,propertyId:original.propertyId,bookingId:original.bookingId,ownerKey:original.ownerKey,legalEntity:original.legalEntity,settlement:{grossCents:g,feeCents:f,netCents:n},sourceType:'settlement-correction',sourceId:proposal.id,sourceRevision:proposal.sourceDigest,effectiveDate:proposal.effectiveDate,correctionOf:original.id,lines:[...signed('cash',n,true),...signed('ownerLiability',g,false),...signed('ownerLiability',f,true)]})
-    proposal.journalIds=[reversed.id,corrected.id];proposal.status='approved';row.status='corrected'
+    proposal.journalIds=[reversed.id,corrected.id]
+    }
+    proposal.status='approved';row.status='corrected'
     c.data.approvals.push({id:newId(),kind:'financial-correction',recordId:proposal.id,revision:proposal.baseline,actorId:c.actor.id,at:c.now})
    }else{proposal.status='rejected';row.status='investigating'}
    proposal.decisionBy=c.actor.id;proposal.decisionAt=c.now;proposal.decisionReason=text(p.reason,'decision reason',1000)
