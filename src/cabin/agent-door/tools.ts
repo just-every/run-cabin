@@ -81,7 +81,7 @@ export function cabinTools(env: Bindings): ToolDefinition[] {
       // This is the existing draft-only native agent path, with the current sponsor's grants.
       const row = await command(env.DB, { ...actor, isAgent: true, agent: prepared }, draft.command, args) as { id: string; revision: string }
       ctx.emit(`${draft.kind}.prepared`, recordUri(draft.kind, row.id), { id: row.id })
-      return { result: { id: row.id, revision: row.revision } }
+      return { result: { id: row.id, revision: row.revision }, resources: [{ uri: recordUri(draft.kind, row.id), name: `Cabin ${draft.kind}` }] }
     },
   }))
   return tools

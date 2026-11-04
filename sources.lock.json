@@ -108,7 +108,7 @@
       "executable": false
     },
     "agent-surface.json": {
-      "sha256": "f4554b80623e9018069d1235f6d2edcedf0c5603610918064b0d1ac490e6377a",
+      "sha256": "a91bd4187051e56f83faf5c9fe81dfb6ea88bc1fe061a7244e5e82227154567e",
       "executable": false
     },
     "AGENTS.md": {
@@ -128,7 +128,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "150e2f72c3b89155278c573843c6ab642498891ab8c10825aed316e7df51b99d",
+      "sha256": "a82035a7347cdb95e58be0e61a7117e197c733abd52d03d378d2fb359d29a368",
       "executable": false
     },
     "DEMO.md": {
@@ -192,7 +192,7 @@
       "executable": false
     },
     "docs/company-agent-door.md": {
-      "sha256": "10d32bfa6e0cac51626a71398326a8cb4fa61eb48427cf29d1a0b94560aa3075",
+      "sha256": "16a7609acc01f375cfbcb52ae5e63a305593c566f7401b136567d1f5c46c1da9",
       "executable": false
     },
     "docs/data-custody.md": {
@@ -1984,7 +1984,7 @@
       "executable": false
     },
     "src/cabin/agent-door/index.ts": {
-      "sha256": "506dfd4094828c97b15c541e773a1ac81df4709342f176b04bb8ae9dd092bb86",
+      "sha256": "0bb212a1d00d3dba341de235800b3deabe7a62a2332a0dc0d01f332f2b8c3996",
       "executable": false
     },
     "src/cabin/agent-door/people.ts": {
@@ -1996,7 +1996,7 @@
       "executable": false
     },
     "src/cabin/agent-door/tools.ts": {
-      "sha256": "ca6f624ffaa3a91d6abf62ecf9c124236e7e5b3b4814033aa5718a1b26df6f20",
+      "sha256": "317fdc84aa6021757b298bb4fe9e5f4280432d91a7d2c1857a9d2ba6d4a62e20",
       "executable": false
     },
     "src/cabin/agreements/access.ts": {
@@ -6119,6 +6119,10 @@
       "sha256": "4edcf174d221e06e1be4915c8cb0af2a15cf97df9cc982266b77a9cfeecdae2a",
       "executable": false
     },
+    "tests/agent-resources.test.mjs": {
+      "sha256": "42f2ff608f6d60934eac217522b852a4545918c194d5abb4751ca4805f69b802",
+      "executable": false
+    },
     "tests/allocations.test.mjs": {
       "sha256": "cf12929959df7d6a9461939ca170b5c4f10a1e681d5d156aa444b87612c06c54",
       "executable": false
@@ -6368,7 +6372,7 @@
       "executable": false
     },
     "tests/initialize-agent-owner.mjs": {
-      "sha256": "5e22a71a4cc4969560f93da1162b20d72b8912f16206ba930d24926e9ecd416b",
+      "sha256": "fd74296efe4657889bd82c0b6fc78f35bfdeddd123da081831f8de9db1c36b62",
       "executable": false
     },
     "tests/inquiries-browser.mjs": {
@@ -6592,7 +6596,7 @@
       "executable": false
     },
     "tests/worker.ts": {
-      "sha256": "8fd40dcb2046ebd38f834e949bb6a193794a6e1cc02c4b0f5f26edbd872c746c",
+      "sha256": "1bb01bbeaba9b7456004546f002e2a33db7f755367a4c1f04843ba975c06b64a",
       "executable": false
     },
     "tsconfig.json": {
@@ -6600,7 +6604,7 @@
       "executable": false
     },
     "verification.json": {
-      "sha256": "fc8e2dc405327c04cc53e6189035b35b554ee84cddb6e428d0f4efa80d698c41",
+      "sha256": "25f073132190b5b28113fed1e7f21bdd75513b3cd5993509fc2880df7b48ff74",
       "executable": false
     },
     "VERIFY-WORKFLOW.md": {

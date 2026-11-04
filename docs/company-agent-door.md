@@ -30,11 +30,16 @@ promotion does not create a Business role.
 
 The runtime is copied from Base `2135c394939f4a737adabdc8003b0e667b31ac5a`,
 with the released `@runeditrun/rer` 0.2.91 CLI. The production door and descriptor
-declare only tools, policy, pause, audit and idempotency. Events, resources,
-prompts and subscriptions are undeclared: their lists are empty or absent and
-calls return `capability_not_declared`. Unknown tool names return
-`tool_not_found`. The record collections above are read through scoped tools;
-there are no public MCP resource links or specialist prompts in this subset.
+declare tools, resources, policy, pause, audit and idempotency. Events,
+prompts and subscriptions remain undeclared: their lists are empty or absent
+and calls return `capability_not_declared`. Unknown tool names return
+`tool_not_found`. The ten record collections above each have a JSON URI template declared in
+`agent-surface.json`. Both resource reads and the existing read tools require
+`records:read`; local draft keys cannot list or open resources. The three draft
+preparations return a `resource_link` to the saved record. Reads reapply native
+visibility and omit active capabilities, including for the installation owner.
+Customer and imported text has `com.runeditrun/untrusted: true` on its content.
+There are no specialist prompts in this subset.
 
 The copied runtime now exposes consent on tool context and checks current native
 resource visibility for events. Those former Base gaps are closed. This adoption
@@ -43,8 +48,10 @@ explicitly admit agents for only the three preparations; broad company policy
 does not authorize a signature, inspection, provider send, payout or native role
 change. Broader tools need their own native authority, durable consent and
 provider receipts before they can be declared. No queued provider action,
-mail edge, multi-sponsor, timed or dual-host journey, resource refresh or native
-owner administration is claimed. BASE-AGENT clauses remain partial and name
+mail edge, timed or dual-host journey, resource refresh or native owner
+administration is claimed. Grant byte budgets and file-byte accounting remain
+unavailable in the pinned Base door; resources expose JSON records only. This
+is the remaining BASE-AGENT-003 acceptance gap, not a byte-budget guarantee. BASE-AGENT clauses remain partial and name
 these gaps; the pinned ct Agent surface is still a wider target.
 
 `agent-surface.json` declares the bounded registry and its normal `rer verify`
@@ -68,3 +75,12 @@ classes, unanswered and paused policy, revision conflict, replay, consent
 revocation and audit agreement. The runtime shard's emitted-Worker HTTP check
 and its existing cleaner, quote and booking-site browser journeys also passed.
 Unknown-subject and changed-email sponsor probes passed. Inactive and allow-list-excluded sponsor fixtures remain undeclared and received no passing points. This proves the declared subset; it does not promote the wider rental clauses.
+
+The public-door resource journeys in `tests/agent-resources.test.mjs` compare
+nonempty owner and scoped cleaner reads with the native HTTP state, test identical
+missing and restricted refusals, and read each prepared draft back under autonomous
+and held policies. Sensitive content stays withheld until its sponsor approves.
+Revoking consent after classification expires the pending read; native offboarding
+ends the next read without affecting the owner. The public CLI archive journey
+retains native history, expires saved read approvals and requires fresh Business
+pairing and policy. Neither restoration nor an old local key restores admission.

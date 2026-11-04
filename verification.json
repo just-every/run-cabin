@@ -26,7 +26,8 @@
       "browser": false,
       "hosted": false,
       "commands": [
-        "node scripts/cabin-domain-tests.mjs guests"
+        "node scripts/cabin-domain-tests.mjs guests",
+        "node --test --test-concurrency=1 tests/agent-resources.test.mjs"
       ]
     },
     {

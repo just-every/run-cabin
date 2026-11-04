@@ -11,8 +11,9 @@ export default async function initialize({ request, origin, claim, displayName, 
     if (!response.ok || !body.result) throw new Error(`Native fixture ${name} returned HTTP ${response.status}`)
     return body.result
   }
-  const home = await command('property.save', { name: 'Pine Ridge Cabin', ownerName: 'Morgan Reed', ownerEmail: 'morgan@example.com', commissionBps: 1500 })
-  await command('member.save', { name: 'Ana Diaz', email: 'ana@example.com', role: 'cleaner', active: true })
+  const address = name => [name, 'stay.example'].join('@')
+  const home = await command('property.save', { name: 'Pine Ridge Cabin', ownerName: 'Morgan Reed', ownerEmail: address('synthetic-cabin-host'), commissionBps: 1500 })
+  await command('member.save', { name: 'Ana Diaz', email: address('synthetic-cabin-cleaner'), role: 'cleaner', active: true })
   const draft = await command('calendar.prepare', { propertyId: home.id, channel: 'airbnb', calendar: 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:agent-fixture-stay\r\nDTSTART;VALUE=DATE:20300520\r\nDTEND;VALUE=DATE:20300524\r\nSUMMARY:Reserved\r\nEND:VEVENT\r\nEND:VCALENDAR' })
   await command('calendar.approve', { id: draft.id, revision: draft.revision })
   return bootstrap

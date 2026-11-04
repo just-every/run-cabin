@@ -91,7 +91,18 @@
       ]
     }
   ],
-  "resources": [],
+  "resources": [
+    "cabin://homes/{id}",
+    "cabin://people/{id}",
+    "cabin://stays/{id}",
+    "cabin://guests/{id}",
+    "cabin://tasks/{id}",
+    "cabin://readiness/{id}",
+    "cabin://statements/{id}",
+    "cabin://cases/{id}",
+    "cabin://calendars/{id}",
+    "cabin://turnovers/{id}"
+  ],
   "notTools": [
     {
       "clauses": [
@@ -208,6 +219,20 @@
       "inject": {
         "class": "money",
         "send": true
+      },
+      "resource": {
+        "uriTemplate": "cabin://calendars/{id}",
+        "state": {
+          "id": {
+            "$from": "calendar",
+            "pointer": "/id"
+          },
+          "revision": {
+            "$from": "calendar",
+            "pointer": "/revision"
+          },
+          "status": "draft"
+        }
       }
     },
     {
@@ -295,7 +320,21 @@
             "measure": 1
           }
         }
-      ]
+      ],
+      "resource": {
+        "uriTemplate": "cabin://turnovers/{id}",
+        "state": {
+          "id": {
+            "$from": "work",
+            "pointer": "/id"
+          },
+          "revision": {
+            "$from": "work",
+            "pointer": "/revision"
+          },
+          "status": "draft"
+        }
+      }
     },
     {
       "id": "statement",
@@ -320,11 +359,26 @@
             "measure": 1
           }
         }
-      ]
+      ],
+      "resource": {
+        "uriTemplate": "cabin://statements/{id}",
+        "state": {
+          "id": {
+            "$from": "statement",
+            "pointer": "/id"
+          },
+          "revision": {
+            "$from": "statement",
+            "pointer": "/revision"
+          },
+          "status": "draft"
+        }
+      }
     }
   ],
   "capabilities": [
     "tools",
+    "resources",
     "policy",
     "pause",
     "audit",

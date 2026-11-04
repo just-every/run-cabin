@@ -5,9 +5,11 @@ import { directDue } from '../src/cabin/direct/payments'
 import { syncDue } from '../src/cabin/channels'
 import { settle } from '../src/cabin/settle'
 import { emailHandler, pollChannels } from '../src/cabin/inbox/inbound'
+import { cabinAgentResponse, cabinBusinessSettings } from '../src/cabin/agent-door/index'
 export default {
   async fetch(request: Request, env: Bindings) {
-    return await authResponse(request, env) ?? await cabinResponse(request, env) ?? new Response('Not found', { status: 404 })
+    return await cabinBusinessSettings(env).handle(request) ?? await cabinAgentResponse(request, env)
+      ?? await authResponse(request, env) ?? await cabinResponse(request, env) ?? new Response('Not found', { status: 404 })
   },
   async scheduled(_controller: ScheduledController, env: Bindings) {
     await Promise.all([syncDue(env),directDue(env),pollChannels(env)])
