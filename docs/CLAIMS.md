@@ -251,3 +251,19 @@ Evidence: `src/cabin/finance/exceptions/`; `docs/financial-exceptions.md`; `test
 
 Remaining: Source-linked native cases and manually obtained provider records now support exact correction of unallocated native payout postings and an explicit missing fee on an unchanged already allocated native settlement, preserving gross, tax basis, frozen agreement, historical owner and entity and frozen statements. Allocated corrections reverse and replace the complete payout and allocation journal group, recompute owner interests, commission and reserves from the original terms, and link later-period adjustments for each owner without rewriting originals. Legacy imported frozen statements now enter exact source review and receive linked later-period adjustments without rewriting their files; unmatched bank statements cannot resolve a bank-record request. Remaining: automatic provider-record pursuit, other allocated correction types and transferred correction workflows, legacy statement commission and paid costs not posted to the ledger, processor-funded corrections, full source and bank completeness and verified actual owner distribution. FIN-002 and FIN-006 external settlement and authorized transfer dependencies remain; local matching and unexecuted plans are not distribution evidence. Ct approved the interim installation-owner-only boundary on 23 October 2026: exact local append-only corrections keep their reason and before and after evidence; no new accountant exposure, outbound request, refund, period reopening or payout authority. BLOCKED for actual distribution by FIN-006: a selected licensed US payout partner, authorized funded trust accounts, verified owner and vendor payees and fresh execution authority are not held. FIN-002 still needs complete eligible source settlements and actual bank receipts.
 <!-- contract-status:AGENT-002:end -->
+
+<!-- contract-status:FIN-002:start -->
+FIN-002 · Payout reconciliation per reservation · partial.
+
+Evidence: `src/cabin/finance/`; `tests/finance.test.mjs`; `tests/direct.test.mjs`.
+
+Remaining: Airbnb/Vrbo USD payout CSVs match stays with actual imported fees and unmatched review. Stripe test automatic USD payouts match direct payment intents; live USD acceptance still needs an eligible automatic USD payout (fleet test account settles AUD). Partner APIs, FX, bank receipt and full exception closure remain later.
+<!-- contract-status:FIN-002:end -->
+
+<!-- contract-status:FIN-003:start -->
+FIN-003 · Management agreements and expense allocation · done.
+
+Evidence: `src/cabin/properties/terms.ts`; `src/cabin/finance/allocation-commands.ts`; `src/cabin/finance/cost-commands.ts`; `src/cabin/finance/allocation-statements.ts`; `src/cabin/work-orders/expenses.ts`; `src/cabin/blocks.ts`; `tests/allocations.test.mjs`; `docs/management-allocations.md`.
+
+Assessment: Effective-dated frozen models select commission bases, fixed/percentage fees, cleaning, pass-through/tax responsibility, reserves and owner interests. Exact source-backed revenue and shared-invoice approval retains accountant-reviewed mappings and evidence, posts balanced owner/manager liabilities and feeds frozen statement totals. Desktop and phone product forms exercised.
+<!-- contract-status:FIN-003:end -->
