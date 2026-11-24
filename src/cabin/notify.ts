@@ -1,3 +1,4 @@
+import { noticesDue } from './cron-due'
 import { record } from './audit/write'
 import type { Bindings } from '../auth.server'
 import { operatorMail } from './connections/mail'
@@ -11,6 +12,7 @@ import { type SendState, startSend, sendExpired, ownsSend, finishSend, resultSta
 const PER_RUN = 20
 const escape = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 export async function deliverNotices(env: Bindings) {
+ if (!await noticesDue(env.DB)) return []
  await mutate(env.DB,SYSTEM,'notice.restart.reconcile',c=>{
   for(const n of c.data.notices.filter(n=>sendExpired(n,c.now))){
    if(!n.send)startSend(n,n.createdAt,n.createdAt,env.OWNER_EMAIL)

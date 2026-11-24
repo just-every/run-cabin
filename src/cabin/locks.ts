@@ -1,3 +1,4 @@
+import { lockCodesDue } from './cron-due'
 import { due } from './locks/jobs'
 import { pushLock } from './locks/worker'
 import { secureAccount } from './connections/credentials'
@@ -18,7 +19,7 @@ export const LOCK_LINES = {
 export const lockLine = (env: { managed: boolean; lockAccount: boolean }, code: AccessCode) => code.lock.state === 'manual' ? LOCK_LINES.manual : env.managed ? LOCK_LINES.managed : !env.lockAccount ? LOCK_LINES.account : code.lock.state === 'set' ? 'Seam confirmed this code and its scheduled window on the lock. It works only during the displayed hours; check entry on site.' : code.lock.state === 'removed' ? 'Removed from the lock.' : code.lock.state === 'failed' ? `The lock did not take this code: ${code.lock.error}` : 'Sending to the lock…'
 
 export async function pushLocks(env: Bindings) {
- if (managedInstall(env)||!await secureAccount(env,'seam')) return []
+ if (managedInstall(env)||!await secureAccount(env,'seam')||!await lockCodesDue(env.DB)) return []
  const data=await load(env.DB),results=[]
  for(const code of data.codes.filter(due).sort((a,b)=>(a.lock.at??'').localeCompare(b.lock.at??'')).slice(0,20)){
   try{results.push(await pushLock(env,code.id))}catch{/* A lost claim or storage interruption leaves its durable attempt for reconciliation. */}

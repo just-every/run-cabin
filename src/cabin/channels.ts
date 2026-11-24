@@ -1,7 +1,7 @@
 import { sharingAllowed, restorationPaused } from './connections/guard'
 import type { Bindings } from '../auth.server'
 import { type Actor, type Connection, need, fail, text, newId, manager, property, exact } from './model'
-import { load, mutate, SYSTEM } from './storage'
+import { mutate, SYSTEM } from './storage'
 import { parseCalendar } from './calendar-file'
 import { applyChanges, channelBookings, reconcile } from './calendars'
 import { channel, channelName } from './inventory'
@@ -38,7 +38,7 @@ async function fetchFeed(url: string): Promise<string> {
 }
 /** Fetch first, then apply in one guarded commit. A failed fetch or parse marks the link stale and keeps every night it last held. */
 export async function syncConnection(env: Bindings, actor: Actor, id: string) {
- const found = (await load(env.DB)).connections.find(r => r.id === id); need(found, 'Calendar link not found', 404)
+ const row0 = await env.DB.prepare("SELECT data FROM cb_records WHERE kind='connections' AND id=?").bind(id).first<{ data: string }>(), found: Connection | undefined = row0 ? JSON.parse(row0.data) : undefined; need(found, 'Calendar link not found', 404)
  let body: string | null = null, error: string | null = null
  try { need(!found.restorePaused, 'Reconnect this restored calendar with a fresh link.', 409); await sharingAllowed(env.DB, 'calendars','calendar:read',found.propertyId); body = await fetchFeed(found.url) } catch (e) { error = (e as Error).message }
  return mutate(env.DB, actor, 'channel.sync', async c => {
@@ -62,7 +62,7 @@ export async function syncConnection(env: Bindings, actor: Actor, id: string) {
 /** The Worker's Cron: every link whose poll is due, oldest first, a bounded number per run. */
 export async function syncDue(env: Bindings) {
  if (managedInstall(env) || await restorationPaused(env.DB)) return []
- const now = new Date().toISOString(), due = (await load(env.DB)).connections.filter(r => r.nextPollAt <= now).sort((a, b) => a.nextPollAt.localeCompare(b.nextPollAt)).slice(0, PER_RUN), results = []
+ const now = new Date().toISOString(), due = (await env.DB.prepare("SELECT id FROM cb_records WHERE kind='connections' AND json_extract(data,'$.nextPollAt')<=? ORDER BY json_extract(data,'$.nextPollAt'),id LIMIT ?").bind(now, PER_RUN).all<{ id: string }>()).results, results = []
  for (const row of due) {
   try { results.push(await syncConnection(env, SYSTEM, row.id)) }
   catch (error) { console.error('Calendar sync failed', row.id, (error as Error).message) }

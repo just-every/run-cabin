@@ -1,4 +1,3 @@
-import { promotionDue } from './cabin/promotions/payments'
 import { withDemo } from './modules/demo/index.mjs'
 import { rejectedResponse } from './base/rejected-response'
 import start from '@tanstack/react-start/server-entry'
@@ -11,10 +10,8 @@ import { setupStateResponse } from './base/setup-state'
 import { authResponse, runtimeBindings, type Bindings } from './auth.server'
 import { identity } from './identity'
 import { cabinResponse } from './cabin/http'
-import { directDue } from './cabin/direct/payments'
-import { syncDue } from './cabin/channels'
-import { settle } from './cabin/settle'
-import { emailHandler, pollChannels } from './cabin/inbox/inbound'
+import { emailHandler } from './cabin/inbox/inbound'
+import { runCron } from './cabin/cron'
 import { seedDemo } from './demo'
 import { cabinAgentResponse, cabinBusinessSettings } from './cabin/agent-door/index.ts'
 
@@ -53,11 +50,9 @@ export default withDemo<Bindings, ExportedHandler<Bindings>>({
     if (lobby) return lobby
     return rejectedResponse(request, await dispatch(request, () => api.fetch(request, env, execution), async () => noTransform(await start.fetch(request))))
   },
-  // Cron polls every connected channel calendar whose interval is due (SYNC-009),
-  // then sends turnover emails, pushes door codes the new stays made (OPS-001, OPS-005)
-  // and sends the guest messages that have fallen due (MESSAGE-003).
+  // The five-minute Cron: channel calendars, payments, promotions and every message or notice that has fallen due (cabin/cron.ts).
   async scheduled(_controller, env, execution) {
-    execution.waitUntil(Promise.all([syncDue(runtimeBindings(env)),directDue(runtimeBindings(env)),pollChannels(runtimeBindings(env)).catch(error => console.error('Cabin channel messages', error.message))]).then(async () => { await promotionDue(runtimeBindings(env)); await settle(runtimeBindings(env)) }))
+    execution.waitUntil(runCron(runtimeBindings(env)))
   },
   // Cloudflare Email Routing delivers the inbox address here: guest email and replies (MESSAGE-001).
   async email(message, env) {

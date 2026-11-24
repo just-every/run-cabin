@@ -9,15 +9,17 @@ export async function byToken(db:D1Database,hash:string):Promise<DirectStay> { c
 export function saveStay(c:Context,row:DirectStay) { row.revision=newId();c.entityId=row.id;c.queries.push(query('UPDATE cb_direct_stays SET data=? WHERE id=?',JSON.stringify(row),row.id)) }
 export function saveHome(c:Context,row:DirectHome) { c.entityId=row.propertyId;c.audit=[...(c.audit??[]),{kind:'direct-home',id:row.propertyId,propertyId:row.propertyId,sourceVersion:c.before.version,result:'saved'}];c.queries.push(query('INSERT INTO cb_direct_homes(property_id,slug,data) VALUES(?,?,?) ON CONFLICT(property_id) DO UPDATE SET slug=excluded.slug,data=excluded.data',row.propertyId,row.slug,JSON.stringify(row))) }
 
+/** The widest set dueStays can return, written without time or subqueries so a partial index can hold it (cb_direct_stays_open, migration 0070). Same text as the index. */
+export const STAYS_OPEN=`(json_extract(data,'$.phase') IN ('held','paid') OR json_extract(data,'$.previousDeposit.id') IS NOT NULL OR instr(json(data),'"status":"requested"')>0 OR instr(json(data),'"status":"pending"')>0 OR instr(json(data),'"status":"uncertain"')>0 OR (json_extract(data,'$.phase') IN ('confirmed','cancelled') AND json_extract(data,'$.deposit.status') IN ('requires_capture','capturing','releasing')) OR (json_extract(data,'$.phase')='confirmed' AND json_extract(data,'$.quote.depositCents')>0 AND json_extract(data,'$.deposit.id') IS NULL))`
 export async function dueStays(db:D1Database):Promise<DirectStay[]> {
  // Completed settlements have no automatic financial action left. Keep interrupted effects,
  // active authorizations and future initial holds; a guest/host can still refresh any stay.
  const pendingRefund="EXISTS(SELECT 1 FROM json_each(cb_direct_stays.data,'$.refunds') WHERE json_extract(value,'$.status') IN ('requested','pending','uncertain'))"
  const activeHold="json_extract(data,'$.deposit.status') IN ('requires_capture','capturing','releasing')"
- const rows=await db.prepare(`SELECT data FROM cb_direct_stays WHERE
+ const rows=await db.prepare(`SELECT data FROM cb_direct_stays INDEXED BY cb_direct_stays_open WHERE ${STAYS_OPEN} AND (
   json_extract(data,'$.phase') IN ('held','paid') OR json_extract(data,'$.previousDeposit.id') IS NOT NULL OR ${pendingRefund}
   OR (json_extract(data,'$.phase') IN ('confirmed','cancelled') AND ${activeHold})
-  OR (json_extract(data,'$.phase')='confirmed' AND json_extract(data,'$.quote.depositCents')>0 AND json_extract(data,'$.deposit.id') IS NULL AND json_extract(data,'$.end')>=date('now'))
+  OR (json_extract(data,'$.phase')='confirmed' AND json_extract(data,'$.quote.depositCents')>0 AND json_extract(data,'$.deposit.id') IS NULL AND json_extract(data,'$.end')>=date('now')))
   ORDER BY CASE WHEN ${activeHold} AND (json_extract(data,'$.phase')='cancelled' OR json_extract(data,'$.checkedOutAt') IS NOT NULL) THEN 0 ELSE 1 END,json_extract(data,'$.createdAt') LIMIT 100`).all<{data:string}>()
  return rows.results.map(r=>JSON.parse(r.data)).filter(r=>!r.restored)
 }

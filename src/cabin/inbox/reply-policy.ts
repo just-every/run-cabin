@@ -1,3 +1,4 @@
+import { replyEscalationDue } from '../cron-due'
 import type { Bindings } from '../../auth.server'
 import { type Context, type Data, type GuestMessage, type Booking, need, text, integer, newId, property } from '../model'
 import { load, mutate, SYSTEM } from '../storage'
@@ -55,6 +56,7 @@ export function automaticReply(c: Context, origin: string, m: GuestMessage) {
  c.data.approvals.push(approval); m.approvalId = approval.id; m.detail = 'Automatic reply within the saved property policy; rendered from approved sources.'
 }
 export async function escalateReplies(env: Bindings) {
+ if (!await replyEscalationDue(env.DB)) return
  const data = await load(env.DB)
  const pending = data.messages.filter(m => m.status === 'draft' && m.control && !m.control.escalatedAt && (m.control.needsHost || m.control.confidence < (replyPolicy(data, m.propertyId)?.minConfidence ?? 80) || Date.parse(m.control.dueAt) <= Date.now()))
  if (!pending.length) return

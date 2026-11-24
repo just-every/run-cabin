@@ -1,3 +1,4 @@
+import { statementDeliveriesDue } from '../cron-due'
 import { queuedAuthority } from '../permissions/commands'
 import { record } from '../audit/write'
 import type { Bindings } from '../../auth.server'
@@ -14,6 +15,7 @@ export async function resendStatement(env:Bindings,actor:Actor,input:Record<stri
  })
 }
 export async function deliverStatements(env:Bindings){
+ if(!await statementDeliveriesDue(env.DB))return
  for(const pending of (await load(env.DB)).deliveries.filter(d=>d.status==='pending').slice(0,20)){
   const claimed=await mutate(env.DB,SYSTEM,'statement.delivery.claim',c=>{const d=c.data.deliveries.find(r=>r.id===pending.id);if(!d||d.status!=='pending')return null;d.status='sending';return {delivery:{...d},statement:c.data.statements.find(s=>s.id===d.statementId)}}).catch(()=>null)
   if(!claimed?.statement)continue

@@ -5,7 +5,7 @@ import {spawnSync} from 'node:child_process'
 // test:cabin command remains the complete registry; reject omissions, duplicates
 // and stale assignments so new coverage cannot silently miss push verification.
 const groups={
- operations:['cabin','readiness','dispatch','turnovers','work-orders','property-register','calendar','calendars-sync','issues','data-custody'],
+ operations:['cabin','readiness','dispatch','turnovers','work-orders','property-register','calendar','calendars-sync','issues','data-custody','cron-budget'],
  finance:['finance','ledger','allocations','month-close','taxes','audit'],
  guests:['security','inbox','promotions','guest-portal','guests','replies','owners','website'],
  restart:['direct','lifecycle','recovery','recovery-authority','demo','privacy','reservations','movein','movein-register'],

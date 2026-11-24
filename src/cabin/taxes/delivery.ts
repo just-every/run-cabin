@@ -1,3 +1,4 @@
+import { taxDeliveriesDue } from '../cron-due'
 import type { Bindings } from '../../auth.server'
 import { operatorMail } from '../connections/mail'
 import { mutate, SYSTEM } from '../storage'
@@ -8,6 +9,7 @@ import type { TaxReport, Obligation } from './types'
 /** A packet is an instruction to the accountant/partner, never a statutory filing receipt. */
 export function packet(report:TaxReport,o:Obligation){const sourceIds=new Set(o.lines.map(l=>l.sourceId)),ruleIds=new Set(o.lines.map(l=>l.ruleId));return {format:'cabin-reviewed-lodging-tax-v1',reportId:report.id,revision:report.revision,propertyId:report.propertyId,month:report.month,...(report.period?{period:report.period}:{}),approvedAt:report.approvedAt,approvedBy:report.approvedBy,priorReportIds:report.priorReportIds,obligation:o,sources:report.sources.filter(s=>sourceIds.has(s.id)),rules:report.rules.filter(r=>ruleIds.has(r.id)),instruction:'Review and file/remit through the authorized jurisdiction process. Return filing acknowledgement and payment evidence. Email delivery is not government acceptance or payment.'}}
 export async function deliverTaxes(env:Bindings){
+ if(!await taxDeliveriesDue(env.DB))return
  for(const pending of (await taxData(env.DB)).deliveries.filter(d=>d.status==='pending').slice(0,12)){
   const claim=await mutate(env.DB,SYSTEM,'tax.delivery.claim',async c=>{
    const data=await taxData(c.db),row=data.deliveries.find(d=>d.id===pending.id);if(!row||row.status!=='pending')return null

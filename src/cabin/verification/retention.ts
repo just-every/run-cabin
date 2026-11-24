@@ -2,7 +2,7 @@ import type { Bindings } from '../../auth.server'
 import { query,type Context } from '../model'
 import { mutate,SYSTEM } from '../storage'
 import { stripe,readIdentity } from '../direct/stripe'
-import { cases,loadVerifications,saveVerification } from './records'
+import { cases,loadDueVerifications,saveVerification } from './records'
 import { reconcileVerification } from './provider'
 /** Called inside guest/property erasure before the normal transaction commits. References remain private only until provider redaction finishes. */
 export async function eraseVerification(c:Context,bookingIds:Set<string>){for(const v of cases(c.data))if(bookingIds.has(v.bookingId)){
@@ -10,7 +10,7 @@ export async function eraseVerification(c:Context,bookingIds:Set<string>){for(co
  for(const n of c.data.notices)if(n.recordId===v.id){n.email='';n.text='';n.subject='Erased identity review';n.status='suppressed';n.detail=null}
 }for(const id of bookingIds)c.queries.push(query("UPDATE cb_direct_stays SET data = json_remove(data,'$.identity') WHERE json_extract(data,'$.bookingId')=?",id))}
 export async function verificationDue(env:Bindings){
- for(const snapshot of (await loadVerifications(env.DB)).filter(v=>!v.restorePaused).filter(v=>v.status==='erased'?!!v.provider:Date.parse(v.retainUntil)<=Date.now()||!!v.provider&&!['verified','approved','rejected','manual_requested'].includes(v.status)).slice(0,100))try{
+ for(const snapshot of (await loadDueVerifications(env.DB)).filter(v=>!v.restorePaused).filter(v=>v.status==='erased'?!!v.provider:Date.parse(v.retainUntil)<=Date.now()||!!v.provider&&!['verified','approved','rejected','manual_requested'].includes(v.status)).slice(0,100))try{
   await mutate(env.DB,SYSTEM,'verification.reconciled',async c=>{
    const v=cases(c.data).find(v=>v.id===snapshot.id);if(!v)return
    const booking=c.data.bookings.find(b=>b.id===v.bookingId)

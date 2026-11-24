@@ -6,7 +6,7 @@ import { queuedAuthority } from '../permissions/commands'
 import { hasAction,permitsProperty } from '../permissions/policy'
 import { decimalUnits } from './presentation'
 import { DIRECT_SYSTEM } from './store'
-import { collectionPlans,saveCollection,collectionOutput } from './collection-store'
+import { collectionPlans,saveCollection,collectionOutput,COLLECTION_OPEN } from './collection-store'
 import { collectionBasis,collectionDue } from './collection-sync'
 import { followup,closeFollowup } from './collection-followup'
 import { chargeCollection,findCollectionPayment } from './collection-provider'
@@ -14,7 +14,7 @@ import { post } from '../ledger/store'
 import { debit,credit } from '../ledger/types'
 import type { CollectionPlan,CollectionJob,CollectionAttempt } from './collection-types'
 const envFor=(env:Bindings,p:CollectionPlan)=>({...env,CABIN_PROVIDER_PROPERTY_ID:p.propertyId,DIRECT_STRIPE_MODE:p.mode})
-const plan=async(db:D1Database,id:string)=>{const p=(await collectionPlans(db)).find(p=>p.id===id);need(p,'Collection schedule not found',404);return p}
+const plan=async(db:D1Database,id:string)=>{const row=await db.prepare("SELECT data FROM cb_records WHERE kind='collectionPlans' AND id=?").bind(id).first<{data:string}>();need(row,'Collection schedule not found',404);return JSON.parse(row.data) as CollectionPlan}
 const owns=(actor:Actor,p:CollectionPlan)=>need(permitsProperty(actor,p.propertyId),'Collection schedule not found',404)
 export async function collectionCommand(env:Bindings,actor:Actor,name:string,input:Record<string,unknown>){
  if(!name.startsWith('direct.collection.'))return undefined
@@ -112,4 +112,8 @@ export async function runCollection(env:Bindings,id:string){
   }
  }
 }
-export async function collectionDueJobs(env:Bindings){for(const p of await collectionPlans(env.DB))if(!p.restored)try{await runCollection(env,p.id)}catch{/* A failed family must not stop other independent jobs. */}}
+/** Only schedules with a job still to run, to reconcile or to chase are read (cb_records_collection_open, migration 0070). */
+export async function collectionDueJobs(env:Bindings){
+ const due=(await env.DB.prepare(`SELECT id FROM cb_records INDEXED BY cb_records_collection_open WHERE kind='collectionPlans' AND ${COLLECTION_OPEN} AND COALESCE(json_extract(data,'$.restored'),0)=0 ORDER BY rowid`).all<{id:string}>()).results
+ for(const {id} of due)try{await runCollection(env,id)}catch{/* A failed family must not stop other independent jobs. */}
+}

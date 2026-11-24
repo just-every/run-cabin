@@ -3,6 +3,7 @@ import { type Actor,type Context,need,text,newId } from '../model'
 import { mutate } from '../storage'
 import { DIRECT_SYSTEM } from '../direct/store'
 import { restorationPaused } from '../connections/guard'
+import { promotionExpiryDue } from '../cron-due'
 import { stripe,stripeCredentials,CARD_ONLY,paymentRefunds,createRefund,readRefund } from '../direct/stripe'
 import { offer,promotionRows,savePromotion,publicOffer } from './store'
 import { eligible } from './eligibility'
@@ -113,6 +114,6 @@ async function reconcileRefund(env:Bindings,o:PromotionOffer){
 /** Invoked by the scheduled worker; interrupted requests only read their provider outcomes. */
 export async function promotionDue(env:Bindings){
  if(await restorationPaused(env.DB))return
- await mutate(env.DB,DIRECT_SYSTEM,'promotion.expiry.sweep',()=>undefined,()=>false)
- for(const o of await promotionRows<PromotionOffer>(env.DB,'promotionOffers'))if(!o.restorePaused&&(o.status==='checkout'||o.status==='refund_due'&&o.refund&&['requested','pending','uncertain'].includes(o.refund.status)))await reconcilePromotion(env,o.id)
+ if(await promotionExpiryDue(env.DB))await mutate(env.DB,DIRECT_SYSTEM,'promotion.expiry.sweep',()=>undefined,()=>false)
+ for(const o of (await env.DB.prepare("SELECT data FROM cb_records WHERE kind='promotionOffers' AND json_extract(data,'$.status') IN ('checkout','refund_due') ORDER BY rowid").all<{data:string}>()).results.map(r=>JSON.parse(r.data) as PromotionOffer))if(!o.restorePaused&&(o.status==='checkout'||o.status==='refund_due'&&o.refund&&['requested','pending','uncertain'].includes(o.refund.status)))await reconcilePromotion(env,o.id)
 }

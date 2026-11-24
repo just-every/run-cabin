@@ -1,6 +1,9 @@
 import type { Bindings } from '../../auth.server'
 import { type Context,manager,owner,need,text,integer,newId } from '../model'
-import { load,mutate } from '../storage'
+import { mutate } from '../storage'
+import { configRows } from '../cron-due'
+import type { HomeSettings } from '../model'
+import type { StatementSchedule } from './close-types'
 import { homeSettings } from '../homes'
 import { wall } from '../clock'
 import { closeMonth,nextMonth,prepareClose } from './month-close'
@@ -15,8 +18,12 @@ export async function closeScheduleCommand(c:Context,p:Record<string,unknown>){
 }
 /** Native grants are checked at commit. Unfinished or revoked schedules remain assigned work, never automatic success. */
 export async function generateStatements(env:Bindings){
- for(const s of (await load(env.DB)).statementSchedules.filter(s=>s.enabled)){
-  const data=await load(env.DB),local=wall(Date.now(),homeSettings(data,s.propertyId).timeZone),due=`${nextMonth(s.nextMonth)}-${String(s.day).padStart(2,'0')}T${s.time}`
+ // Schedules and home time zones are one row per home; nothing here reads bookings, messages or ledgers until a statement is due.
+ const schedules=(await configRows<StatementSchedule>(env.DB,'statementSchedules')).filter(s=>s.enabled)
+ if(!schedules.length)return
+ const settings={homeSettings:await configRows<HomeSettings>(env.DB,'homeSettings')}
+ for(const s of schedules){
+  const local=wall(Date.now(),homeSettings(settings,s.propertyId).timeZone),due=`${nextMonth(s.nextMonth)}-${String(s.day).padStart(2,'0')}T${s.time}`
   if(local<due)continue
   // Failed source review is retried by Cron; never spin or repeat an approved delivery.
   try{await mutate(env.DB,s.actor,'statement.schedule.run',async c=>{

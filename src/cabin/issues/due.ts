@@ -1,9 +1,11 @@
+import { issueChecksDue } from '../cron-due'
 import type {Bindings} from '../../auth.server'
 import {load,mutate,SYSTEM} from '../storage'
 import {newId} from '../model'
 import {requestGuestCheck,issueNotice} from './records'
 
 export async function advanceIssueChecks(env:Bindings){
+ if(!await issueChecksDue(env.DB))return
  const data=await load(env.DB)
  const due=data.recoveries.filter(r=>r.issue&&!r.restorePaused&&!['closed','undone'].includes(r.status)).filter(r=>{
   const i=r.issue!,t=data.tasks.find(t=>t.id===i.taskId)

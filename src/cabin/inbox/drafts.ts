@@ -1,3 +1,4 @@
+import { draftsDue } from '../cron-due'
 import type { Bindings } from '../../auth.server'
 import { type Context, type GuestMessage, newId } from '../model'
 import { load, mutate, SYSTEM } from '../storage'
@@ -21,6 +22,7 @@ export function startDraft(c: Context, origin: string, inbound: GuestMessage, ai
 }
 /** Fills AI drafts after their commit. A failed call leaves a visible failure and an empty reply for the host. */
 export async function finishDrafts(env: Bindings) {
+ if (!await draftsDue(env.DB)) return
  const data = await load(env.DB), waiting = data.messages.filter(m => m.status === 'drafting').slice(0, 5)
  if (!waiting.length) return
  const config = await aiKey(env, inboxSettings(data))

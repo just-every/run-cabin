@@ -7,6 +7,15 @@ export const verificationOf=(data:VerificationData,bookingId:string)=>cases(data
 export const resolved=(v:VerificationCase)=>v.status==='not_required'||v.status==='verified'||v.status==='approved'
 export const verificationAccessBlocked=(data:VerificationData,bookingId:string)=>{const v=verificationOf(data,bookingId);return !!v&&v.policy.blockAccess&&!resolved(v)}
 export async function loadVerifications(db:D1Database):Promise<VerificationCase[]> {return (await db.prepare('SELECT data FROM cb_verifications ORDER BY rowid').all<{data:string}>()).results.map(r=>JSON.parse(r.data))}
+/** Cases past retention or with an open provider session: the only ones verificationDue can act on (partial indexes of migration 0070). */
+export async function loadDueVerifications(db:D1Database):Promise<VerificationCase[]> {
+ const [expired,provider]=await db.batch<{rowid:number;data:string}>([
+  db.prepare("SELECT rowid,data FROM cb_verifications INDEXED BY cb_verifications_retention WHERE json_extract(data,'$.status')<>'erased' AND json_extract(data,'$.retainUntil')<=?").bind(new Date().toISOString()),
+  db.prepare("SELECT rowid,data FROM cb_verifications INDEXED BY cb_verifications_provider_open WHERE json_extract(data,'$.provider') IS NOT NULL AND json_extract(data,'$.status') NOT IN ('verified','approved','rejected','manual_requested')"),
+ ])
+ const rows=new Map([...expired.results,...provider.results].map(r=>[r.rowid,r.data]))
+ return [...rows].sort((a,b)=>a[0]-b[0]).map(([,data])=>JSON.parse(data))
+}
 export function saveVerification(c:Context,v:VerificationCase){v.revision=newId();const data=c.data as typeof c.data&VerificationData;data.verifications??=[];const index=data.verifications.findIndex(r=>r.id===v.id);if(index<0)data.verifications.push(v);else data.verifications[index]=v;c.queries.push(query('INSERT INTO cb_verifications(id,booking_id,property_id,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',v.id,v.bookingId,v.propertyId,JSON.stringify(v)));c.audit=[...(c.audit??[]),{kind:'verification',id:v.id,propertyId:v.propertyId,bookingId:v.bookingId,revision:v.revision,result:v.status}];c.entityId=v.id}
 export function createVerification(c:Context,bookingId:string,propertyId:string,policy:VerificationPolicy,reasons:string[],end:string){
  const v:VerificationCase={id:newId(),revision:newId(),propertyId,bookingId,policy:structuredClone(policy),reasons,status:reasons.length?'pending':'not_required',token:reasons.length?newId()+newId():null,createdAt:c.now,retainUntil:new Date(Date.parse(end.slice(0,10)+'T23:59:59Z')+policy.retentionDays*86400000).toISOString(),history:[{at:c.now,by:c.actor.id,action:reasons.length?'Verification required by saved policy':'Verification not required by saved policy'}]};if(!reasons.length){v.policy.blockAccess=false;v.policy.requireBeforeConfirmation=false}saveVerification(c,v)

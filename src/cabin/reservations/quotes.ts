@@ -1,3 +1,4 @@
+import { quotesDue } from '../cron-due'
 import type { Bindings } from '../../auth.server'
 import { type Context, type Data, type Actor, need, text, newId, sha, manager } from '../model'
 import { mutate, load, SYSTEM } from '../storage'
@@ -14,7 +15,7 @@ export interface StaffQuote { id:string; revision:string; propertyId:string; gue
 export const currentQuote=(row:StaffQuote)=>row.versions[row.versions.length-1]
 function release(c:Context,row:StaffQuote){const b=c.data.bookings.find(b=>b.id===row.holdBookingId);if(b&&b.status==='confirmed'){b.status='cancelled';b.cancelled=true;b.revision=newId()}}
 export function expireQuotes(c:Context){for(const row of c.data.staffQuotes)if(row.status==='issued'&&Date.parse(currentQuote(row).expiresAt)<=Date.parse(c.now)){release(c,row);row.status='expired';row.revision=newId();const m=c.data.messages.find(m=>m.id===row.messageId);if(m?.status==='pending')m.status='discarded'}}
-export async function sweepQuotes(env:Bindings){const data=await load(env.DB);if(data.staffQuotes.some(r=>r.status==='issued'&&Date.parse(currentQuote(r).expiresAt)<=Date.now()))await mutate(env.DB,SYSTEM,'quote.expired',c=>expireQuotes(c))}
+export async function sweepQuotes(env:Bindings){if(!await quotesDue(env.DB))return;const data=await load(env.DB);if(data.staffQuotes.some(r=>r.status==='issued'&&Date.parse(currentQuote(r).expiresAt)<=Date.now()))await mutate(env.DB,SYSTEM,'quote.expired',c=>expireQuotes(c))}
 async function baseline(data:Data,home:DirectHome,start:string){return sha(JSON.stringify({home,template:data.rentalTemplates.find(t=>t.propertyId===home.propertyId),settings:homeSettings(data,home.propertyId),occupancy:data.propertyProfiles.find(p=>p.propertyId===home.propertyId)?.occupancyLimit,capacity:data.propertyProfiles.map(p=>[p.propertyId,p.inventoryUnits]),management:managementFor(data,home.propertyId,start)}))}
 export async function quoteByToken(data:Data,token:unknown){need(typeof token==='string'&&/^[a-f0-9-]{72}$/.test(token),'Quote not found',404);const hash=await sha(token),row=data.staffQuotes.find(r=>r.tokenHash===hash);need(row,'Quote not found',404);return row}
 export async function validateQuote(c:Pick<Context,'data'|'db'|'now'>,row:StaffQuote,revision?:unknown){

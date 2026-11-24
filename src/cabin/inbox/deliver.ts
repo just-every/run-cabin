@@ -1,3 +1,4 @@
+import { guestMessagesDue } from '../cron-due'
 import { memberActor } from '../permissions/authority'
 import { queuedAuthority } from '../permissions/commands'
 import { promotionMailAllowed } from '../promotions/mail'
@@ -107,6 +108,7 @@ export async function transmit(env: Bindings, data: Data, m: GuestMessage): Prom
  } catch (error) { return { status: 'failed', detail: `${(error as Error)?.message || 'The provider refused this message.'}`.slice(0, 300), providerId: null, sendState:'uncertain' } }
 }
 export async function deliverGuestMessages(env: Bindings) {
+ if (!await guestMessagesDue(env.DB)) return []
  await mutate(env.DB, INBOX_SYSTEM, 'message.restart.reconcile', c => {
   for (const m of c.data.messages.filter(m=>m.direction==='out'&&sendExpired(m,c.now))) {
    const scheduled=c.data.scheduled.find(r=>r.id===m.scheduledId)

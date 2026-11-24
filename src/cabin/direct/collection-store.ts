@@ -1,6 +1,8 @@
 import { projectState } from '../permissions/projection'
 import { newId,type Context,type Actor } from '../model'
 import type { CollectionPlan } from './collection-types'
+/** A job still scheduled, uncertain or pending, or with a follow-up deadline; json() makes the match independent of stored spacing. Same text as cb_records_collection_open. */
+export const COLLECTION_OPEN=`(instr(json(data),'"status":"scheduled"')>0 OR instr(json(data),'"status":"uncertain"')>0 OR instr(json(data),'"status":"pending"')>0 OR instr(json(data),'"deadline"')>0)`
 export async function collectionPlans(db:D1Database):Promise<CollectionPlan[]> {
  return (await db.prepare("SELECT data FROM cb_records WHERE kind='collectionPlans' ORDER BY rowid").all<{data:string}>()).results.map(r=>JSON.parse(r.data))
 }

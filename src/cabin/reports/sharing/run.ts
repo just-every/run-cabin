@@ -1,3 +1,4 @@
+import { reportsDue } from '../../cron-due'
 import type { Bindings } from '../../../auth.server'
 import { guard, need, newId, query, sha } from '../../model'
 import { authority, mutate, SYSTEM } from '../../storage'
@@ -75,6 +76,7 @@ async function generateAndSend(env:Bindings,s:ReportSchedule,r:ReportRun){
 }
 /** One claim per due occurrence. Uncertain effects are assigned, never silently retried. */
 export async function runReportSchedules(env:Bindings,now=Date.now()){
+ if(!await reportsDue(env.DB,now))return
  for(const r of await rows<ReportRun>(env.DB,'cb_report_runs'))if(active(r)&&Date.parse(r.startedAt)<now-15*60_000)await failed(env,r.id,r.status==='sending'?'delivery_failed':'generation_failed','Interrupted report run. Check generation or provider acceptance before scheduling another send.')
  const due=(await rows<ReportSchedule>(env.DB,'cb_report_schedules')).filter(s=>s.enabled&&Date.parse(s.nextRunAt)<=now).sort((a,b)=>a.nextRunAt.localeCompare(b.nextRunAt))
  for(const s of due.slice(0,20)){
