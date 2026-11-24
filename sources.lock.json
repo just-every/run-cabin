@@ -120,7 +120,7 @@
       "executable": false
     },
     "CHANGELOG.md": {
-      "sha256": "550208af99b8bebeedd313dc9b113c8af3bc118ccb9d32a0e5290f75a1fe76de",
+      "sha256": "71772b85d22f6698fd17c45c1c564759f2bb059a14bf86bb2674e0992fb7177f",
       "executable": false
     },
     "composition.lock.json": {
@@ -619,6 +619,10 @@
       "sha256": "6307cc50d86eb8017d461ba912b1c924ca10753ffc1e21a974013e364c4be45b",
       "executable": false
     },
+    "migrations/core/0070_cron_due.sql": {
+      "sha256": "d92796a28146b1b955b43001448a5a5b7cbc74a0de4e4e415bdc042cbc3a7f9e",
+      "executable": false
+    },
     "ONBOARDING.md": {
       "sha256": "5d20f1bd0c24def0cd6c1165d1a58d0472ad0f02f2b60047014bda962eaf4274",
       "executable": false
@@ -632,7 +636,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "011e703705f4670ec93ca0610cc482b8448982bd60e13998612b31616a02ce57",
+      "sha256": "4213f85e3263097d1a8d80905d92069acea7823b046874b36b5e3d21cf381621",
       "executable": false
     },
     "packaging.json": {
@@ -1060,7 +1064,7 @@
       "executable": false
     },
     "scripts/cabin-domain-tests.mjs": {
-      "sha256": "b68bd3c1bfd9bf3cbcb166616210e32f75d882c8a37017161a5710b0e161051c",
+      "sha256": "fc9dd05724de4cc293a3cc7d8aa1eadfddc6e5ebc8052f229f19b64e8adf636b",
       "executable": false
     },
     "scripts/channel-agent/executor.mjs": {
@@ -2160,7 +2164,7 @@
       "executable": false
     },
     "src/cabin/channels.ts": {
-      "sha256": "1cd0829f2269c64a65f7b9602a0d685c0f4b22db00292ab8c868a46fa43c2d24",
+      "sha256": "34aeee153b6e4ca3a191d376aa46ed1e4395c1a17a19ba8f211849e7bd44a0a5",
       "executable": false
     },
     "src/cabin/clock.ts": {
@@ -2211,6 +2215,14 @@
       "sha256": "48b34bc96bb03b6c42cc34db467f8e2a33ac25ac28de58bf98fddf83f2f548d6",
       "executable": false
     },
+    "src/cabin/cron-due.ts": {
+      "sha256": "9f5e79232b48b37a896853d75414ea2e7a25c364055c6237b627a37572116c56",
+      "executable": false
+    },
+    "src/cabin/cron.ts": {
+      "sha256": "09593078787bdcd606d2a80fbe82067eaea4b92876cf5956680fb3da7ce33eb1",
+      "executable": false
+    },
     "src/cabin/demo/ledger.ts": {
       "sha256": "09b5f5786cdb05803dd3b7d57368a20c756344d6ea45260c021d0f15d138630e",
       "executable": false
@@ -2252,7 +2264,7 @@
       "executable": false
     },
     "src/cabin/direct/collection-store.ts": {
-      "sha256": "3fdda58f80a7de28b2897e6bcbf2d24306bf59fedbd0f42ce514154e96ea7923",
+      "sha256": "1f96bd061554bdb870e1e29960ab8b76797a0d406a0f6eb4b3d0921ec88cb602",
       "executable": false
     },
     "src/cabin/direct/collection-sync.ts": {
@@ -2268,7 +2280,7 @@
       "executable": false
     },
     "src/cabin/direct/collections.ts": {
-      "sha256": "1ea18ee3b6dcd0a6d244d1f7e4703408aabc8312ddbba7d2c84ac0837928f6b8",
+      "sha256": "4dbf0dfc6a3857a6db619c5dfa94384836315bf3dcf18d6a9c3b7c5635391e34",
       "executable": false
     },
     "src/cabin/direct/confirmation.ts": {
@@ -2336,7 +2348,7 @@
       "executable": false
     },
     "src/cabin/direct/store.ts": {
-      "sha256": "aecea2a7846a235991c4d77db958430c5f918324488fd2842dfd2d79e256737a",
+      "sha256": "9521343243fab7e9c98759e48055b3d2ae2b625d76b2fab1964289eb55496900",
       "executable": false
     },
     "src/cabin/direct/stripe.ts": {
@@ -2440,7 +2452,7 @@
       "executable": false
     },
     "src/cabin/finance/close-schedule.ts": {
-      "sha256": "26b5d8ee107bc554112cd8952445c56d0443f896eadb9b436666dc138bfd5411",
+      "sha256": "5e8c21c9f2c41fe04c79a1e20b719f2159f7adbff2537edbae420b03558bdf16",
       "executable": false
     },
     "src/cabin/finance/close-types.ts": {
@@ -2460,7 +2472,7 @@
       "executable": false
     },
     "src/cabin/finance/delivery.ts": {
-      "sha256": "dc385a73454ed3d521a88e8fabdfeb332db5a76072c21fcd62606e7ff2b37cc4",
+      "sha256": "0b4eced0fbcd52fd96152cc1b8b6226b2d489ce0d16b7cdc6bb8942f8557f398",
       "executable": false
     },
     "src/cabin/finance/exceptions/allocated.ts": {
@@ -2632,11 +2644,11 @@
       "executable": false
     },
     "src/cabin/inbox/deliver.ts": {
-      "sha256": "5cb57cb295e80c0e945b5be7433dbd9a37a64c1e81a31528a905ffd34b3cf0b5",
+      "sha256": "71e3ec9a004609777db5ccc80fbab78e395a8eeb9b1daa3a09f8b4df0cd34efa",
       "executable": false
     },
     "src/cabin/inbox/drafts.ts": {
-      "sha256": "4920a04afff58a0dd514d98b8ee0304e7fff1c01c1691c6702675bc656810f88",
+      "sha256": "cb20ef5edef2a4387d1ed57ae555ff88ca558f5945176726a5b408cdf62266a2",
       "executable": false
     },
     "src/cabin/inbox/inbound.ts": {
@@ -2664,7 +2676,7 @@
       "executable": false
     },
     "src/cabin/inbox/reply-policy.ts": {
-      "sha256": "0e7aee214dbc3a1738290042c7344857c4302a305b569aac64b3f94b21de23d5",
+      "sha256": "29169e01898b8dfd1a43aef377707ed0a294077bc4f06d46bab101915053c964",
       "executable": false
     },
     "src/cabin/inbox/reply-sources.ts": {
@@ -2704,7 +2716,7 @@
       "executable": false
     },
     "src/cabin/inbox/team/advance.ts": {
-      "sha256": "f761490bc583365ef493045d2c433ef1b2f7b211f0c55f9ecc018d39af91162c",
+      "sha256": "36a78597255d06d390d9d80a396bd75b71ecacf9924aa944086d5a59d7260632",
       "executable": false
     },
     "src/cabin/inbox/team/cases.ts": {
@@ -2752,7 +2764,7 @@
       "executable": false
     },
     "src/cabin/issues/due.ts": {
-      "sha256": "9288ff21913235ab63d811ff10bb791ed681f504938a97bec84c2fccf1de729a",
+      "sha256": "2390b526f9115e46afa8a669289d74398eae3a194a7660853a42b36dc11fc913",
       "executable": false
     },
     "src/cabin/issues/records.ts": {
@@ -2784,7 +2796,7 @@
       "executable": false
     },
     "src/cabin/locks.ts": {
-      "sha256": "a00bbfa7f4ce24115abef3386eaaa0c58fd5cc5d3f23d6091b365e3b99887987",
+      "sha256": "91c58f2f6e7428d5de985cec4d6ee6e94a19f70b0d5ac70dcd3e036fdbd6bb8e",
       "executable": false
     },
     "src/cabin/locks/jobs.ts": {
@@ -2876,7 +2888,7 @@
       "executable": false
     },
     "src/cabin/notify.ts": {
-      "sha256": "e10ea7ca6529ed664e3f849b063874c8511a49edcb301192cbc33277384558fd",
+      "sha256": "fa06ded4c8879279348f0d3dfc570f8fe179419f349b740dab0ce1aa5df4aef8",
       "executable": false
     },
     "src/cabin/owners/access.ts": {
@@ -3144,7 +3156,7 @@
       "executable": false
     },
     "src/cabin/promotions/payments.ts": {
-      "sha256": "c05549ffe9a3aaec57a543ede184d2d0d0b4b373650869b18c3753c310ca3ab2",
+      "sha256": "4c66d6fa89e9ed89eb585294cb33d5542eb4da081e54f5417423c6d4412238c5",
       "executable": false
     },
     "src/cabin/promotions/settlement.ts": {
@@ -3316,7 +3328,7 @@
       "executable": false
     },
     "src/cabin/reports/sharing/run.ts": {
-      "sha256": "b594208b2862a3b3171089492fb08ff00c4bc9a7e4ca37cf9834ef7e9490c06d",
+      "sha256": "e1596dcfcb4fd923456e23fa0f86894145bf28d29194c1b8eb574bd368c5ac19",
       "executable": false
     },
     "src/cabin/reports/sharing/scope.ts": {
@@ -3368,7 +3380,7 @@
       "executable": false
     },
     "src/cabin/reservations/quotes.ts": {
-      "sha256": "564bd1356f91f1f21740d10edc658fa025c43571a3bdfc690d357e26536543b6",
+      "sha256": "7ac3a8dad655d8847158b03b3f7f68715a9cf94c9f9601e15d6aab31327b2f9c",
       "executable": false
     },
     "src/cabin/reservations/types.ts": {
@@ -3384,7 +3396,7 @@
       "executable": false
     },
     "src/cabin/settle.ts": {
-      "sha256": "01021f873da3de72d3e03e1243548f953a19825332cca1025cc138fcee9c3923",
+      "sha256": "a2013e1f468058064ed0c48b7bc51e3ef71266560c11a05c4d6f77b186bb4270",
       "executable": false
     },
     "src/cabin/statements.ts": {
@@ -3404,7 +3416,7 @@
       "executable": false
     },
     "src/cabin/taxes/delivery.ts": {
-      "sha256": "15f2036be02d240a9fd9489c2bc331a36a95f6c18ba344f1f9ff8c72b4a9da9c",
+      "sha256": "dab494426dcf7711cc4ad830c5b185452d21823149775ef57d6413e891e0e30b",
       "executable": false
     },
     "src/cabin/taxes/direct.ts": {
@@ -3620,11 +3632,11 @@
       "executable": false
     },
     "src/cabin/verification/records.ts": {
-      "sha256": "cb9058539e661b305d94c5efa1b8005a4e6e4288230ed935247f280f4f0a655d",
+      "sha256": "02535bf7ad0aad6c3660ad8ae15364a47f3a6ed7d680e650d357eae3a4133e3c",
       "executable": false
     },
     "src/cabin/verification/retention.ts": {
-      "sha256": "7bc4dc805d8a2c20505473376c347bb4c0d9b6ac158e93491e738c9e23e355fc",
+      "sha256": "ce42ab628d4bd473a94c79596f2f98b2471d5cef0443094cb8e88f864faea5fc",
       "executable": false
     },
     "src/cabin/verification/types.ts": {
@@ -5956,7 +5968,7 @@
       "executable": false
     },
     "src/server.ts": {
-      "sha256": "55e426157133c53c65a76a00ff414b129f8e5fde7106a23d4ba6016b97a29b00",
+      "sha256": "f97e085ab2acda6bc7d467f1b7d6123f3b0620ac14a985db6f2c0b9e76c4a0f7",
       "executable": false
     },
     "src/site/docs/build/manifest.ts": {
@@ -6241,6 +6253,14 @@
     },
     "tests/collection-support.mjs": {
       "sha256": "a012319f3c4f61e7b182b39693bbaed92ca57c72ed22a3f0bf14a1707e76173c",
+      "executable": false
+    },
+    "tests/cron-budget-worker.ts": {
+      "sha256": "c7f85f00078519ef28e9a151a1a1548de99086b18579066fb061e43ebecea7e2",
+      "executable": false
+    },
+    "tests/cron-budget.test.mjs": {
+      "sha256": "3bd107d528a922a531803ae3bf243835fa981e1efbc02cef3043ec15d2b2a78c",
       "executable": false
     },
     "tests/data-custody.test.mjs": {
@@ -6644,7 +6664,7 @@
       "executable": false
     },
     "tests/worker.ts": {
-      "sha256": "1bb01bbeaba9b7456004546f002e2a33db7f755367a4c1f04843ba975c06b64a",
+      "sha256": "8a6c7273a965488a3f5bce7dc212057bbb59f5882ea6310e8a32f3f37659ccbd",
       "executable": false
     },
     "tsconfig.json": {
