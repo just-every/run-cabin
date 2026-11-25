@@ -6,6 +6,8 @@ import { sharingAllowed } from './guard'
 /** Keep the product's email data behind the same durable revocation as API calls. */
 export function operatorMail(env: Bindings,propertyId?:string|null) {
  const mail = sender(env)
+ // No provider effect is possible when outbound mail is off.
+ if (env.MAIL_PROVIDER === 'none') return mail
  return mail && { async send(message: Parameters<NonNullable<ReturnType<typeof sender>>['send']>[0]) { await assertContactsAllowed(env.DB,message.to); await sharingAllowed(env.DB, 'mail','message:send',propertyId); const ticket=await beginRecoveryEffect(env.DB,'mail',message.deliveryId,message)
  try{const result=await mail.send(message);await finishRecoveryEffect(env.DB,ticket,{state:result?.status==='accepted'?'acknowledged':result?.status==='development'?'not_applied':'uncertain',reference:result?.providerMessageId??undefined});return result}
  catch(error){await finishRecoveryEffect(env.DB,ticket,{state:'uncertain'});throw error} } }

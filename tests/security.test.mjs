@@ -1,11 +1,43 @@
 import { homeDay } from './home-calendar.mjs'
 import assert from 'node:assert/strict'
-import { createHmac } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto'
 import test from 'node:test'
 import { harness } from './harness.mjs'
 
 const day = n => homeDay(n, 'America/New_York')
 const initial = 'network-edge-initial-auth', rotated = 'network-edge-rotated-auth'
+
+test('a mail-off installation refuses email and admits its owner with a one-time sign-in grant', async () => {
+ let outbound = 0
+ const h = await harness({ entry: 'tests/worker.ts', auth: { MAIL_PROVIDER: 'none', MAIL_FROM: '' }, outbound() {
+  outbound++
+  return new Response(null, { status: 503 })
+ } })
+ try {
+  const signin = await h.send('/signin')
+  assert.equal(signin.status, 200)
+  assert.ok(!signin.text.includes('action="/auth/magic-link"'))
+  const magic = await h.send('/auth/magic-link', { email: h.auth.OWNER_EMAIL })
+  assert.equal(magic.status, 503)
+  assert.equal(magic.value.error, 'mail_unavailable')
+
+  // Write the same grant that rer signin writes at the Cloudflare D1 boundary.
+  const token = randomBytes(32).toString('base64url')
+  const hash = createHash('sha256').update(`owner-signin\0${token}`).digest('hex')
+  const now = Date.now()
+  const grant = await h.db.prepare(`INSERT INTO oa_owner_signins(id,token_hash,operator_id,operator_version,created_at,expires_at)
+   SELECT ?,?,id,version,?,? FROM oa_operators WHERE email=? AND role='owner' AND status='active'`)
+   .bind(randomUUID(), hash, now, now + 60_000, h.auth.OWNER_EMAIL).run()
+  assert.equal(grant.meta.changes, 1)
+  assert.equal((await h.send(`/auth/owner-signin?token=${token}`)).status, 200)
+  const confirmed = await h.send('/auth/owner-signin', { token })
+  assert.equal(confirmed.status, 303)
+  assert.ok(confirmed.cookie)
+  assert.equal((await h.state(confirmed.cookie)).actor.role, 'owner')
+  assert.equal((await h.send('/auth/owner-signin', { token })).status, 400)
+  assert.equal(outbound, 0)
+ } finally { await h.close() }
+})
 
 test('SECURITY-001: owner grants, encrypted rotation, forged events, private AI facts and revoked queued sends', async () => {
  const outbound=[]

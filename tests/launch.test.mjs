@@ -6,7 +6,7 @@ import { mkdtemp,rm,readFile,mkdir } from 'node:fs/promises'
 import { join,resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { chromium,expect } from '@playwright/test'
-const exec=promisify(execFile),launcher=resolve('node_modules/@runeditrun/rer/global/rer.mjs')
+const exec=promisify(execFile),launcher=resolve('node_modules/.bin/rer')
 async function stopOwned(app){
  if(!app||app.exitCode!==null||app.signalCode!==null)return
  const exited=new Promise(r=>app.once('exit',r));app.kill('SIGINT')
@@ -19,9 +19,9 @@ test('a fresh public-source clone installs, sets up, signs in and preserves a na
  delete env.RER_LOCAL_OPERATION;delete env.RER_LOCAL_STATE_PATH
  for(const key of Object.keys(env))if(/^(GH_|GITHUB_|RER_CLOUD_)/.test(key)||key.endsWith('_CLOUD'))delete env[key]
  let app,browser
- const command=async args=>{try{return await exec(process.execPath,[launcher,...args,'--cwd',root,'--json'],{env,maxBuffer:2000000})}catch(error){const failures=String(error.stdout??'').split('\n').flatMap(line=>{try{const v=JSON.parse(line);return v.event==='error'?[{code:v.code,step:v.step,message:String(v.message??'').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]').split('\n').filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join(' ')}]:[]}catch{return []}});const captured=await readFile(join(root,'.seed/installer/install.log'),'utf8').catch(()=>'');const diagnostic=captured.split('\n').slice(-60).filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join('\n').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]');throw new Error('Source lifecycle '+args[0]+' failed with exit '+error.code+'; sanitized diagnostic '+JSON.stringify(failures)+'; redacted capture tail '+diagnostic)}}
+ const command=async args=>{try{return await exec(launcher,[...args,'--cwd',root,'--json'],{env,maxBuffer:2000000})}catch(error){const failures=String(error.stdout??'').split('\n').flatMap(line=>{try{const v=JSON.parse(line);return v.event==='error'?[{code:v.code,step:v.step,message:String(v.message??'').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]').split('\n').filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join(' ')}]:[]}catch{return []}});const captured=await readFile(join(root,'.seed/installer/install.log'),'utf8').catch(()=>'');const diagnostic=captured.split('\n').slice(-60).filter(v=>!/secret|token|password|authorization|RER_OPEN/i.test(v)).join('\n').replace(/https?:\/\/\S+/g,'[address]').replace(/[A-Za-z0-9_-]{24,}/g,'[opaque]');throw new Error('Source lifecycle '+args[0]+' failed with exit '+error.code+'; sanitized diagnostic '+JSON.stringify(failures)+'; redacted capture tail '+diagnostic)}}
  const start=async()=>{
-  app=spawn(process.execPath,[launcher,'dev','--cwd',root,'--foreground','--json'],{cwd:root,env,stdio:['ignore','pipe','pipe']})
+  app=spawn(launcher,['dev','--cwd',root,'--foreground','--json'],{cwd:root,env,stdio:['ignore','pipe','pipe']})
   let buffer='',timer
   return new Promise((resolve,reject)=>{
    timer=setTimeout(()=>reject(new Error('Source rer dev readiness timed out')),600000)

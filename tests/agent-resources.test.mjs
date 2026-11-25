@@ -212,12 +212,12 @@ test('Archive resource history requires fresh Business and native admission, and
     const old = pending.body.error.data, identity = { auth: h.auth, owner: h.owner }
     const local = await h.cmd('agent.create', { label: 'Synthetic nonportable draft key' })
     await h.close(); h = null
-    const cli = resolve('node_modules/@runeditrun/rer/global/rer.mjs')
-    await exec(process.execPath, [cli, 'export', '--output', archive], { cwd: source, env, maxBuffer: 2e6 })
+    const cli = resolve('node_modules/.bin/rer')
+    await exec(cli, ['export', '--output', archive], { cwd: source, env, maxBuffer: 2e6 })
     const bytes = await readFile(archive, 'utf8')
     assert.ok(bytes.includes(f.home.name), 'native history remains portable')
     assert.ok(!bytes.includes(local.token), 'bearer authority is not portable')
-    await exec(process.execPath, [cli, 'import', '--input', archive, '--yes'], { cwd: restored, env, maxBuffer: 2e6 })
+    await exec(cli, ['import', '--input', archive, '--yes'], { cwd: restored, env, maxBuffer: 2e6 })
     const restore = await resourceHarness({ root: restored, ...identity, signer: setup.signer })
     h = restore.h
     // The new installation has the same trusted key ring, but none of its old signed bindings or policy.

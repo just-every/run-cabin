@@ -87,6 +87,10 @@
           "label": "Configure later (no email)"
         },
         {
+          "value": "none",
+          "label": "Turn off outbound email"
+        },
+        {
           "value": "sendgrid",
           "label": "SendGrid"
         },

@@ -24,10 +24,10 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   await inquiryDoor.settings();await inquiryDoor.read([sourceInquiry],'succeeded',null);await inquiryDoor.review((await h.state()).inquiries[0])
   const inquiryProof=(await h.state()).inquiries[0]
   await h.close();h=null
-  const cli=resolve('node_modules/@runeditrun/rer/global/rer.mjs')
-  await exec(process.execPath,[cli,'export','--output',archive],{cwd:source,env,maxBuffer:2e6})
+  const cli=resolve('node_modules/.bin/rer')
+  await exec(cli,['export','--output',archive],{cwd:source,env,maxBuffer:2e6})
   const bytes=await readFile(archive,'utf8');assert.ok(!bytes.includes(path.split('/').at(-1)),'archive omits the private quote capability');assert.match(bytes,/Alex Rivera/,'business terms remain portable')
-  await exec(process.execPath,[cli,'import','--input',archive,'--yes'],{cwd:restored,env,maxBuffer:2e6})
+  await exec(cli,['import','--input',archive,'--yes'],{cwd:restored,env,maxBuffer:2e6})
   let outbound=0;h=await harness({root:restored,...identity,outbound:()=>{outbound++;assert.fail('Restored quotes must cause no external action')}})
   const cookie=await h.signIn(h.auth.OWNER_EMAIL),saved=await h.state(cookie)
   assert.deepEqual(saved.propertyProfiles.find(p=>p.propertyId===saved.staffQuotes[0].propertyId).inventoryUnits,[a.id,b.id].sort());assert.equal(saved.staffQuotes.length,1);assert.equal(saved.staffQuotes[0].versions[0].price.totalCents,58300);assert.equal(saved.staffQuotes[0].versions[0].price.cancellationPolicy.retainedBps,5000)
@@ -44,7 +44,7 @@ test('RES-006 / DATA-001: public archive restore retains quoted terms without re
   await h.cmd('inquiry.erase',{id:currentInquiry.id,revision:currentInquiry.revision,confirm:'yes'},sourceOwner)
   assert.equal((await h.state(sourceOwner)).inquiries.find(q=>q.id===inquiryProof.id).status,'erased')
   await h.close();h=null
-  await exec(process.execPath,[cli,'export','--output',journal],{cwd:source,env,maxBuffer:2e6})
-  await assert.rejects(exec(process.execPath,[cli,'import','--input',archive,'--journal',journal,'--yes'],{cwd:erased,env,maxBuffer:2e6}),error=>error.code===4,'a later inquiry erasure journal refuses an older unredacted archive')
+  await exec(cli,['export','--output',journal],{cwd:source,env,maxBuffer:2e6})
+  await assert.rejects(exec(cli,['import','--input',archive,'--journal',journal,'--yes'],{cwd:erased,env,maxBuffer:2e6}),error=>error.code===4,'a later inquiry erasure journal refuses an older unredacted archive')
  }finally{if(h)await h.close();await rm(temporary,{recursive:true,force:true})}
 })

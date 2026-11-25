@@ -4,7 +4,7 @@ Cabin runs locally without provider accounts. To let owners, cleaners and guests
 
 1. In your [Cloudflare dashboard](https://dash.cloudflare.com), open **Workers & Pages** and set your account’s `workers.dev` subdomain if this is your first Worker. Cabin can use this address without a purchased domain.
 2. Copy the **Account ID**. Under [My Profile → API Tokens](https://dash.cloudflare.com/profile/api-tokens), create a custom token with account permissions **Workers Scripts: Edit** and **D1: Edit**, scoped to your account.
-3. Choose a mail provider: `sendgrid`, `resend` or `cloudflare`. Verify your sending address/domain with that provider and obtain its sending API key. Cloudflare mail also needs its **Account ID** as `MAIL_ACCOUNT_ID`. Keep these credentials private. Receiving guest mail through Cloudflare Email Routing needs your own domain on Cloudflare; see [Guest inbox](/docs/inbox).
+3. Choose `MAIL_PROVIDER=none` to set up without email. To send mail, choose `sendgrid`, `resend` or `cloudflare`, verify your sender with that provider and obtain a sending API key. Receiving guest mail through Cloudflare Email Routing needs your own Cloudflare domain. See [Guest inbox](/docs/inbox).
 
 ## Save private deploy inputs
 
@@ -14,10 +14,12 @@ In the Cabin checkout create `.env.cabin` with your own values:
 CLOUDFLARE_ACCOUNT_ID=your-account-id
 CLOUDFLARE_API_TOKEN=your-scoped-deploy-token
 OWNER_EMAIL=you@example.com
-MAIL_API_KEY=your-mail-provider-api-key
+MAIL_PROVIDER=none
 ```
 
-Set `MAIL_PROVIDER` (`sendgrid`, `resend` or `cloudflare`) and `MAIL_FROM` (a verified sender address) in the plain `vars` block of `wrangler.jsonc`. For `MAIL_PROVIDER=cloudflare`, also set the plain `MAIL_ACCOUNT_ID` to the mail account’s ID; managed mail uses the plain `MAIL_RELAY_URL`. These settings are deployed with the Worker; changing them requires another build and deploy. Connect Stripe directly under **Direct bookings → Connect Stripe**: save a test key, complete the $1 test checkout, then save a live key when ready to charge real guests. See [Direct bookings](/docs/direct-bookings). Server configuration is also supported: `STRIPE_TEST_SECRET_KEY` takes an `sk_test_` key from the [Stripe test API keys page](https://dashboard.stripe.com/test/apikeys), and `STRIPE_SECRET_KEY` takes an `sk_live_` key from the live dashboard. Keep both private. Statement payout import currently supports test-mode paid automatic USD payouts only, even when direct bookings use live mode.
+For mail-enabled hosting, set `MAIL_PROVIDER`, `MAIL_API_KEY` and `MAIL_FROM` with your provider, key and verified sender in `.env.cabin`. Cloudflare mail also needs the plain `MAIL_ACCOUNT_ID`, and managed mail uses the plain `MAIL_RELAY_URL`. Move any old `MAIL_PROVIDER` and `MAIL_FROM` values from `wrangler.jsonc` to the environment file and leave their source defaults empty. Changing these settings requires another build and deploy.
+
+Connect Stripe under **Direct bookings → Connect Stripe**, save a test key and complete the $1 test checkout, then save a live key when ready to charge real guests. See [Direct bookings](/docs/direct-bookings). `STRIPE_TEST_SECRET_KEY` and `STRIPE_SECRET_KEY` are also supported. Keep both private. Statement payout import currently supports paid automatic USD payouts in test mode only.
 
 The remaining secret settings are optional; `rer deploy` lists the ones you have not set, and Cabin runs without them:
 
@@ -38,7 +40,7 @@ rer deploy --env-file .env.cabin --dry-run
 rer deploy --env-file .env.cabin
 ```
 
-The first command builds and checks locally without contacting providers. The second creates resources in your account, applies database migrations, uploads the Worker and secrets, checks health and claims `OWNER_EMAIL` as the hosted owner. If a first deploy stops with a Cloudflare error such as `provider-http-500` or code 10500, run the same command again: rer continues where it stopped. Open the address it prints, request a sign-in email and finish setup. A successful deploy does not prove email delivery: check your mailbox and mail provider before inviting others. If needed, `rer signin --env-file .env.cabin` prints a private one-time owner sign-in link.
+The first command builds and checks locally without contacting providers. The second creates resources in your account, applies database migrations, uploads the Worker and secrets, checks health and claims `OWNER_EMAIL` as the hosted owner. If Cloudflare returns `provider-http-500` or code 10500 during first deploy, run the same command again to resume. With mail off, run `rer signin --env-file .env.cabin` and open the private one-time link to finish setup. Email links, staff invitations, guest verification codes and outbound notices are unavailable. With mail enabled, request a sign-in email and confirm delivery before inviting staff.
 
 The default environment is `production`: its Worker is `cabin-production` and D1 database is `cabin-production-db`. For another environment add `--environment NAME` to each deploy, sign-in, secret update and removal command. For example, environment `trial` uses Worker `cabin-trial` and database `cabin-trial-db`.
 

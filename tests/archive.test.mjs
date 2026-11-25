@@ -10,14 +10,14 @@ import { join, resolve } from 'node:path'
 import { getPlatformProxy } from 'wrangler'
 import { harness } from './harness.mjs'
 const exec = promisify(execFile)
-const cli = resolve('node_modules/@runeditrun/rer/global/rer.mjs')
+const cli = resolve('node_modules/.bin/rer')
 const command = async (cwd, args, expected = 0) => {
   let result
   // These commands own a separate checkout, not the parent verify operation.
   const env = { ...process.env, CI: 'true', WRANGLER_SEND_METRICS: 'false' }
   delete env.RER_LOCAL_OPERATION
   delete env.RER_LOCAL_STATE_PATH
-  try { result = { ...await exec(process.execPath, [cli, ...args], { cwd, env, maxBuffer: 2e6 }), code: 0 } }
+  try { result = { ...await exec(cli, [...args], { cwd, env, maxBuffer: 2e6 }), code: 0 } }
   catch (error) { result = error }
   assert.equal(result.code, expected, `${args[0]}: ${result.stdout ?? ''} ${result.stderr ?? ''}`)
 }

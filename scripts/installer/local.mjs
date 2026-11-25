@@ -27,6 +27,7 @@ const localLifecycle = { ...lifecycle, run(root, input, store, onApp, signal, op
 } }
 export const commandAdapter = createCommandAdapter(localLifecycle, {
  dev: developmentTarget, preview: previewTarget, verify: ['pnpm', ['run', 'verify:app']], deploy: ownerDeploy('deploy.json', lifecycle),
+ mailOffSignIn: 'rer signin',
  portability: localPortability({ database: 'foundation', policyModule: 'src/cabin/archive-policy.mjs', transient: ['local runtime caches and logs'] }),
  setup: { manifestFile: 'rer-setup.json' }, browserModule: 'scripts/installer/ui/seed.mjs',
  // The run site (rer build --site, rer deploy --site, RER_SITE): pages from
