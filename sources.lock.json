@@ -6404,7 +6404,7 @@
       "executable": false
     },
     "tests/harness.mjs": {
-      "sha256": "139b344d29adcebd23b26e58850768840f32776f42de0e64dc5810212eea8d99",
+      "sha256": "e0683ee71944b1b9eac6bd4a5182151d36bd174eb37237495ff27063e1011775",
       "executable": false
     },
     "tests/home-calendar.mjs": {
