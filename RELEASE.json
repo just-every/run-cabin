@@ -1,7 +1,7 @@
 {
   "version": "0.1.1",
-  "date": "2026-10-24",
-  "publicReleaseNotes": "Prepare Cabin for hosted installation with a digest-bound setup manifest, a deployment specification, dispatch-only Managed delivery, hosted mail configuration and concise listing metadata. Existing reservation, turnover, statement and backup workflows remain available. This metadata prepares a future native release; no release has been created.",
+  "date": "2026-11-27",
+  "publicReleaseNotes": "Cabin 0.1.1 brings the release up to Run Edit Run 0.2.134 and lets a Business run Cabin with mail off: MAIL_PROVIDER=none needs no sender or key, nothing is sent, and the owner signs in with rer signin. Since 0.1.0 it adds the company agent door (bounded reads, drafts and specialist prompts over MCP, with Business settings and people), native QuickBooks synchronization, dated rates, pricing floors and direct discounts, linked room listings that share inventory, quarterly tax reviews, member scopes, guest sessions, report sharing, inbox search, exact stay alternatives and provider recovery, and hosted installation metadata. Migrations: 0022_ledger.sql, 0023_audit.sql, 0028_owner_operations.sql, 0029_taxes.sql, 0030_owner_blocks.sql, 0031_verification.sql, 0032_provider_sharing.sql, 0033_restore_review.sql, 0034_erasure.sql, 0035_provider_security.sql, 0036_booking_website.sql, 0057_member_scopes.sql, 0058_guest_sessions.sql, 0059_report_sharing.sql, 0061_page_reads.sql, 0062_inbox_search.sql, 0063_dependency_keys_sealed.sql, 0064_quickbooks.sql, 0065_agent_door.sql, 0066_business_settings.sql, 0067_business_people.sql, 0068_agent_people.sql, 0069_agent_door_refresh.sql.",
   "extensionPointChanges": [],
   "migrations": [
     "migrations/core/0022_ledger.sql",
@@ -20,9 +20,15 @@
     "migrations/core/0059_report_sharing.sql",
     "migrations/core/0061_page_reads.sql",
     "migrations/core/0062_inbox_search.sql",
-    "migrations/core/0063_dependency_keys_sealed.sql"
+    "migrations/core/0063_dependency_keys_sealed.sql",
+    "migrations/core/0064_quickbooks.sql",
+    "migrations/core/0065_agent_door.sql",
+    "migrations/core/0066_business_settings.sql",
+    "migrations/core/0067_business_people.sql",
+    "migrations/core/0068_agent_people.sql",
+    "migrations/core/0069_agent_door_refresh.sql"
   ],
   "breaking": false,
-  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md. Adopt this source with its pinned rer 0.2.79, apply only forward migrations, configure the selected hosted mail provider and verify before routing traffic. The native release and the rer 0.2.80 update follow in a later round.",
+  "agentUpdateInstructions": "Back up the existing installation using the local export or hosted backup instructions in OPERATIONS.md and exercise a restored copy. Pull v0.1.1, pnpm install --frozen-lockfile, then rer setup locally or rer deploy --environment <name> hosted with the same environment: the 23 new migrations apply in filename order, forward only. @runeditrun/rer moves from 0.2.47 to 0.2.134. MAIL_PROVIDER and MAIL_FROM are public settings with empty defaults: an installation that sends mail sets MAIL_PROVIDER, MAIL_FROM and MAIL_API_KEY; MAIL_PROVIDER=none turns mail off and the owner signs in with rer signin.",
   "previousVersion": "0.1.0"
 }

@@ -1,6 +1,18 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 (27 Nov 2026)
+
+**Back up first** (OPERATIONS.md: a local export, or the hosted backup), then pull, `pnpm install --frozen-lockfile` and `rer setup` locally or `rer deploy --environment <name>` hosted; the 23 new migrations apply in filename order.
+
+- **Mail off.** `MAIL_PROVIDER=none` needs no sender or key and sends nothing; the owner signs in with `rer signin` from the deployment checkout. `MAIL_PROVIDER` and `MAIL_FROM` are public settings with empty defaults, so a deploy that sends mail names its provider with `MAIL_FROM` and `MAIL_API_KEY`. Pinned rer moves from 0.2.47 to 0.2.134, and Cabin starts from a fresh source checkout.
+- **The company agent door.** Bounded reads and drafts, specialist prompts and generated agent documentation over one MCP door, with Business settings and people bound to native members.
+- **Money.** Native QuickBooks synchronization of reviewed, frozen mappings; dated native rates and preparation rules; pricing floors enforced across discounts; quarterly tax reviews; allocated corrections refused in frozen statement periods.
+- **Homes and channels.** Linked room listings share physical inventory; exact stay alternatives and durable provider interruption recovery; guest lock recovery.
+- **People and access.** Member scopes, guest sessions, report sharing, inbox search and erasure of shared inquiry context.
+- **The Run demo** redeploys on each published release.
+- Migrations: 0022_ledger.sql, 0023_audit.sql, 0028_owner_operations.sql, 0029_taxes.sql, 0030_owner_blocks.sql, 0031_verification.sql, 0032_provider_sharing.sql, 0033_restore_review.sql, 0034_erasure.sql, 0035_provider_security.sql, 0036_booking_website.sql, 0057_member_scopes.sql, 0058_guest_sessions.sql, 0059_report_sharing.sql, 0061_page_reads.sql, 0062_inbox_search.sql, 0063_dependency_keys_sealed.sql, 0064_quickbooks.sql, 0065_agent_door.sql, 0066_business_settings.sql, 0067_business_people.sql, 0068_agent_people.sql, 0069_agent_door_refresh.sql.
+
+### Also
 
 - **Homepage.** The run site's homepage follows one stay end to end, on the page structure the owner approved on 17 October 2026: Megan Ortiz's Lake Loft stay from the booking that closes every channel, through her messages, the turnover, a cleaner who cancels the morning she arrives, the payout on the owner's statement and her next stay booked direct, then moving in from another system. Every drawing is HTML; the claims it makes are in `docs/CLAIMS.md`.
 
